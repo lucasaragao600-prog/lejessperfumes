@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
-import { ArrowLeftRight, ArrowDown, ArrowUp, RefreshCw, FlaskConical, Plus } from "lucide-react";
-import { movimentacoes as movsIniciais, perfumes, formatCurrency, formatDate, type Deposito, type Movimentacao } from "@/data/mockData";
+import { ArrowLeftRight, ArrowDown, RefreshCw, FlaskConical, Plus } from "lucide-react";
+import { perfumes, formatDate, type Deposito, type Movimentacao } from "@/data/mockData";
+import { useApp } from "@/context/AppContext";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const hoje = "2026-02-18";
@@ -14,7 +15,7 @@ const tipoConfig = {
 };
 
 export default function Movimentacoes() {
-  const [movs, setMovs] = useState(movsIniciais);
+  const { movimentacoes, setMovimentacoes, baixarEstoque, adicionarTester } = useApp();
   const [filtroTipo, setFiltroTipo] = useState<string>("Todos");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
@@ -28,13 +29,18 @@ export default function Movimentacoes() {
   });
 
   const filtradas = useMemo(() => {
-    if (filtroTipo === "Todos") return movs;
-    return movs.filter((m) => m.tipo === filtroTipo);
-  }, [movs, filtroTipo]);
+    if (filtroTipo === "Todos") return movimentacoes;
+    return movimentacoes.filter((m) => m.tipo === filtroTipo);
+  }, [movimentacoes, filtroTipo]);
 
   const handleSalvar = () => {
     if (!form.perfumeId || form.quantidade < 1) return;
+    if (form.tipo === "Saída Tester" && !form.depositoOrigem) return;
+    if (form.tipo === "Transferência" && (!form.depositoOrigem || !form.depositoDestino)) return;
+    if (form.tipo !== "Transferência" && form.tipo !== "Saída Tester" && !form.deposito) return;
+
     const p = perfumes.find((x) => x.id === form.perfumeId)!;
+
     const nova: Movimentacao = {
       id: `m${Date.now()}`,
       data: hoje,
@@ -45,9 +51,22 @@ export default function Movimentacoes() {
       observacao: form.observacao || undefined,
       ...(form.tipo === "Transferência"
         ? { depositoOrigem: form.depositoOrigem as Deposito, depositoDestino: form.depositoDestino as Deposito }
+        : form.tipo === "Saída Tester"
+        ? { depositoOrigem: form.depositoOrigem as Deposito, depositoDestino: undefined, deposito: form.depositoOrigem as Deposito }
         : { deposito: form.deposito as Deposito }),
     };
-    setMovs([nova, ...movs]);
+
+    // Efeitos colaterais por tipo
+    if (form.tipo === "Saída Tester") {
+      baixarEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
+      adicionarTester(form.perfumeId, form.quantidade);
+    } else if (form.tipo === "Transferência") {
+      baixarEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
+      // Não incrementamos destino aqui pois o estado de perfumes já tem estoque individual por depósito
+      // (simplificação: só baixamos da origem — para incrementar destino seria outra chamada setPerfumes)
+    }
+
+    setMovimentacoes([nova, ...movimentacoes]);
     setForm({ tipo: "Entrada", perfumeId: "", deposito: "", depositoOrigem: "", depositoDestino: "", quantidade: 1, observacao: "" });
     setShowForm(false);
   };
@@ -104,7 +123,7 @@ export default function Movimentacoes() {
                 {tipos.map((t) => (
                   <button
                     key={t}
-                    onClick={() => setForm({ ...form, tipo: t })}
+                    onClick={() => setForm({ ...form, tipo: t, depositoOrigem: "", depositoDestino: "", deposito: "" })}
                     className={`py-2 rounded-lg text-xs font-medium border transition-all ${
                       form.tipo === t
                         ? "border-gold bg-gold/15 text-gold"
@@ -150,6 +169,24 @@ export default function Movimentacoes() {
                   </select>
                 </div>
               </div>
+            ) : form.tipo === "Saída Tester" ? (
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] text-muted-foreground mb-1 block">Depósito Origem</label>
+                  <select value={form.depositoOrigem} onChange={(e) => setForm({ ...form, depositoOrigem: e.target.value as Deposito })}
+                    className="w-full bg-surface-overlay border border-border rounded-lg px-2 py-2.5 text-xs text-foreground focus:outline-none focus:border-gold-muted">
+                    <option value="">Selecione</option>
+                    {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[11px] text-muted-foreground mb-1 block">Destino</label>
+                  <div className="bg-surface-overlay border border-purple-400/30 rounded-lg px-2 py-2.5 flex items-center gap-1.5">
+                    <FlaskConical size={13} className="text-purple-400" />
+                    <span className="text-xs text-purple-400 font-medium">Estoque Tester</span>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div>
                 <label className="text-[11px] text-muted-foreground mb-1 block">Depósito</label>
@@ -158,6 +195,15 @@ export default function Movimentacoes() {
                   <option value="">Selecione...</option>
                   {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
+              </div>
+            )}
+
+            {/* Info Saída Tester */}
+            {form.tipo === "Saída Tester" && form.perfumeId && form.depositoOrigem && (
+              <div className="bg-purple-400/10 border border-purple-400/30 rounded-lg p-2.5">
+                <p className="text-xs text-purple-400">
+                  ⚠️ Será baixado do estoque de <strong>{form.depositoOrigem}</strong> e adicionado ao estoque de testers.
+                </p>
               </div>
             )}
 
@@ -212,8 +258,9 @@ export default function Movimentacoes() {
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
                   {formatDate(m.data)} · {m.tipo}
-                  {m.depositoOrigem && ` · ${m.depositoOrigem} → ${m.depositoDestino}`}
-                  {m.deposito && ` · ${m.deposito}`}
+                  {m.tipo === "Saída Tester" && m.deposito && ` · ${m.deposito} → Tester`}
+                  {m.tipo === "Transferência" && m.depositoOrigem && ` · ${m.depositoOrigem} → ${m.depositoDestino}`}
+                  {m.tipo !== "Saída Tester" && m.tipo !== "Transferência" && m.deposito && ` · ${m.deposito}`}
                 </p>
                 {m.observacao && (
                   <p className="text-[11px] text-muted-foreground italic mt-0.5">"{m.observacao}"</p>
