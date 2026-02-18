@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
 import { FlaskConical, Search, Plus, Trash2 } from "lucide-react";
-import { testers as testersIniciais, perfumes, formatCurrency } from "@/data/mockData";
+import { perfumes, formatCurrency } from "@/data/mockData";
 import type { Tester } from "@/data/mockData";
+import { useApp } from "@/context/AppContext";
 
 export default function Testers() {
-  const [testers, setTesters] = useState(testersIniciais);
+  const { testers, setTesters } = useApp();
   const [busca, setBusca] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ perfumeId: "", quantidade: 1 });

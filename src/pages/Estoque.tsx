@@ -1,10 +1,12 @@
 import { useState, useMemo } from "react";
 import { Package, Search, AlertTriangle } from "lucide-react";
-import { perfumes, formatCurrency, type Deposito } from "@/data/mockData";
+import { formatCurrency, type Deposito, type Perfume } from "@/data/mockData";
+import { useApp } from "@/context/AppContext";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Estoque() {
+  const { perfumes } = useApp();
   const [busca, setBusca] = useState("");
   const [depositoFiltro, setDepositoFiltro] = useState<Deposito | "Todos">("Todos");
   const [showAlertas, setShowAlertas] = useState(false);
@@ -23,14 +25,10 @@ export default function Estoque() {
       if (showAlertas) return matchBusca && qtd <= p.estoqueMinimo;
       return matchBusca;
     });
-  }, [busca, depositoFiltro, showAlertas]);
+  }, [perfumes, busca, depositoFiltro, showAlertas]);
 
   const totais = useMemo(() => {
-    const lista = depositoFiltro === "Todos"
-      ? perfumes
-      : perfumes.map((p) => ({ ...p, estoques: { Casa: 0, Sumaúma: 0, Amazonas: 0, [depositoFiltro]: p.estoques[depositoFiltro] } }));
-
-    return lista.reduce(
+    return perfumes.reduce(
       (acc, p) => {
         const qtd = depositoFiltro === "Todos"
           ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
@@ -41,7 +39,7 @@ export default function Estoque() {
       },
       { custo: 0, venda: 0 }
     );
-  }, [depositoFiltro]);
+  }, [perfumes, depositoFiltro]);
 
   const alertas = perfumes.filter((p) => {
     const qtd = depositoFiltro === "Todos"
@@ -50,12 +48,12 @@ export default function Estoque() {
     return qtd <= p.estoqueMinimo;
   }).length;
 
-  const getQtd = (p: typeof perfumes[0]) =>
+  const getQtd = (p: Perfume) =>
     depositoFiltro === "Todos"
       ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
       : p.estoques[depositoFiltro as Deposito];
 
-  const isBaixo = (p: typeof perfumes[0]) => getQtd(p) <= p.estoqueMinimo;
+  const isBaixo = (p: Perfume) => getQtd(p) <= p.estoqueMinimo;
 
   return (
     <div className="min-h-screen bg-background pb-24">
