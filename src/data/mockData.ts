@@ -99,17 +99,18 @@ export const casasPadrao: Casa[] = [
 ];
 
 // Geração de código automático TTMMCCLLLL VVV
+// LLLL = sequencial por casa (não global)
 export function gerarCodigo(
   tipo: TipoPerfume,
   casaSigla: string,
   concentracao: Concentracao,
-  linha: number, // número sequencial global
+  linhaPorCasa: number, // número sequencial por casa
   volume: number
 ): string {
   const tt = tipo.padEnd(2, "X").slice(0, 2);
   const mm = casaSigla.replace(/[^A-Z0-9]/gi, "").toUpperCase().padEnd(2, "X").slice(0, 2);
   const cc = concentracao.slice(0, 2).toUpperCase();
-  const llll = String(linha).padStart(4, "0");
+  const llll = String(linhaPorCasa).padStart(4, "0");
   const vvv = String(volume).padStart(3, "0");
   return `${tt}${mm}${cc}${llll}${vvv}`;
 }

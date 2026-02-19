@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Settings, X, ChevronDown } from "lucide-react";
+import { Plus, Settings, X } from "lucide-react";
 import {
   TIPOS_PERFUME,
   CONCENTRACOES,
@@ -19,7 +19,7 @@ interface Props {
 type Tab = "cadastrar" | "casas";
 
 export default function CadastroPerfume({ onClose }: Props) {
-  const { casas, setCasas, perfumes, adicionarPerfume } = useApp();
+  const { casas, setCasas, adicionarPerfume, proximaLinhaPorCasa } = useApp();
   const [tab, setTab] = useState<Tab>("cadastrar");
 
   // --- Estado do formulário ---
@@ -41,13 +41,13 @@ export default function CadastroPerfume({ onClose }: Props) {
   const [novaCasaSigla, setNovaCasaSigla] = useState("");
   const [novaCasaTipo, setNovaCasaTipo] = useState<TipoPerfume>("NI");
 
-  // Próximo número de linha global
-  const proximaLinha = perfumes.length + 1;
+  // Próximo número de linha por casa selecionada
+  const linhaCasa = casaSelecionada ? proximaLinhaPorCasa(casaSelecionada.sigla) : 1;
 
   // Código gerado ao vivo
   const codigoPreview =
     casaSelecionada
-      ? gerarCodigo(tipo, casaSelecionada.sigla, concentracao, proximaLinha, volume)
+      ? gerarCodigo(tipo, casaSelecionada.sigla, concentracao, linhaCasa, volume)
       : "——";
 
   const casasFiltradas = casas.filter((c) => c.tipo === tipo);
@@ -56,7 +56,7 @@ export default function CadastroPerfume({ onClose }: Props) {
     if (!casaSelecionada || !nome || !custo || !precoVenda) return;
     const novoPerfume: Perfume = {
       id: `p${Date.now()}`,
-      codigo: gerarCodigo(tipo, casaSelecionada.sigla, concentracao, proximaLinha, volume),
+      codigo: gerarCodigo(tipo, casaSelecionada.sigla, concentracao, linhaCasa, volume),
       nome,
       marca: casaSelecionada.nome,
       casaSigla: casaSelecionada.sigla,
