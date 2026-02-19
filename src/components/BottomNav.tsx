@@ -1,20 +1,24 @@
-import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings } from "lucide-react";
+import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users } from "lucide-react";
 
 interface BottomNavProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
+  isMaster?: boolean;
 }
 
-const tabs = [
-  { id: "estoque", label: "Estoque", icon: Package },
-  { id: "vendas", label: "Vendas", icon: ShoppingCart },
-  { id: "movimentacoes", label: "Moviment.", icon: ArrowLeftRight },
-  { id: "testers", label: "Testers", icon: FlaskConical },
-  { id: "dashboards", label: "Dashboard", icon: BarChart3 },
-  { id: "configuracoes", label: "Config.", icon: Settings },
+const allTabs = [
+  { id: "estoque", label: "Estoque", icon: Package, masterOnly: false },
+  { id: "vendas", label: "Vendas", icon: ShoppingCart, masterOnly: false },
+  { id: "movimentacoes", label: "Moviment.", icon: ArrowLeftRight, masterOnly: false },
+  { id: "testers", label: "Testers", icon: FlaskConical, masterOnly: false },
+  { id: "dashboards", label: "Dashboard", icon: BarChart3, masterOnly: true },
+  { id: "configuracoes", label: "Config.", icon: Settings, masterOnly: true },
+  { id: "usuarios", label: "Usuários", icon: Users, masterOnly: true },
 ];
 
-export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
+export default function BottomNav({ activeTab, onTabChange, isMaster = true }: BottomNavProps) {
+  const tabs = allTabs.filter((t) => !t.masterOnly || isMaster);
+
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 border-t border-gold-muted"
       style={{ background: "hsl(0 0% 8%)", boxShadow: "0 -4px 24px hsl(0 0% 0% / 0.5)" }}>
@@ -28,9 +32,7 @@ export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
               className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-all duration-200 min-w-0 flex-1"
             >
               <div className={`p-1.5 rounded-lg transition-all duration-200 ${
-                isActive
-                  ? "bg-gold-muted shadow-gold"
-                  : "bg-transparent"
+                isActive ? "bg-gold-muted shadow-gold" : "bg-transparent"
               }`}>
                 <Icon
                   size={20}

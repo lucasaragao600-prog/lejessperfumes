@@ -6,7 +6,7 @@ import CadastroPerfume from "@/components/CadastroPerfume";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
-export default function Estoque() {
+export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const { perfumes, tiposPerfumeConfig } = useApp();
   const tipos = useMemo(() =>
     Object.entries(tiposPerfumeConfig).map(([key, label]) => ({ key: key as TipoPerfume, label: String(label) })),
@@ -148,21 +148,23 @@ export default function Estoque() {
         </div>
       </div>
 
-      {/* Cards de valor */}
-      <div className="px-4 mb-4 grid grid-cols-3 gap-2">
-        {[
-          { label: "Custo", value: totais.custo, color: "text-muted-foreground" },
-          { label: "Venda", value: totais.venda, color: "text-gold" },
-          { label: "Lucro pot.", value: totais.venda - totais.custo, color: "text-emerald-400" },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="bg-surface border border-border rounded-xl p-3">
-            <p className="text-[10px] text-muted-foreground mb-1">{label}</p>
-            <p className={`text-xs font-semibold ${color}`}>
-              {formatCurrency(value)}
-            </p>
-          </div>
-        ))}
-      </div>
+      {/* Cards de valor - somente master */}
+      {isMaster && (
+        <div className="px-4 mb-4 grid grid-cols-3 gap-2">
+          {[
+            { label: "Custo", value: totais.custo, color: "text-muted-foreground" },
+            { label: "Venda", value: totais.venda, color: "text-gold" },
+            { label: "Lucro pot.", value: totais.venda - totais.custo, color: "text-emerald-400" },
+          ].map(({ label, value, color }) => (
+            <div key={label} className="bg-surface border border-border rounded-xl p-3">
+              <p className="text-[10px] text-muted-foreground mb-1">{label}</p>
+              <p className={`text-xs font-semibold ${color}`}>
+                {formatCurrency(value)}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Lista */}
       <div className="px-4 space-y-3">
@@ -210,21 +212,23 @@ export default function Estoque() {
                 </div>
               )}
 
-              {/* Valores */}
-              <div className="grid grid-cols-3 gap-1.5 border-t border-border pt-2">
-                <div>
-                  <p className="text-[9px] text-muted-foreground">Custo unit.</p>
-                  <p className="text-xs text-foreground">{formatCurrency(p.custo)}</p>
+              {/* Valores - somente master */}
+              {isMaster && (
+                <div className="grid grid-cols-3 gap-1.5 border-t border-border pt-2">
+                  <div>
+                    <p className="text-[9px] text-muted-foreground">Custo unit.</p>
+                    <p className="text-xs text-foreground">{formatCurrency(p.custo)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-muted-foreground">Venda unit.</p>
+                    <p className="text-xs text-gold">{formatCurrency(p.precoVenda)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-muted-foreground">Lucro unit.</p>
+                    <p className="text-xs text-emerald-400">{formatCurrency(p.precoVenda - p.custo)}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[9px] text-muted-foreground">Venda unit.</p>
-                  <p className="text-xs text-gold">{formatCurrency(p.precoVenda)}</p>
-                </div>
-                <div>
-                  <p className="text-[9px] text-muted-foreground">Lucro unit.</p>
-                  <p className="text-xs text-emerald-400">{formatCurrency(p.precoVenda - p.custo)}</p>
-                </div>
-              </div>
+              )}
             </div>
           );
         })}
