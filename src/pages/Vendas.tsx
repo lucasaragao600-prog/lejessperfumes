@@ -724,8 +724,8 @@ export default function Vendas() {
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <p className="text-sm font-medium text-foreground truncate">{v.perfumeNome}</p>
                     {pf && (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-gold/10 text-gold border border-gold-muted flex-shrink-0">
-                        {pf.casaSigla}
+                      <span className="text-[10px] text-muted-foreground flex-shrink-0">
+                        {pf.marca}
                       </span>
                     )}
                   </div>
