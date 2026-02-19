@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings, Plus, Trash2, RotateCcw } from "lucide-react";
+import { Settings, Plus, Trash2, RotateCcw, Users } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { TipoPerfume, Concentracao } from "@/data/mockData";
 
@@ -8,6 +8,7 @@ export default function Configuracoes() {
     tiposPerfumeConfig, setTiposPerfumeConfig,
     concentracoesConfig, setConcentracoesConfig,
     volumesPadrao, setVolumesPadrao,
+    vendedoras, setVendedoras,
   } = useApp();
 
   const [novoTipoSigla, setNovoTipoSigla] = useState("");
@@ -15,6 +16,7 @@ export default function Configuracoes() {
   const [novaConcentSigla, setNovaConcentSigla] = useState("");
   const [novaConcentLabel, setNovaConcentLabel] = useState("");
   const [novoVolume, setNovoVolume] = useState("");
+  const [novaVendedora, setNovaVendedora] = useState("");
 
   const handleAddTipo = () => {
     const sigla = novoTipoSigla.toUpperCase().slice(0, 3).trim();
@@ -74,6 +76,21 @@ export default function Configuracoes() {
 
   const handleResetVolumes = () => {
     setVolumesPadrao([30, 50, 75, 100, 150, 200, 250]);
+  };
+
+  const handleAddVendedora = () => {
+    const nome = novaVendedora.trim();
+    if (!nome || vendedoras.includes(nome)) return;
+    setVendedoras((prev) => [...prev, nome]);
+    setNovaVendedora("");
+  };
+
+  const handleRemoveVendedora = (nome: string) => {
+    setVendedoras((prev) => prev.filter((v) => v !== nome));
+  };
+
+  const handleResetVendedoras = () => {
+    setVendedoras(["Ana", "Julia", "Carla"]);
   };
 
   return (
@@ -232,6 +249,51 @@ export default function Configuracoes() {
             <button
               onClick={handleAddVolume}
               disabled={!novoVolume}
+              className="px-3 py-2 rounded-lg text-xs font-semibold text-primary-foreground disabled:opacity-40 transition-opacity"
+              style={{ background: "var(--gradient-gold)" }}
+            >
+              <Plus size={14} />
+            </button>
+          </div>
+        </section>
+
+        {/* Vendedoras */}
+        <section className="bg-surface border border-border rounded-xl p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Users size={14} /> Vendedoras
+              </h2>
+              <p className="text-[10px] text-muted-foreground mt-0.5">Equipe de vendas disponível no lançamento</p>
+            </div>
+            <button onClick={handleResetVendedoras} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-gold transition-colors">
+              <RotateCcw size={11} /> Restaurar
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {vendedoras.map((v) => (
+              <div key={v} className="flex items-center gap-1 bg-surface-overlay border border-border rounded-lg px-2.5 py-1.5">
+                <span className="text-xs text-foreground">{v}</span>
+                <button onClick={() => handleRemoveVendedora(v)} className="text-muted-foreground hover:text-destructive transition-colors ml-1">
+                  <Trash2 size={11} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Nome da vendedora"
+              value={novaVendedora}
+              onChange={(e) => setNovaVendedora(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleAddVendedora()}
+              className="flex-1 bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted"
+            />
+            <button
+              onClick={handleAddVendedora}
+              disabled={!novaVendedora.trim()}
               className="px-3 py-2 rounded-lg text-xs font-semibold text-primary-foreground disabled:opacity-40 transition-opacity"
               style={{ background: "var(--gradient-gold)" }}
             >
