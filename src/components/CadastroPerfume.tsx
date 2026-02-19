@@ -16,7 +16,7 @@ interface Props {
 type Tab = "cadastrar" | "casas";
 
 export default function CadastroPerfume({ onClose }: Props) {
-  const { casas, setCasas, adicionarPerfume, proximaLinhaPorCasa, tiposPerfumeConfig, concentracoesConfig, volumesPadrao } = useApp();
+  const { casas, adicionarCasaDB, removerCasaDB, adicionarPerfume, proximaLinhaPorCasa, tiposPerfumeConfig, concentracoesConfig, volumesPadrao } = useApp();
   const [tab, setTab] = useState<Tab>("cadastrar");
 
   // --- Estado do formulário ---
@@ -133,20 +133,20 @@ export default function CadastroPerfume({ onClose }: Props) {
     onClose();
   };
 
-  const handleAdicionarCasa = () => {
+  const handleAdicionarCasa = async () => {
     if (!novaCasaNome || novaCasaSigla.length < 2) return;
     const nova: Casa = {
       sigla: novaCasaSigla.toUpperCase().slice(0, 3),
       nome: novaCasaNome,
       tipo: novaCasaTipo,
     };
-    setCasas((prev) => [...prev, nova]);
+    await adicionarCasaDB(nova);
     setNovaCasaNome("");
     setNovaCasaSigla("");
   };
 
-  const handleRemoverCasa = (sigla: string) => {
-    setCasas((prev) => prev.filter((c) => c.sigla !== sigla));
+  const handleRemoverCasa = async (sigla: string) => {
+    await removerCasaDB(sigla);
   };
 
   return (
