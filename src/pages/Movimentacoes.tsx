@@ -179,6 +179,19 @@ export default function Movimentacoes() {
                 <option value="">Selecione...</option>
                 {perfumes.map((p) => <option key={p.id} value={p.id}>{p.nome} — {p.marca}</option>)}
               </select>
+              {(() => { const pf = perfumes.find((p) => p.id === form.perfumeId); return pf ? (
+                <div className="flex gap-2 mt-1.5">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
+                    {pf.concentracao}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
+                    {pf.volume} ml
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
+                    {pf.marca}
+                  </span>
+                </div>
+              ) : null; })()}
             </div>
 
             {/* Depósito(s) */}

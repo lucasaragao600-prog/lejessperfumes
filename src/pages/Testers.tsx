@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { FlaskConical, Search, Plus, Trash2 } from "lucide-react";
-import { perfumes as perfumesData, formatCurrency, type Deposito } from "@/data/mockData";
+import { formatCurrency, type Deposito } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
@@ -147,8 +147,21 @@ export default function Testers() {
                 className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
               >
                 <option value="">Selecione...</option>
-                {perfumes.map((p) => <option key={p.id} value={p.id}>{p.nome} - {p.marca}</option>)}
+                {perfumes.map((p) => <option key={p.id} value={p.id}>{p.nome} — {p.marca}</option>)}
               </select>
+              {(() => { const pf = perfumes.find((p) => p.id === form.perfumeId); return pf ? (
+                <div className="flex gap-2 mt-1.5">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
+                    {pf.concentracao}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
+                    {pf.volume} ml
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
+                    {pf.marca}
+                  </span>
+                </div>
+              ) : null; })()}
             </div>
             <div>
               <label className="text-[11px] text-muted-foreground mb-1 block">Depósito de origem</label>
