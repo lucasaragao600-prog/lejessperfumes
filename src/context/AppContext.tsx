@@ -1,46 +1,49 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 import {
-  vendas as vendasIniciais,
-  movimentacoes as movsIniciais,
-  testers as testersIniciais,
-  TIPOS_PERFUME,
-  CONCENTRACOES,
-  VOLUMES_PADRAO,
   type Perfume,
   type Venda,
   type Movimentacao,
   type Tester,
   type Deposito,
   type Casa,
-  type TipoPerfume,
-  type Concentracao,
 } from "@/data/mockData";
 import { usePerfumes } from "@/hooks/usePerfumes";
 import { useCasas } from "@/hooks/useCasas";
+import { useVendas } from "@/hooks/useVendas";
+import { useMovimentacoes } from "@/hooks/useMovimentacoes";
+import { useTesters } from "@/hooks/useTesters";
+import { useVendedoras } from "@/hooks/useVendedoras";
+import { useConfiguracoes } from "@/hooks/useConfiguracoes";
 
 interface AppContextType {
   perfumes: Perfume[];
-  setPerfumes: React.Dispatch<React.SetStateAction<Perfume[]>>;
+  setPerfumes: any;
   perfumesLoading: boolean;
   vendas: Venda[];
-  setVendas: React.Dispatch<React.SetStateAction<Venda[]>>;
+  setVendas: any;
+  adicionarVenda: (v: Venda) => Promise<void>;
   movimentacoes: Movimentacao[];
-  setMovimentacoes: React.Dispatch<React.SetStateAction<Movimentacao[]>>;
+  setMovimentacoes: any;
+  adicionarMovimentacao: (m: Movimentacao) => Promise<void>;
   testers: Tester[];
-  setTesters: React.Dispatch<React.SetStateAction<Tester[]>>;
+  setTesters: any;
+  adicionarTesterDB: (t: { perfumeId: string; perfumeNome: string; marca: string; deposito: Deposito; quantidade: number; custo: number }) => Promise<void>;
+  removerTesterDB: (id: string) => Promise<void>;
   casas: Casa[];
-  setCasas: React.Dispatch<React.SetStateAction<Casa[]>>;
+  setCasas: any;
   casasLoading: boolean;
   adicionarCasaDB: (casa: Casa) => Promise<void>;
   removerCasaDB: (sigla: string) => Promise<void>;
   vendedoras: string[];
-  setVendedoras: React.Dispatch<React.SetStateAction<string[]>>;
+  setVendedoras: any;
+  adicionarVendedoraDB: (nome: string) => Promise<void>;
+  removerVendedoraDB: (nome: string) => Promise<void>;
   tiposPerfumeConfig: Record<string, string>;
-  setTiposPerfumeConfig: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  setTiposPerfumeConfig: (updater: React.SetStateAction<Record<string, string>>) => void;
   concentracoesConfig: Record<string, string>;
-  setConcentracoesConfig: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  setConcentracoesConfig: (updater: React.SetStateAction<Record<string, string>>) => void;
   volumesPadrao: number[];
-  setVolumesPadrao: React.Dispatch<React.SetStateAction<number[]>>;
+  setVolumesPadrao: (updater: React.SetStateAction<number[]>) => void;
   proximaLinhaPorCasa: (casaSigla: string) => number;
   baixarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
   adicionarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
@@ -52,7 +55,6 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  // DB-backed state
   const {
     perfumes,
     isLoading: perfumesLoading,
@@ -63,21 +65,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     proximaLinhaPorCasa,
   } = usePerfumes();
 
-  const {
-    casas,
-    isLoading: casasLoading,
-    adicionarCasa: adicionarCasaDB,
-    removerCasa: removerCasaDB,
-  } = useCasas();
-
-  // Still in-memory for now (will be migrated later)
-  const [vendas, setVendas] = useState<Venda[]>(vendasIniciais);
-  const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>(movsIniciais);
-  const [testers, setTesters] = useState<Tester[]>(testersIniciais);
-  const [vendedoras, setVendedoras] = useState<string[]>(["Ana", "Julia", "Carla"]);
-  const [tiposPerfumeConfig, setTiposPerfumeConfig] = useState<Record<string, string>>(TIPOS_PERFUME as Record<string, string>);
-  const [concentracoesConfig, setConcentracoesConfig] = useState<Record<string, string>>(CONCENTRACOES as Record<string, string>);
-  const [volumesPadrao, setVolumesPadrao] = useState<number[]>(VOLUMES_PADRAO);
+  const { casas, isLoading: casasLoading, adicionarCasa: adicionarCasaDB, removerCasa: removerCasaDB } = useCasas();
+  const { vendas, adicionarVenda } = useVendas();
+  const { movimentacoes, adicionarMovimentacao } = useMovimentacoes();
+  const { testers, adicionarTester: adicionarTesterDB, removerTester: removerTesterDB } = useTesters();
+  const { vendedoras, adicionarVendedora: adicionarVendedoraDB, removerVendedora: removerVendedoraDB } = useVendedoras();
+  const { tiposPerfumeConfig, concentracoesConfig, volumesPadrao, setTiposPerfumeConfig, setConcentracoesConfig, setVolumesPadrao } = useConfiguracoes();
 
   const baixarEstoque = (perfumeId: string, deposito: Deposito, quantidade: number) => {
     baixarEstoqueDB(perfumeId, deposito, quantidade);
@@ -92,26 +85,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const adicionarTester = (perfumeId: string, deposito: Deposito, quantidade: number) => {
-    setTesters((prev) => {
-      const existente = prev.find((t) => t.perfumeId === perfumeId && t.deposito === deposito);
-      if (existente) {
-        return prev.map((t) =>
-          t.perfumeId === perfumeId && t.deposito === deposito
-            ? { ...t, quantidade: t.quantidade + quantidade }
-            : t
-        );
-      }
-      const p = perfumes.find((x) => x.id === perfumeId)!;
-      const novo: Tester = {
-        id: `t${Date.now()}`,
-        perfumeId: p.id,
-        perfumeNome: p.nome,
-        marca: p.marca,
-        deposito,
-        quantidade,
-        custo: p.custo,
-      };
-      return [...prev, novo];
+    const p = perfumes.find((x) => x.id === perfumeId);
+    if (!p) return;
+    adicionarTesterDB({
+      perfumeId: p.id,
+      perfumeNome: p.nome,
+      marca: p.marca,
+      deposito,
+      quantidade,
+      custo: p.custo,
     });
   };
 
@@ -119,7 +101,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     adicionarPerfumeDB(perfume);
   };
 
-  // no-op setters for backward compatibility
   const noop = (() => {}) as any;
 
   return (
@@ -129,18 +110,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setPerfumes: noop,
         perfumesLoading,
         vendas,
-        setVendas,
+        setVendas: noop,
+        adicionarVenda,
         movimentacoes,
-        setMovimentacoes,
+        setMovimentacoes: noop,
+        adicionarMovimentacao,
         testers,
-        setTesters,
+        setTesters: noop,
+        adicionarTesterDB,
+        removerTesterDB,
         casas,
         setCasas: noop,
         casasLoading,
         adicionarCasaDB,
         removerCasaDB,
         vendedoras,
-        setVendedoras,
+        setVendedoras: noop,
+        adicionarVendedoraDB,
+        removerVendedoraDB,
         tiposPerfumeConfig,
         setTiposPerfumeConfig,
         concentracoesConfig,
