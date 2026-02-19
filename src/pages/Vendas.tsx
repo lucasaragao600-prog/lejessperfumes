@@ -489,6 +489,19 @@ export default function Vendas() {
                   <option key={p.id} value={p.id}>{p.nome} — {p.marca}</option>
                 ))}
               </select>
+              {perfumeSelecionado && (
+                <div className="flex gap-2 mt-1.5">
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
+                    {perfumeSelecionado.concentracao}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
+                    {perfumeSelecionado.volume} ml
+                  </span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
+                    {perfumeSelecionado.marca}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Vendedora */}
