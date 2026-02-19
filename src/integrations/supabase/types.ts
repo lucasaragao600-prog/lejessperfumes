@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      casas: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          sigla: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          sigla: string
+          tipo: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          sigla?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
+      perfumes: {
+        Row: {
+          casa_sigla: string
+          codigo: string
+          concentracao: string
+          created_at: string
+          custo: number
+          estoque_amazonas: number
+          estoque_casa: number
+          estoque_minimo: number
+          estoque_sumauma: number
+          id: string
+          marca: string
+          nome: string
+          preco_venda: number
+          tamanho: string
+          tipo: string
+          updated_at: string
+          volume: number
+        }
+        Insert: {
+          casa_sigla: string
+          codigo: string
+          concentracao: string
+          created_at?: string
+          custo?: number
+          estoque_amazonas?: number
+          estoque_casa?: number
+          estoque_minimo?: number
+          estoque_sumauma?: number
+          id?: string
+          marca: string
+          nome: string
+          preco_venda?: number
+          tamanho: string
+          tipo: string
+          updated_at?: string
+          volume: number
+        }
+        Update: {
+          casa_sigla?: string
+          codigo?: string
+          concentracao?: string
+          created_at?: string
+          custo?: number
+          estoque_amazonas?: number
+          estoque_casa?: number
+          estoque_minimo?: number
+          estoque_sumauma?: number
+          id?: string
+          marca?: string
+          nome?: string
+          preco_venda?: number
+          tamanho?: string
+          tipo?: string
+          updated_at?: string
+          volume?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perfumes_casa_sigla_fkey"
+            columns: ["casa_sigla"]
+            isOneToOne: false
+            referencedRelation: "casas"
+            referencedColumns: ["sigla"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
