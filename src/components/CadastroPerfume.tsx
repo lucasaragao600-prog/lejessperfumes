@@ -91,7 +91,7 @@ export default function CadastroPerfume({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background">
+    <div className="fixed inset-0 z-[70] flex flex-col bg-background">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-12 pb-3 border-b border-border">
         <div>
