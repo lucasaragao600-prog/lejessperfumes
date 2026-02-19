@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { Plus, Settings, X } from "lucide-react";
 import {
-  TIPOS_PERFUME,
-  CONCENTRACOES,
-  VOLUMES_PADRAO,
   gerarCodigo,
   type TipoPerfume,
   type Concentracao,
@@ -19,7 +16,7 @@ interface Props {
 type Tab = "cadastrar" | "casas";
 
 export default function CadastroPerfume({ onClose }: Props) {
-  const { casas, setCasas, adicionarPerfume, proximaLinhaPorCasa } = useApp();
+  const { casas, setCasas, adicionarPerfume, proximaLinhaPorCasa, tiposPerfumeConfig, concentracoesConfig, volumesPadrao } = useApp();
   const [tab, setTab] = useState<Tab>("cadastrar");
 
   // --- Estado do formulário ---
@@ -137,7 +134,7 @@ export default function CadastroPerfume({ onClose }: Props) {
             <div>
               <label className="text-xs text-muted-foreground mb-2 block">Tipo de Perfume (TT)</label>
               <div className="grid grid-cols-4 gap-1.5">
-                {(Object.entries(TIPOS_PERFUME) as [TipoPerfume, string][]).map(([key, label]) => (
+                {(Object.entries(tiposPerfumeConfig) as [TipoPerfume, string][]).map(([key, label]) => (
                   <button
                     key={key}
                     onClick={() => { setTipo(key); setCasaSelecionada(null); }}
@@ -167,7 +164,7 @@ export default function CadastroPerfume({ onClose }: Props) {
               </div>
               {casasFiltradas.length === 0 ? (
                 <div className="bg-surface border border-border rounded-xl p-4 text-center">
-                  <p className="text-xs text-muted-foreground">Nenhuma casa cadastrada para {TIPOS_PERFUME[tipo]}</p>
+                  <p className="text-xs text-muted-foreground">Nenhuma casa cadastrada para {tiposPerfumeConfig[tipo]}</p>
                   <button onClick={() => setTab("casas")} className="text-gold text-xs mt-1">+ Adicionar casa</button>
                 </div>
               ) : (
@@ -194,7 +191,7 @@ export default function CadastroPerfume({ onClose }: Props) {
             <div>
               <label className="text-xs text-muted-foreground mb-2 block">Concentração (CC)</label>
               <div className="grid grid-cols-2 gap-1.5">
-                {(Object.entries(CONCENTRACOES) as [Concentracao, string][]).map(([key, label]) => (
+                {(Object.entries(concentracoesConfig) as [Concentracao, string][]).map(([key, label]) => (
                   <button
                     key={key}
                     onClick={() => setConcentracao(key)}
@@ -215,7 +212,7 @@ export default function CadastroPerfume({ onClose }: Props) {
             <div>
               <label className="text-xs text-muted-foreground mb-2 block">Volume / ml (VVV)</label>
               <div className="flex flex-wrap gap-1.5 mb-2">
-                {VOLUMES_PADRAO.map((v) => (
+                {volumesPadrao.map((v) => (
                   <button
                     key={v}
                     onClick={() => { setVolume(v); setVolumeCustom(false); }}
@@ -331,7 +328,7 @@ export default function CadastroPerfume({ onClose }: Props) {
               <div>
                 <label className="text-[10px] text-muted-foreground mb-1 block">Tipo</label>
                 <div className="grid grid-cols-4 gap-1.5">
-                  {(Object.entries(TIPOS_PERFUME) as [TipoPerfume, string][]).map(([key, label]) => (
+                  {(Object.entries(tiposPerfumeConfig) as [TipoPerfume, string][]).map(([key, _label]) => (
                     <button
                       key={key}
                       onClick={() => setNovaCasaTipo(key)}
@@ -381,7 +378,7 @@ export default function CadastroPerfume({ onClose }: Props) {
             </div>
 
             {/* Lista de casas por tipo */}
-            {(Object.entries(TIPOS_PERFUME) as [TipoPerfume, string][]).map(([tipoKey, tipoLabel]) => {
+            {(Object.entries(tiposPerfumeConfig) as [TipoPerfume, string][]).map(([tipoKey, tipoLabel]) => {
               const lista = casas.filter((c) => c.tipo === tipoKey);
               if (lista.length === 0) return null;
               return (

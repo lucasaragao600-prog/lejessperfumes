@@ -190,7 +190,7 @@ export default function Estoque() {
                     {baixo && <AlertTriangle size={12} className="text-destructive flex-shrink-0" />}
                   </div>
                   <h3 className="font-display text-base text-foreground mt-1 truncate">{p.nome}</h3>
-                  <p className="text-xs text-muted-foreground">{p.marca} · {p.tamanho}</p>
+                  <p className="text-xs text-muted-foreground">{p.marca} · {p.concentracao} · {p.tamanho}</p>
                 </div>
                 <div className="text-right ml-3">
                   <p className={`text-2xl font-bold ${baixo ? "text-destructive" : "text-gold"}`}>{qtd}</p>

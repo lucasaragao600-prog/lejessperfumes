@@ -214,8 +214,15 @@ export default function Testers() {
                 <FlaskConical size={20} className="text-purple-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-display text-sm text-foreground truncate">{t.perfumeNome}</p>
-                <p className="text-[11px] text-muted-foreground">{t.marca}</p>
+                <p className="font-display text-sm text-foreground truncate">{t.marca} · {t.perfumeNome}</p>
+                {(() => {
+                  const pf = perfumes.find((p) => p.id === t.perfumeId);
+                  return pf ? (
+                    <p className="text-[11px] text-muted-foreground">{pf.concentracao} · {pf.volume}ml</p>
+                  ) : (
+                    <p className="text-[11px] text-muted-foreground">{t.marca}</p>
+                  );
+                })()}
               </div>
               <button onClick={() => handleRemover(t.id)}
                 className="p-2 rounded-lg text-muted-foreground hover:text-destructive transition-colors">

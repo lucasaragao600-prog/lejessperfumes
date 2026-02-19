@@ -5,6 +5,7 @@ import Vendas from "@/pages/Vendas";
 import Movimentacoes from "@/pages/Movimentacoes";
 import Testers from "@/pages/Testers";
 import Dashboards from "@/pages/Dashboards";
+import Configuracoes from "@/pages/Configuracoes";
 import { AppProvider } from "@/context/AppContext";
 
 const Index = () => {
@@ -17,6 +18,7 @@ const Index = () => {
       case "movimentacoes": return <Movimentacoes />;
       case "testers": return <Testers />;
       case "dashboards": return <Dashboards />;
+      case "configuracoes": return <Configuracoes />;
       default: return <Estoque />;
     }
   };
