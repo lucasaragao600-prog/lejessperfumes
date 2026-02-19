@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { ArrowLeftRight, ArrowDown, RefreshCw, FlaskConical, Plus, Search, ArrowUpDown } from "lucide-react";
-import { perfumes, formatDate, type Deposito, type Movimentacao } from "@/data/mockData";
+import { formatDate, type Deposito, type Movimentacao } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
@@ -15,7 +15,7 @@ const tipoConfig = {
 };
 
 export default function Movimentacoes() {
-  const { movimentacoes, setMovimentacoes, baixarEstoque, adicionarEstoque, transferirEstoque, adicionarTester } = useApp();
+  const { movimentacoes, setMovimentacoes, perfumes, baixarEstoque, adicionarEstoque, transferirEstoque, adicionarTester } = useApp();
   const [filtroTipo, setFiltroTipo] = useState<string>("Todos");
   const [busca, setBusca] = useState("");
   const [ordenacao, setOrdenacao] = useState<"recente" | "antiga">("recente");
@@ -51,6 +51,27 @@ export default function Movimentacoes() {
     if (form.tipo !== "Transferência" && form.tipo !== "Saída Tester" && !form.deposito) return;
 
     const p = perfumes.find((x) => x.id === form.perfumeId)!;
+
+    // Bloquear se estoque insuficiente para operações que reduzem
+    if (form.tipo === "Saída Tester") {
+      const est = p.estoques[form.depositoOrigem as Deposito];
+      if (est < form.quantidade) {
+        alert(`Estoque insuficiente em ${form.depositoOrigem}. Disponível: ${est}`);
+        return;
+      }
+    } else if (form.tipo === "Transferência") {
+      const est = p.estoques[form.depositoOrigem as Deposito];
+      if (est < form.quantidade) {
+        alert(`Estoque insuficiente em ${form.depositoOrigem}. Disponível: ${est}`);
+        return;
+      }
+    } else if (form.tipo === "Ajuste" && form.quantidade < 0) {
+      const est = p.estoques[form.deposito as Deposito];
+      if (est < Math.abs(form.quantidade)) {
+        alert(`Estoque insuficiente em ${form.deposito}. Disponível: ${est}`);
+        return;
+      }
+    }
 
     const nova: Movimentacao = {
       id: `m${Date.now()}`,

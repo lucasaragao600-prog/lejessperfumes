@@ -6,7 +6,7 @@ import { useApp } from "@/context/AppContext";
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Testers() {
-  const { testers, setTesters, perfumes } = useApp();
+  const { testers, setTesters, perfumes, baixarEstoque } = useApp();
   const [busca, setBusca] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
   const [showForm, setShowForm] = useState(false);
@@ -43,6 +43,14 @@ export default function Testers() {
     if (!form.perfumeId || !form.deposito || form.quantidade < 1) return;
     const deposito = form.deposito as Deposito;
     const p = perfumes.find((x) => x.id === form.perfumeId)!;
+    // Bloquear se estoque insuficiente
+    const estoqueAtual = p.estoques[deposito];
+    if (estoqueAtual < form.quantidade) {
+      alert(`Estoque insuficiente em ${deposito}. Disponível: ${estoqueAtual}`);
+      return;
+    }
+    // Baixar do estoque
+    baixarEstoque(form.perfumeId, deposito, form.quantidade);
     const existente = testers.find((t) => t.perfumeId === form.perfumeId && t.deposito === deposito);
     if (existente) {
       setTesters(testers.map((t) =>
