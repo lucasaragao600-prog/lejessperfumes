@@ -16,7 +16,12 @@ export default function Vendas() {
   const [filtroVendedora, setFiltroVendedora] = useState("Todas");
   const [showForm, setShowForm] = useState(false);
   const [showRelatorio, setShowRelatorio] = useState(false);
+  // Filtro do relatório: modo "dia" ou "periodo"
+  const [modoRelatorio, setModoRelatorio] = useState<"dia" | "periodo" | "mes">("dia");
   const [dataRelatorio, setDataRelatorio] = useState(hoje);
+  const [periodoInicio, setPeriodoInicio] = useState("");
+  const [periodoFim, setPeriodoFim] = useState("");
+  const [mesRelatorio, setMesRelatorio] = useState("2026-02"); // YYYY-MM
 
   // Form
   const [form, setForm] = useState({
@@ -66,11 +71,17 @@ export default function Vendas() {
     itens: filtradas.reduce((a, v) => a + v.quantidade, 0),
   }), [filtradas]);
 
-  // Relatório
-  const vendasRelatorio = useMemo(() =>
-    vendas.filter((v) => v.data === dataRelatorio),
-    [vendas, dataRelatorio]
-  );
+  // Relatório — filtra por modo escolhido
+  const vendasRelatorio = useMemo(() => {
+    return vendas.filter((v) => {
+      if (modoRelatorio === "dia") return v.data === dataRelatorio;
+      if (modoRelatorio === "mes") return v.data.startsWith(mesRelatorio);
+      // periodo
+      const ok1 = periodoInicio ? v.data >= periodoInicio : true;
+      const ok2 = periodoFim ? v.data <= periodoFim : true;
+      return ok1 && ok2;
+    });
+  }, [vendas, modoRelatorio, dataRelatorio, mesRelatorio, periodoInicio, periodoFim]);
 
   const relatorio = useMemo(() => {
     const porProduto: Record<string, { nome: string; qtd: number; valor: number }> = {};
@@ -205,21 +216,68 @@ export default function Vendas() {
       {/* Relatório */}
       {showRelatorio && (
         <div className="mx-4 mb-4 bg-surface border border-border rounded-xl p-4 animate-fade-in space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-display text-base text-gold flex items-center gap-2">
+          {/* Header do relatório */}
+          <div>
+            <h3 className="font-display text-base text-gold flex items-center gap-2 mb-3">
               <FileText size={16} />
-              Relatório do Dia
+              Relatório de Vendas
             </h3>
-            <input
-              type="date"
-              value={dataRelatorio}
-              onChange={(e) => setDataRelatorio(e.target.value)}
-              className="bg-surface-overlay border border-border rounded-lg px-2 py-1 text-xs text-foreground focus:outline-none [color-scheme:dark]"
-            />
+            {/* Seletor de modo */}
+            <div className="flex gap-1.5 mb-3">
+              {(["dia", "mes", "periodo"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setModoRelatorio(m)}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                    modoRelatorio === m
+                      ? "bg-gold/20 text-gold border-gold-muted"
+                      : "bg-surface-overlay border-border text-muted-foreground"
+                  }`}
+                >
+                  {m === "dia" ? "Dia" : m === "mes" ? "Mês" : "Período"}
+                </button>
+              ))}
+            </div>
+            {/* Inputs de data conforme modo */}
+            {modoRelatorio === "dia" && (
+              <input
+                type="date"
+                value={dataRelatorio}
+                onChange={(e) => setDataRelatorio(e.target.value)}
+                className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]"
+              />
+            )}
+            {modoRelatorio === "mes" && (
+              <input
+                type="month"
+                value={mesRelatorio}
+                onChange={(e) => setMesRelatorio(e.target.value)}
+                className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]"
+              />
+            )}
+            {modoRelatorio === "periodo" && (
+              <div className="flex gap-2 items-center">
+                <input
+                  type="date"
+                  value={periodoInicio}
+                  onChange={(e) => setPeriodoInicio(e.target.value)}
+                  className="flex-1 bg-surface-overlay border border-border rounded-lg px-2 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]"
+                  placeholder="Início"
+                />
+                <span className="text-muted-foreground text-xs">até</span>
+                <input
+                  type="date"
+                  value={periodoFim}
+                  onChange={(e) => setPeriodoFim(e.target.value)}
+                  className="flex-1 bg-surface-overlay border border-border rounded-lg px-2 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]"
+                  placeholder="Fim"
+                />
+              </div>
+            )}
           </div>
 
           {vendasRelatorio.length === 0 ? (
-            <p className="text-xs text-muted-foreground text-center py-4">Sem vendas nesta data</p>
+            <p className="text-xs text-muted-foreground text-center py-4">Sem vendas no período selecionado</p>
           ) : (
             <>
               {/* Resumo geral */}
