@@ -126,6 +126,11 @@ export default function Vendas() {
   const handleLancar = () => {
     if (!form.perfumeId || !form.deposito || form.quantidade < 1 || !form.vendedora || !form.tipoPagamento) return;
     const p = perfumes.find((x) => x.id === form.perfumeId)!;
+    const estoqueAtual = p.estoques[form.deposito as Deposito];
+    if (estoqueAtual < form.quantidade) {
+      alert(`Estoque insuficiente em ${form.deposito}. Disponível: ${estoqueAtual}`);
+      return;
+    }
     const novaVenda: Venda = {
       id: `v${Date.now()}`,
       data: hoje,

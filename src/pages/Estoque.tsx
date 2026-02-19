@@ -5,15 +5,13 @@ import { useApp } from "@/context/AppContext";
 import CadastroPerfume from "@/components/CadastroPerfume";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
-const tipos: { key: TipoPerfume; label: string }[] = [
-  { key: "AR", label: "Árabe" },
-  { key: "NI", label: "Nicho" },
-  { key: "NA", label: "Nacional" },
-  { key: "KI", label: "Kit" },
-];
 
 export default function Estoque() {
-  const { perfumes } = useApp();
+  const { perfumes, tiposPerfumeConfig } = useApp();
+  const tipos = useMemo(() =>
+    Object.entries(tiposPerfumeConfig).map(([key, label]) => ({ key: key as TipoPerfume, label: String(label) })),
+    [tiposPerfumeConfig]
+  );
   const [busca, setBusca] = useState("");
   const [depositoFiltro, setDepositoFiltro] = useState<Deposito | "Todos">("Todos");
   const [tipoFiltro, setTipoFiltro] = useState<TipoPerfume | "Todos">("Todos");

@@ -1,24 +1,20 @@
 import { useMemo, useState } from "react";
 import { BarChart3, TrendingUp, Package, ShoppingCart } from "lucide-react";
-import { formatCurrency, type TipoPerfume, TIPOS_PERFUME } from "@/data/mockData";
+import { formatCurrency, type TipoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, Cell } from "recharts";
 
 const GOLD = "hsl(43, 74%, 49%)";
 const GOLD_LIGHT = "hsl(43, 80%, 65%)";
 
-type SegmentoTab = "geral" | "AR" | "NI" | "NA";
-
-const SEGMENTOS: { key: SegmentoTab; label: string }[] = [
-  { key: "geral", label: "Geral" },
-  { key: "AR", label: "Árabe" },
-  { key: "NI", label: "Nichos" },
-  { key: "NA", label: "Nacional" },
-];
-
 export default function Dashboards() {
-  const { vendas, perfumes } = useApp();
-  const [segmento, setSegmento] = useState<SegmentoTab>("geral");
+  const { vendas, perfumes, tiposPerfumeConfig } = useApp();
+  const [segmento, setSegmento] = useState<string>("geral");
+
+  const SEGMENTOS = useMemo(() => [
+    { key: "geral", label: "Geral" },
+    ...Object.entries(tiposPerfumeConfig).map(([key, label]) => ({ key, label: String(label) })),
+  ], [tiposPerfumeConfig]);
   const hoje = "2026-02-18";
 
   // Mapa perfumeId → tipo
@@ -179,7 +175,7 @@ export default function Dashboards() {
             {/* Faturamento por segmento */}
             {segmento !== "geral" && (
               <div className="flex items-center justify-between py-2 border-b border-border">
-                <p className="text-xs text-muted-foreground">Total {TIPOS_PERFUME[segmento as TipoPerfume]}</p>
+                <p className="text-xs text-muted-foreground">Total {tiposPerfumeConfig[segmento] || segmento}</p>
                 <p className="text-sm font-bold text-gold">{formatCurrency(totalSegmento)}</p>
               </div>
             )}
