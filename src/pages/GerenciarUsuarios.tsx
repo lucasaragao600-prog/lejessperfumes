@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, Plus, Shield } from "lucide-react";
+import { Users, Plus, Shield, Trash2 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -13,13 +13,15 @@ interface UserItem {
 }
 
 export default function GerenciarUsuarios() {
-  const _auth = useAuth();
+  const auth = useAuth();
   const { toast } = useToast();
   const [users, setUsers] = useState<UserItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", nome: "", loja: "", role: "vendedor" as string });
   const [creating, setCreating] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -61,6 +63,22 @@ export default function GerenciarUsuarios() {
       fetchUsers();
     }
     setCreating(false);
+  };
+
+  const handleDelete = async (userId: string) => {
+    setDeletingId(userId);
+    const { data, error } = await supabase.functions.invoke("delete-user", {
+      body: { userId },
+    });
+
+    if (error || data?.error) {
+      toast({ title: "Erro", description: data?.error || error?.message || "Erro ao excluir usuário", variant: "destructive" });
+    } else {
+      toast({ title: "Sucesso", description: "Usuário excluído com sucesso" });
+      fetchUsers();
+    }
+    setDeletingId(null);
+    setConfirmDeleteId(null);
   };
 
   return (
@@ -153,7 +171,7 @@ export default function GerenciarUsuarios() {
           <div className="space-y-3">
             {users.map((u) => (
               <div key={u.id} className="bg-surface border border-border rounded-xl p-4 flex items-center justify-between">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium text-foreground truncate">{u.nome || "Sem nome"}</p>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
@@ -168,7 +186,37 @@ export default function GerenciarUsuarios() {
                   </div>
                   {u.loja && <p className="text-[10px] text-muted-foreground mt-0.5">{u.loja}</p>}
                 </div>
-                <Shield size={14} className={u.role === "master" ? "text-gold" : "text-muted-foreground"} />
+
+                <div className="flex items-center gap-2">
+                  {/* Delete button - don't show for own user */}
+                  {u.id !== auth.user?.id && (
+                    confirmDeleteId === u.id ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleDelete(u.id)}
+                          disabled={deletingId === u.id}
+                          className="px-2 py-1 rounded-lg text-[10px] font-semibold bg-destructive text-destructive-foreground disabled:opacity-50"
+                        >
+                          {deletingId === u.id ? "..." : "Confirmar"}
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground"
+                        >
+                          Não
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDeleteId(u.id)}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )
+                  )}
+                  <Shield size={14} className={u.role === "master" ? "text-gold" : "text-muted-foreground"} />
+                </div>
               </div>
             ))}
 
