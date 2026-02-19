@@ -4,13 +4,13 @@ import { formatCurrency, formatDate, type Deposito, type Venda, type TipoPagamen
 import { useApp } from "@/context/AppContext";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
-const hoje = "2026-02-18";
+const hoje = new Date().toISOString().slice(0, 10);
 const vendedorasFixas = ["Outra"];
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito"];
 const bandeiras: Bandeira[] = ["Visa", "Mastercard", "Elo", "Amex", "Hipercard"];
 
 export default function Vendas() {
-  const { vendas, setVendas, perfumes, baixarEstoque, vendedoras: vendedorasCtx } = useApp();
+  const { vendas, perfumes, baixarEstoque, vendedoras: vendedorasCtx, adicionarVenda } = useApp();
   const vendedoras = [...vendedorasCtx, ...vendedorasFixas];
   const [filtroData, setFiltroData] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
@@ -124,7 +124,7 @@ export default function Vendas() {
     return { porProduto, porVendedora, porPagamento, porBandeira, totalDesconto, totalAcrescimo };
   }, [vendasRelatorio]);
 
-  const handleLancar = () => {
+  const handleLancar = async () => {
     if (!form.perfumeId || !form.deposito || form.quantidade < 1 || !form.vendedora || !form.tipoPagamento) return;
     const p = perfumes.find((x) => x.id === form.perfumeId)!;
     const estoqueAtual = p.estoques[form.deposito as Deposito];
@@ -132,6 +132,7 @@ export default function Vendas() {
       alert(`Estoque insuficiente em ${form.deposito}. Disponível: ${estoqueAtual}`);
       return;
     }
+    const hoje = new Date().toISOString().slice(0, 10);
     const novaVenda: Venda = {
       id: `v${Date.now()}`,
       data: hoje,
@@ -148,7 +149,7 @@ export default function Vendas() {
       bandeira: form.tipoPagamento === "Crédito" || form.tipoPagamento === "Débito" ? form.bandeira : "N/A",
       observacao: form.observacao,
     };
-    setVendas([novaVenda, ...vendas]);
+    await adicionarVenda(novaVenda);
     baixarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
     setForm({ perfumeId: "", deposito: "", quantidade: 1, ajuste: 0, tipoAjuste: "desconto", tipoCalculo: "valor", vendedora: "", tipoPagamento: "", bandeira: "N/A", observacao: "" });
     setShowForm(false);

@@ -4,7 +4,6 @@ import { formatDate, type Deposito, type Movimentacao } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
-const hoje = "2026-02-18";
 const tipos = ["Entrada", "Ajuste", "Transferência", "Saída Tester"] as const;
 
 const tipoConfig = {
@@ -15,7 +14,7 @@ const tipoConfig = {
 };
 
 export default function Movimentacoes() {
-  const { movimentacoes, setMovimentacoes, perfumes, baixarEstoque, adicionarEstoque, transferirEstoque, adicionarTester } = useApp();
+  const { movimentacoes, perfumes, baixarEstoque, adicionarEstoque, transferirEstoque, adicionarTester, adicionarMovimentacao } = useApp();
   const [filtroTipo, setFiltroTipo] = useState<string>("Todos");
   const [busca, setBusca] = useState("");
   const [ordenacao, setOrdenacao] = useState<"recente" | "antiga">("recente");
@@ -44,7 +43,7 @@ export default function Movimentacoes() {
     return result;
   }, [movimentacoes, filtroTipo, busca, ordenacao]);
 
-  const handleSalvar = () => {
+  const handleSalvar = async () => {
     if (!form.perfumeId || form.quantidade < 1) return;
     if (form.tipo === "Saída Tester" && !form.depositoOrigem) return;
     if (form.tipo === "Transferência" && (!form.depositoOrigem || !form.depositoDestino)) return;
@@ -52,7 +51,6 @@ export default function Movimentacoes() {
 
     const p = perfumes.find((x) => x.id === form.perfumeId)!;
 
-    // Bloquear se estoque insuficiente para operações que reduzem
     if (form.tipo === "Saída Tester") {
       const est = p.estoques[form.depositoOrigem as Deposito];
       if (est < form.quantidade) {
@@ -73,6 +71,7 @@ export default function Movimentacoes() {
       }
     }
 
+    const hoje = new Date().toISOString().slice(0, 10);
     const nova: Movimentacao = {
       id: `m${Date.now()}`,
       data: hoje,
@@ -96,7 +95,6 @@ export default function Movimentacoes() {
     } else if (form.tipo === "Entrada") {
       adicionarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
     } else if (form.tipo === "Ajuste") {
-      // Ajuste pode ser positivo ou negativo
       if (form.quantidade > 0) {
         adicionarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
       } else {
@@ -104,7 +102,7 @@ export default function Movimentacoes() {
       }
     }
 
-    setMovimentacoes([nova, ...movimentacoes]);
+    await adicionarMovimentacao(nova);
     setForm({ tipo: "Entrada", perfumeId: "", deposito: "", depositoOrigem: "", depositoDestino: "", quantidade: 1, observacao: "" });
     setShowForm(false);
   };

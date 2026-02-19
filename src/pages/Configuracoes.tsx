@@ -8,7 +8,8 @@ export default function Configuracoes() {
     tiposPerfumeConfig, setTiposPerfumeConfig,
     concentracoesConfig, setConcentracoesConfig,
     volumesPadrao, setVolumesPadrao,
-    vendedoras, setVendedoras,
+    vendedoras,
+    adicionarVendedoraDB, removerVendedoraDB,
   } = useApp();
 
   const [novoTipoSigla, setNovoTipoSigla] = useState("");
@@ -78,19 +79,25 @@ export default function Configuracoes() {
     setVolumesPadrao([30, 50, 75, 100, 150, 200, 250]);
   };
 
-  const handleAddVendedora = () => {
+  const handleAddVendedora = async () => {
     const nome = novaVendedora.trim();
     if (!nome || vendedoras.includes(nome)) return;
-    setVendedoras((prev) => [...prev, nome]);
+    await adicionarVendedoraDB(nome);
     setNovaVendedora("");
   };
 
-  const handleRemoveVendedora = (nome: string) => {
-    setVendedoras((prev) => prev.filter((v) => v !== nome));
+  const handleRemoveVendedora = async (nome: string) => {
+    await removerVendedoraDB(nome);
   };
 
-  const handleResetVendedoras = () => {
-    setVendedoras(["Ana", "Julia", "Carla"]);
+  const handleResetVendedoras = async () => {
+    // Remove all and re-add defaults
+    for (const v of vendedoras) {
+      await removerVendedoraDB(v);
+    }
+    for (const v of ["Ana", "Julia", "Carla"]) {
+      await adicionarVendedoraDB(v);
+    }
   };
 
   return (

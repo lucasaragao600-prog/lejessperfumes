@@ -6,7 +6,7 @@ import { useApp } from "@/context/AppContext";
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
-  const { testers, setTesters, perfumes, baixarEstoque } = useApp();
+  const { testers, perfumes, baixarEstoque, adicionarTesterDB, removerTesterDB } = useApp();
   const [busca, setBusca] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
   const [showForm, setShowForm] = useState(false);
@@ -39,42 +39,30 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
     [testers]
   );
 
-  const handleAdicionar = () => {
+  const handleAdicionar = async () => {
     if (!form.perfumeId || !form.deposito || form.quantidade < 1) return;
     const deposito = form.deposito as Deposito;
     const p = perfumes.find((x) => x.id === form.perfumeId)!;
-    // Bloquear se estoque insuficiente
     const estoqueAtual = p.estoques[deposito];
     if (estoqueAtual < form.quantidade) {
       alert(`Estoque insuficiente em ${deposito}. Disponível: ${estoqueAtual}`);
       return;
     }
-    // Baixar do estoque
     baixarEstoque(form.perfumeId, deposito, form.quantidade);
-    const existente = testers.find((t) => t.perfumeId === form.perfumeId && t.deposito === deposito);
-    if (existente) {
-      setTesters(testers.map((t) =>
-        t.perfumeId === form.perfumeId && t.deposito === deposito
-          ? { ...t, quantidade: t.quantidade + form.quantidade }
-          : t
-      ));
-    } else {
-      setTesters([...testers, {
-        id: `t${Date.now()}`,
-        perfumeId: p.id,
-        perfumeNome: p.nome,
-        marca: p.marca,
-        deposito,
-        quantidade: form.quantidade,
-        custo: p.custo,
-      }]);
-    }
+    await adicionarTesterDB({
+      perfumeId: p.id,
+      perfumeNome: p.nome,
+      marca: p.marca,
+      deposito,
+      quantidade: form.quantidade,
+      custo: p.custo,
+    });
     setForm({ perfumeId: "", deposito: "", quantidade: 1 });
     setShowForm(false);
   };
 
-  const handleRemover = (id: string) => {
-    setTesters(testers.filter((t) => t.id !== id));
+  const handleRemover = async (id: string) => {
+    await removerTesterDB(id);
   };
 
   return (
