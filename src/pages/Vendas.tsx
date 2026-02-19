@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ShoppingCart, Plus, Calendar, User, Tag, FileText, CreditCard } from "lucide-react";
+import { ShoppingCart, Plus, Calendar, User, Tag, FileText, CreditCard, Search, ArrowUpDown, Store } from "lucide-react";
 import { perfumes, formatCurrency, formatDate, type Deposito, type Venda, type TipoPagamento, type Bandeira, type TipoAjusteValor } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 
@@ -14,14 +14,17 @@ export default function Vendas() {
   const [filtroData, setFiltroData] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
   const [filtroVendedora, setFiltroVendedora] = useState("Todas");
+  const [busca, setBusca] = useState("");
+  const [ordenacao, setOrdenacao] = useState<"recente" | "antiga">("recente");
   const [showForm, setShowForm] = useState(false);
   const [showRelatorio, setShowRelatorio] = useState(false);
-  // Filtro do relatório: modo "dia" ou "periodo"
+  // Filtro do relatório: modo "dia" ou "periodo" ou "mes"
   const [modoRelatorio, setModoRelatorio] = useState<"dia" | "periodo" | "mes">("dia");
   const [dataRelatorio, setDataRelatorio] = useState(hoje);
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
   const [mesRelatorio, setMesRelatorio] = useState("2026-02"); // YYYY-MM
+  const [lojaRelatorio, setLojaRelatorio] = useState<Deposito | "Geral">("Geral");
 
   // Form
   const [form, setForm] = useState({
@@ -49,13 +52,20 @@ export default function Vendas() {
       : subtotal + ajusteCalculado;
 
   const filtradas = useMemo(() => {
-    return vendas.filter((v) => {
+    let result = vendas.filter((v) => {
       const matchData = filtroData ? v.data === filtroData : true;
       const matchDeposito = filtroDeposito === "Todos" || v.deposito === filtroDeposito;
       const matchVendedora = filtroVendedora === "Todas" || v.vendedora === filtroVendedora;
-      return matchData && matchDeposito && matchVendedora;
+      const matchBusca = busca.trim() === "" || v.perfumeNome.toLowerCase().includes(busca.toLowerCase()) || v.vendedora.toLowerCase().includes(busca.toLowerCase());
+      return matchData && matchDeposito && matchVendedora && matchBusca;
     });
-  }, [vendas, filtroData, filtroDeposito, filtroVendedora]);
+    result = [...result].sort((a, b) =>
+      ordenacao === "recente"
+        ? b.data.localeCompare(a.data)
+        : a.data.localeCompare(b.data)
+    );
+    return result;
+  }, [vendas, filtroData, filtroDeposito, filtroVendedora, busca, ordenacao]);
 
   const totalHoje = useMemo(() => {
     const vendasHoje = vendas.filter((v) => v.data === hoje);
@@ -71,9 +81,11 @@ export default function Vendas() {
     itens: filtradas.reduce((a, v) => a + v.quantidade, 0),
   }), [filtradas]);
 
-  // Relatório — filtra por modo escolhido
+  // Relatório — filtra por modo e loja
   const vendasRelatorio = useMemo(() => {
     return vendas.filter((v) => {
+      const matchLoja = lojaRelatorio === "Geral" || v.deposito === lojaRelatorio;
+      if (!matchLoja) return false;
       if (modoRelatorio === "dia") return v.data === dataRelatorio;
       if (modoRelatorio === "mes") return v.data.startsWith(mesRelatorio);
       // periodo
@@ -81,25 +93,41 @@ export default function Vendas() {
       const ok2 = periodoFim ? v.data <= periodoFim : true;
       return ok1 && ok2;
     });
-  }, [vendas, modoRelatorio, dataRelatorio, mesRelatorio, periodoInicio, periodoFim]);
+  }, [vendas, modoRelatorio, dataRelatorio, mesRelatorio, periodoInicio, periodoFim, lojaRelatorio]);
+
+  // Relatório por loja (para auditoria geral)
+  const vendasPorLoja = useMemo(() => {
+    if (lojaRelatorio !== "Geral") return null;
+    return depositos.map((dep) => {
+      const vLoja = vendasRelatorio.filter((v) => v.deposito === dep);
+      return {
+        loja: dep,
+        total: vLoja.reduce((a, v) => a + v.total, 0),
+        qtd: vLoja.length,
+        itens: vLoja.reduce((a, v) => a + v.quantidade, 0),
+      };
+    }).filter((l) => l.qtd > 0);
+  }, [vendasRelatorio, lojaRelatorio]);
 
   const relatorio = useMemo(() => {
-    const porProduto: Record<string, { nome: string; qtd: number; valor: number }> = {};
-    const porVendedora: Record<string, { qtd: number; valor: number }> = {};
+    const porProduto: Record<string, { nome: string; marca: string; qtd: number; valor: number }> = {};
+    const porVendedora: Record<string, { qtd: number; valor: number; transacoes: number }> = {};
     const porPagamento: Record<string, { qtd: number; valor: number }> = {};
     const porBandeira: Record<string, { qtd: number; valor: number }> = {};
     let totalDesconto = 0;
     let totalAcrescimo = 0;
 
     vendasRelatorio.forEach((v) => {
+      const pf = perfumes.find((p) => p.id === v.perfumeId);
       // Por produto
-      if (!porProduto[v.perfumeId]) porProduto[v.perfumeId] = { nome: v.perfumeNome, qtd: 0, valor: 0 };
+      if (!porProduto[v.perfumeId]) porProduto[v.perfumeId] = { nome: v.perfumeNome, marca: pf?.marca ?? "", qtd: 0, valor: 0 };
       porProduto[v.perfumeId].qtd += v.quantidade;
       porProduto[v.perfumeId].valor += v.total;
       // Por vendedora
-      if (!porVendedora[v.vendedora]) porVendedora[v.vendedora] = { qtd: 0, valor: 0 };
+      if (!porVendedora[v.vendedora]) porVendedora[v.vendedora] = { qtd: 0, valor: 0, transacoes: 0 };
       porVendedora[v.vendedora].qtd += v.quantidade;
       porVendedora[v.vendedora].valor += v.total;
+      porVendedora[v.vendedora].transacoes += 1;
       // Por pagamento
       if (!porPagamento[v.tipoPagamento]) porPagamento[v.tipoPagamento] = { qtd: 0, valor: 0 };
       porPagamento[v.tipoPagamento].qtd += 1;
@@ -142,6 +170,8 @@ export default function Vendas() {
     setShowForm(false);
   };
 
+  const temFiltroAtivo = filtroData || filtroDeposito !== "Todos" || filtroVendedora !== "Todas" || busca.trim() !== "";
+
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
@@ -183,8 +213,20 @@ export default function Vendas() {
           </div>
         </div>
 
+        {/* Barra de pesquisa */}
+        <div className="relative mb-2">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar por perfume ou vendedora..."
+            className="w-full bg-surface border border-border rounded-xl pl-8 pr-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted"
+          />
+        </div>
+
         {/* Filtros */}
-        <div className="flex gap-2 mb-2">
+        <div className="flex gap-2 mb-1">
           <div className="relative flex-1">
             <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -210,6 +252,13 @@ export default function Vendas() {
             <option value="Todas">Vendedora</option>
             {vendedoras.map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
+          <button
+            onClick={() => setOrdenacao(o => o === "recente" ? "antiga" : "recente")}
+            className={`flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-medium border transition-all flex-shrink-0 ${ordenacao === "antiga" ? "border-gold-muted bg-gold/10 text-gold" : "border-border bg-surface text-muted-foreground"}`}
+            title={ordenacao === "recente" ? "Mais recentes primeiro" : "Mais antigas primeiro"}
+          >
+            <ArrowUpDown size={13} />
+          </button>
         </div>
       </div>
 
@@ -222,6 +271,27 @@ export default function Vendas() {
               <FileText size={16} />
               Relatório de Vendas
             </h3>
+
+            {/* Filtro de loja */}
+            <div className="mb-3">
+              <p className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1"><Store size={10}/>Loja</p>
+              <div className="flex gap-1.5 flex-wrap">
+                {(["Geral", ...depositos] as const).map((loja) => (
+                  <button
+                    key={loja}
+                    onClick={() => setLojaRelatorio(loja as Deposito | "Geral")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                      lojaRelatorio === loja
+                        ? "bg-gold/20 text-gold border-gold-muted"
+                        : "bg-surface-overlay border-border text-muted-foreground"
+                    }`}
+                  >
+                    {loja}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Seletor de modo */}
             <div className="flex gap-1.5 mb-3">
               {(["dia", "mes", "periodo"] as const).map((m) => (
@@ -262,7 +332,6 @@ export default function Vendas() {
                   value={periodoInicio}
                   onChange={(e) => setPeriodoInicio(e.target.value)}
                   className="flex-1 bg-surface-overlay border border-border rounded-lg px-2 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]"
-                  placeholder="Início"
                 />
                 <span className="text-muted-foreground text-xs">até</span>
                 <input
@@ -270,7 +339,6 @@ export default function Vendas() {
                   value={periodoFim}
                   onChange={(e) => setPeriodoFim(e.target.value)}
                   className="flex-1 bg-surface-overlay border border-border rounded-lg px-2 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]"
-                  placeholder="Fim"
                 />
               </div>
             )}
@@ -280,6 +348,31 @@ export default function Vendas() {
             <p className="text-xs text-muted-foreground text-center py-4">Sem vendas no período selecionado</p>
           ) : (
             <>
+              {/* Resumo por loja (se Geral) */}
+              {lojaRelatorio === "Geral" && vendasPorLoja && vendasPorLoja.length > 0 && (
+                <div>
+                  <p className="text-[11px] font-semibold text-foreground mb-2 flex items-center gap-1">
+                    <Store size={11} /> Por Loja
+                  </p>
+                  <div className="space-y-1.5">
+                    {vendasPorLoja.map((loja) => (
+                      <div key={loja.loja} className="flex justify-between items-center bg-surface-overlay rounded-lg px-2.5 py-2">
+                        <div>
+                          <p className="text-xs font-medium text-foreground">{loja.loja}</p>
+                          <p className="text-[10px] text-muted-foreground">{loja.qtd} vendas · {loja.itens} un.</p>
+                        </div>
+                        <p className="text-xs font-bold text-gold">{formatCurrency(loja.total)}</p>
+                      </div>
+                    ))}
+                    {/* Total geral */}
+                    <div className="flex justify-between items-center bg-gold/10 border border-gold-muted rounded-lg px-2.5 py-2">
+                      <p className="text-xs font-bold text-gold">Total Geral</p>
+                      <p className="text-xs font-bold text-gold">{formatCurrency(vendasRelatorio.reduce((a, v) => a + v.total, 0))}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Resumo geral */}
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-surface-overlay rounded-lg p-2 text-center">
@@ -302,7 +395,10 @@ export default function Vendas() {
                 <div className="space-y-1.5">
                   {Object.values(relatorio.porProduto).sort((a, b) => b.qtd - a.qtd).map((item) => (
                     <div key={item.nome} className="flex justify-between items-center bg-surface-overlay rounded-lg px-2.5 py-1.5">
-                      <p className="text-xs text-foreground truncate flex-1 mr-2">{item.nome}</p>
+                      <div className="flex-1 min-w-0 mr-2">
+                        <p className="text-xs text-foreground truncate">{item.nome}</p>
+                        {item.marca && <p className="text-[10px] text-muted-foreground">{item.marca}</p>}
+                      </div>
                       <div className="flex gap-3 flex-shrink-0">
                         <span className="text-[11px] text-muted-foreground">{item.qtd} un.</span>
                         <span className="text-[11px] font-semibold text-gold">{formatCurrency(item.valor)}</span>
@@ -319,11 +415,15 @@ export default function Vendas() {
                 </p>
                 <div className="space-y-1.5">
                   {Object.entries(relatorio.porVendedora).sort(([, a], [, b]) => b.valor - a.valor).map(([nome, dados]) => (
-                    <div key={nome} className="flex justify-between items-center bg-surface-overlay rounded-lg px-2.5 py-1.5">
-                      <p className="text-xs text-foreground">{nome}</p>
-                      <div className="flex gap-3">
-                        <span className="text-[11px] text-muted-foreground">{dados.qtd} un.</span>
+                    <div key={nome} className="bg-surface-overlay rounded-lg px-2.5 py-2">
+                      <div className="flex justify-between items-center">
+                        <p className="text-xs font-medium text-foreground">{nome}</p>
                         <span className="text-[11px] font-semibold text-gold">{formatCurrency(dados.valor)}</span>
+                      </div>
+                      <div className="flex gap-3 mt-0.5">
+                        <span className="text-[10px] text-muted-foreground">{dados.qtd} un. vendidas</span>
+                        <span className="text-[10px] text-muted-foreground">·</span>
+                        <span className="text-[10px] text-muted-foreground">Ticket médio: {formatCurrency(dados.transacoes > 0 ? dados.valor / dados.transacoes : 0)}</span>
                       </div>
                     </div>
                   ))}
@@ -386,7 +486,7 @@ export default function Vendas() {
               >
                 <option value="">Selecione...</option>
                 {perfumes.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nome} - {p.marca}</option>
+                  <option key={p.id} value={p.id}>{p.nome} — {p.marca}</option>
                 ))}
               </select>
             </div>
@@ -602,7 +702,7 @@ export default function Vendas() {
       )}
 
       {/* Total filtrado */}
-      {(filtroData || filtroDeposito !== "Todos" || filtroVendedora !== "Todas") && (
+      {temFiltroAtivo && (
         <div className="mx-4 mb-3 bg-surface border border-border rounded-xl p-3 flex justify-between items-center">
           <p className="text-xs text-muted-foreground">Total filtrado ({filtradas.length} vendas)</p>
           <p className="text-sm font-bold text-gold">{formatCurrency(totalFiltrado.valor)}</p>
@@ -611,54 +711,64 @@ export default function Vendas() {
 
       {/* Lista */}
       <div className="px-4 space-y-2">
-        {filtradas.map((v) => (
-          <div key={v.id} className="bg-surface border border-border rounded-xl p-3.5"
-            style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.3)" }}>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gold/10 border border-gold-muted flex items-center justify-center flex-shrink-0">
-                <ShoppingCart size={18} className="text-gold" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{v.perfumeNome}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {formatDate(v.data)} · {v.deposito} · {v.quantidade} unid.
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="text-sm font-bold text-gold">{formatCurrency(v.total)}</p>
-                <p className="text-[10px] text-muted-foreground">{formatCurrency(v.precoUnitario)}/un</p>
-              </div>
-            </div>
-            {/* Info extra */}
-            <div className="flex flex-wrap items-center justify-between gap-1 mt-2 pt-2 border-t border-border">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  <User size={10} className="text-muted-foreground" />
-                  <p className="text-[11px] text-muted-foreground">{v.vendedora}</p>
+        {filtradas.map((v) => {
+          const pf = perfumes.find((p) => p.id === v.perfumeId);
+          return (
+            <div key={v.id} className="bg-surface border border-border rounded-xl p-3.5"
+              style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.3)" }}>
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gold/10 border border-gold-muted flex items-center justify-center flex-shrink-0">
+                  <ShoppingCart size={18} className="text-gold" />
                 </div>
-                <div className="flex items-center gap-1">
-                  <CreditCard size={10} className="text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-sm font-medium text-foreground truncate">{v.perfumeNome}</p>
+                    {pf && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-gold/10 text-gold border border-gold-muted flex-shrink-0">
+                        {pf.casaSigla}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-[11px] text-muted-foreground">
-                    {v.tipoPagamento}{v.bandeira !== "N/A" ? ` · ${v.bandeira}` : ""}
+                    {formatDate(v.data)} · {v.deposito} · {v.quantidade} unid.
                   </p>
                 </div>
+                <div className="text-right">
+                  <p className="text-sm font-bold text-gold">{formatCurrency(v.total)}</p>
+                  <p className="text-[10px] text-muted-foreground">{formatCurrency(v.precoUnitario)}/un</p>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                {v.desconto > 0 && (
+              {/* Info extra */}
+              <div className="flex flex-wrap items-center justify-between gap-1 mt-2 pt-2 border-t border-border">
+                <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
-                    <Tag size={10} className={v.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"} />
-                    <p className={`text-[11px] ${v.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"}`}>
-                      {v.tipoAjuste === "desconto" ? "-" : "+"}{formatCurrency(v.desconto)}
+                    <User size={10} className="text-muted-foreground" />
+                    <p className="text-[11px] text-muted-foreground">{v.vendedora}</p>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <CreditCard size={10} className="text-muted-foreground" />
+                    <p className="text-[11px] text-muted-foreground">
+                      {v.tipoPagamento}{v.bandeira !== "N/A" ? ` · ${v.bandeira}` : ""}
                     </p>
                   </div>
-                )}
+                </div>
+                <div className="flex items-center gap-2">
+                  {v.desconto > 0 && (
+                    <div className="flex items-center gap-1">
+                      <Tag size={10} className={v.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"} />
+                      <p className={`text-[11px] ${v.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"}`}>
+                        {v.tipoAjuste === "desconto" ? "-" : "+"}{formatCurrency(v.desconto)}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
+              {v.observacao && (
+                <p className="text-[10px] text-muted-foreground mt-1 italic">"{v.observacao}"</p>
+              )}
             </div>
-            {v.observacao && (
-              <p className="text-[10px] text-muted-foreground mt-1 italic">"{v.observacao}"</p>
-            )}
-          </div>
-        ))}
+          );
+        })}
         {filtradas.length === 0 && (
           <div className="text-center py-16">
             <ShoppingCart size={40} className="text-muted-foreground mx-auto mb-3 opacity-50" />
