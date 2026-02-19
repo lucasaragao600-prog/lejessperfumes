@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ArrowLeftRight, ArrowDown, RefreshCw, FlaskConical, Plus } from "lucide-react";
+import { ArrowLeftRight, ArrowDown, RefreshCw, FlaskConical, Plus, Search, ArrowUpDown } from "lucide-react";
 import { perfumes, formatDate, type Deposito, type Movimentacao } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 
@@ -17,6 +17,8 @@ const tipoConfig = {
 export default function Movimentacoes() {
   const { movimentacoes, setMovimentacoes, baixarEstoque, adicionarTester } = useApp();
   const [filtroTipo, setFiltroTipo] = useState<string>("Todos");
+  const [busca, setBusca] = useState("");
+  const [ordenacao, setOrdenacao] = useState<"recente" | "antiga">("recente");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     tipo: "Entrada" as typeof tipos[number],
@@ -29,9 +31,20 @@ export default function Movimentacoes() {
   });
 
   const filtradas = useMemo(() => {
-    if (filtroTipo === "Todos") return movimentacoes;
-    return movimentacoes.filter((m) => m.tipo === filtroTipo);
-  }, [movimentacoes, filtroTipo]);
+    let result = movimentacoes.filter((m) => {
+      const matchTipo = filtroTipo === "Todos" || m.tipo === filtroTipo;
+      const matchBusca =
+        busca.trim() === "" ||
+        m.perfumeNome.toLowerCase().includes(busca.toLowerCase());
+      return matchTipo && matchBusca;
+    });
+    result = [...result].sort((a, b) =>
+      ordenacao === "recente"
+        ? b.data.localeCompare(a.data)
+        : a.data.localeCompare(b.data)
+    );
+    return result;
+  }, [movimentacoes, filtroTipo, busca, ordenacao]);
 
   const handleSalvar = () => {
     if (!form.perfumeId || form.quantidade < 1) return;
@@ -62,8 +75,6 @@ export default function Movimentacoes() {
       adicionarTester(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
     } else if (form.tipo === "Transferência") {
       baixarEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
-      // Não incrementamos destino aqui pois o estado de perfumes já tem estoque individual por depósito
-      // (simplificação: só baixamos da origem — para incrementar destino seria outra chamada setPerfumes)
     }
 
     setMovimentacoes([nova, ...movimentacoes]);
@@ -91,21 +102,42 @@ export default function Movimentacoes() {
           </button>
         </div>
 
-        {/* Filtro tipo */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
-          {["Todos", ...tipos].map((t) => (
-            <button
-              key={t}
-              onClick={() => setFiltroTipo(t)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                filtroTipo === t
-                  ? "bg-gold text-primary-foreground border-gold shadow-gold"
-                  : "bg-surface border-border text-muted-foreground"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
+        {/* Barra de busca */}
+        <div className="relative mb-2">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar por perfume..."
+            className="w-full bg-surface border border-border rounded-xl pl-8 pr-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted"
+          />
+        </div>
+
+        {/* Filtro tipo + ordenação */}
+        <div className="flex gap-2 items-center">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-1">
+            {["Todos", ...tipos].map((t) => (
+              <button
+                key={t}
+                onClick={() => setFiltroTipo(t)}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                  filtroTipo === t
+                    ? "bg-gold text-primary-foreground border-gold shadow-gold"
+                    : "bg-surface border-border text-muted-foreground"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setOrdenacao(o => o === "recente" ? "antiga" : "recente")}
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all flex-shrink-0 ${ordenacao === "antiga" ? "border-gold-muted bg-gold/10 text-gold" : "border-border bg-surface text-muted-foreground"}`}
+            title={ordenacao === "recente" ? "Mais recentes primeiro" : "Mais antigas primeiro"}
+          >
+            <ArrowUpDown size={13} />
+          </button>
         </div>
       </div>
 
@@ -145,7 +177,7 @@ export default function Movimentacoes() {
                 className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
               >
                 <option value="">Selecione...</option>
-                {perfumes.map((p) => <option key={p.id} value={p.id}>{p.nome} - {p.marca}</option>)}
+                {perfumes.map((p) => <option key={p.id} value={p.id}>{p.nome} — {p.marca}</option>)}
               </select>
             </div>
 
@@ -243,6 +275,7 @@ export default function Movimentacoes() {
         {filtradas.map((m) => {
           const cfg = tipoConfig[m.tipo];
           const Icon = cfg.icon;
+          const pf = perfumes.find((p) => p.id === m.perfumeId);
           return (
             <div key={m.id} className="bg-surface border border-border rounded-xl p-3.5 flex items-start gap-3"
               style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.3)" }}>
@@ -251,7 +284,14 @@ export default function Movimentacoes() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-medium text-foreground truncate">{m.perfumeNome}</p>
+                  <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{m.perfumeNome}</p>
+                    {pf && (
+                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-gold/10 text-gold border border-gold-muted flex-shrink-0">
+                        {pf.casaSigla}
+                      </span>
+                    )}
+                  </div>
                   <p className={`text-sm font-bold flex-shrink-0 ${cfg.color}`}>
                     {m.tipo === "Ajuste" ? (m.quantidade > 0 ? "+" : "") : m.tipo === "Entrada" ? "+" : "-"}{Math.abs(m.quantidade)}
                   </p>
