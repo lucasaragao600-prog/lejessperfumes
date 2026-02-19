@@ -1,4 +1,5 @@
 import { useState } from "react";
+import logoLeJess from "@/assets/logo-le-jess.png";
 import BottomNav from "@/components/BottomNav";
 import Estoque from "@/pages/Estoque";
 import Vendas from "@/pages/Vendas";
@@ -21,7 +22,7 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h1 className="font-display text-2xl text-gold mb-2">Perfumaria</h1>
+          <img src={logoLeJess} alt="Le Jess Perfumes" className="h-16 mx-auto mb-3 invert" />
           <p className="text-muted-foreground text-sm">Carregando...</p>
         </div>
       </div>

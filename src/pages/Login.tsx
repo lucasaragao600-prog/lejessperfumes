@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import logoLeJess from "@/assets/logo-le-jess.png";
 
 export default function Login() {
   const { signIn } = useAuth();
@@ -22,7 +23,7 @@ export default function Login() {
       <div className="w-full max-w-sm space-y-8">
         {/* Logo */}
         <div className="text-center">
-          <h1 className="font-display text-4xl text-gold mb-2">Perfumaria</h1>
+          <img src={logoLeJess} alt="Le Jess Perfumes" className="h-20 mx-auto mb-4 invert" />
           <p className="text-muted-foreground text-sm">Faça login para continuar</p>
         </div>
 

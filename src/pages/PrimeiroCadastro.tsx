@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import logoLeJess from "@/assets/logo-le-jess.png";
 
 interface Props {
   onCreated: () => void;
@@ -51,7 +52,7 @@ export default function PrimeiroCadastro({ onCreated }: Props) {
     <div className="min-h-screen bg-background flex items-center justify-center px-6">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
-          <h1 className="font-display text-4xl text-gold mb-2">Perfumaria</h1>
+          <img src={logoLeJess} alt="Le Jess Perfumes" className="h-20 mx-auto mb-4 invert" />
           <p className="text-muted-foreground text-sm">Crie sua conta Master para começar</p>
           <p className="text-[10px] text-muted-foreground mt-1">Este será o administrador principal do sistema</p>
         </div>
