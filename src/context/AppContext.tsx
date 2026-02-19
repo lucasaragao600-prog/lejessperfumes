@@ -24,7 +24,7 @@ interface AppContextType {
   setTesters: React.Dispatch<React.SetStateAction<Tester[]>>;
   casas: Casa[];
   setCasas: React.Dispatch<React.SetStateAction<Casa[]>>;
-  proximaLinha: number; // próximo número sequencial global de linha
+  proximaLinhaPorCasa: (casaSigla: string) => number; // próximo número sequencial por casa
   // helpers
   baixarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
   adicionarTester: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
@@ -40,8 +40,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [testers, setTesters] = useState<Tester[]>(testersIniciais);
   const [casas, setCasas] = useState<Casa[]>(casasPadrao);
 
-  // A próxima linha é calculada a partir dos perfumes existentes
-  const proximaLinha = perfumesIniciais.length + 1;
+  // Calcula o próximo número sequencial por casa
+  const proximaLinhaPorCasa = (casaSigla: string): number => {
+    const perfumesDaCasa = perfumes.filter((p) => p.casaSigla === casaSigla);
+    return perfumesDaCasa.length + 1;
+  };
 
   const baixarEstoque = (perfumeId: string, deposito: Deposito, quantidade: number) => {
     setPerfumes((prev) =>
@@ -100,7 +103,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setTesters,
         casas,
         setCasas,
-        proximaLinha,
+        proximaLinhaPorCasa,
         baixarEstoque,
         adicionarTester,
         adicionarPerfume,
