@@ -1,23 +1,38 @@
 import { useState, useMemo } from "react";
 import { FlaskConical, Search, Plus, Trash2 } from "lucide-react";
-import { perfumes, formatCurrency } from "@/data/mockData";
-import type { Tester } from "@/data/mockData";
+import { perfumes as perfumesData, formatCurrency, type Deposito } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 
+const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
+
 export default function Testers() {
-  const { testers, setTesters } = useApp();
+  const { testers, setTesters, perfumes } = useApp();
   const [busca, setBusca] = useState("");
+  const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ perfumeId: "", quantidade: 1 });
+  const [form, setForm] = useState({ perfumeId: "", deposito: "" as Deposito | "", quantidade: 1 });
 
   const filtrados = useMemo(() => {
     const q = busca.toLowerCase();
-    return testers.filter(
-      (t) =>
-        t.perfumeNome.toLowerCase().includes(q) ||
-        t.marca.toLowerCase().includes(q)
-    );
-  }, [testers, busca]);
+    return testers.filter((t) => {
+      const matchBusca = t.perfumeNome.toLowerCase().includes(q) || t.marca.toLowerCase().includes(q);
+      const matchDeposito = filtroDeposito === "Todos" || t.deposito === filtroDeposito;
+      return matchBusca && matchDeposito;
+    });
+  }, [testers, busca, filtroDeposito]);
+
+  // Resumo por depósito
+  const resumoPorDeposito = useMemo(() => {
+    const mapa: Record<string, { qtd: number; custo: number }> = {};
+    depositos.forEach((d) => { mapa[d] = { qtd: 0, custo: 0 }; });
+    testers.forEach((t) => {
+      if (mapa[t.deposito]) {
+        mapa[t.deposito].qtd += t.quantidade;
+        mapa[t.deposito].custo += t.quantidade * t.custo;
+      }
+    });
+    return mapa;
+  }, [testers]);
 
   const totalCusto = useMemo(
     () => testers.reduce((acc, t) => acc + t.quantidade * t.custo, 0),
@@ -25,27 +40,28 @@ export default function Testers() {
   );
 
   const handleAdicionar = () => {
-    if (!form.perfumeId || form.quantidade < 1) return;
+    if (!form.perfumeId || !form.deposito || form.quantidade < 1) return;
+    const deposito = form.deposito as Deposito;
     const p = perfumes.find((x) => x.id === form.perfumeId)!;
-    const existente = testers.find((t) => t.perfumeId === form.perfumeId);
+    const existente = testers.find((t) => t.perfumeId === form.perfumeId && t.deposito === deposito);
     if (existente) {
       setTesters(testers.map((t) =>
-        t.perfumeId === form.perfumeId
+        t.perfumeId === form.perfumeId && t.deposito === deposito
           ? { ...t, quantidade: t.quantidade + form.quantidade }
           : t
       ));
     } else {
-      const novo: Tester = {
+      setTesters([...testers, {
         id: `t${Date.now()}`,
         perfumeId: p.id,
         perfumeNome: p.nome,
         marca: p.marca,
+        deposito,
         quantidade: form.quantidade,
         custo: p.custo,
-      };
-      setTesters([...testers, novo]);
+      }]);
     }
-    setForm({ perfumeId: "", quantidade: 1 });
+    setForm({ perfumeId: "", deposito: "", quantidade: 1 });
     setShowForm(false);
   };
 
@@ -73,14 +89,35 @@ export default function Testers() {
           </button>
         </div>
 
+        {/* Cards por depósito */}
+        <div className="grid grid-cols-3 gap-2 mb-3">
+          {depositos.map((d) => (
+            <button
+              key={d}
+              onClick={() => setFiltroDeposito(filtroDeposito === d ? "Todos" : d)}
+              className={`rounded-xl p-2.5 border text-left transition-all ${
+                filtroDeposito === d
+                  ? "border-gold bg-gold/10"
+                  : "border-border bg-surface"
+              }`}
+            >
+              <p className={`text-[9px] mb-0.5 ${filtroDeposito === d ? "text-gold" : "text-muted-foreground"}`}>{d}</p>
+              <p className={`text-sm font-bold ${filtroDeposito === d ? "text-gold" : "text-foreground"}`}>
+                {resumoPorDeposito[d]?.qtd ?? 0} <span className="text-[9px] font-normal">un.</span>
+              </p>
+              <p className="text-[9px] text-muted-foreground">{formatCurrency(resumoPorDeposito[d]?.custo ?? 0)}</p>
+            </button>
+          ))}
+        </div>
+
         {/* Card total */}
-        <div className="bg-surface border border-gold-muted rounded-xl p-4 mb-3"
+        <div className="bg-surface border border-gold-muted rounded-xl p-3 mb-3 flex justify-between items-center"
           style={{ background: "var(--gradient-gold-subtle)", boxShadow: "var(--shadow-gold)" }}>
-          <p className="text-xs text-muted-foreground mb-1">Valor total em custo (testers)</p>
-          <p className="font-display text-2xl text-gold">{formatCurrency(totalCusto)}</p>
-          <p className="text-[11px] text-muted-foreground mt-1">
-            {testers.reduce((a, t) => a + t.quantidade, 0)} unidades no total
-          </p>
+          <div>
+            <p className="text-xs text-muted-foreground">Total geral em custo</p>
+            <p className="font-display text-xl text-gold">{formatCurrency(totalCusto)}</p>
+          </div>
+          <p className="text-sm text-muted-foreground">{testers.reduce((a, t) => a + t.quantidade, 0)} unid.</p>
         </div>
 
         {/* Busca */}
@@ -114,6 +151,24 @@ export default function Testers() {
               </select>
             </div>
             <div>
+              <label className="text-[11px] text-muted-foreground mb-1 block">Depósito de origem</label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {depositos.map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => setForm({ ...form, deposito: d })}
+                    className={`py-2 rounded-lg text-xs font-medium border transition-all ${
+                      form.deposito === d
+                        ? "border-gold bg-gold/15 text-gold"
+                        : "border-border bg-surface-overlay text-muted-foreground"
+                    }`}
+                  >
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
               <label className="text-[11px] text-muted-foreground mb-1 block">Quantidade</label>
               <input
                 type="number" min={1} value={form.quantidade}
@@ -126,7 +181,7 @@ export default function Testers() {
                 className="flex-1 py-2.5 rounded-xl text-sm border border-border text-muted-foreground">
                 Cancelar
               </button>
-              <button onClick={handleAdicionar} disabled={!form.perfumeId}
+              <button onClick={handleAdicionar} disabled={!form.perfumeId || !form.deposito}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-primary-foreground disabled:opacity-40"
                 style={{ background: "var(--gradient-gold)" }}>
                 Salvar
@@ -154,7 +209,11 @@ export default function Testers() {
                 <Trash2 size={15} />
               </button>
             </div>
-            <div className="grid grid-cols-3 gap-2 mt-3 border-t border-border pt-3">
+            <div className="grid grid-cols-4 gap-2 mt-3 border-t border-border pt-3">
+              <div>
+                <p className="text-[9px] text-muted-foreground">Depósito</p>
+                <p className="text-xs font-semibold text-purple-400">{t.deposito}</p>
+              </div>
               <div>
                 <p className="text-[9px] text-muted-foreground">Quantidade</p>
                 <p className="text-sm font-bold text-purple-400">{t.quantidade} un.</p>

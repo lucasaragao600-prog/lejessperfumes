@@ -40,6 +40,10 @@ export interface Perfume {
   estoqueMinimo: number;
 }
 
+export type TipoAjusteValor = "desconto" | "acrescimo";
+export type TipoPagamento = "Dinheiro" | "Pix" | "Débito" | "Crédito";
+export type Bandeira = "Visa" | "Mastercard" | "Elo" | "Amex" | "Hipercard" | "N/A";
+
 export interface Venda {
   id: string;
   data: string;
@@ -48,9 +52,13 @@ export interface Venda {
   deposito: Deposito;
   quantidade: number;
   precoUnitario: number;
-  desconto: number;
+  tipoAjuste: TipoAjusteValor;
+  desconto: number;     // valor do ajuste (positivo = desconto, positivo = acrescimo)
   total: number;
   vendedora: string;
+  tipoPagamento: TipoPagamento;
+  bandeira: Bandeira;
+  observacao: string;
 }
 
 export interface Movimentacao {
@@ -71,6 +79,7 @@ export interface Tester {
   perfumeId: string;
   perfumeNome: string;
   marca: string;
+  deposito: Deposito;
   quantidade: number;
   custo: number;
 }
@@ -229,16 +238,16 @@ export const perfumes: Perfume[] = [
 ];
 
 export const vendas: Venda[] = [
-  { id: "v1", data: "2026-02-18", perfumeId: "1", perfumeNome: "Black Orchid", deposito: "Casa", quantidade: 2, precoUnitario: 680, desconto: 0, total: 1360, vendedora: "Ana" },
-  { id: "v2", data: "2026-02-18", perfumeId: "4", perfumeNome: "Bleu de Chanel", deposito: "Sumaúma", quantidade: 1, precoUnitario: 580, desconto: 0, total: 580, vendedora: "Julia" },
-  { id: "v3", data: "2026-02-17", perfumeId: "2", perfumeNome: "Sauvage", deposito: "Casa", quantidade: 3, precoUnitario: 550, desconto: 50, total: 1600, vendedora: "Ana" },
-  { id: "v4", data: "2026-02-17", perfumeId: "6", perfumeNome: "La Vie Est Belle", deposito: "Amazonas", quantidade: 2, precoUnitario: 420, desconto: 0, total: 840, vendedora: "Carla" },
-  { id: "v5", data: "2026-02-16", perfumeId: "3", perfumeNome: "Oud Wood", deposito: "Casa", quantidade: 1, precoUnitario: 780, desconto: 0, total: 780, vendedora: "Julia" },
-  { id: "v6", data: "2026-02-16", perfumeId: "7", perfumeNome: "Good Girl", deposito: "Sumaúma", quantidade: 2, precoUnitario: 510, desconto: 0, total: 1020, vendedora: "Ana" },
-  { id: "v7", data: "2026-02-15", perfumeId: "4", perfumeNome: "Bleu de Chanel", deposito: "Casa", quantidade: 3, precoUnitario: 580, desconto: 0, total: 1740, vendedora: "Carla" },
-  { id: "v8", data: "2026-02-14", perfumeId: "1", perfumeNome: "Black Orchid", deposito: "Amazonas", quantidade: 1, precoUnitario: 680, desconto: 0, total: 680, vendedora: "Ana" },
-  { id: "v9", data: "2026-02-13", perfumeId: "5", perfumeNome: "Aventus", deposito: "Casa", quantidade: 1, precoUnitario: 1200, desconto: 100, total: 1100, vendedora: "Julia" },
-  { id: "v10", data: "2026-02-12", perfumeId: "6", perfumeNome: "La Vie Est Belle", deposito: "Casa", quantidade: 4, precoUnitario: 420, desconto: 0, total: 1680, vendedora: "Carla" },
+  { id: "v1", data: "2026-02-18", perfumeId: "1", perfumeNome: "Black Orchid", deposito: "Casa", quantidade: 2, precoUnitario: 680, tipoAjuste: "desconto", desconto: 0, total: 1360, vendedora: "Ana", tipoPagamento: "Pix", bandeira: "N/A", observacao: "" },
+  { id: "v2", data: "2026-02-18", perfumeId: "4", perfumeNome: "Bleu de Chanel", deposito: "Sumaúma", quantidade: 1, precoUnitario: 580, tipoAjuste: "desconto", desconto: 0, total: 580, vendedora: "Julia", tipoPagamento: "Crédito", bandeira: "Visa", observacao: "" },
+  { id: "v3", data: "2026-02-17", perfumeId: "2", perfumeNome: "Sauvage", deposito: "Casa", quantidade: 3, precoUnitario: 550, tipoAjuste: "desconto", desconto: 50, total: 1600, vendedora: "Ana", tipoPagamento: "Dinheiro", bandeira: "N/A", observacao: "Cliente pediu desconto" },
+  { id: "v4", data: "2026-02-17", perfumeId: "6", perfumeNome: "La Vie Est Belle", deposito: "Amazonas", quantidade: 2, precoUnitario: 420, tipoAjuste: "desconto", desconto: 0, total: 840, vendedora: "Carla", tipoPagamento: "Débito", bandeira: "Elo", observacao: "" },
+  { id: "v5", data: "2026-02-16", perfumeId: "3", perfumeNome: "Oud Wood", deposito: "Casa", quantidade: 1, precoUnitario: 780, tipoAjuste: "desconto", desconto: 0, total: 780, vendedora: "Julia", tipoPagamento: "Crédito", bandeira: "Mastercard", observacao: "" },
+  { id: "v6", data: "2026-02-16", perfumeId: "7", perfumeNome: "Good Girl", deposito: "Sumaúma", quantidade: 2, precoUnitario: 510, tipoAjuste: "desconto", desconto: 0, total: 1020, vendedora: "Ana", tipoPagamento: "Pix", bandeira: "N/A", observacao: "" },
+  { id: "v7", data: "2026-02-15", perfumeId: "4", perfumeNome: "Bleu de Chanel", deposito: "Casa", quantidade: 3, precoUnitario: 580, tipoAjuste: "desconto", desconto: 0, total: 1740, vendedora: "Carla", tipoPagamento: "Crédito", bandeira: "Visa", observacao: "" },
+  { id: "v8", data: "2026-02-14", perfumeId: "1", perfumeNome: "Black Orchid", deposito: "Amazonas", quantidade: 1, precoUnitario: 680, tipoAjuste: "desconto", desconto: 0, total: 680, vendedora: "Ana", tipoPagamento: "Dinheiro", bandeira: "N/A", observacao: "" },
+  { id: "v9", data: "2026-02-13", perfumeId: "5", perfumeNome: "Aventus", deposito: "Casa", quantidade: 1, precoUnitario: 1200, tipoAjuste: "desconto", desconto: 100, total: 1100, vendedora: "Julia", tipoPagamento: "Pix", bandeira: "N/A", observacao: "Negociação especial" },
+  { id: "v10", data: "2026-02-12", perfumeId: "6", perfumeNome: "La Vie Est Belle", deposito: "Casa", quantidade: 4, precoUnitario: 420, tipoAjuste: "desconto", desconto: 0, total: 1680, vendedora: "Carla", tipoPagamento: "Crédito", bandeira: "Amex", observacao: "" },
 ];
 
 export const movimentacoes: Movimentacao[] = [
@@ -251,11 +260,11 @@ export const movimentacoes: Movimentacao[] = [
 ];
 
 export const testers: Tester[] = [
-  { id: "t1", perfumeId: "1", perfumeNome: "Black Orchid", marca: "Tom Ford", quantidade: 2, custo: 350 },
-  { id: "t2", perfumeId: "2", perfumeNome: "Sauvage", marca: "Dior", quantidade: 1, custo: 290 },
-  { id: "t3", perfumeId: "3", perfumeNome: "Oud Wood", marca: "Tom Ford", quantidade: 1, custo: 420 },
-  { id: "t4", perfumeId: "4", perfumeNome: "Bleu de Chanel", marca: "Chanel", quantidade: 3, custo: 310 },
-  { id: "t5", perfumeId: "6", perfumeNome: "La Vie Est Belle", marca: "Lancôme", quantidade: 2, custo: 220 },
+  { id: "t1", perfumeId: "1", perfumeNome: "Black Orchid", marca: "Tom Ford", deposito: "Casa", quantidade: 2, custo: 350 },
+  { id: "t2", perfumeId: "2", perfumeNome: "Sauvage", marca: "Dior", deposito: "Casa", quantidade: 1, custo: 290 },
+  { id: "t3", perfumeId: "3", perfumeNome: "Oud Wood", marca: "Tom Ford", deposito: "Sumaúma", quantidade: 1, custo: 420 },
+  { id: "t4", perfumeId: "4", perfumeNome: "Bleu de Chanel", marca: "Chanel", deposito: "Amazonas", quantidade: 3, custo: 310 },
+  { id: "t5", perfumeId: "6", perfumeNome: "La Vie Est Belle", marca: "Lancôme", deposito: "Sumaúma", quantidade: 2, custo: 220 },
 ];
 
 export const formatCurrency = (value: number) =>

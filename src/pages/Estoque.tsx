@@ -1,15 +1,22 @@
 import { useState, useMemo } from "react";
 import { Package, Search, AlertTriangle, Plus } from "lucide-react";
-import { formatCurrency, type Deposito, type Perfume } from "@/data/mockData";
+import { formatCurrency, type Deposito, type Perfume, type TipoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import CadastroPerfume from "@/components/CadastroPerfume";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
+const tipos: { key: TipoPerfume; label: string }[] = [
+  { key: "AR", label: "Árabe" },
+  { key: "NI", label: "Nicho" },
+  { key: "NA", label: "Nacional" },
+  { key: "KI", label: "Kit" },
+];
 
 export default function Estoque() {
   const { perfumes } = useApp();
   const [busca, setBusca] = useState("");
   const [depositoFiltro, setDepositoFiltro] = useState<Deposito | "Todos">("Todos");
+  const [tipoFiltro, setTipoFiltro] = useState<TipoPerfume | "Todos">("Todos");
   const [showAlertas, setShowAlertas] = useState(false);
   const [showCadastro, setShowCadastro] = useState(false);
 
@@ -20,14 +27,16 @@ export default function Estoque() {
         p.codigo.toLowerCase().includes(busca.toLowerCase()) ||
         p.marca.toLowerCase().includes(busca.toLowerCase());
 
+      const matchTipo = tipoFiltro === "Todos" || p.tipo === tipoFiltro;
+
       const qtd = depositoFiltro === "Todos"
         ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
         : p.estoques[depositoFiltro];
 
-      if (showAlertas) return matchBusca && qtd <= p.estoqueMinimo;
-      return matchBusca;
+      if (showAlertas) return matchBusca && matchTipo && qtd <= p.estoqueMinimo;
+      return matchBusca && matchTipo;
     });
-  }, [perfumes, busca, depositoFiltro, showAlertas]);
+  }, [perfumes, busca, depositoFiltro, tipoFiltro, showAlertas]);
 
   const totais = useMemo(() => {
     return perfumes.reduce(
@@ -106,7 +115,7 @@ export default function Estoque() {
         </div>
 
         {/* Filtro depósito */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-2">
           {(["Todos", ...depositos] as const).map((d) => (
             <button
               key={d}
@@ -118,6 +127,23 @@ export default function Estoque() {
               }`}
             >
               {d}
+            </button>
+          ))}
+        </div>
+
+        {/* Filtro tipo de perfume */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+          {([{ key: "Todos" as const, label: "Todos os tipos" }, ...tipos]).map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setTipoFiltro(key)}
+              className={`flex-shrink-0 px-3 py-1 rounded-full text-[11px] font-medium border transition-all ${
+                tipoFiltro === key
+                  ? "bg-gold/20 text-gold border-gold-muted"
+                  : "bg-surface border-border text-muted-foreground"
+              }`}
+            >
+              {label}
             </button>
           ))}
         </div>
