@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { ShoppingCart, Plus, Calendar, User, Tag, FileText, CreditCard, Search, ArrowUpDown, Store } from "lucide-react";
-import { perfumes, formatCurrency, formatDate, type Deposito, type Venda, type TipoPagamento, type Bandeira, type TipoAjusteValor } from "@/data/mockData";
+import { formatCurrency, formatDate, type Deposito, type Venda, type TipoPagamento, type Bandeira, type TipoAjusteValor } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
@@ -10,7 +10,7 @@ const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito
 const bandeiras: Bandeira[] = ["Visa", "Mastercard", "Elo", "Amex", "Hipercard"];
 
 export default function Vendas() {
-  const { vendas, setVendas } = useApp();
+  const { vendas, setVendas, perfumes, baixarEstoque } = useApp();
   const [filtroData, setFiltroData] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
   const [filtroVendedora, setFiltroVendedora] = useState("Todas");
@@ -143,6 +143,7 @@ export default function Vendas() {
       observacao: form.observacao,
     };
     setVendas([novaVenda, ...vendas]);
+    baixarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
     setForm({ perfumeId: "", deposito: "", quantidade: 1, ajuste: 0, tipoAjuste: "desconto", tipoCalculo: "valor", vendedora: "", tipoPagamento: "", bandeira: "N/A", observacao: "" });
     setShowForm(false);
   };

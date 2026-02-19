@@ -5,12 +5,17 @@ import {
   movimentacoes as movsIniciais,
   testers as testersIniciais,
   casasPadrao,
+  TIPOS_PERFUME,
+  CONCENTRACOES,
+  VOLUMES_PADRAO,
   type Perfume,
   type Venda,
   type Movimentacao,
   type Tester,
   type Deposito,
   type Casa,
+  type TipoPerfume,
+  type Concentracao,
 } from "@/data/mockData";
 
 interface AppContextType {
@@ -24,9 +29,18 @@ interface AppContextType {
   setTesters: React.Dispatch<React.SetStateAction<Tester[]>>;
   casas: Casa[];
   setCasas: React.Dispatch<React.SetStateAction<Casa[]>>;
-  proximaLinhaPorCasa: (casaSigla: string) => number; // próximo número sequencial por casa
-  // helpers
+  // configs editáveis
+  tiposPerfumeConfig: Record<string, string>;
+  setTiposPerfumeConfig: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  concentracoesConfig: Record<string, string>;
+  setConcentracoesConfig: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  volumesPadrao: number[];
+  setVolumesPadrao: React.Dispatch<React.SetStateAction<number[]>>;
+  proximaLinhaPorCasa: (casaSigla: string) => number;
+  // helpers de estoque
   baixarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
+  adicionarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
+  transferirEstoque: (perfumeId: string, origem: Deposito, destino: Deposito, quantidade: number) => void;
   adicionarTester: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
   adicionarPerfume: (perfume: Perfume) => void;
 }
@@ -39,8 +53,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>(movsIniciais);
   const [testers, setTesters] = useState<Tester[]>(testersIniciais);
   const [casas, setCasas] = useState<Casa[]>(casasPadrao);
+  const [tiposPerfumeConfig, setTiposPerfumeConfig] = useState<Record<string, string>>(TIPOS_PERFUME as Record<string, string>);
+  const [concentracoesConfig, setConcentracoesConfig] = useState<Record<string, string>>(CONCENTRACOES as Record<string, string>);
+  const [volumesPadrao, setVolumesPadrao] = useState<number[]>(VOLUMES_PADRAO);
 
-  // Calcula o próximo número sequencial por casa
   const proximaLinhaPorCasa = (casaSigla: string): number => {
     const perfumesDaCasa = perfumes.filter((p) => p.casaSigla === casaSigla);
     return perfumesDaCasa.length + 1;
@@ -50,11 +66,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setPerfumes((prev) =>
       prev.map((p) =>
         p.id === perfumeId
+          ? { ...p, estoques: { ...p.estoques, [deposito]: Math.max(0, p.estoques[deposito] - quantidade) } }
+          : p
+      )
+    );
+  };
+
+  const adicionarEstoque = (perfumeId: string, deposito: Deposito, quantidade: number) => {
+    setPerfumes((prev) =>
+      prev.map((p) =>
+        p.id === perfumeId
+          ? { ...p, estoques: { ...p.estoques, [deposito]: p.estoques[deposito] + quantidade } }
+          : p
+      )
+    );
+  };
+
+  const transferirEstoque = (perfumeId: string, origem: Deposito, destino: Deposito, quantidade: number) => {
+    setPerfumes((prev) =>
+      prev.map((p) =>
+        p.id === perfumeId
           ? {
               ...p,
               estoques: {
                 ...p.estoques,
-                [deposito]: Math.max(0, p.estoques[deposito] - quantidade),
+                [origem]: Math.max(0, p.estoques[origem] - quantidade),
+                [destino]: p.estoques[destino] + quantidade,
               },
             }
           : p
@@ -103,8 +140,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setTesters,
         casas,
         setCasas,
+        tiposPerfumeConfig,
+        setTiposPerfumeConfig,
+        concentracoesConfig,
+        setConcentracoesConfig,
+        volumesPadrao,
+        setVolumesPadrao,
         proximaLinhaPorCasa,
         baixarEstoque,
+        adicionarEstoque,
+        transferirEstoque,
         adicionarTester,
         adicionarPerfume,
       }}

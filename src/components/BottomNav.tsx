@@ -1,4 +1,4 @@
-import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3 } from "lucide-react";
+import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings } from "lucide-react";
 
 interface BottomNavProps {
   activeTab: string;
@@ -11,6 +11,7 @@ const tabs = [
   { id: "movimentacoes", label: "Moviment.", icon: ArrowLeftRight },
   { id: "testers", label: "Testers", icon: FlaskConical },
   { id: "dashboards", label: "Dashboard", icon: BarChart3 },
+  { id: "configuracoes", label: "Config.", icon: Settings },
 ];
 
 export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {

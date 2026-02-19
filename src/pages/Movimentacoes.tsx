@@ -15,7 +15,7 @@ const tipoConfig = {
 };
 
 export default function Movimentacoes() {
-  const { movimentacoes, setMovimentacoes, baixarEstoque, adicionarTester } = useApp();
+  const { movimentacoes, setMovimentacoes, baixarEstoque, adicionarEstoque, transferirEstoque, adicionarTester } = useApp();
   const [filtroTipo, setFiltroTipo] = useState<string>("Todos");
   const [busca, setBusca] = useState("");
   const [ordenacao, setOrdenacao] = useState<"recente" | "antiga">("recente");
@@ -71,7 +71,16 @@ export default function Movimentacoes() {
       baixarEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
       adicionarTester(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
     } else if (form.tipo === "Transferência") {
-      baixarEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
+      transferirEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.depositoDestino as Deposito, form.quantidade);
+    } else if (form.tipo === "Entrada") {
+      adicionarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
+    } else if (form.tipo === "Ajuste") {
+      // Ajuste pode ser positivo ou negativo
+      if (form.quantidade > 0) {
+        adicionarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
+      } else {
+        baixarEstoque(form.perfumeId, form.deposito as Deposito, Math.abs(form.quantidade));
+      }
     }
 
     setMovimentacoes([nova, ...movimentacoes]);
