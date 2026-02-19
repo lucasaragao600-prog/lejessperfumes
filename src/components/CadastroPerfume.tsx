@@ -415,7 +415,7 @@ export default function CadastroPerfume({ onClose }: Props) {
 
       {/* Footer botão salvar (só na aba cadastrar) */}
       {tab === "cadastrar" && (
-        <div className="fixed bottom-0 left-0 right-0 px-4 pb-8 pt-4 border-t border-border bg-background max-w-md mx-auto">
+        <div className="fixed bottom-0 left-0 right-0 z-[60] px-4 pb-8 pt-4 border-t border-border bg-background max-w-md mx-auto">
           <button
             onClick={handleSubmit}
             disabled={!casaSelecionada || !nome || !custo || !precoVenda}
