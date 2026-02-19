@@ -39,7 +39,11 @@ export default function Estoque() {
   }, [perfumes, busca, depositoFiltro, tipoFiltro, showAlertas]);
 
   const totais = useMemo(() => {
-    return perfumes.reduce(
+    // Aplica AMBOS os filtros: depósito e tipo
+    const perfumesFiltrados = perfumes.filter((p) =>
+      tipoFiltro === "Todos" || p.tipo === tipoFiltro
+    );
+    return perfumesFiltrados.reduce(
       (acc, p) => {
         const qtd = depositoFiltro === "Todos"
           ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
@@ -50,7 +54,7 @@ export default function Estoque() {
       },
       { custo: 0, venda: 0 }
     );
-  }, [perfumes, depositoFiltro]);
+  }, [perfumes, depositoFiltro, tipoFiltro]);
 
   const alertas = perfumes.filter((p) => {
     const qtd = depositoFiltro === "Todos"

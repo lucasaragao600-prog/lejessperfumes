@@ -54,7 +54,7 @@ export default function Dashboards() {
       mapa[v.perfumeId].quantidade += v.quantidade;
       mapa[v.perfumeId].valor += v.total;
     });
-    const limite = segmento === "geral" ? 7 : 5;
+    const limite = segmento === "geral" ? 10 : 5;
     return Object.values(mapa)
       .sort((a, b) => b.quantidade - a.quantidade)
       .slice(0, limite);
@@ -71,10 +71,27 @@ export default function Dashboards() {
   const totalGeral = vendas.reduce((a, v) => a + v.total, 0);
   const totalSegmento = vendasFiltradas.reduce((a, v) => a + v.total, 0);
   const totalHoje = vendas.filter((v) => v.data === hoje).reduce((a, v) => a + v.total, 0);
-  const totalEstoque = perfumes.reduce((acc, p) => {
+  const totalEstoqueVenda = perfumes.reduce((acc, p) => {
     const qtd = Object.values(p.estoques).reduce((a, b) => a + b, 0);
     return acc + qtd * p.precoVenda;
   }, 0);
+  const totalEstoqueCusto = perfumes.reduce((acc, p) => {
+    const qtd = Object.values(p.estoques).reduce((a, b) => a + b, 0);
+    return acc + qtd * p.custo;
+  }, 0);
+
+  // Ticket médio por vendedora
+  const ticketPorVendedora = useMemo(() => {
+    const mapa: Record<string, { total: number; qtd: number }> = {};
+    vendas.forEach((v) => {
+      if (!mapa[v.vendedora]) mapa[v.vendedora] = { total: 0, qtd: 0 };
+      mapa[v.vendedora].total += v.total;
+      mapa[v.vendedora].qtd += 1;
+    });
+    return Object.entries(mapa)
+      .map(([nome, d]) => ({ nome, ticket: d.qtd > 0 ? d.total / d.qtd : 0, total: d.total, qtd: d.qtd }))
+      .sort((a, b) => b.ticket - a.ticket);
+  }, [vendas]);
 
   const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ value: number }> }) => {
     if (active && payload && payload.length) {
@@ -101,8 +118,9 @@ export default function Dashboards() {
           {[
             { label: "Faturado hoje", value: formatCurrency(totalHoje), icon: TrendingUp, sub: "18/02/2026" },
             { label: "Total histórico", value: formatCurrency(totalGeral), icon: ShoppingCart, sub: `${vendas.length} vendas` },
-            { label: "Estoque (venda)", value: formatCurrency(totalEstoque), icon: Package, sub: `${perfumes.length} produtos` },
-            { label: "Ticket médio", value: formatCurrency(totalGeral / vendas.length), icon: BarChart3, sub: "por venda" },
+            { label: "Estoque (venda)", value: formatCurrency(totalEstoqueVenda), icon: Package, sub: `${perfumes.length} produtos` },
+            { label: "Estoque (custo)", value: formatCurrency(totalEstoqueCusto), icon: Package, sub: "valor investido" },
+            { label: "Ticket médio", value: formatCurrency(totalGeral / (vendas.length || 1)), icon: BarChart3, sub: "por venda" },
           ].map(({ label, value, icon: Icon, sub }) => (
             <div key={label} className="bg-surface border border-border rounded-xl p-4"
               style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.3)" }}>
@@ -115,6 +133,28 @@ export default function Dashboards() {
             </div>
           ))}
         </div>
+
+        {/* Ticket médio por vendedora */}
+        {ticketPorVendedora.length > 0 && (
+          <div className="bg-surface border border-border rounded-xl p-4"
+            style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.3)" }}>
+            <h3 className="font-display text-sm text-foreground mb-3 flex items-center gap-2">
+              <BarChart3 size={14} className="text-gold" />
+              Ticket Médio por Vendedora
+            </h3>
+            <div className="space-y-2">
+              {ticketPorVendedora.map((v) => (
+                <div key={v.nome} className="flex items-center justify-between bg-surface-overlay rounded-lg px-3 py-2">
+                  <div>
+                    <p className="text-xs font-medium text-foreground">{v.nome}</p>
+                    <p className="text-[10px] text-muted-foreground">{v.qtd} venda(s) · {formatCurrency(v.total)}</p>
+                  </div>
+                  <p className="text-sm font-bold text-gold">{formatCurrency(v.ticket)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Abas de segmento */}
         <div className="bg-surface border border-border rounded-xl overflow-hidden"
@@ -166,10 +206,10 @@ export default function Dashboards() {
               )}
             </div>
 
-            {/* Top vendidos — 7 geral, 5 por segmento */}
+            {/* Top vendidos — 10 geral, 5 por segmento */}
             <div>
               <h3 className="font-display text-sm text-foreground mb-3">
-                Top {segmento === "geral" ? "7" : "5"} Mais Vendidos
+                Top {segmento === "geral" ? "10" : "5"} Mais Vendidos
                 {segmento !== "geral" && (
                   <span className="ml-2 text-[10px] font-mono text-gold bg-gold/10 px-1.5 py-0.5 rounded">
                     {segmento}
