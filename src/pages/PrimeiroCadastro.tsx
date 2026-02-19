@@ -31,14 +31,13 @@ export default function PrimeiroCadastro({ onCreated }: Props) {
     }
 
     if (data.user) {
-      // Assign master role
-      const { error: roleError } = await supabase.from("user_roles").insert({
-        user_id: data.user.id,
-        role: "master",
+      // Use secure function to claim first master role
+      const { data: claimed, error: claimError } = await supabase.rpc("claim_first_master", {
+        p_user_id: data.user.id,
       });
 
-      if (roleError) {
-        setError("Conta criada mas erro ao atribuir papel master: " + roleError.message);
+      if (claimError || !claimed) {
+        setError(claimError?.message || "Já existe um administrador master no sistema.");
       } else {
         // Update profile with loja
         await supabase.from("profiles").update({ loja: "" }).eq("user_id", data.user.id);
