@@ -38,6 +38,77 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes: {
+        Row: {
+          chave: string
+          id: string
+          updated_at: string
+          valor: Json
+        }
+        Insert: {
+          chave: string
+          id?: string
+          updated_at?: string
+          valor?: Json
+        }
+        Update: {
+          chave?: string
+          id?: string
+          updated_at?: string
+          valor?: Json
+        }
+        Relationships: []
+      }
+      movimentacoes: {
+        Row: {
+          created_at: string
+          data: string
+          deposito: string | null
+          deposito_destino: string | null
+          deposito_origem: string | null
+          id: string
+          observacao: string | null
+          perfume_id: string
+          perfume_nome: string
+          quantidade: number
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          deposito?: string | null
+          deposito_destino?: string | null
+          deposito_origem?: string | null
+          id?: string
+          observacao?: string | null
+          perfume_id: string
+          perfume_nome: string
+          quantidade?: number
+          tipo: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          deposito?: string | null
+          deposito_destino?: string | null
+          deposito_origem?: string | null
+          id?: string
+          observacao?: string | null
+          perfume_id?: string
+          perfume_nome?: string
+          quantidade?: number
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_perfume_id_fkey"
+            columns: ["perfume_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfumes: {
         Row: {
           casa_sigla: string
@@ -133,6 +204,47 @@ export type Database = {
         }
         Relationships: []
       }
+      testers: {
+        Row: {
+          created_at: string
+          custo: number
+          deposito: string
+          id: string
+          marca: string
+          perfume_id: string
+          perfume_nome: string
+          quantidade: number
+        }
+        Insert: {
+          created_at?: string
+          custo?: number
+          deposito: string
+          id?: string
+          marca: string
+          perfume_id: string
+          perfume_nome: string
+          quantidade?: number
+        }
+        Update: {
+          created_at?: string
+          custo?: number
+          deposito?: string
+          id?: string
+          marca?: string
+          perfume_id?: string
+          perfume_nome?: string
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testers_perfume_id_fkey"
+            columns: ["perfume_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -151,6 +263,86 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vendas: {
+        Row: {
+          bandeira: string
+          created_at: string
+          data: string
+          deposito: string
+          desconto: number
+          id: string
+          observacao: string
+          perfume_id: string
+          perfume_nome: string
+          preco_unitario: number
+          quantidade: number
+          tipo_ajuste: string
+          tipo_pagamento: string
+          total: number
+          vendedora: string
+        }
+        Insert: {
+          bandeira?: string
+          created_at?: string
+          data?: string
+          deposito: string
+          desconto?: number
+          id?: string
+          observacao?: string
+          perfume_id: string
+          perfume_nome: string
+          preco_unitario?: number
+          quantidade?: number
+          tipo_ajuste?: string
+          tipo_pagamento?: string
+          total?: number
+          vendedora?: string
+        }
+        Update: {
+          bandeira?: string
+          created_at?: string
+          data?: string
+          deposito?: string
+          desconto?: number
+          id?: string
+          observacao?: string
+          perfume_id?: string
+          perfume_nome?: string
+          preco_unitario?: number
+          quantidade?: number
+          tipo_ajuste?: string
+          tipo_pagamento?: string
+          total?: number
+          vendedora?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendas_perfume_id_fkey"
+            columns: ["perfume_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendedoras: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
         }
         Relationships: []
       }
