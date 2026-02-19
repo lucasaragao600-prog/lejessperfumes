@@ -4,11 +4,13 @@ import {
   vendas as vendasIniciais,
   movimentacoes as movsIniciais,
   testers as testersIniciais,
+  casasPadrao,
   type Perfume,
   type Venda,
   type Movimentacao,
   type Tester,
   type Deposito,
+  type Casa,
 } from "@/data/mockData";
 
 interface AppContextType {
@@ -20,9 +22,13 @@ interface AppContextType {
   setMovimentacoes: React.Dispatch<React.SetStateAction<Movimentacao[]>>;
   testers: Tester[];
   setTesters: React.Dispatch<React.SetStateAction<Tester[]>>;
+  casas: Casa[];
+  setCasas: React.Dispatch<React.SetStateAction<Casa[]>>;
+  proximaLinha: number; // próximo número sequencial global de linha
   // helpers
   baixarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
   adicionarTester: (perfumeId: string, quantidade: number) => void;
+  adicionarPerfume: (perfume: Perfume) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -32,6 +38,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [vendas, setVendas] = useState<Venda[]>(vendasIniciais);
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>(movsIniciais);
   const [testers, setTesters] = useState<Tester[]>(testersIniciais);
+  const [casas, setCasas] = useState<Casa[]>(casasPadrao);
+
+  // A próxima linha é calculada a partir dos perfumes existentes
+  const proximaLinha = perfumesIniciais.length + 1;
 
   const baixarEstoque = (perfumeId: string, deposito: Deposito, quantidade: number) => {
     setPerfumes((prev) =>
@@ -74,6 +84,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const adicionarPerfume = (perfume: Perfume) => {
+    setPerfumes((prev) => [...prev, perfume]);
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -85,8 +99,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setMovimentacoes,
         testers,
         setTesters,
+        casas,
+        setCasas,
+        proximaLinha,
         baixarEstoque,
         adicionarTester,
+        adicionarPerfume,
       }}
     >
       {children}

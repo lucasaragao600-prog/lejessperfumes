@@ -1,7 +1,8 @@
 import { useState, useMemo } from "react";
-import { Package, Search, AlertTriangle } from "lucide-react";
+import { Package, Search, AlertTriangle, Plus } from "lucide-react";
 import { formatCurrency, type Deposito, type Perfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
+import CadastroPerfume from "@/components/CadastroPerfume";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
@@ -10,6 +11,7 @@ export default function Estoque() {
   const [busca, setBusca] = useState("");
   const [depositoFiltro, setDepositoFiltro] = useState<Deposito | "Todos">("Todos");
   const [showAlertas, setShowAlertas] = useState(false);
+  const [showCadastro, setShowCadastro] = useState(false);
 
   const filtrados = useMemo(() => {
     return perfumes.filter((p) => {
@@ -57,6 +59,9 @@ export default function Estoque() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
+      {/* Modal de cadastro */}
+      {showCadastro && <CadastroPerfume onClose={() => setShowCadastro(false)} />}
+
       {/* Header */}
       <div className="sticky top-0 z-10 px-4 pt-12 pb-4"
         style={{ background: "linear-gradient(180deg, hsl(0 0% 7%) 80%, transparent)" }}>
@@ -65,19 +70,27 @@ export default function Estoque() {
             <h1 className="font-display text-2xl text-gold">Estoque</h1>
             <p className="text-muted-foreground text-xs mt-0.5">{filtrados.length} produtos</p>
           </div>
-          <button
-            onClick={() => setShowAlertas(!showAlertas)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-              showAlertas
-                ? "bg-destructive/20 border-destructive text-destructive"
-                : alertas > 0
-                ? "bg-destructive/10 border-destructive/40 text-destructive"
-                : "bg-surface border-border text-muted-foreground"
-            }`}
-          >
-            <AlertTriangle size={12} />
-            {alertas} alertas
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowAlertas(!showAlertas)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                showAlertas
+                  ? "bg-destructive/20 border-destructive text-destructive"
+                  : alertas > 0
+                  ? "bg-destructive/10 border-destructive/40 text-destructive"
+                  : "bg-surface border-border text-muted-foreground"
+              }`}
+            >
+              <AlertTriangle size={12} />
+              {alertas}
+            </button>
+            <button
+              onClick={() => setShowCadastro(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-gold-muted bg-gold/10 text-gold transition-all"
+            >
+              <Plus size={12} /> Novo
+            </button>
+          </div>
         </div>
 
         {/* Busca */}

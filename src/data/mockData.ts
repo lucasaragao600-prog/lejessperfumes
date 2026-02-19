@@ -1,11 +1,39 @@
 export type Deposito = "Casa" | "Sumaúma" | "Amazonas";
+export type TipoPerfume = "AR" | "NI" | "NA" | "KI";
+export type Concentracao = "EDP" | "EDT" | "PAR" | "OUT";
+
+export const TIPOS_PERFUME: Record<TipoPerfume, string> = {
+  AR: "Árabe",
+  NI: "Nicho",
+  NA: "Nacional",
+  KI: "Kit",
+};
+
+export const CONCENTRACOES: Record<Concentracao, string> = {
+  EDP: "EDP – Eau de Parfum",
+  EDT: "EDT – Eau de Toilette",
+  PAR: "Parfum / Extrait",
+  OUT: "Outro",
+};
+
+export const VOLUMES_PADRAO = [30, 50, 75, 100, 150, 200, 250];
+
+export interface Casa {
+  sigla: string; // 2 chars, ex: "TF"
+  nome: string;
+  tipo: TipoPerfume;
+}
 
 export interface Perfume {
   id: string;
-  codigo: string;
+  codigo: string; // TTMMCCLLLLVVV gerado automaticamente
   nome: string;
   marca: string;
+  casaSigla: string;
+  tipo: TipoPerfume;
+  concentracao: Concentracao;
   tamanho: string;
+  volume: number; // ml
   custo: number;
   precoVenda: number;
   estoques: Record<Deposito, number>;
@@ -20,7 +48,7 @@ export interface Venda {
   deposito: Deposito;
   quantidade: number;
   precoUnitario: number;
-  desconto: number; // valor absoluto de desconto
+  desconto: number;
   total: number;
   vendedora: string;
 }
@@ -47,13 +75,47 @@ export interface Tester {
   custo: number;
 }
 
+// Casas/marcas cadastradas com suas siglas
+export const casasPadrao: Casa[] = [
+  { sigla: "TF", nome: "Tom Ford", tipo: "NI" },
+  { sigla: "DR", nome: "Dior", tipo: "NI" },
+  { sigla: "CR", nome: "Creed", tipo: "NI" },
+  { sigla: "CH", nome: "Chanel", tipo: "NI" },
+  { sigla: "LC", nome: "Lancôme", tipo: "NA" },
+  { sigla: "CH2", nome: "Carolina Herrera", tipo: "NA" },
+  { sigla: "HB", nome: "Hugo Boss", tipo: "NA" },
+  { sigla: "AM", nome: "Amouage", tipo: "AR" },
+  { sigla: "RM", nome: "Rasasi", tipo: "AR" },
+  { sigla: "LA", nome: "Lattafa", tipo: "AR" },
+];
+
+// Geração de código automático TTMMCCLLLL VVV
+export function gerarCodigo(
+  tipo: TipoPerfume,
+  casaSigla: string,
+  concentracao: Concentracao,
+  linha: number, // número sequencial global
+  volume: number
+): string {
+  const tt = tipo.padEnd(2, "X").slice(0, 2);
+  const mm = casaSigla.replace(/[^A-Z0-9]/gi, "").toUpperCase().padEnd(2, "X").slice(0, 2);
+  const cc = concentracao.slice(0, 2).toUpperCase();
+  const llll = String(linha).padStart(4, "0");
+  const vvv = String(volume).padStart(3, "0");
+  return `${tt}${mm}${cc}${llll}${vvv}`;
+}
+
 export const perfumes: Perfume[] = [
   {
     id: "1",
-    codigo: "PF001",
+    codigo: "NITFED0001100",
     nome: "Black Orchid",
     marca: "Tom Ford",
+    casaSigla: "TF",
+    tipo: "NI",
+    concentracao: "EDP",
     tamanho: "100ml",
+    volume: 100,
     custo: 350,
     precoVenda: 680,
     estoques: { Casa: 12, Sumaúma: 5, Amazonas: 8 },
@@ -61,10 +123,14 @@ export const perfumes: Perfume[] = [
   },
   {
     id: "2",
-    codigo: "PF002",
+    codigo: "NIDRED0002100",
     nome: "Sauvage",
     marca: "Dior",
+    casaSigla: "DR",
+    tipo: "NI",
+    concentracao: "EDP",
     tamanho: "100ml",
+    volume: 100,
     custo: 290,
     precoVenda: 550,
     estoques: { Casa: 2, Sumaúma: 0, Amazonas: 3 },
@@ -72,10 +138,14 @@ export const perfumes: Perfume[] = [
   },
   {
     id: "3",
-    codigo: "PF003",
+    codigo: "NITFPA0003050",
     nome: "Oud Wood",
     marca: "Tom Ford",
+    casaSigla: "TF",
+    tipo: "NI",
+    concentracao: "PAR",
     tamanho: "50ml",
+    volume: 50,
     custo: 420,
     precoVenda: 780,
     estoques: { Casa: 7, Sumaúma: 4, Amazonas: 2 },
@@ -83,10 +153,14 @@ export const perfumes: Perfume[] = [
   },
   {
     id: "4",
-    codigo: "PF004",
+    codigo: "NICHED0004100",
     nome: "Bleu de Chanel",
     marca: "Chanel",
+    casaSigla: "CH",
+    tipo: "NI",
+    concentracao: "EDP",
     tamanho: "100ml",
+    volume: 100,
     custo: 310,
     precoVenda: 580,
     estoques: { Casa: 15, Sumaúma: 8, Amazonas: 6 },
@@ -94,10 +168,14 @@ export const perfumes: Perfume[] = [
   },
   {
     id: "5",
-    codigo: "PF005",
+    codigo: "NICRPA0005100",
     nome: "Aventus",
     marca: "Creed",
+    casaSigla: "CR",
+    tipo: "NI",
+    concentracao: "PAR",
     tamanho: "100ml",
+    volume: 100,
     custo: 680,
     precoVenda: 1200,
     estoques: { Casa: 1, Sumaúma: 0, Amazonas: 1 },
@@ -105,10 +183,14 @@ export const perfumes: Perfume[] = [
   },
   {
     id: "6",
-    codigo: "PF006",
+    codigo: "NALCED0006075",
     nome: "La Vie Est Belle",
     marca: "Lancôme",
+    casaSigla: "LC",
+    tipo: "NA",
+    concentracao: "EDP",
     tamanho: "75ml",
+    volume: 75,
     custo: 220,
     precoVenda: 420,
     estoques: { Casa: 20, Sumaúma: 12, Amazonas: 9 },
@@ -116,10 +198,14 @@ export const perfumes: Perfume[] = [
   },
   {
     id: "7",
-    codigo: "PF007",
+    codigo: "NACHED0007080",
     nome: "Good Girl",
     marca: "Carolina Herrera",
+    casaSigla: "CH2",
+    tipo: "NA",
+    concentracao: "EDP",
     tamanho: "80ml",
+    volume: 80,
     custo: 280,
     precoVenda: 510,
     estoques: { Casa: 6, Sumaúma: 3, Amazonas: 4 },
@@ -127,10 +213,14 @@ export const perfumes: Perfume[] = [
   },
   {
     id: "8",
-    codigo: "PF008",
+    codigo: "NAHBED0008100",
     nome: "Boss Bottled",
     marca: "Hugo Boss",
+    casaSigla: "HB",
+    tipo: "NA",
+    concentracao: "EDP",
     tamanho: "100ml",
+    volume: 100,
     custo: 180,
     precoVenda: 340,
     estoques: { Casa: 0, Sumaúma: 2, Amazonas: 1 },
