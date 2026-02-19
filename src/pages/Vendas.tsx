@@ -2,15 +2,19 @@ import { useState, useMemo } from "react";
 import { ShoppingCart, Plus, Calendar, User, Tag, FileText, CreditCard, Search, ArrowUpDown, Store } from "lucide-react";
 import { formatCurrency, formatDate, type Deposito, type Venda, type TipoPagamento, type Bandeira, type TipoAjusteValor } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const hoje = new Date().toISOString().slice(0, 10);
+const ontem = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
 const vendedorasFixas = ["Outra"];
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito"];
 const bandeiras: Bandeira[] = ["Visa", "Mastercard", "Elo", "Amex", "Hipercard"];
 
 export default function Vendas() {
   const { vendas, perfumes, baixarEstoque, vendedoras: vendedorasCtx, adicionarVenda } = useApp();
+  const { role } = useAuth();
+  const isVendedor = role === "vendedor";
   const vendedoras = [...vendedorasCtx, ...vendedorasFixas];
   const [filtroData, setFiltroData] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
@@ -73,16 +77,21 @@ export default function Vendas() {
   }), [filtradas]);
 
   const vendasRelatorio = useMemo(() => {
+    const modo = isVendedor ? "dia" : modoRelatorio;
+    const dataEfetiva = isVendedor
+      ? (dataRelatorio === hoje || dataRelatorio === ontem ? dataRelatorio : hoje)
+      : dataRelatorio;
+
     return vendas.filter((v) => {
       const matchLoja = lojaRelatorio === "Geral" || v.deposito === lojaRelatorio;
       if (!matchLoja) return false;
-      if (modoRelatorio === "dia") return v.data === dataRelatorio;
-      if (modoRelatorio === "mes") return v.data.startsWith(mesRelatorio);
+      if (modo === "dia") return v.data === dataEfetiva;
+      if (modo === "mes") return v.data.startsWith(mesRelatorio);
       const ok1 = periodoInicio ? v.data >= periodoInicio : true;
       const ok2 = periodoFim ? v.data <= periodoFim : true;
       return ok1 && ok2;
     });
-  }, [vendas, modoRelatorio, dataRelatorio, mesRelatorio, periodoInicio, periodoFim, lojaRelatorio]);
+  }, [vendas, modoRelatorio, dataRelatorio, mesRelatorio, periodoInicio, periodoFim, lojaRelatorio, isVendedor]);
 
   const vendasPorLoja = useMemo(() => {
     if (lojaRelatorio !== "Geral") return null;
@@ -184,8 +193,8 @@ export default function Vendas() {
 
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div className="bg-surface border border-gold-muted rounded-xl p-3">
-            <p className="text-[10px] text-muted-foreground mb-1">Faturado hoje</p>
-            <p className="text-base font-bold text-gold">{formatCurrency(totalHoje.valor)}</p>
+            <p className="text-[10px] text-muted-foreground mb-1">{isVendedor ? "Vendas hoje" : "Faturado hoje"}</p>
+            <p className="text-base font-bold text-gold">{isVendedor ? `${totalHoje.qtd} vendas` : formatCurrency(totalHoje.valor)}</p>
           </div>
           <div className="bg-surface border border-border rounded-xl p-3">
             <p className="text-[10px] text-muted-foreground mb-1">Itens vendidos</p>
@@ -242,23 +251,38 @@ export default function Vendas() {
                 ))}
               </div>
             </div>
-            <div className="flex gap-1.5 mb-3">
-              {(["dia", "mes", "periodo"] as const).map((m) => (
-                <button key={m} onClick={() => setModoRelatorio(m)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-all ${modoRelatorio === m ? "bg-gold/20 text-gold border-gold-muted" : "bg-surface-overlay border-border text-muted-foreground"}`}>
-                  {m === "dia" ? "Dia" : m === "mes" ? "Mês" : "Período"}
-                </button>
-              ))}
-            </div>
-            {modoRelatorio === "dia" && (
-              <input type="date" value={dataRelatorio} onChange={(e) => setDataRelatorio(e.target.value)}
-                className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]" />
+            {!isVendedor && (
+              <div className="flex gap-1.5 mb-3">
+                {(["dia", "mes", "periodo"] as const).map((m) => (
+                  <button key={m} onClick={() => setModoRelatorio(m)}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-all ${modoRelatorio === m ? "bg-gold/20 text-gold border-gold-muted" : "bg-surface-overlay border-border text-muted-foreground"}`}>
+                    {m === "dia" ? "Dia" : m === "mes" ? "Mês" : "Período"}
+                  </button>
+                ))}
+              </div>
             )}
-            {modoRelatorio === "mes" && (
+            {(isVendedor || modoRelatorio === "dia") && (
+              <div>
+                {isVendedor ? (
+                  <div className="flex gap-1.5 mb-3">
+                    {[{ label: "Hoje", value: hoje }, { label: "Ontem", value: ontem }].map((opt) => (
+                      <button key={opt.value} onClick={() => setDataRelatorio(opt.value)}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-all ${dataRelatorio === opt.value ? "bg-gold/20 text-gold border-gold-muted" : "bg-surface-overlay border-border text-muted-foreground"}`}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <input type="date" value={dataRelatorio} onChange={(e) => setDataRelatorio(e.target.value)}
+                    className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]" />
+                )}
+              </div>
+            )}
+            {!isVendedor && modoRelatorio === "mes" && (
               <input type="month" value={mesRelatorio} onChange={(e) => setMesRelatorio(e.target.value)}
                 className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]" />
             )}
-            {modoRelatorio === "periodo" && (
+            {!isVendedor && modoRelatorio === "periodo" && (
               <div className="flex gap-2 items-center">
                 <input type="date" value={periodoInicio} onChange={(e) => setPeriodoInicio(e.target.value)}
                   className="flex-1 bg-surface-overlay border border-border rounded-lg px-2 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]" />
@@ -283,31 +307,35 @@ export default function Vendas() {
                           <p className="text-xs font-medium text-foreground">{loja.loja}</p>
                           <p className="text-[10px] text-muted-foreground">{loja.qtd} vendas · {loja.itens} un.</p>
                         </div>
-                        <p className="text-xs font-bold text-gold">{formatCurrency(loja.total)}</p>
+                        {!isVendedor && <p className="text-xs font-bold text-gold">{formatCurrency(loja.total)}</p>}
                       </div>
                     ))}
-                    <div className="flex justify-between items-center bg-gold/10 border border-gold-muted rounded-lg px-2.5 py-2">
-                      <p className="text-xs font-bold text-gold">Total Geral</p>
-                      <p className="text-xs font-bold text-gold">{formatCurrency(vendasRelatorio.reduce((a, v) => a + v.total, 0))}</p>
-                    </div>
+                    {!isVendedor && (
+                      <div className="flex justify-between items-center bg-gold/10 border border-gold-muted rounded-lg px-2.5 py-2">
+                        <p className="text-xs font-bold text-gold">Total Geral</p>
+                        <p className="text-xs font-bold text-gold">{formatCurrency(vendasRelatorio.reduce((a, v) => a + v.total, 0))}</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
 
-              <div className="grid grid-cols-3 gap-2">
-                <div className="bg-surface-overlay rounded-lg p-2 text-center">
-                  <p className="text-[9px] text-muted-foreground">Total</p>
-                  <p className="text-xs font-bold text-gold">{formatCurrency(vendasRelatorio.reduce((a, v) => a + v.total, 0))}</p>
+              {!isVendedor && (
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="bg-surface-overlay rounded-lg p-2 text-center">
+                    <p className="text-[9px] text-muted-foreground">Total</p>
+                    <p className="text-xs font-bold text-gold">{formatCurrency(vendasRelatorio.reduce((a, v) => a + v.total, 0))}</p>
+                  </div>
+                  <div className="bg-surface-overlay rounded-lg p-2 text-center">
+                    <p className="text-[9px] text-muted-foreground">Descontos</p>
+                    <p className="text-xs font-bold text-destructive">-{formatCurrency(relatorio.totalDesconto)}</p>
+                  </div>
+                  <div className="bg-surface-overlay rounded-lg p-2 text-center">
+                    <p className="text-[9px] text-muted-foreground">Acréscimos</p>
+                    <p className="text-xs font-bold text-emerald-400">+{formatCurrency(relatorio.totalAcrescimo)}</p>
+                  </div>
                 </div>
-                <div className="bg-surface-overlay rounded-lg p-2 text-center">
-                  <p className="text-[9px] text-muted-foreground">Descontos</p>
-                  <p className="text-xs font-bold text-destructive">-{formatCurrency(relatorio.totalDesconto)}</p>
-                </div>
-                <div className="bg-surface-overlay rounded-lg p-2 text-center">
-                  <p className="text-[9px] text-muted-foreground">Acréscimos</p>
-                  <p className="text-xs font-bold text-emerald-400">+{formatCurrency(relatorio.totalAcrescimo)}</p>
-                </div>
-              </div>
+              )}
 
               <div>
                 <p className="text-[11px] font-semibold text-foreground mb-2">Produtos Vendidos</p>
@@ -320,7 +348,7 @@ export default function Vendas() {
                       </div>
                       <div className="flex gap-3 flex-shrink-0">
                         <span className="text-[11px] text-muted-foreground">{item.qtd} un.</span>
-                        <span className="text-[11px] font-semibold text-gold">{formatCurrency(item.valor)}</span>
+                        {!isVendedor && <span className="text-[11px] font-semibold text-gold">{formatCurrency(item.valor)}</span>}
                       </div>
                     </div>
                   ))}
@@ -334,12 +362,16 @@ export default function Vendas() {
                     <div key={nome} className="bg-surface-overlay rounded-lg px-2.5 py-2">
                       <div className="flex justify-between items-center">
                         <p className="text-xs font-medium text-foreground">{nome}</p>
-                        <span className="text-[11px] font-semibold text-gold">{formatCurrency(dados.valor)}</span>
+                        {!isVendedor && <span className="text-[11px] font-semibold text-gold">{formatCurrency(dados.valor)}</span>}
                       </div>
                       <div className="flex gap-3 mt-0.5">
                         <span className="text-[10px] text-muted-foreground">{dados.qtd} un.</span>
-                        <span className="text-[10px] text-muted-foreground">·</span>
-                        <span className="text-[10px] text-muted-foreground">Ticket médio: {formatCurrency(dados.transacoes > 0 ? dados.valor / dados.transacoes : 0)}</span>
+                        {!isVendedor && (
+                          <>
+                            <span className="text-[10px] text-muted-foreground">·</span>
+                            <span className="text-[10px] text-muted-foreground">Ticket médio: {formatCurrency(dados.transacoes > 0 ? dados.valor / dados.transacoes : 0)}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -354,7 +386,7 @@ export default function Vendas() {
                       <p className="text-xs text-foreground">{tipo}</p>
                       <div className="flex gap-3">
                         <span className="text-[11px] text-muted-foreground">{dados.qtd} venda(s)</span>
-                        <span className="text-[11px] font-semibold text-gold">{formatCurrency(dados.valor)}</span>
+                        {!isVendedor && <span className="text-[11px] font-semibold text-gold">{formatCurrency(dados.valor)}</span>}
                       </div>
                     </div>
                   ))}
@@ -370,7 +402,7 @@ export default function Vendas() {
                         <p className="text-xs text-foreground">{band}</p>
                         <div className="flex gap-3">
                           <span className="text-[11px] text-muted-foreground">{dados.qtd} venda(s)</span>
-                          <span className="text-[11px] font-semibold text-gold">{formatCurrency(dados.valor)}</span>
+                          {!isVendedor && <span className="text-[11px] font-semibold text-gold">{formatCurrency(dados.valor)}</span>}
                         </div>
                       </div>
                     ))}
@@ -532,7 +564,7 @@ export default function Vendas() {
       {temFiltroAtivo && (
         <div className="mx-4 mb-3 bg-surface border border-border rounded-xl p-3 flex justify-between items-center">
           <p className="text-xs text-muted-foreground">Total filtrado ({filtradas.length} vendas)</p>
-          <p className="text-sm font-bold text-gold">{formatCurrency(totalFiltrado.valor)}</p>
+          {!isVendedor && <p className="text-sm font-bold text-gold">{formatCurrency(totalFiltrado.valor)}</p>}
         </div>
       )}
 
@@ -558,10 +590,12 @@ export default function Vendas() {
                     {formatDate(v.data)} · {v.deposito} · {v.quantidade} unid.
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-gold">{formatCurrency(v.total)}</p>
-                  <p className="text-[10px] text-muted-foreground">{formatCurrency(v.precoUnitario)}/un</p>
-                </div>
+                {!isVendedor && (
+                  <div className="text-right">
+                    <p className="text-sm font-bold text-gold">{formatCurrency(v.total)}</p>
+                    <p className="text-[10px] text-muted-foreground">{formatCurrency(v.precoUnitario)}/un</p>
+                  </div>
+                )}
               </div>
               <div className="flex flex-wrap items-center justify-between gap-1 mt-2 pt-2 border-t border-border">
                 <div className="flex items-center gap-2">
@@ -576,7 +610,7 @@ export default function Vendas() {
                     </p>
                   </div>
                 </div>
-                {v.desconto > 0 && (
+                {v.desconto > 0 && !isVendedor && (
                   <div className="flex items-center gap-1">
                     <Tag size={10} className={v.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"} />
                     <p className={`text-[11px] ${v.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"}`}>
