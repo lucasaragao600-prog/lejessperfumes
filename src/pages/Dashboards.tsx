@@ -208,7 +208,7 @@ export default function Dashboards() {
             {/* Por depósito */}
             {porDeposito.length > 0 && (
               <div>
-                <h3 className="font-display text-sm text-foreground mb-3">Faturamento por Depósito</h3>
+                <h3 className="font-display text-sm text-foreground mb-3">Faturamento por Loja</h3>
                 <div className="space-y-2">
                   {porDeposito.map((d) => {
                     const pct = totalSegmento > 0 ? (d.total / totalSegmento) * 100 : 0;

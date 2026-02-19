@@ -27,7 +27,7 @@ interface AppContextType {
   proximaLinha: number; // próximo número sequencial global de linha
   // helpers
   baixarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
-  adicionarTester: (perfumeId: string, quantidade: number) => void;
+  adicionarTester: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
   adicionarPerfume: (perfume: Perfume) => void;
 }
 
@@ -59,28 +59,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const adicionarTester = (perfumeId: string, quantidade: number) => {
+  const adicionarTester = (perfumeId: string, deposito: Deposito, quantidade: number) => {
     setTesters((prev) => {
-      const existente = prev.find((t) => t.perfumeId === perfumeId);
+      const existente = prev.find((t) => t.perfumeId === perfumeId && t.deposito === deposito);
       if (existente) {
         return prev.map((t) =>
-          t.perfumeId === perfumeId
+          t.perfumeId === perfumeId && t.deposito === deposito
             ? { ...t, quantidade: t.quantidade + quantidade }
             : t
         );
       }
       const p = perfumes.find((x) => x.id === perfumeId)!;
-      return [
-        ...prev,
-        {
-          id: `t${Date.now()}`,
-          perfumeId: p.id,
-          perfumeNome: p.nome,
-          marca: p.marca,
-          quantidade,
-          custo: p.custo,
-        },
-      ];
+      const novo: Tester = {
+        id: `t${Date.now()}`,
+        perfumeId: p.id,
+        perfumeNome: p.nome,
+        marca: p.marca,
+        deposito,
+        quantidade,
+        custo: p.custo,
+      };
+      return [...prev, novo];
     });
   };
 

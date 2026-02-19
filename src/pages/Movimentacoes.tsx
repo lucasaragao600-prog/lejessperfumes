@@ -59,7 +59,7 @@ export default function Movimentacoes() {
     // Efeitos colaterais por tipo
     if (form.tipo === "Saída Tester") {
       baixarEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
-      adicionarTester(form.perfumeId, form.quantidade);
+      adicionarTester(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
     } else if (form.tipo === "Transferência") {
       baixarEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
       // Não incrementamos destino aqui pois o estado de perfumes já tem estoque individual por depósito
