@@ -18,15 +18,13 @@ export default function Vendas() {
   const [ordenacao, setOrdenacao] = useState<"recente" | "antiga">("recente");
   const [showForm, setShowForm] = useState(false);
   const [showRelatorio, setShowRelatorio] = useState(false);
-  // Filtro do relatório: modo "dia" ou "periodo" ou "mes"
   const [modoRelatorio, setModoRelatorio] = useState<"dia" | "periodo" | "mes">("dia");
   const [dataRelatorio, setDataRelatorio] = useState(hoje);
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
-  const [mesRelatorio, setMesRelatorio] = useState("2026-02"); // YYYY-MM
+  const [mesRelatorio, setMesRelatorio] = useState("2026-02");
   const [lojaRelatorio, setLojaRelatorio] = useState<Deposito | "Geral">("Geral");
 
-  // Form
   const [form, setForm] = useState({
     perfumeId: "",
     deposito: "" as Deposito | "",
@@ -42,14 +40,8 @@ export default function Vendas() {
 
   const perfumeSelecionado = perfumes.find((p) => p.id === form.perfumeId);
   const subtotal = perfumeSelecionado ? perfumeSelecionado.precoVenda * form.quantidade : 0;
-  const ajusteCalculado =
-    form.tipoCalculo === "percent"
-      ? (subtotal * form.ajuste) / 100
-      : form.ajuste;
-  const totalFinal =
-    form.tipoAjuste === "desconto"
-      ? Math.max(0, subtotal - ajusteCalculado)
-      : subtotal + ajusteCalculado;
+  const ajusteCalculado = form.tipoCalculo === "percent" ? (subtotal * form.ajuste) / 100 : form.ajuste;
+  const totalFinal = form.tipoAjuste === "desconto" ? Math.max(0, subtotal - ajusteCalculado) : subtotal + ajusteCalculado;
 
   const filtradas = useMemo(() => {
     let result = vendas.filter((v) => {
@@ -60,9 +52,7 @@ export default function Vendas() {
       return matchData && matchDeposito && matchVendedora && matchBusca;
     });
     result = [...result].sort((a, b) =>
-      ordenacao === "recente"
-        ? b.data.localeCompare(a.data)
-        : a.data.localeCompare(b.data)
+      ordenacao === "recente" ? b.data.localeCompare(a.data) : a.data.localeCompare(b.data)
     );
     return result;
   }, [vendas, filtroData, filtroDeposito, filtroVendedora, busca, ordenacao]);
@@ -81,31 +71,23 @@ export default function Vendas() {
     itens: filtradas.reduce((a, v) => a + v.quantidade, 0),
   }), [filtradas]);
 
-  // Relatório — filtra por modo e loja
   const vendasRelatorio = useMemo(() => {
     return vendas.filter((v) => {
       const matchLoja = lojaRelatorio === "Geral" || v.deposito === lojaRelatorio;
       if (!matchLoja) return false;
       if (modoRelatorio === "dia") return v.data === dataRelatorio;
       if (modoRelatorio === "mes") return v.data.startsWith(mesRelatorio);
-      // periodo
       const ok1 = periodoInicio ? v.data >= periodoInicio : true;
       const ok2 = periodoFim ? v.data <= periodoFim : true;
       return ok1 && ok2;
     });
   }, [vendas, modoRelatorio, dataRelatorio, mesRelatorio, periodoInicio, periodoFim, lojaRelatorio]);
 
-  // Relatório por loja (para auditoria geral)
   const vendasPorLoja = useMemo(() => {
     if (lojaRelatorio !== "Geral") return null;
     return depositos.map((dep) => {
       const vLoja = vendasRelatorio.filter((v) => v.deposito === dep);
-      return {
-        loja: dep,
-        total: vLoja.reduce((a, v) => a + v.total, 0),
-        qtd: vLoja.length,
-        itens: vLoja.reduce((a, v) => a + v.quantidade, 0),
-      };
+      return { loja: dep, total: vLoja.reduce((a, v) => a + v.total, 0), qtd: vLoja.length, itens: vLoja.reduce((a, v) => a + v.quantidade, 0) };
     }).filter((l) => l.qtd > 0);
   }, [vendasRelatorio, lojaRelatorio]);
 
@@ -119,26 +101,21 @@ export default function Vendas() {
 
     vendasRelatorio.forEach((v) => {
       const pf = perfumes.find((p) => p.id === v.perfumeId);
-      // Por produto
       if (!porProduto[v.perfumeId]) porProduto[v.perfumeId] = { nome: v.perfumeNome, marca: pf?.marca ?? "", qtd: 0, valor: 0 };
       porProduto[v.perfumeId].qtd += v.quantidade;
       porProduto[v.perfumeId].valor += v.total;
-      // Por vendedora
       if (!porVendedora[v.vendedora]) porVendedora[v.vendedora] = { qtd: 0, valor: 0, transacoes: 0 };
       porVendedora[v.vendedora].qtd += v.quantidade;
       porVendedora[v.vendedora].valor += v.total;
       porVendedora[v.vendedora].transacoes += 1;
-      // Por pagamento
       if (!porPagamento[v.tipoPagamento]) porPagamento[v.tipoPagamento] = { qtd: 0, valor: 0 };
       porPagamento[v.tipoPagamento].qtd += 1;
       porPagamento[v.tipoPagamento].valor += v.total;
-      // Por bandeira (só crédito/débito)
       if (v.bandeira !== "N/A") {
         if (!porBandeira[v.bandeira]) porBandeira[v.bandeira] = { qtd: 0, valor: 0 };
         porBandeira[v.bandeira].qtd += 1;
         porBandeira[v.bandeira].valor += v.total;
       }
-      // Descontos/acréscimos
       if (v.tipoAjuste === "desconto") totalDesconto += v.desconto;
       else totalAcrescimo += v.desconto;
     });
@@ -183,25 +160,20 @@ export default function Vendas() {
             <p className="text-muted-foreground text-xs mt-0.5">Hoje: {totalHoje.qtd} vendas · {totalHoje.itens} itens</p>
           </div>
           <div className="flex gap-2">
-            <button
-              onClick={() => setShowRelatorio(!showRelatorio)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border border-border text-muted-foreground bg-surface transition-all"
-            >
+            <button onClick={() => setShowRelatorio(!showRelatorio)}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border border-border text-muted-foreground bg-surface transition-all">
               <FileText size={14} />
               Relatório
             </button>
-            <button
-              onClick={() => setShowForm(!showForm)}
+            <button onClick={() => setShowForm(!showForm)}
               className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-primary-foreground shadow-gold transition-all active:scale-95"
-              style={{ background: "var(--gradient-gold)" }}
-            >
+              style={{ background: "var(--gradient-gold)" }}>
               <Plus size={16} />
               Lançar
             </button>
           </div>
         </div>
 
-        {/* Cards resumo hoje */}
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div className="bg-surface border border-gold-muted rounded-xl p-3">
             <p className="text-[10px] text-muted-foreground mb-1">Faturado hoje</p>
@@ -213,50 +185,31 @@ export default function Vendas() {
           </div>
         </div>
 
-        {/* Barra de pesquisa */}
         <div className="relative mb-2">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
+          <input type="text" value={busca} onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar por perfume ou vendedora..."
-            className="w-full bg-surface border border-border rounded-xl pl-8 pr-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted"
-          />
+            className="w-full bg-surface border border-border rounded-xl pl-8 pr-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted" />
         </div>
 
-        {/* Filtros */}
         <div className="flex gap-2 mb-1">
           <div className="relative flex-1">
             <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="date"
-              value={filtroData}
-              onChange={(e) => setFiltroData(e.target.value)}
-              className="w-full bg-surface border border-border rounded-xl pl-8 pr-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted [color-scheme:dark]"
-            />
+            <input type="date" value={filtroData} onChange={(e) => setFiltroData(e.target.value)}
+              className="w-full bg-surface border border-border rounded-xl pl-8 pr-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted [color-scheme:dark]" />
           </div>
-          <select
-            value={filtroDeposito}
-            onChange={(e) => setFiltroDeposito(e.target.value as Deposito | "Todos")}
-            className="bg-surface border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted"
-          >
+          <select value={filtroDeposito} onChange={(e) => setFiltroDeposito(e.target.value as Deposito | "Todos")}
+            className="bg-surface border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted">
             <option value="Todos">Depósito</option>
             {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
-          <select
-            value={filtroVendedora}
-            onChange={(e) => setFiltroVendedora(e.target.value)}
-            className="bg-surface border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted"
-          >
+          <select value={filtroVendedora} onChange={(e) => setFiltroVendedora(e.target.value)}
+            className="bg-surface border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted">
             <option value="Todas">Vendedora</option>
             {vendedoras.map((v) => <option key={v} value={v}>{v}</option>)}
           </select>
-          <button
-            onClick={() => setOrdenacao(o => o === "recente" ? "antiga" : "recente")}
-            className={`flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-medium border transition-all flex-shrink-0 ${ordenacao === "antiga" ? "border-gold-muted bg-gold/10 text-gold" : "border-border bg-surface text-muted-foreground"}`}
-            title={ordenacao === "recente" ? "Mais recentes primeiro" : "Mais antigas primeiro"}
-          >
+          <button onClick={() => setOrdenacao(o => o === "recente" ? "antiga" : "recente")}
+            className={`flex items-center gap-1 px-2.5 py-2 rounded-xl text-xs font-medium border transition-all flex-shrink-0 ${ordenacao === "antiga" ? "border-gold-muted bg-gold/10 text-gold" : "border-border bg-surface text-muted-foreground"}`}>
             <ArrowUpDown size={13} />
           </button>
         </div>
@@ -265,81 +218,45 @@ export default function Vendas() {
       {/* Relatório */}
       {showRelatorio && (
         <div className="mx-4 mb-4 bg-surface border border-border rounded-xl p-4 animate-fade-in space-y-4">
-          {/* Header do relatório */}
           <div>
             <h3 className="font-display text-base text-gold flex items-center gap-2 mb-3">
               <FileText size={16} />
               Relatório de Vendas
             </h3>
-
-            {/* Filtro de loja */}
             <div className="mb-3">
-              <p className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1"><Store size={10}/>Loja</p>
+              <p className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1"><Store size={10} />Loja</p>
               <div className="flex gap-1.5 flex-wrap">
                 {(["Geral", ...depositos] as const).map((loja) => (
-                  <button
-                    key={loja}
-                    onClick={() => setLojaRelatorio(loja as Deposito | "Geral")}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                      lojaRelatorio === loja
-                        ? "bg-gold/20 text-gold border-gold-muted"
-                        : "bg-surface-overlay border-border text-muted-foreground"
-                    }`}
-                  >
+                  <button key={loja} onClick={() => setLojaRelatorio(loja as Deposito | "Geral")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${lojaRelatorio === loja ? "bg-gold/20 text-gold border-gold-muted" : "bg-surface-overlay border-border text-muted-foreground"}`}>
                     {loja}
                   </button>
                 ))}
               </div>
             </div>
-
-            {/* Seletor de modo */}
             <div className="flex gap-1.5 mb-3">
               {(["dia", "mes", "periodo"] as const).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setModoRelatorio(m)}
-                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                    modoRelatorio === m
-                      ? "bg-gold/20 text-gold border-gold-muted"
-                      : "bg-surface-overlay border-border text-muted-foreground"
-                  }`}
-                >
+                <button key={m} onClick={() => setModoRelatorio(m)}
+                  className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-all ${modoRelatorio === m ? "bg-gold/20 text-gold border-gold-muted" : "bg-surface-overlay border-border text-muted-foreground"}`}>
                   {m === "dia" ? "Dia" : m === "mes" ? "Mês" : "Período"}
                 </button>
               ))}
             </div>
-            {/* Inputs de data conforme modo */}
             {modoRelatorio === "dia" && (
-              <input
-                type="date"
-                value={dataRelatorio}
-                onChange={(e) => setDataRelatorio(e.target.value)}
-                className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]"
-              />
+              <input type="date" value={dataRelatorio} onChange={(e) => setDataRelatorio(e.target.value)}
+                className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]" />
             )}
             {modoRelatorio === "mes" && (
-              <input
-                type="month"
-                value={mesRelatorio}
-                onChange={(e) => setMesRelatorio(e.target.value)}
-                className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]"
-              />
+              <input type="month" value={mesRelatorio} onChange={(e) => setMesRelatorio(e.target.value)}
+                className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]" />
             )}
             {modoRelatorio === "periodo" && (
               <div className="flex gap-2 items-center">
-                <input
-                  type="date"
-                  value={periodoInicio}
-                  onChange={(e) => setPeriodoInicio(e.target.value)}
-                  className="flex-1 bg-surface-overlay border border-border rounded-lg px-2 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]"
-                />
+                <input type="date" value={periodoInicio} onChange={(e) => setPeriodoInicio(e.target.value)}
+                  className="flex-1 bg-surface-overlay border border-border rounded-lg px-2 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]" />
                 <span className="text-muted-foreground text-xs">até</span>
-                <input
-                  type="date"
-                  value={periodoFim}
-                  onChange={(e) => setPeriodoFim(e.target.value)}
-                  className="flex-1 bg-surface-overlay border border-border rounded-lg px-2 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]"
-                />
+                <input type="date" value={periodoFim} onChange={(e) => setPeriodoFim(e.target.value)}
+                  className="flex-1 bg-surface-overlay border border-border rounded-lg px-2 py-2 text-xs text-foreground focus:outline-none [color-scheme:dark]" />
               </div>
             )}
           </div>
@@ -348,12 +265,9 @@ export default function Vendas() {
             <p className="text-xs text-muted-foreground text-center py-4">Sem vendas no período selecionado</p>
           ) : (
             <>
-              {/* Resumo por loja (se Geral) */}
               {lojaRelatorio === "Geral" && vendasPorLoja && vendasPorLoja.length > 0 && (
                 <div>
-                  <p className="text-[11px] font-semibold text-foreground mb-2 flex items-center gap-1">
-                    <Store size={11} /> Por Loja
-                  </p>
+                  <p className="text-[11px] font-semibold text-foreground mb-2 flex items-center gap-1"><Store size={11} /> Por Loja</p>
                   <div className="space-y-1.5">
                     {vendasPorLoja.map((loja) => (
                       <div key={loja.loja} className="flex justify-between items-center bg-surface-overlay rounded-lg px-2.5 py-2">
@@ -364,7 +278,6 @@ export default function Vendas() {
                         <p className="text-xs font-bold text-gold">{formatCurrency(loja.total)}</p>
                       </div>
                     ))}
-                    {/* Total geral */}
                     <div className="flex justify-between items-center bg-gold/10 border border-gold-muted rounded-lg px-2.5 py-2">
                       <p className="text-xs font-bold text-gold">Total Geral</p>
                       <p className="text-xs font-bold text-gold">{formatCurrency(vendasRelatorio.reduce((a, v) => a + v.total, 0))}</p>
@@ -373,7 +286,6 @@ export default function Vendas() {
                 </div>
               )}
 
-              {/* Resumo geral */}
               <div className="grid grid-cols-3 gap-2">
                 <div className="bg-surface-overlay rounded-lg p-2 text-center">
                   <p className="text-[9px] text-muted-foreground">Total</p>
@@ -389,7 +301,6 @@ export default function Vendas() {
                 </div>
               </div>
 
-              {/* Por produto */}
               <div>
                 <p className="text-[11px] font-semibold text-foreground mb-2">Produtos Vendidos</p>
                 <div className="space-y-1.5">
@@ -408,11 +319,8 @@ export default function Vendas() {
                 </div>
               </div>
 
-              {/* Por vendedora */}
               <div>
-                <p className="text-[11px] font-semibold text-foreground mb-2 flex items-center gap-1">
-                  <User size={11} /> Por Vendedora
-                </p>
+                <p className="text-[11px] font-semibold text-foreground mb-2 flex items-center gap-1"><User size={11} /> Por Vendedora</p>
                 <div className="space-y-1.5">
                   {Object.entries(relatorio.porVendedora).sort(([, a], [, b]) => b.valor - a.valor).map(([nome, dados]) => (
                     <div key={nome} className="bg-surface-overlay rounded-lg px-2.5 py-2">
@@ -421,7 +329,7 @@ export default function Vendas() {
                         <span className="text-[11px] font-semibold text-gold">{formatCurrency(dados.valor)}</span>
                       </div>
                       <div className="flex gap-3 mt-0.5">
-                        <span className="text-[10px] text-muted-foreground">{dados.qtd} un. vendidas</span>
+                        <span className="text-[10px] text-muted-foreground">{dados.qtd} un.</span>
                         <span className="text-[10px] text-muted-foreground">·</span>
                         <span className="text-[10px] text-muted-foreground">Ticket médio: {formatCurrency(dados.transacoes > 0 ? dados.valor / dados.transacoes : 0)}</span>
                       </div>
@@ -430,11 +338,8 @@ export default function Vendas() {
                 </div>
               </div>
 
-              {/* Por pagamento */}
               <div>
-                <p className="text-[11px] font-semibold text-foreground mb-2 flex items-center gap-1">
-                  <CreditCard size={11} /> Por Pagamento
-                </p>
+                <p className="text-[11px] font-semibold text-foreground mb-2 flex items-center gap-1"><CreditCard size={11} /> Por Pagamento</p>
                 <div className="space-y-1.5">
                   {Object.entries(relatorio.porPagamento).map(([tipo, dados]) => (
                     <div key={tipo} className="flex justify-between items-center bg-surface-overlay rounded-lg px-2.5 py-1.5">
@@ -448,7 +353,6 @@ export default function Vendas() {
                 </div>
               </div>
 
-              {/* Por bandeira */}
               {Object.keys(relatorio.porBandeira).length > 0 && (
                 <div>
                   <p className="text-[11px] font-semibold text-foreground mb-2">Por Bandeira</p>
@@ -476,113 +380,66 @@ export default function Vendas() {
           style={{ boxShadow: "var(--shadow-gold)" }}>
           <h3 className="font-display text-base text-gold mb-3">Nova Venda</h3>
           <div className="space-y-3">
-            {/* Perfume */}
             <div>
               <label className="text-[11px] text-muted-foreground mb-1 block">Perfume</label>
-              <select
-                value={form.perfumeId}
-                onChange={(e) => setForm({ ...form, perfumeId: e.target.value, ajuste: 0 })}
-                className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
-              >
+              <select value={form.perfumeId} onChange={(e) => setForm({ ...form, perfumeId: e.target.value, ajuste: 0 })}
+                className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted">
                 <option value="">Selecione...</option>
-                {perfumes.map((p) => (
-                  <option key={p.id} value={p.id}>{p.nome} — {p.marca}</option>
-                ))}
+                {perfumes.map((p) => <option key={p.id} value={p.id}>{p.nome} — {p.marca}</option>)}
               </select>
               {perfumeSelecionado && (
                 <div className="flex gap-2 mt-1.5">
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
-                    {perfumeSelecionado.concentracao}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
-                    {perfumeSelecionado.volume} ml
-                  </span>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
-                    {perfumeSelecionado.marca}
-                  </span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">{perfumeSelecionado.concentracao}</span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">{perfumeSelecionado.volume} ml</span>
+                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">{perfumeSelecionado.marca}</span>
                 </div>
               )}
             </div>
 
-            {/* Vendedora */}
             <div>
               <label className="text-[11px] text-muted-foreground mb-1 block">Vendedora</label>
               <div className="grid grid-cols-4 gap-1.5">
                 {vendedoras.map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => setForm({ ...form, vendedora: v })}
-                    className={`py-2 rounded-lg text-xs font-medium border transition-all ${
-                      form.vendedora === v
-                        ? "border-gold bg-gold/15 text-gold"
-                        : "border-border bg-surface-overlay text-muted-foreground"
-                    }`}
-                  >
+                  <button key={v} onClick={() => setForm({ ...form, vendedora: v })}
+                    className={`py-2 rounded-lg text-xs font-medium border transition-all ${form.vendedora === v ? "border-gold bg-gold/15 text-gold" : "border-border bg-surface-overlay text-muted-foreground"}`}>
                     {v}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Depósito + Quantidade */}
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[11px] text-muted-foreground mb-1 block">Depósito</label>
-                <select
-                  value={form.deposito}
-                  onChange={(e) => setForm({ ...form, deposito: e.target.value as Deposito })}
-                  className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
-                >
+                <select value={form.deposito} onChange={(e) => setForm({ ...form, deposito: e.target.value as Deposito })}
+                  className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted">
                   <option value="">Selecione...</option>
                   {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-[11px] text-muted-foreground mb-1 block">Quantidade</label>
-                <input
-                  type="number"
-                  min={1}
-                  value={form.quantidade}
+                <input type="number" min={1} value={form.quantidade}
                   onChange={(e) => setForm({ ...form, quantidade: parseInt(e.target.value) || 1 })}
-                  className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
-                />
+                  className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted" />
               </div>
             </div>
 
-            {/* Tipo de pagamento */}
             <div>
-              <label className="text-[11px] text-muted-foreground mb-1 block flex items-center gap-1">
-                <CreditCard size={10} />
-                Pagamento
-              </label>
+              <label className="text-[11px] text-muted-foreground mb-1 block flex items-center gap-1"><CreditCard size={10} />Pagamento</label>
               <div className="grid grid-cols-4 gap-1.5">
                 {tiposPagamento.map((tp) => (
-                  <button
-                    key={tp}
-                    onClick={() => setForm({ ...form, tipoPagamento: tp, bandeira: "N/A" })}
-                    className={`py-2 rounded-lg text-xs font-medium border transition-all ${
-                      form.tipoPagamento === tp
-                        ? "border-gold bg-gold/15 text-gold"
-                        : "border-border bg-surface-overlay text-muted-foreground"
-                    }`}
-                  >
+                  <button key={tp} onClick={() => setForm({ ...form, tipoPagamento: tp, bandeira: "N/A" })}
+                    className={`py-2 rounded-lg text-xs font-medium border transition-all ${form.tipoPagamento === tp ? "border-gold bg-gold/15 text-gold" : "border-border bg-surface-overlay text-muted-foreground"}`}>
                     {tp}
                   </button>
                 ))}
               </div>
-              {/* Bandeira - só pra crédito/débito */}
               {(form.tipoPagamento === "Crédito" || form.tipoPagamento === "Débito") && (
                 <div className="flex gap-1.5 mt-2 flex-wrap">
                   {bandeiras.map((b) => (
-                    <button
-                      key={b}
-                      onClick={() => setForm({ ...form, bandeira: b })}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all ${
-                        form.bandeira === b
-                          ? "border-gold bg-gold/15 text-gold"
-                          : "border-border bg-surface-overlay text-muted-foreground"
-                      }`}
-                    >
+                    <button key={b} onClick={() => setForm({ ...form, bandeira: b })}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border transition-all ${form.bandeira === b ? "border-gold bg-gold/15 text-gold" : "border-border bg-surface-overlay text-muted-foreground"}`}>
                       {b}
                     </button>
                   ))}
@@ -590,87 +447,43 @@ export default function Vendas() {
               )}
             </div>
 
-            {/* Ajuste de valor */}
             <div>
-              <label className="text-[11px] text-muted-foreground mb-1 block flex items-center gap-1">
-                <Tag size={10} />
-                Ajuste de Valor
-              </label>
+              <label className="text-[11px] text-muted-foreground mb-1 block flex items-center gap-1"><Tag size={10} />Ajuste de Valor</label>
               <div className="flex gap-2">
-                {/* Tipo: desconto ou acréscimo */}
                 <div className="flex rounded-lg overflow-hidden border border-border">
-                  <button
-                    onClick={() => setForm({ ...form, tipoAjuste: "desconto", ajuste: 0 })}
-                    className={`px-2.5 py-2 text-xs font-medium transition-all ${
-                      form.tipoAjuste === "desconto"
-                        ? "bg-destructive/20 text-destructive"
-                        : "bg-surface-overlay text-muted-foreground"
-                    }`}
-                  >
+                  <button onClick={() => setForm({ ...form, tipoAjuste: "desconto", ajuste: 0 })}
+                    className={`px-2.5 py-2 text-xs font-medium transition-all ${form.tipoAjuste === "desconto" ? "bg-destructive/20 text-destructive" : "bg-surface-overlay text-muted-foreground"}`}>
                     Desc.
                   </button>
-                  <button
-                    onClick={() => setForm({ ...form, tipoAjuste: "acrescimo", ajuste: 0 })}
-                    className={`px-2.5 py-2 text-xs font-medium transition-all ${
-                      form.tipoAjuste === "acrescimo"
-                        ? "bg-emerald-500/20 text-emerald-400"
-                        : "bg-surface-overlay text-muted-foreground"
-                    }`}
-                  >
+                  <button onClick={() => setForm({ ...form, tipoAjuste: "acrescimo", ajuste: 0 })}
+                    className={`px-2.5 py-2 text-xs font-medium transition-all ${form.tipoAjuste === "acrescimo" ? "bg-emerald-500/20 text-emerald-400" : "bg-surface-overlay text-muted-foreground"}`}>
                     Acrés.
                   </button>
                 </div>
-                {/* R$ ou % */}
                 <div className="flex rounded-lg overflow-hidden border border-border">
-                  <button
-                    onClick={() => setForm({ ...form, tipoCalculo: "valor", ajuste: 0 })}
-                    className={`px-3 py-2 text-xs font-medium transition-all ${
-                      form.tipoCalculo === "valor"
-                        ? "bg-gold/20 text-gold"
-                        : "bg-surface-overlay text-muted-foreground"
-                    }`}
-                  >
+                  <button onClick={() => setForm({ ...form, tipoCalculo: "valor", ajuste: 0 })}
+                    className={`px-3 py-2 text-xs font-medium transition-all ${form.tipoCalculo === "valor" ? "bg-gold/20 text-gold" : "bg-surface-overlay text-muted-foreground"}`}>
                     R$
                   </button>
-                  <button
-                    onClick={() => setForm({ ...form, tipoCalculo: "percent", ajuste: 0 })}
-                    className={`px-3 py-2 text-xs font-medium transition-all ${
-                      form.tipoCalculo === "percent"
-                        ? "bg-gold/20 text-gold"
-                        : "bg-surface-overlay text-muted-foreground"
-                    }`}
-                  >
+                  <button onClick={() => setForm({ ...form, tipoCalculo: "percent", ajuste: 0 })}
+                    className={`px-3 py-2 text-xs font-medium transition-all ${form.tipoCalculo === "percent" ? "bg-gold/20 text-gold" : "bg-surface-overlay text-muted-foreground"}`}>
                     %
                   </button>
                 </div>
-                <input
-                  type="number"
-                  min={0}
-                  max={form.tipoCalculo === "percent" ? 100 : subtotal}
-                  value={form.ajuste}
-                  onChange={(e) => setForm({ ...form, ajuste: parseFloat(e.target.value) || 0 })}
+                <input type="number" min={0} max={form.tipoCalculo === "percent" ? 100 : subtotal}
+                  value={form.ajuste} onChange={(e) => setForm({ ...form, ajuste: parseFloat(e.target.value) || 0 })}
                   placeholder={form.tipoCalculo === "percent" ? "Ex: 10" : "Ex: 50"}
-                  className="flex-1 bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted"
-                />
+                  className="flex-1 bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted" />
               </div>
             </div>
 
-            {/* Observação */}
             <div>
-              <label className="text-[11px] text-muted-foreground mb-1 block flex items-center gap-1">
-                <FileText size={10} />
-                Observação
-              </label>
-              <input
-                type="text"
-                value={form.observacao}
-                onChange={(e) => setForm({ ...form, observacao: e.target.value })}
+              <label className="text-[11px] text-muted-foreground mb-1 block flex items-center gap-1"><FileText size={10} />Observação</label>
+              <input type="text" value={form.observacao} onChange={(e) => setForm({ ...form, observacao: e.target.value })}
                 placeholder="Ex: cliente fidelidade, negociação especial..."
-                className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted"
-              />
+                className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted" />
             </div>
 
-            {/* Preview preço */}
             {perfumeSelecionado && (
               <div className="bg-gold/10 border border-gold-muted rounded-lg p-3 space-y-1">
                 <div className="flex justify-between text-xs">
@@ -679,9 +492,7 @@ export default function Vendas() {
                 </div>
                 {ajusteCalculado > 0 && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">
-                      {form.tipoAjuste === "desconto" ? "Desconto" : "Acréscimo"}
-                    </span>
+                    <span className="text-muted-foreground">{form.tipoAjuste === "desconto" ? "Desconto" : "Acréscimo"}</span>
                     <span className={form.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"}>
                       {form.tipoAjuste === "desconto" ? "- " : "+ "}{formatCurrency(ajusteCalculado)}
                     </span>
@@ -695,18 +506,14 @@ export default function Vendas() {
             )}
 
             <div className="flex gap-2">
-              <button
-                onClick={() => setShowForm(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm border border-border text-muted-foreground"
-              >
+              <button onClick={() => setShowForm(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm border border-border text-muted-foreground">
                 Cancelar
               </button>
-              <button
-                onClick={handleLancar}
+              <button onClick={handleLancar}
                 disabled={!form.perfumeId || !form.deposito || !form.vendedora || !form.tipoPagamento}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-primary-foreground disabled:opacity-40 transition-all"
-                style={{ background: "var(--gradient-gold)" }}
-              >
+                style={{ background: "var(--gradient-gold)" }}>
                 Confirmar
               </button>
             </div>
@@ -714,7 +521,6 @@ export default function Vendas() {
         </div>
       )}
 
-      {/* Total filtrado */}
       {temFiltroAtivo && (
         <div className="mx-4 mb-3 bg-surface border border-border rounded-xl p-3 flex justify-between items-center">
           <p className="text-xs text-muted-foreground">Total filtrado ({filtradas.length} vendas)</p>
@@ -734,14 +540,12 @@ export default function Vendas() {
                   <ShoppingCart size={18} className="text-gold" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <p className="text-sm font-medium text-foreground truncate">{v.perfumeNome}</p>
-                    {pf && (
-                      <span className="text-[10px] text-muted-foreground flex-shrink-0">
-                        {pf.marca}
-                      </span>
-                    )}
-                  </div>
+                  <p className="text-sm font-medium text-foreground truncate">{v.perfumeNome}</p>
+                  {pf && (
+                    <p className="text-[10px] text-muted-foreground truncate">
+                      {pf.marca} · {pf.concentracao} · {pf.volume}ml
+                    </p>
+                  )}
                   <p className="text-[11px] text-muted-foreground">
                     {formatDate(v.data)} · {v.deposito} · {v.quantidade} unid.
                   </p>
@@ -751,7 +555,6 @@ export default function Vendas() {
                   <p className="text-[10px] text-muted-foreground">{formatCurrency(v.precoUnitario)}/un</p>
                 </div>
               </div>
-              {/* Info extra */}
               <div className="flex flex-wrap items-center justify-between gap-1 mt-2 pt-2 border-t border-border">
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1">
@@ -765,16 +568,14 @@ export default function Vendas() {
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {v.desconto > 0 && (
-                    <div className="flex items-center gap-1">
-                      <Tag size={10} className={v.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"} />
-                      <p className={`text-[11px] ${v.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"}`}>
-                        {v.tipoAjuste === "desconto" ? "-" : "+"}{formatCurrency(v.desconto)}
-                      </p>
-                    </div>
-                  )}
-                </div>
+                {v.desconto > 0 && (
+                  <div className="flex items-center gap-1">
+                    <Tag size={10} className={v.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"} />
+                    <p className={`text-[11px] ${v.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"}`}>
+                      {v.tipoAjuste === "desconto" ? "-" : "+"}{formatCurrency(v.desconto)}
+                    </p>
+                  </div>
+                )}
               </div>
               {v.observacao && (
                 <p className="text-[10px] text-muted-foreground mt-1 italic">"{v.observacao}"</p>

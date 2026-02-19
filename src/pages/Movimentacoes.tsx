@@ -33,9 +33,7 @@ export default function Movimentacoes() {
   const filtradas = useMemo(() => {
     let result = movimentacoes.filter((m) => {
       const matchTipo = filtroTipo === "Todos" || m.tipo === filtroTipo;
-      const matchBusca =
-        busca.trim() === "" ||
-        m.perfumeNome.toLowerCase().includes(busca.toLowerCase());
+      const matchBusca = busca.trim() === "" || m.perfumeNome.toLowerCase().includes(busca.toLowerCase());
       return matchTipo && matchBusca;
     });
     result = [...result].sort((a, b) =>
@@ -69,7 +67,6 @@ export default function Movimentacoes() {
         : { deposito: form.deposito as Deposito }),
     };
 
-    // Efeitos colaterais por tipo
     if (form.tipo === "Saída Tester") {
       baixarEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
       adicionarTester(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
@@ -134,7 +131,6 @@ export default function Movimentacoes() {
           <button
             onClick={() => setOrdenacao(o => o === "recente" ? "antiga" : "recente")}
             className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all flex-shrink-0 ${ordenacao === "antiga" ? "border-gold-muted bg-gold/10 text-gold" : "border-border bg-surface text-muted-foreground"}`}
-            title={ordenacao === "recente" ? "Mais recentes primeiro" : "Mais antigas primeiro"}
           >
             <ArrowUpDown size={13} />
           </button>
@@ -146,7 +142,6 @@ export default function Movimentacoes() {
         <div className="mx-4 mb-4 bg-surface border border-gold-muted rounded-xl p-4 animate-fade-in"
           style={{ boxShadow: "var(--shadow-gold)" }}>
           <h3 className="font-display text-base text-gold mb-3">Nova Movimentação</h3>
-
           <div className="space-y-3">
             {/* Tipo */}
             <div>
@@ -179,19 +174,16 @@ export default function Movimentacoes() {
                 <option value="">Selecione...</option>
                 {perfumes.map((p) => <option key={p.id} value={p.id}>{p.nome} — {p.marca}</option>)}
               </select>
-              {(() => { const pf = perfumes.find((p) => p.id === form.perfumeId); return pf ? (
-                <div className="flex gap-2 mt-1.5">
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
-                    {pf.concentracao}
-                  </span>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
-                    {pf.volume} ml
-                  </span>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">
-                    {pf.marca}
-                  </span>
-                </div>
-              ) : null; })()}
+              {(() => {
+                const pf = perfumes.find((p) => p.id === form.perfumeId);
+                return pf ? (
+                  <div className="flex gap-2 mt-1.5">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">{pf.concentracao}</span>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">{pf.volume} ml</span>
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">{pf.marca}</span>
+                  </div>
+                ) : null;
+              })()}
             </div>
 
             {/* Depósito(s) */}
@@ -243,7 +235,6 @@ export default function Movimentacoes() {
               </div>
             )}
 
-            {/* Info Saída Tester */}
             {form.tipo === "Saída Tester" && form.perfumeId && form.depositoOrigem && (
               <div className="bg-purple-400/10 border border-purple-400/30 rounded-lg p-2.5">
                 <p className="text-xs text-purple-400">
@@ -297,18 +288,16 @@ export default function Movimentacoes() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{m.perfumeNome}</p>
-                    {pf && (
-                      <span className="text-[10px] text-muted-foreground flex-shrink-0">
-                        {pf.marca}
-                      </span>
-                    )}
-                  </div>
+                  <p className="text-sm font-medium text-foreground truncate">{m.perfumeNome}</p>
                   <p className={`text-sm font-bold flex-shrink-0 ${cfg.color}`}>
                     {m.tipo === "Ajuste" ? (m.quantidade > 0 ? "+" : "") : m.tipo === "Entrada" ? "+" : "-"}{Math.abs(m.quantidade)}
                   </p>
                 </div>
+                {pf && (
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {pf.marca} · {pf.concentracao} · {pf.volume}ml
+                  </p>
+                )}
                 <p className="text-[11px] text-muted-foreground mt-0.5">
                   {formatDate(m.data)} · {m.tipo}
                   {m.tipo === "Saída Tester" && m.deposito && ` · ${m.deposito} → Tester`}
