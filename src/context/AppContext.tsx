@@ -29,6 +29,8 @@ interface AppContextType {
   setTesters: React.Dispatch<React.SetStateAction<Tester[]>>;
   casas: Casa[];
   setCasas: React.Dispatch<React.SetStateAction<Casa[]>>;
+  vendedoras: string[];
+  setVendedoras: React.Dispatch<React.SetStateAction<string[]>>;
   // configs editáveis
   tiposPerfumeConfig: Record<string, string>;
   setTiposPerfumeConfig: React.Dispatch<React.SetStateAction<Record<string, string>>>;
@@ -53,6 +55,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>(movsIniciais);
   const [testers, setTesters] = useState<Tester[]>(testersIniciais);
   const [casas, setCasas] = useState<Casa[]>(casasPadrao);
+  const [vendedoras, setVendedoras] = useState<string[]>(["Ana", "Julia", "Carla"]);
   const [tiposPerfumeConfig, setTiposPerfumeConfig] = useState<Record<string, string>>(TIPOS_PERFUME as Record<string, string>);
   const [concentracoesConfig, setConcentracoesConfig] = useState<Record<string, string>>(CONCENTRACOES as Record<string, string>);
   const [volumesPadrao, setVolumesPadrao] = useState<number[]>(VOLUMES_PADRAO);
@@ -140,6 +143,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setTesters,
         casas,
         setCasas,
+        vendedoras,
+        setVendedoras,
         tiposPerfumeConfig,
         setTiposPerfumeConfig,
         concentracoesConfig,

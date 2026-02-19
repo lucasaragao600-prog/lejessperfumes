@@ -5,12 +5,13 @@ import { useApp } from "@/context/AppContext";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const hoje = "2026-02-18";
-const vendedoras = ["Ana", "Julia", "Carla", "Outra"];
+const vendedorasFixas = ["Outra"];
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito"];
 const bandeiras: Bandeira[] = ["Visa", "Mastercard", "Elo", "Amex", "Hipercard"];
 
 export default function Vendas() {
-  const { vendas, setVendas, perfumes, baixarEstoque } = useApp();
+  const { vendas, setVendas, perfumes, baixarEstoque, vendedoras: vendedorasCtx } = useApp();
+  const vendedoras = [...vendedorasCtx, ...vendedorasFixas];
   const [filtroData, setFiltroData] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
   const [filtroVendedora, setFiltroVendedora] = useState("Todas");
