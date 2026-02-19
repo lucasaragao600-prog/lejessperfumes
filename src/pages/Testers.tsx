@@ -5,7 +5,7 @@ import { useApp } from "@/context/AppContext";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
-export default function Testers() {
+export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
   const { testers, setTesters, perfumes, baixarEstoque } = useApp();
   const [busca, setBusca] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
@@ -113,20 +113,26 @@ export default function Testers() {
               <p className={`text-sm font-bold ${filtroDeposito === d ? "text-gold" : "text-foreground"}`}>
                 {resumoPorDeposito[d]?.qtd ?? 0} <span className="text-[9px] font-normal">un.</span>
               </p>
-              <p className="text-[9px] text-muted-foreground">{formatCurrency(resumoPorDeposito[d]?.custo ?? 0)}</p>
+              {isMaster && <p className="text-[9px] text-muted-foreground">{formatCurrency(resumoPorDeposito[d]?.custo ?? 0)}</p>}
             </button>
           ))}
         </div>
 
         {/* Card total */}
-        <div className="bg-surface border border-gold-muted rounded-xl p-3 mb-3 flex justify-between items-center"
-          style={{ background: "var(--gradient-gold-subtle)", boxShadow: "var(--shadow-gold)" }}>
-          <div>
-            <p className="text-xs text-muted-foreground">Total geral em custo</p>
-            <p className="font-display text-xl text-gold">{formatCurrency(totalCusto)}</p>
+        {isMaster ? (
+          <div className="bg-surface border border-gold-muted rounded-xl p-3 mb-3 flex justify-between items-center"
+            style={{ background: "var(--gradient-gold-subtle)", boxShadow: "var(--shadow-gold)" }}>
+            <div>
+              <p className="text-xs text-muted-foreground">Total geral em custo</p>
+              <p className="font-display text-xl text-gold">{formatCurrency(totalCusto)}</p>
+            </div>
+            <p className="text-sm text-muted-foreground">{testers.reduce((a, t) => a + t.quantidade, 0)} unid.</p>
           </div>
-          <p className="text-sm text-muted-foreground">{testers.reduce((a, t) => a + t.quantidade, 0)} unid.</p>
-        </div>
+        ) : (
+          <div className="bg-surface border border-border rounded-xl p-3 mb-3 text-center">
+            <p className="text-sm text-foreground font-semibold">{testers.reduce((a, t) => a + t.quantidade, 0)} testers total</p>
+          </div>
+        )}
 
         {/* Busca */}
         <div className="relative">
@@ -247,13 +253,19 @@ export default function Testers() {
                 <p className="text-sm font-bold text-purple-400">{t.quantidade} un.</p>
               </div>
               <div>
-                <p className="text-[9px] text-muted-foreground">Custo unit.</p>
-                <p className="text-sm font-semibold text-foreground">{formatCurrency(t.custo)}</p>
+              {isMaster && (
+                <>
+                  <p className="text-[9px] text-muted-foreground">Custo unit.</p>
+                  <p className="text-sm font-semibold text-foreground">{formatCurrency(t.custo)}</p>
+                </>
+              )}
               </div>
+              {isMaster && (
               <div>
                 <p className="text-[9px] text-muted-foreground">Total custo</p>
                 <p className="text-sm font-bold text-gold">{formatCurrency(t.quantidade * t.custo)}</p>
               </div>
+              )}
             </div>
           </div>
         ))}
