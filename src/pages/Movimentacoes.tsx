@@ -202,7 +202,7 @@ export default function Movimentacoes() {
                 className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
               >
                 <option value="">Selecione...</option>
-                {perfumes.map((p) => <option key={p.id} value={p.id}>{p.nome} — {p.marca}</option>)}
+                {perfumes.map((p) => <option key={p.id} value={p.id}>{p.marca} - {p.nome} - {p.concentracao} - {p.volume}ml</option>)}
               </select>
               {(() => {
                 const pf = perfumes.find((p) => p.id === form.perfumeId);

@@ -391,7 +391,7 @@ export default function Vendas() {
               <select value={form.perfumeId} onChange={(e) => setForm({ ...form, perfumeId: e.target.value, ajuste: 0 })}
                 className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted">
                 <option value="">Selecione...</option>
-                {perfumes.map((p) => <option key={p.id} value={p.id}>{p.nome} — {p.marca}</option>)}
+                {perfumes.map((p) => <option key={p.id} value={p.id}>{p.marca} - {p.nome} - {p.concentracao} - {p.volume}ml</option>)}
               </select>
               {perfumeSelecionado && (
                 <div className="flex gap-2 mt-1.5">
