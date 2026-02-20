@@ -27,8 +27,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [hasMaster, setHasMaster] = useState<boolean | null>(null);
 
   const checkHasMaster = async () => {
-    const { count } = await supabase.from("user_roles").select("*", { count: "exact", head: true }).eq("role", "master");
-    setHasMaster((count ?? 0) > 0);
+    const { data } = await supabase.rpc("check_master_exists");
+    setHasMaster(data === true);
   };
 
   const fetchUserData = async (userId: string) => {
