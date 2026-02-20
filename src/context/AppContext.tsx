@@ -51,6 +51,7 @@ interface AppContextType {
   transferirEstoque: (perfumeId: string, origem: Deposito, destino: Deposito, quantidade: number) => void;
   adicionarTester: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
   adicionarPerfume: (perfume: Perfume) => void;
+  atualizarPrecos: (perfumeId: string, custo: number, precoVenda: number) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -60,6 +61,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     perfumes,
     isLoading: perfumesLoading,
     adicionarPerfume: adicionarPerfumeDB,
+    atualizarPrecos: atualizarPrecosDB,
     baixarEstoque: baixarEstoqueDB,
     adicionarEstoque: adicionarEstoqueDB,
     transferirEstoque: transferirEstoqueDB,
@@ -102,6 +104,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     adicionarPerfumeDB(perfume);
   };
 
+  const atualizarPrecos = async (perfumeId: string, custo: number, precoVenda: number) => {
+    await atualizarPrecosDB({ perfumeId, custo, precoVenda });
+  };
+
   const noop = (() => {}) as any;
 
   return (
@@ -142,6 +148,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         transferirEstoque,
         adicionarTester,
         adicionarPerfume,
+        atualizarPrecos,
       }}
     >
       {children}
