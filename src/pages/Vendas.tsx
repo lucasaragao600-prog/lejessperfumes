@@ -216,32 +216,36 @@ export default function Vendas() {
             className="w-full bg-surface border border-border rounded-xl pl-8 pr-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted" />
         </div>
 
-        <div className="grid grid-cols-2 gap-2 mb-1">
-          {!isVendedor ? (
-            <div className="relative">
-              <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-              <input type="date" value={filtroData} onChange={(e) => setFiltroData(e.target.value)}
-                className="w-full bg-surface border border-border rounded-xl pl-8 pr-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted [color-scheme:dark]" />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center bg-surface border border-border rounded-xl px-3 py-2 text-xs text-muted-foreground">
-              <Calendar size={13} className="mr-1.5" /> Hoje
-            </div>
-          )}
-          <select value={filtroDeposito} onChange={(e) => setFiltroDeposito(e.target.value as Deposito | "Todos")}
-            className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted">
-            <option value="Todos">Depósito</option>
-            {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
-          </select>
-          <select value={filtroVendedora} onChange={(e) => setFiltroVendedora(e.target.value)}
-            className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted">
-            <option value="Todas">Vendedora</option>
-            {vendedoras.map((v) => <option key={v} value={v}>{v}</option>)}
-          </select>
-          <button onClick={() => setOrdenacao(o => o === "recente" ? "antiga" : "recente")}
-            className={`flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-medium border transition-all ${ordenacao === "antiga" ? "border-gold-muted bg-gold/10 text-gold" : "border-border bg-surface text-muted-foreground"}`}>
-            <ArrowUpDown size={13} /> {ordenacao === "recente" ? "Recente" : "Antiga"}
-          </button>
+        <div className="space-y-2 mb-1">
+          <div className="grid grid-cols-2 gap-2">
+            {!isVendedor ? (
+              <div className="relative">
+                <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input type="date" value={filtroData} onChange={(e) => setFiltroData(e.target.value)}
+                  className="w-full bg-surface border border-border rounded-xl pl-8 pr-2 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted [color-scheme:dark]" />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center bg-surface border border-border rounded-xl px-3 py-2 text-xs text-muted-foreground">
+                <Calendar size={13} className="mr-1.5" /> Hoje
+              </div>
+            )}
+            <select value={filtroDeposito} onChange={(e) => setFiltroDeposito(e.target.value as Deposito | "Todos")}
+              className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted">
+              <option value="Todos">Depósito</option>
+              {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <select value={filtroVendedora} onChange={(e) => setFiltroVendedora(e.target.value)}
+              className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted">
+              <option value="Todas">Vendedora</option>
+              {vendedoras.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+            <button onClick={() => setOrdenacao(o => o === "recente" ? "antiga" : "recente")}
+              className={`flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-medium border transition-all ${ordenacao === "antiga" ? "border-gold-muted bg-gold/10 text-gold" : "border-border bg-surface text-muted-foreground"}`}>
+              <ArrowUpDown size={13} /> {ordenacao === "recente" ? "Recente" : "Antiga"}
+            </button>
+          </div>
         </div>
       </div>
 
