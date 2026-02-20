@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { ArrowLeftRight, ArrowDown, RefreshCw, FlaskConical, Plus, Search, ArrowUpDown } from "lucide-react";
 import { formatDate, type Deposito, type Movimentacao } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const tipos = ["Entrada", "Ajuste", "Transferência", "Saída Tester"] as const;
@@ -15,6 +16,7 @@ const tipoConfig = {
 
 export default function Movimentacoes() {
   const { movimentacoes, perfumes, baixarEstoque, adicionarEstoque, transferirEstoque, adicionarTester, adicionarMovimentacao } = useApp();
+  const { profile } = useAuth();
   const [filtroTipo, setFiltroTipo] = useState<string>("Todos");
   const [busca, setBusca] = useState("");
   const [ordenacao, setOrdenacao] = useState<"recente" | "antiga">("recente");
@@ -80,6 +82,7 @@ export default function Movimentacoes() {
       perfumeNome: p.nome,
       quantidade: form.tipo === "Ajuste" ? form.quantidade : Math.abs(form.quantidade),
       observacao: form.observacao || undefined,
+      registradoPor: profile?.nome || "Desconhecido",
       ...(form.tipo === "Transferência"
         ? { depositoOrigem: form.depositoOrigem as Deposito, depositoDestino: form.depositoDestino as Deposito }
         : form.tipo === "Saída Tester"
@@ -334,6 +337,9 @@ export default function Movimentacoes() {
                 </p>
                 {m.observacao && (
                   <p className="text-[11px] text-muted-foreground italic mt-0.5">"{m.observacao}"</p>
+                )}
+                {m.registradoPor && (
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Registrado por: {m.registradoPor}</p>
                 )}
               </div>
             </div>

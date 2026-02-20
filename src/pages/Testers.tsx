@@ -2,11 +2,13 @@ import { useState, useMemo } from "react";
 import { FlaskConical, Search, Plus, Trash2 } from "lucide-react";
 import { formatCurrency, type Deposito } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
   const { testers, perfumes, baixarEstoque, adicionarTesterDB, removerTesterDB } = useApp();
+  const { profile } = useAuth();
   const [busca, setBusca] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
   const [showForm, setShowForm] = useState(false);
@@ -56,6 +58,7 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
       deposito,
       quantidade: form.quantidade,
       custo: p.custo,
+      registradoPor: profile?.nome || "Desconhecido",
     });
     setForm({ perfumeId: "", deposito: "", quantidade: 1 });
     setShowForm(false);

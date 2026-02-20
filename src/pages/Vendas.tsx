@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { ShoppingCart, Plus, Calendar, User, Tag, FileText, CreditCard, Search, ArrowUpDown, Store } from "lucide-react";
+import { ShoppingCart, Plus, Calendar, User, Tag, FileText, CreditCard, Search, ArrowUpDown, Store, Trash2 } from "lucide-react";
 import { formatCurrency, formatDate, type Deposito, type Venda, type TipoPagamento, type Bandeira, type TipoAjusteValor } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
@@ -12,9 +12,10 @@ const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito
 const bandeiras: Bandeira[] = ["Visa", "Mastercard", "Elo", "Amex", "Hipercard"];
 
 export default function Vendas() {
-  const { vendas, perfumes, baixarEstoque, vendedoras: vendedorasCtx, adicionarVenda } = useApp();
-  const { role } = useAuth();
+  const { vendas, perfumes, baixarEstoque, vendedoras: vendedorasCtx, adicionarVenda, excluirVenda } = useApp();
+  const { role, profile } = useAuth();
   const isVendedor = role === "vendedor";
+  const isMaster = role === "master";
   const vendedoras = [...vendedorasCtx, ...vendedorasFixas];
   const [filtroData, setFiltroData] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
@@ -157,11 +158,16 @@ export default function Vendas() {
       tipoPagamento: form.tipoPagamento as TipoPagamento,
       bandeira: form.tipoPagamento === "Crédito" || form.tipoPagamento === "Débito" ? form.bandeira : "N/A",
       observacao: form.observacao,
+      registradoPor: profile?.nome || "Desconhecido",
     };
     await adicionarVenda(novaVenda);
     baixarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
     setForm({ perfumeId: "", deposito: "", quantidade: 1, ajuste: 0, tipoAjuste: "desconto", tipoCalculo: "valor", vendedora: "", tipoPagamento: "", bandeira: "N/A", observacao: "" });
     setShowForm(false);
+  };
+  const handleExcluirVenda = async (id: string) => {
+    if (!confirm("Tem certeza que deseja excluir esta venda?")) return;
+    await excluirVenda(id);
   };
 
   const temFiltroAtivo = filtroData || filtroDeposito !== "Todos" || filtroVendedora !== "Todas" || busca.trim() !== "";
@@ -590,15 +596,23 @@ export default function Vendas() {
                     {formatDate(v.data)} · {v.deposito} · {v.quantidade} unid.
                   </p>
                 </div>
-                {!isVendedor && (
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-gold">{formatCurrency(v.total)}</p>
-                    <p className="text-[10px] text-muted-foreground">{formatCurrency(v.precoUnitario)}/un</p>
-                  </div>
-                )}
+                <div className="flex items-center gap-2">
+                  {!isVendedor && (
+                    <div className="text-right">
+                      <p className="text-sm font-bold text-gold">{formatCurrency(v.total)}</p>
+                      <p className="text-[10px] text-muted-foreground">{formatCurrency(v.precoUnitario)}/un</p>
+                    </div>
+                  )}
+                  {isMaster && (
+                    <button onClick={() => handleExcluirVenda(v.id)}
+                      className="p-2 rounded-lg text-muted-foreground hover:text-destructive transition-colors">
+                      <Trash2 size={15} />
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-1 mt-2 pt-2 border-t border-border">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <div className="flex items-center gap-1">
                     <User size={10} className="text-muted-foreground" />
                     <p className="text-[11px] text-muted-foreground">{v.vendedora}</p>
@@ -609,6 +623,9 @@ export default function Vendas() {
                       {v.tipoPagamento}{v.bandeira !== "N/A" ? ` · ${v.bandeira}` : ""}
                     </p>
                   </div>
+                  {v.registradoPor && (
+                    <p className="text-[10px] text-muted-foreground">Reg: {v.registradoPor}</p>
+                  )}
                 </div>
                 {v.desconto > 0 && !isVendedor && (
                   <div className="flex items-center gap-1">

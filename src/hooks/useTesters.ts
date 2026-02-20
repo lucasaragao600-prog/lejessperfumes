@@ -11,6 +11,7 @@ function rowToTester(row: any): Tester {
     deposito: row.deposito as Deposito,
     quantidade: row.quantidade,
     custo: Number(row.custo),
+    registradoPor: row.registrado_por || "",
   };
 }
 
@@ -31,7 +32,7 @@ export function useTesters() {
   });
 
   const adicionarTester = useMutation({
-    mutationFn: async (t: { perfumeId: string; perfumeNome: string; marca: string; deposito: Deposito; quantidade: number; custo: number }) => {
+    mutationFn: async (t: { perfumeId: string; perfumeNome: string; marca: string; deposito: Deposito; quantidade: number; custo: number; registradoPor?: string }) => {
       // Check if tester exists for this perfume+deposito
       const { data: existing } = await supabase
         .from("testers")
@@ -54,6 +55,7 @@ export function useTesters() {
           deposito: t.deposito,
           quantidade: t.quantidade,
           custo: t.custo,
+          registrado_por: t.registradoPor || "",
         });
         if (error) throw error;
       }

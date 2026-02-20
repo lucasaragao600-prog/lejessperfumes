@@ -71,6 +71,7 @@ export type Database = {
           perfume_id: string
           perfume_nome: string
           quantidade: number
+          registrado_por: string
           tipo: string
         }
         Insert: {
@@ -84,6 +85,7 @@ export type Database = {
           perfume_id: string
           perfume_nome: string
           quantidade?: number
+          registrado_por?: string
           tipo: string
         }
         Update: {
@@ -97,6 +99,7 @@ export type Database = {
           perfume_id?: string
           perfume_nome?: string
           quantidade?: number
+          registrado_por?: string
           tipo?: string
         }
         Relationships: [
@@ -214,6 +217,7 @@ export type Database = {
           perfume_id: string
           perfume_nome: string
           quantidade: number
+          registrado_por: string
         }
         Insert: {
           created_at?: string
@@ -224,6 +228,7 @@ export type Database = {
           perfume_id: string
           perfume_nome: string
           quantidade?: number
+          registrado_por?: string
         }
         Update: {
           created_at?: string
@@ -234,6 +239,7 @@ export type Database = {
           perfume_id?: string
           perfume_nome?: string
           quantidade?: number
+          registrado_por?: string
         }
         Relationships: [
           {
@@ -279,6 +285,7 @@ export type Database = {
           perfume_nome: string
           preco_unitario: number
           quantidade: number
+          registrado_por: string
           tipo_ajuste: string
           tipo_pagamento: string
           total: number
@@ -296,6 +303,7 @@ export type Database = {
           perfume_nome: string
           preco_unitario?: number
           quantidade?: number
+          registrado_por?: string
           tipo_ajuste?: string
           tipo_pagamento?: string
           total?: number
@@ -313,6 +321,7 @@ export type Database = {
           perfume_nome?: string
           preco_unitario?: number
           quantidade?: number
+          registrado_por?: string
           tipo_ajuste?: string
           tipo_pagamento?: string
           total?: number

@@ -22,12 +22,13 @@ interface AppContextType {
   vendas: Venda[];
   setVendas: any;
   adicionarVenda: (v: Venda) => Promise<void>;
+  excluirVenda: (id: string) => Promise<void>;
   movimentacoes: Movimentacao[];
   setMovimentacoes: any;
   adicionarMovimentacao: (m: Movimentacao) => Promise<void>;
   testers: Tester[];
   setTesters: any;
-  adicionarTesterDB: (t: { perfumeId: string; perfumeNome: string; marca: string; deposito: Deposito; quantidade: number; custo: number }) => Promise<void>;
+  adicionarTesterDB: (t: { perfumeId: string; perfumeNome: string; marca: string; deposito: Deposito; quantidade: number; custo: number; registradoPor?: string }) => Promise<void>;
   removerTesterDB: (id: string) => Promise<void>;
   casas: Casa[];
   setCasas: any;
@@ -66,7 +67,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   } = usePerfumes();
 
   const { casas, isLoading: casasLoading, adicionarCasa: adicionarCasaDB, removerCasa: removerCasaDB } = useCasas();
-  const { vendas, adicionarVenda } = useVendas();
+  const { vendas, adicionarVenda, excluirVenda } = useVendas();
   const { movimentacoes, adicionarMovimentacao } = useMovimentacoes();
   const { testers, adicionarTester: adicionarTesterDB, removerTester: removerTesterDB } = useTesters();
   const { vendedoras, adicionarVendedora: adicionarVendedoraDB, removerVendedora: removerVendedoraDB } = useVendedoras();
@@ -112,6 +113,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         vendas,
         setVendas: noop,
         adicionarVenda,
+        excluirVenda,
         movimentacoes,
         setMovimentacoes: noop,
         adicionarMovimentacao,

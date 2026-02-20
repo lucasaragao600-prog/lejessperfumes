@@ -14,6 +14,7 @@ function rowToMov(row: any): Movimentacao {
     deposito: row.deposito || undefined,
     quantidade: row.quantidade,
     observacao: row.observacao || undefined,
+    registradoPor: row.registrado_por || "",
   };
 }
 
@@ -45,6 +46,7 @@ export function useMovimentacoes() {
         deposito: m.deposito || null,
         quantidade: m.quantidade,
         observacao: m.observacao || "",
+        registrado_por: m.registradoPor || "",
       });
       if (error) throw error;
     },
