@@ -67,6 +67,25 @@ export function usePerfumes() {
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["perfumes"] });
 
+  const atualizarPrecos = useMutation({
+    mutationFn: async ({
+      perfumeId,
+      custo,
+      precoVenda,
+    }: {
+      perfumeId: string;
+      custo: number;
+      precoVenda: number;
+    }) => {
+      const { error } = await supabase
+        .from("perfumes")
+        .update({ custo, preco_venda: precoVenda })
+        .eq("id", perfumeId);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   const adicionarPerfume = useMutation({
     mutationFn: async (p: Perfume) => {
       const { error } = await supabase.from("perfumes").insert(perfumeToRow(p));
@@ -146,6 +165,7 @@ export function usePerfumes() {
     perfumes,
     isLoading,
     adicionarPerfume: adicionarPerfume.mutateAsync,
+    atualizarPrecos: atualizarPrecos.mutateAsync,
     baixarEstoque,
     adicionarEstoque,
     transferirEstoque,
