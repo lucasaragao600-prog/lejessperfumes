@@ -77,7 +77,8 @@ Deno.serve(async (req) => {
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(userId);
 
     if (deleteError) {
-      return new Response(JSON.stringify({ error: deleteError.message }), {
+      console.error('[delete-user] deleteUser error:', deleteError);
+      return new Response(JSON.stringify({ error: "Erro ao excluir usuário" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
