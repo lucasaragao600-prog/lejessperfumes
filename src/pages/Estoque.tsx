@@ -92,12 +92,14 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
               <AlertTriangle size={12} />
               {alertas}
             </button>
-            <button
-              onClick={() => setShowCadastro(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-gold-muted bg-gold/10 text-gold transition-all"
-            >
-              <Plus size={12} /> Novo
-            </button>
+            {isMaster && (
+              <button
+                onClick={() => setShowCadastro(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-gold-muted bg-gold/10 text-gold transition-all"
+              >
+                <Plus size={12} /> Novo
+              </button>
+            )}
           </div>
         </div>
 
