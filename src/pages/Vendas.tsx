@@ -11,11 +11,11 @@ function getHojeManaus() {
 const hoje = getHojeManaus();
 
 const vendedorasFixas = ["Outra"];
-const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito"];
+const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada"];
 const bandeiras: Bandeira[] = ["Visa", "Mastercard", "Elo", "Amex", "Hipercard"];
 
 export default function Vendas() {
-  const { vendas, perfumes, baixarEstoque, vendedoras: vendedorasCtx, adicionarVenda, excluirVenda } = useApp();
+  const { vendas, perfumes, baixarEstoque, vendedoras: vendedorasCtx, adicionarVenda, excluirVenda, concentracoesConfig } = useApp();
   const { role, profile } = useAuth();
   const isVendedor = role === "vendedor";
   const isMaster = role === "master";
@@ -439,7 +439,7 @@ export default function Vendas() {
               <select value={form.perfumeId} onChange={(e) => setForm({ ...form, perfumeId: e.target.value, ajuste: 0 })}
                 className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted">
                 <option value="">Selecione...</option>
-                {perfumes.map((p) => <option key={p.id} value={p.id}>{p.marca} - {p.nome} - {p.concentracao} - {p.volume}ml</option>)}
+                {perfumes.map((p) => <option key={p.id} value={p.id}>{p.marca} - {p.nome} - {(concentracoesConfig[p.concentracao] || p.concentracao)} - {p.volume}ml</option>)}
               </select>
               {perfumeSelecionado && (
                 <div className="flex gap-2 mt-1.5">
@@ -481,7 +481,7 @@ export default function Vendas() {
 
             <div>
               <label className="text-[11px] text-muted-foreground mb-1 block flex items-center gap-1"><CreditCard size={10} />Pagamento</label>
-              <div className="grid grid-cols-4 gap-1.5">
+              <div className="grid grid-cols-3 gap-1.5">
                 {tiposPagamento.map((tp) => (
                   <button key={tp} onClick={() => setForm({ ...form, tipoPagamento: tp, bandeira: "N/A" })}
                     className={`py-2 rounded-lg text-xs font-medium border transition-all ${form.tipoPagamento === tp ? "border-gold bg-gold/15 text-gold" : "border-border bg-surface-overlay text-muted-foreground"}`}>
