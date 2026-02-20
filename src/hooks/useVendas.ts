@@ -18,6 +18,7 @@ function rowToVenda(row: any): Venda {
     tipoPagamento: row.tipo_pagamento as TipoPagamento,
     bandeira: row.bandeira as Bandeira,
     observacao: row.observacao,
+    registradoPor: row.registrado_por || "",
   };
 }
 
@@ -53,7 +54,16 @@ export function useVendas() {
         bandeira: v.bandeira,
         observacao: v.observacao,
         data: v.data,
+        registrado_por: v.registradoPor || "",
       });
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
+  const excluirVenda = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("vendas").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: invalidate,
@@ -63,6 +73,7 @@ export function useVendas() {
     vendas,
     isLoading,
     adicionarVenda: adicionarVenda.mutateAsync,
+    excluirVenda: excluirVenda.mutateAsync,
     setVendas: () => {},
   };
 }

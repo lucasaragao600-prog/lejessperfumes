@@ -53,12 +53,13 @@ export interface Venda {
   quantidade: number;
   precoUnitario: number;
   tipoAjuste: TipoAjusteValor;
-  desconto: number;     // valor do ajuste (positivo = desconto, positivo = acrescimo)
+  desconto: number;
   total: number;
   vendedora: string;
   tipoPagamento: TipoPagamento;
   bandeira: Bandeira;
   observacao: string;
+  registradoPor?: string;
 }
 
 export interface Movimentacao {
@@ -72,6 +73,7 @@ export interface Movimentacao {
   deposito?: Deposito;
   quantidade: number;
   observacao?: string;
+  registradoPor?: string;
 }
 
 export interface Tester {
@@ -82,6 +84,7 @@ export interface Tester {
   deposito: Deposito;
   quantidade: number;
   custo: number;
+  registradoPor?: string;
 }
 
 // Casas/marcas cadastradas com suas siglas
