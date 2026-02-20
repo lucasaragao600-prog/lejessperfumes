@@ -5,8 +5,11 @@ import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
-const hoje = new Date().toISOString().slice(0, 10);
-const ontem = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+function getHojeManaus() {
+  return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Manaus" })).toISOString().slice(0, 10);
+}
+const hoje = getHojeManaus();
+
 const vendedorasFixas = ["Outra"];
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito"];
 const bandeiras: Bandeira[] = ["Visa", "Mastercard", "Elo", "Amex", "Hipercard"];
@@ -51,7 +54,7 @@ export default function Vendas() {
 
   const filtradas = useMemo(() => {
     let result = vendas.filter((v) => {
-      const matchData = filtroData ? v.data === filtroData : true;
+      const matchData = isVendedor ? v.data === hoje : (filtroData ? v.data === filtroData : true);
       const matchDeposito = filtroDeposito === "Todos" || v.deposito === filtroDeposito;
       const matchVendedora = filtroVendedora === "Todas" || v.vendedora === filtroVendedora;
       const matchBusca = busca.trim() === "" || v.perfumeNome.toLowerCase().includes(busca.toLowerCase()) || v.vendedora.toLowerCase().includes(busca.toLowerCase());
@@ -79,9 +82,7 @@ export default function Vendas() {
 
   const vendasRelatorio = useMemo(() => {
     const modo = isVendedor ? "dia" : modoRelatorio;
-    const dataEfetiva = isVendedor
-      ? (dataRelatorio === hoje || dataRelatorio === ontem ? dataRelatorio : hoje)
-      : dataRelatorio;
+    const dataEfetiva = isVendedor ? hoje : dataRelatorio;
 
     return vendas.filter((v) => {
       const matchLoja = lojaRelatorio === "Geral" || v.deposito === lojaRelatorio;
@@ -142,10 +143,10 @@ export default function Vendas() {
       alert(`Estoque insuficiente em ${form.deposito}. Disponível: ${estoqueAtual}`);
       return;
     }
-    const hoje = new Date().toISOString().slice(0, 10);
+    const hojeAtual = getHojeManaus();
     const novaVenda: Venda = {
       id: `v${Date.now()}`,
-      data: hoje,
+      data: hojeAtual,
       perfumeId: form.perfumeId,
       perfumeNome: p.nome,
       deposito: form.deposito as Deposito,
@@ -216,11 +217,17 @@ export default function Vendas() {
         </div>
 
         <div className="grid grid-cols-2 gap-2 mb-1">
-          <div className="relative">
-            <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input type="date" value={filtroData} onChange={(e) => setFiltroData(e.target.value)}
-              className="w-full bg-surface border border-border rounded-xl pl-8 pr-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted [color-scheme:dark]" />
-          </div>
+          {!isVendedor ? (
+            <div className="relative">
+              <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input type="date" value={filtroData} onChange={(e) => setFiltroData(e.target.value)}
+                className="w-full bg-surface border border-border rounded-xl pl-8 pr-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted [color-scheme:dark]" />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center bg-surface border border-border rounded-xl px-3 py-2 text-xs text-muted-foreground">
+              <Calendar size={13} className="mr-1.5" /> Hoje
+            </div>
+          )}
           <select value={filtroDeposito} onChange={(e) => setFiltroDeposito(e.target.value as Deposito | "Todos")}
             className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted">
             <option value="Todos">Depósito</option>
@@ -271,12 +278,9 @@ export default function Vendas() {
               <div>
                 {isVendedor ? (
                   <div className="flex gap-1.5 mb-3">
-                    {[{ label: "Hoje", value: hoje }, { label: "Ontem", value: ontem }].map((opt) => (
-                      <button key={opt.value} onClick={() => setDataRelatorio(opt.value)}
-                        className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-all ${dataRelatorio === opt.value ? "bg-gold/20 text-gold border-gold-muted" : "bg-surface-overlay border-border text-muted-foreground"}`}>
-                        {opt.label}
-                      </button>
-                    ))}
+                    <div className="flex-1 py-1.5 rounded-lg text-xs font-medium border bg-gold/20 text-gold border-gold-muted text-center">
+                      Hoje
+                    </div>
                   </div>
                 ) : (
                   <input type="date" value={dataRelatorio} onChange={(e) => setDataRelatorio(e.target.value)}
