@@ -360,6 +360,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_master_exists: { Args: never; Returns: boolean }
       claim_first_master: { Args: { p_user_id: string }; Returns: boolean }
       has_role: {
         Args: {

@@ -1,9 +1,14 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const DeleteUserSchema = z.object({
+  userId: z.string().uuid(),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -22,7 +27,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify caller is master
     const callerClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -49,16 +53,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { userId } = await req.json();
-
-    if (!userId) {
-      return new Response(JSON.stringify({ error: "userId é obrigatório" }), {
+    // Validate input
+    const body = await req.json();
+    const validation = DeleteUserSchema.safeParse(body);
+    if (!validation.success) {
+      return new Response(JSON.stringify({ error: "Formato de userId inválido" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Prevent deleting yourself
+    const { userId } = validation.data;
+
     if (userId === caller.id) {
       return new Response(JSON.stringify({ error: "Você não pode excluir a si mesmo" }), {
         status: 400,
@@ -66,7 +72,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Delete role, profile, then auth user
     await adminClient.from("user_roles").delete().eq("user_id", userId);
     await adminClient.from("profiles").delete().eq("user_id", userId);
     const { error: deleteError } = await adminClient.auth.admin.deleteUser(userId);
@@ -83,7 +88,7 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
+    return new Response(JSON.stringify({ error: "Erro interno do servidor" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

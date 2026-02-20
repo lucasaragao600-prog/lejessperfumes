@@ -1,9 +1,18 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
+
+const CreateUserSchema = z.object({
+  email: z.string().email().max(255),
+  password: z.string().min(6).max(128),
+  nome: z.string().min(1).max(100).trim(),
+  loja: z.string().max(100).trim().optional().default(""),
+  role: z.enum(["master", "vendedor"]),
+});
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,7 +20,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify caller is authenticated
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(JSON.stringify({ error: "Não autorizado" }), {
@@ -23,7 +31,6 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Verify the caller is a master
     const callerClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
       global: { headers: { Authorization: authHeader } },
     });
@@ -35,7 +42,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check master role using admin client
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const { data: roleCheck } = await adminClient
       .from("user_roles")
@@ -51,16 +57,18 @@ Deno.serve(async (req) => {
       });
     }
 
-    const { email, password, nome, loja, role } = await req.json();
-
-    if (!email || !password || !nome || !role) {
-      return new Response(JSON.stringify({ error: "Campos obrigatórios: email, password, nome, role" }), {
+    // Validate input
+    const body = await req.json();
+    const validation = CreateUserSchema.safeParse(body);
+    if (!validation.success) {
+      return new Response(JSON.stringify({ error: "Dados inválidos", details: validation.error.issues }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Create user with admin client
+    const { email, password, nome, loja, role } = validation.data;
+
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
       password,
@@ -75,21 +83,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Update profile with loja
-    await adminClient.from("profiles").update({ loja: loja || "" }).eq("user_id", newUser.user.id);
-
-    // Assign role
-    await adminClient.from("user_roles").insert({
-      user_id: newUser.user.id,
-      role,
-    });
+    await adminClient.from("profiles").update({ loja }).eq("user_id", newUser.user.id);
+    await adminClient.from("user_roles").insert({ user_id: newUser.user.id, role });
 
     return new Response(
       JSON.stringify({ success: true, userId: newUser.user.id }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
+    return new Response(JSON.stringify({ error: "Erro interno do servidor" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
