@@ -41,7 +41,7 @@ export interface Perfume {
 }
 
 export type TipoAjusteValor = "desconto" | "acrescimo";
-export type TipoPagamento = "Dinheiro" | "Pix" | "Débito" | "Crédito";
+export type TipoPagamento = "Dinheiro" | "Pix" | "Débito" | "Crédito" | "Conta Assinada";
 export type Bandeira = "Visa" | "Mastercard" | "Elo" | "Amex" | "Hipercard" | "N/A";
 
 export interface Venda {
