@@ -14,6 +14,7 @@ interface LinhaImportacao {
   volume: number;
   custo: number;
   precoVenda: number;
+  estoqueMinimo: number;
   linha?: number;
   erro?: string;
 }
@@ -47,11 +48,11 @@ export default function ImportarPlanilha() {
 
     if (tipo === "produtos") {
       const dadosModelo = [
-        { nome: "Sauvage EDP 100ml", casa_sigla: "DR", tipo: "NI", concentracao: "EDP", volume: 100, custo: 290, preco_venda: 550 },
-        { nome: "Black Orchid EDP 50ml", casa_sigla: "TF", tipo: "NI", concentracao: "EDP", volume: 50, custo: 350, preco_venda: 680 },
+        { nome: "Sauvage EDP 100ml", casa_sigla: "DR", tipo: "NI", concentracao: "EDP", volume: 100, custo: 290, preco_venda: 550, estoque_minimo: 3 },
+        { nome: "Black Orchid EDP 50ml", casa_sigla: "TF", tipo: "NI", concentracao: "EDP", volume: 50, custo: 350, preco_venda: 680, estoque_minimo: 2 },
       ];
       const wsProdutos = XLSX.utils.json_to_sheet(dadosModelo);
-      wsProdutos["!cols"] = [{ wch: 30 }, { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 12 }];
+      wsProdutos["!cols"] = [{ wch: 30 }, { wch: 12 }, { wch: 8 }, { wch: 8 }, { wch: 8 }, { wch: 10 }, { wch: 12 }, { wch: 14 }];
       XLSX.utils.book_append_sheet(wb, wsProdutos, "Produtos");
 
       const dadosCasas = casas.map((c) => ({ sigla: c.sigla, nome: c.nome, tipo: c.tipo }));
@@ -102,6 +103,7 @@ export default function ImportarPlanilha() {
           const volume = parseInt(String(row.volume || row.Volume || row.VOLUME || row.vol || "0"));
           const custo = parseFloat(String(row.custo || row.Custo || row.CUSTO || row.preco_custo || "0"));
           const precoVenda = parseFloat(String(row.preco_venda || row.PrecoVenda || row.PRECO_VENDA || row.venda || "0"));
+          const estoqueMinimo = parseInt(String(row.estoque_minimo || row.EstoqueMinimo || row.ESTOQUE_MINIMO || row.estoqueMinimo || "0"));
 
           const casa = casas.find((c) => c.sigla === casaSigla);
           const marca = casa?.nome || "";
@@ -123,7 +125,7 @@ export default function ImportarPlanilha() {
             if (existe) erro = "Produto já cadastrado";
           }
 
-          return { nome, marca, casaSigla, tipo, concentracao, volume, custo, precoVenda, erro };
+          return { nome, marca, casaSigla, tipo, concentracao, volume, custo, precoVenda, estoqueMinimo, erro };
         });
 
         setPreview(linhas);
@@ -198,6 +200,7 @@ export default function ImportarPlanilha() {
           codigo, nome: item.nome, marca: item.marca, casa_sigla: item.casaSigla,
           tipo: item.tipo, concentracao: item.concentracao, tamanho: `${item.volume}ml`,
           volume: item.volume, custo: item.custo, preco_venda: item.precoVenda,
+          estoque_minimo: item.estoqueMinimo,
         });
 
         if (error) throw error;
@@ -327,6 +330,7 @@ export default function ImportarPlanilha() {
                   ["volume", "Volume em ml (ex: 100)"],
                   ["custo", "Preço de custo"],
                   ["preco_venda", "Preço de venda"],
+                  ["estoque_minimo", "Estoque mínimo"],
                 ].map(([col, desc]) => (
                   <div key={col} className="flex items-start gap-2">
                     <span className="font-mono text-[10px] font-bold text-gold bg-gold/10 px-1.5 py-0.5 rounded flex-shrink-0">{col}</span>
