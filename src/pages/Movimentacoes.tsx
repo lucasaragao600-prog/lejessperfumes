@@ -277,8 +277,8 @@ export default function Movimentacoes() {
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[11px] text-muted-foreground mb-1 block">Quantidade</label>
-                <input type="number" value={form.quantidade}
-                  onChange={(e) => setForm({ ...form, quantidade: parseInt(e.target.value) || 1 })}
+                <input type="number" min={1} value={form.quantidade === 0 ? "" : form.quantidade}
+                  onChange={(e) => setForm({ ...form, quantidade: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 })}
                   className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted" />
               </div>
               <div>
