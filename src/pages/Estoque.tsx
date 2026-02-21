@@ -1,13 +1,14 @@
 import { useState, useMemo } from "react";
-import { Package, Search, AlertTriangle, Plus, Pencil, Check, X } from "lucide-react";
+import { Package, Search, AlertTriangle, Plus, Pencil } from "lucide-react";
 import { formatCurrency, type Deposito, type Perfume, type TipoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import CadastroPerfume from "@/components/CadastroPerfume";
+import EditarPerfume from "@/components/EditarPerfume";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
-  const { perfumes, tiposPerfumeConfig, concentracoesConfig, atualizarPrecos } = useApp();
+  const { perfumes, tiposPerfumeConfig, concentracoesConfig } = useApp();
   const tipos = useMemo(() =>
     Object.entries(tiposPerfumeConfig).map(([key, label]) => ({ key: key as TipoPerfume, label: String(label) })),
     [tiposPerfumeConfig]
@@ -17,10 +18,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [tipoFiltro, setTipoFiltro] = useState<TipoPerfume | "Todos">("Todos");
   const [showAlertas, setShowAlertas] = useState(false);
   const [showCadastro, setShowCadastro] = useState(false);
-  const [editandoId, setEditandoId] = useState<string | null>(null);
-  const [editCusto, setEditCusto] = useState("");
-  const [editPreco, setEditPreco] = useState("");
-  const [salvando, setSalvando] = useState(false);
+  const [editandoPerfume, setEditandoPerfume] = useState<Perfume | null>(null);
 
   const filtrados = useMemo(() => {
     return perfumes.filter((p) => {
@@ -41,7 +39,6 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   }, [perfumes, busca, depositoFiltro, tipoFiltro, showAlertas]);
 
   const totais = useMemo(() => {
-    // Deriva dos perfumes já filtrados (busca + tipo + depósito + alertas)
     return filtrados.reduce(
       (acc, p) => {
         const qtd = depositoFiltro === "Todos"
@@ -71,8 +68,8 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Modal de cadastro */}
       {showCadastro && <CadastroPerfume onClose={() => setShowCadastro(false)} />}
+      {editandoPerfume && <EditarPerfume perfume={editandoPerfume} onClose={() => setEditandoPerfume(null)} />}
 
       {/* Header */}
       <div className="sticky top-0 z-10 px-4 pt-12 pb-4"
@@ -136,7 +133,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
           ))}
         </div>
 
-        {/* Filtro tipo de perfume */}
+        {/* Filtro tipo */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide">
           {([{ key: "Todos" as const, label: "Todos os tipos" }, ...tipos]).map(({ key, label }) => (
             <button
@@ -218,86 +215,26 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                 </div>
               )}
 
-              {/* Valores - somente master */}
+              {/* Valores + editar - somente master */}
               {isMaster && (
-                editandoId === p.id ? (
-                  <div className="border-t border-border pt-2 space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <p className="text-[9px] text-muted-foreground mb-1">Custo unit. (R$)</p>
-                        <input
-                          type="number"
-                          min={0}
-                          step={0.01}
-                          value={editCusto}
-                          onChange={(e) => setEditCusto(e.target.value)}
-                          className="w-full bg-surface-overlay border border-border rounded-lg px-2 py-1.5 text-xs text-foreground focus:outline-none focus:border-gold-muted"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-[9px] text-muted-foreground mb-1">Venda unit. (R$)</p>
-                        <input
-                          type="number"
-                          min={0}
-                          step={0.01}
-                          value={editPreco}
-                          onChange={(e) => setEditPreco(e.target.value)}
-                          className="w-full bg-surface-overlay border border-border rounded-lg px-2 py-1.5 text-xs text-foreground focus:outline-none focus:border-gold-muted"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        disabled={salvando}
-                        onClick={async () => {
-                          const custo = parseFloat(editCusto);
-                          const preco = parseFloat(editPreco);
-                          if (isNaN(custo) || isNaN(preco) || custo < 0 || preco < 0) return;
-                          setSalvando(true);
-                          try {
-                            await atualizarPrecos(p.id, custo, preco);
-                          } finally {
-                            setSalvando(false);
-                            setEditandoId(null);
-                          }
-                        }}
-                        className="flex-1 flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-semibold text-primary-foreground disabled:opacity-50 transition-opacity"
-                        style={{ background: "var(--gradient-gold)" }}
-                      >
-                        <Check size={12} /> {salvando ? "Salvando…" : "Salvar"}
-                      </button>
-                      <button
-                        onClick={() => setEditandoId(null)}
-                        className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground bg-surface-overlay border border-border"
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
+                <div className="grid grid-cols-3 gap-1.5 border-t border-border pt-2 items-end">
+                  <div>
+                    <p className="text-[9px] text-muted-foreground">Custo unit.</p>
+                    <p className="text-xs text-foreground">{formatCurrency(p.custo)}</p>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-3 gap-1.5 border-t border-border pt-2 items-end">
-                    <div>
-                      <p className="text-[9px] text-muted-foreground">Custo unit.</p>
-                      <p className="text-xs text-foreground">{formatCurrency(p.custo)}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] text-muted-foreground">Venda unit.</p>
-                      <p className="text-xs text-gold">{formatCurrency(p.precoVenda)}</p>
-                    </div>
-                    <div className="text-right">
-                      <button
-                        onClick={() => {
-                          setEditandoId(p.id);
-                          setEditCusto(String(p.custo));
-                          setEditPreco(String(p.precoVenda));
-                        }}
-                        className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-gold transition-colors ml-auto"
-                      >
-                        <Pencil size={11} /> Editar
-                      </button>
-                    </div>
+                  <div>
+                    <p className="text-[9px] text-muted-foreground">Venda unit.</p>
+                    <p className="text-xs text-gold">{formatCurrency(p.precoVenda)}</p>
                   </div>
-                )
+                  <div className="text-right">
+                    <button
+                      onClick={() => setEditandoPerfume(p)}
+                      className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-gold transition-colors ml-auto"
+                    >
+                      <Pencil size={11} /> Editar
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           );

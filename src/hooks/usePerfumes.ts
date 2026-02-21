@@ -86,6 +86,29 @@ export function usePerfumes() {
     onSuccess: invalidate,
   });
 
+  const editarPerfume = useMutation({
+    mutationFn: async (p: Partial<Perfume> & { id: string }) => {
+      const updateData: Record<string, any> = {};
+      if (p.nome !== undefined) updateData.nome = p.nome;
+      if (p.marca !== undefined) updateData.marca = p.marca;
+      if (p.casaSigla !== undefined) updateData.casa_sigla = p.casaSigla;
+      if (p.tipo !== undefined) updateData.tipo = p.tipo;
+      if (p.concentracao !== undefined) updateData.concentracao = p.concentracao;
+      if (p.tamanho !== undefined) updateData.tamanho = p.tamanho;
+      if (p.volume !== undefined) updateData.volume = p.volume;
+      if (p.custo !== undefined) updateData.custo = p.custo;
+      if (p.precoVenda !== undefined) updateData.preco_venda = p.precoVenda;
+      if (p.estoqueMinimo !== undefined) updateData.estoque_minimo = p.estoqueMinimo;
+      if (p.codigo !== undefined) updateData.codigo = p.codigo;
+      const { error } = await supabase
+        .from("perfumes")
+        .update(updateData)
+        .eq("id", p.id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   const adicionarPerfume = useMutation({
     mutationFn: async (p: Perfume) => {
       const { error } = await supabase.from("perfumes").insert(perfumeToRow(p));
@@ -165,6 +188,7 @@ export function usePerfumes() {
     perfumes,
     isLoading,
     adicionarPerfume: adicionarPerfume.mutateAsync,
+    editarPerfume: editarPerfume.mutateAsync,
     atualizarPrecos: atualizarPrecos.mutateAsync,
     baixarEstoque,
     adicionarEstoque,
