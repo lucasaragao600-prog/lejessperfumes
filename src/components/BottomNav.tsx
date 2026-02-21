@@ -1,4 +1,4 @@
-import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users } from "lucide-react";
+import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet } from "lucide-react";
 
 interface BottomNavProps {
   activeTab: string;
@@ -12,6 +12,7 @@ const allTabs = [
   { id: "movimentacoes", label: "Moviment.", icon: ArrowLeftRight, masterOnly: false },
   { id: "testers", label: "Testers", icon: FlaskConical, masterOnly: false },
   { id: "dashboards", label: "Dashboard", icon: BarChart3, masterOnly: true },
+  { id: "importar", label: "Importar", icon: FileSpreadsheet, masterOnly: true },
   { id: "configuracoes", label: "Config.", icon: Settings, masterOnly: true },
   { id: "usuarios", label: "Usuários", icon: Users, masterOnly: true },
 ];
