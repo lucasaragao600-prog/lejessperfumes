@@ -507,7 +507,7 @@ export default function CadastroPerfume({ onClose }: Props) {
               <div>
                 <label className="text-[10px] text-muted-foreground mb-1 block">Tipo</label>
                 <div className="grid grid-cols-4 gap-1.5">
-                  {(Object.entries(tiposPerfumeConfig) as [TipoPerfume, string][]).map(([key, _label]) => (
+                  {(Object.entries(tiposPerfumeConfig) as [TipoPerfume, string][]).map(([key, label]) => (
                     <button
                       key={key}
                       onClick={() => setNovaCasaTipo(key)}
@@ -517,7 +517,7 @@ export default function CadastroPerfume({ onClose }: Props) {
                           : "bg-surface-overlay border-border text-muted-foreground"
                       }`}
                     >
-                      {key}
+                      {label}
                     </button>
                   ))}
                 </div>
