@@ -51,6 +51,7 @@ interface AppContextType {
   transferirEstoque: (perfumeId: string, origem: Deposito, destino: Deposito, quantidade: number) => void;
   adicionarTester: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
   adicionarPerfume: (perfume: Perfume) => void;
+  editarPerfume: (perfume: Partial<Perfume> & { id: string }) => Promise<void>;
   atualizarPrecos: (perfumeId: string, custo: number, precoVenda: number) => Promise<void>;
 }
 
@@ -61,6 +62,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     perfumes,
     isLoading: perfumesLoading,
     adicionarPerfume: adicionarPerfumeDB,
+    editarPerfume: editarPerfumeDB,
     atualizarPrecos: atualizarPrecosDB,
     baixarEstoque: baixarEstoqueDB,
     adicionarEstoque: adicionarEstoqueDB,
@@ -148,6 +150,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         transferirEstoque,
         adicionarTester,
         adicionarPerfume,
+        editarPerfume: editarPerfumeDB,
         atualizarPrecos,
       }}
     >
