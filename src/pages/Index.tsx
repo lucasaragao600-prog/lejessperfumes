@@ -9,6 +9,7 @@ import Dashboards from "@/pages/Dashboards";
 import Configuracoes from "@/pages/Configuracoes";
 import Login from "@/pages/Login";
 import GerenciarUsuarios from "@/pages/GerenciarUsuarios";
+import ImportarPlanilha from "@/pages/ImportarPlanilha";
 import { AppProvider } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 
@@ -68,6 +69,7 @@ const Index = () => {
       case "movimentacoes": return <Movimentacoes />;
       case "testers": return <Testers isMaster={isMaster} />;
       case "dashboards": return isMaster ? <Dashboards /> : <Estoque isMaster={false} />;
+      case "importar": return isMaster ? <ImportarPlanilha /> : <Estoque isMaster={false} />;
       case "configuracoes": return isMaster ? <Configuracoes /> : <Estoque isMaster={false} />;
       case "usuarios": return isMaster ? <GerenciarUsuarios /> : <Estoque isMaster={false} />;
       default: return <Estoque isMaster={isMaster} />;
