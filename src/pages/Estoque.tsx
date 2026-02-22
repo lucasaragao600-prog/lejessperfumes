@@ -46,14 +46,17 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const totais = useMemo(() => {
     return filtrados.reduce(
       (acc, p) => {
-        const qtd = depositoFiltro === "Todos"
-          ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
-          : p.estoques[depositoFiltro as Deposito];
+        const qtdGeral = Object.values(p.estoques).reduce((a, b) => a + b, 0);
+        const qtd = depositoFiltro === "Todos" ? qtdGeral : p.estoques[depositoFiltro as Deposito];
         acc.custo += qtd * p.custo;
         acc.venda += qtd * p.precoVenda;
+        acc.unidades += qtd;
+        acc.casa += p.estoques.Casa;
+        acc.sumauma += p.estoques["Sumaúma"];
+        acc.amazonas += p.estoques.Amazonas;
         return acc;
       },
-      { custo: 0, venda: 0 }
+      { custo: 0, venda: 0, unidades: 0, casa: 0, sumauma: 0, amazonas: 0 }
     );
   }, [filtrados, depositoFiltro]);
 
@@ -154,6 +157,22 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Cards de quantidade */}
+      <div className="px-4 mb-2 grid grid-cols-4 gap-2">
+        {[
+          { label: "Total", value: totais.unidades },
+          { label: "Casa", value: totais.casa },
+          { label: "Sumaúma", value: totais.sumauma },
+          { label: "Amazonas", value: totais.amazonas },
+        ].map(({ label, value }) => (
+          <div key={label} className="bg-surface border border-border rounded-xl p-2.5 text-center">
+            <p className="text-[9px] text-muted-foreground mb-0.5">{label}</p>
+            <p className="text-sm font-bold text-gold">{value}</p>
+            <p className="text-[8px] text-muted-foreground">un.</p>
+          </div>
+        ))}
       </div>
 
       {/* Cards de valor - somente master */}
