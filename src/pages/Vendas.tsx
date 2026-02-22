@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { ShoppingCart, Plus, Calendar, User, Tag, FileText, CreditCard, Search, ArrowUpDown, Store, Trash2 } from "lucide-react";
+import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
 import { formatCurrency, formatDate, type Deposito, type Venda, type TipoPagamento, type Bandeira, type TipoAjusteValor } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
@@ -436,18 +437,12 @@ export default function Vendas() {
           <div className="space-y-3">
             <div>
               <label className="text-[11px] text-muted-foreground mb-1 block">Perfume</label>
-              <select value={form.perfumeId} onChange={(e) => setForm({ ...form, perfumeId: e.target.value, ajuste: 0 })}
-                className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted">
-                <option value="">Selecione...</option>
-                {perfumes.map((p) => <option key={p.id} value={p.id}>{p.marca} - {p.nome} - {(concentracoesConfig[p.concentracao] || p.concentracao)} - {p.volume}ml</option>)}
-              </select>
-              {perfumeSelecionado && (
-                <div className="flex gap-2 mt-1.5">
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">{perfumeSelecionado.concentracao}</span>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">{perfumeSelecionado.volume} ml</span>
-                  <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">{perfumeSelecionado.marca}</span>
-                </div>
-              )}
+              <PerfumeSearchSelect
+                perfumes={perfumes}
+                value={form.perfumeId}
+                onChange={(id) => setForm({ ...form, perfumeId: id, ajuste: 0 })}
+                concentracoesConfig={concentracoesConfig}
+              />
             </div>
 
             <div>
