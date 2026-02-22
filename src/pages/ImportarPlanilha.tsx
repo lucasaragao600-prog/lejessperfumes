@@ -5,6 +5,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { useApp } from "@/context/AppContext";
 import { toast } from "sonner";
 
+// Converte número no formato BR (2.000,50) ou US (2000.50) para float
+function parseBRNumber(val: string): number {
+  const s = val.trim();
+  if (!s) return 0;
+  if (s.includes(",") && s.includes(".")) {
+    const lastComma = s.lastIndexOf(",");
+    const lastDot = s.lastIndexOf(".");
+    if (lastComma > lastDot) {
+      return parseFloat(s.replace(/\./g, "").replace(",", ".")) || 0;
+    } else {
+      return parseFloat(s.replace(/,/g, "")) || 0;
+    }
+  }
+  if (s.includes(",")) {
+    return parseFloat(s.replace(",", ".")) || 0;
+  }
+  return parseFloat(s) || 0;
+}
+
 interface LinhaImportacao {
   nome: string;
   marca: string;
@@ -101,8 +120,8 @@ export default function ImportarPlanilha() {
           const tipo = String(row.tipo || row.Tipo || row.TIPO || "").trim().toUpperCase();
           const concentracao = String(row.concentracao || row.Concentracao || row.CONCENTRACAO || row.conc || "").trim().toUpperCase();
           const volume = parseInt(String(row.volume || row.Volume || row.VOLUME || row.vol || "0"));
-          const custo = parseFloat(String(row.custo || row.Custo || row.CUSTO || row.preco_custo || "0"));
-          const precoVenda = parseFloat(String(row.preco_venda || row.PrecoVenda || row.PRECO_VENDA || row.venda || "0"));
+          const custo = parseBRNumber(String(row.custo || row.Custo || row.CUSTO || row.preco_custo || "0"));
+          const precoVenda = parseBRNumber(String(row.preco_venda || row.PrecoVenda || row.PRECO_VENDA || row.venda || "0"));
           const estoqueMinimo = parseInt(String(row.estoque_minimo || row.EstoqueMinimo || row.ESTOQUE_MINIMO || row.estoqueMinimo || "0"));
 
           const casa = casas.find((c) => c.sigla === casaSigla);
