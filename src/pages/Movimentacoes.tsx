@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { ArrowLeftRight, ArrowDown, RefreshCw, FlaskConical, Plus, Search, ArrowUpDown } from "lucide-react";
+import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
 import { formatDate, type Deposito, type Movimentacao } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
@@ -197,24 +198,12 @@ export default function Movimentacoes() {
             {/* Perfume */}
             <div>
               <label className="text-[11px] text-muted-foreground mb-1 block">Perfume</label>
-              <select
+              <PerfumeSearchSelect
+                perfumes={perfumes}
                 value={form.perfumeId}
-                onChange={(e) => setForm({ ...form, perfumeId: e.target.value })}
-                className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
-              >
-                <option value="">Selecione...</option>
-                {perfumes.map((p) => <option key={p.id} value={p.id}>{p.marca} - {p.nome} - {(concentracoesConfig[p.concentracao] || p.concentracao)} - {p.volume}ml</option>)}
-              </select>
-              {(() => {
-                const pf = perfumes.find((p) => p.id === form.perfumeId);
-                return pf ? (
-                  <div className="flex gap-2 mt-1.5">
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">{pf.concentracao}</span>
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">{pf.volume} ml</span>
-                    <span className="px-2 py-0.5 rounded-md text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground">{pf.marca}</span>
-                  </div>
-                ) : null;
-              })()}
+                onChange={(id) => setForm({ ...form, perfumeId: id })}
+                concentracoesConfig={concentracoesConfig}
+              />
             </div>
 
             {/* Depósito(s) */}
