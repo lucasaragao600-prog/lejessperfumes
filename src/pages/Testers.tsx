@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { FlaskConical, Search, Plus, Trash2 } from "lucide-react";
+import { FlaskConical, Search, Plus, Trash2, Pencil, Check, X } from "lucide-react";
 import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
 import { formatCurrency, type Deposito } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
@@ -8,12 +8,14 @@ import { useAuth } from "@/context/AuthContext";
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
-  const { testers, perfumes, baixarEstoque, adicionarTesterDB, removerTesterDB, concentracoesConfig } = useApp();
+  const { testers, perfumes, baixarEstoque, adicionarTesterDB, removerTesterDB, ajustarTesterDB, concentracoesConfig } = useApp();
   const { profile } = useAuth();
   const [busca, setBusca] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ perfumeId: "", deposito: "" as Deposito | "", quantidade: 1 });
+  const [ajusteId, setAjusteId] = useState<string | null>(null);
+  const [ajusteQtd, setAjusteQtd] = useState(0);
 
   const filtrados = useMemo(() => {
     const q = busca.toLowerCase();
@@ -67,6 +69,12 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
 
   const handleRemover = async (id: string) => {
     await removerTesterDB(id);
+  };
+
+  const handleAjuste = async (id: string) => {
+    if (ajusteQtd < 0) return;
+    await ajustarTesterDB({ id, novaQuantidade: ajusteQtd });
+    setAjusteId(null);
   };
 
   return (
@@ -219,6 +227,12 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
                 className="p-2 rounded-lg text-muted-foreground hover:text-destructive transition-colors">
                 <Trash2 size={15} />
               </button>
+              {isMaster && (
+                <button onClick={() => { setAjusteId(ajusteId === t.id ? null : t.id); setAjusteQtd(t.quantidade); }}
+                  className="p-2 rounded-lg text-muted-foreground hover:text-gold transition-colors">
+                  <Pencil size={15} />
+                </button>
+              )}
             </div>
             <div className="grid grid-cols-4 gap-2 mt-3 border-t border-border pt-3">
               <div>
@@ -244,6 +258,25 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
               </div>
               )}
             </div>
+            {/* Ajuste inline */}
+            {ajusteId === t.id && (
+              <div className="mt-3 border-t border-border pt-3 flex items-center gap-2">
+                <p className="text-[10px] text-muted-foreground whitespace-nowrap">Nova qtd:</p>
+                <input
+                  type="number" min={0} value={ajusteQtd === 0 ? "" : ajusteQtd}
+                  onChange={(e) => setAjusteQtd(e.target.value === "" ? 0 : parseInt(e.target.value) || 0)}
+                  className="flex-1 bg-surface-overlay border border-border rounded-lg px-3 py-1.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
+                />
+                <button onClick={() => handleAjuste(t.id)}
+                  className="p-1.5 rounded-lg bg-gold/15 text-gold hover:bg-gold/25 transition-colors">
+                  <Check size={16} />
+                </button>
+                <button onClick={() => setAjusteId(null)}
+                  className="p-1.5 rounded-lg bg-surface-overlay text-muted-foreground hover:text-destructive transition-colors">
+                  <X size={16} />
+                </button>
+              </div>
+            )}
           </div>
         ))}
         {filtrados.length === 0 && (

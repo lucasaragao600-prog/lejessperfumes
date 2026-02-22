@@ -29,6 +29,7 @@ interface AppContextType {
   testers: Tester[];
   setTesters: any;
   adicionarTesterDB: (t: { perfumeId: string; perfumeNome: string; marca: string; deposito: Deposito; quantidade: number; custo: number; registradoPor?: string }) => Promise<void>;
+  ajustarTesterDB: (params: { id: string; novaQuantidade: number }) => Promise<void>;
   removerTesterDB: (id: string) => Promise<void>;
   casas: Casa[];
   setCasas: any;
@@ -73,7 +74,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { casas, isLoading: casasLoading, adicionarCasa: adicionarCasaDB, removerCasa: removerCasaDB } = useCasas();
   const { vendas, adicionarVenda, excluirVenda } = useVendas();
   const { movimentacoes, adicionarMovimentacao } = useMovimentacoes();
-  const { testers, adicionarTester: adicionarTesterDB, removerTester: removerTesterDB } = useTesters();
+  const { testers, adicionarTester: adicionarTesterDB, removerTester: removerTesterDB, ajustarTester: ajustarTesterDB } = useTesters();
   const { vendedoras, adicionarVendedora: adicionarVendedoraDB, removerVendedora: removerVendedoraDB } = useVendedoras();
   const { tiposPerfumeConfig, concentracoesConfig, volumesPadrao, setTiposPerfumeConfig, setConcentracoesConfig, setVolumesPadrao } = useConfiguracoes();
 
@@ -128,6 +129,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         testers,
         setTesters: noop,
         adicionarTesterDB,
+        ajustarTesterDB,
         removerTesterDB,
         casas,
         setCasas: noop,
