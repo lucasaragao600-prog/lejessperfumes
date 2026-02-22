@@ -71,11 +71,23 @@ export function useTesters() {
     onSuccess: invalidate,
   });
 
+  const ajustarTester = useMutation({
+    mutationFn: async ({ id, novaQuantidade }: { id: string; novaQuantidade: number }) => {
+      const { error } = await supabase
+        .from("testers")
+        .update({ quantidade: novaQuantidade })
+        .eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   return {
     testers,
     isLoading,
     adicionarTester: adicionarTester.mutateAsync,
     removerTester: removerTester.mutateAsync,
+    ajustarTester: ajustarTester.mutateAsync,
     setTesters: () => {},
   };
 }
