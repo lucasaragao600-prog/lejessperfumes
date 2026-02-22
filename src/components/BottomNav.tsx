@@ -23,14 +23,14 @@ export default function BottomNav({ activeTab, onTabChange, isMaster = true }: B
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 border-t border-gold-muted"
       style={{ background: "hsl(0 0% 8%)", boxShadow: "0 -4px 24px hsl(0 0% 0% / 0.5)" }}>
-      <div className="flex items-center justify-around px-1 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <div className="flex items-center overflow-x-auto scrollbar-hide px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] gap-1">
         {tabs.map(({ id, label, icon: Icon }) => {
           const isActive = activeTab === id;
           return (
             <button
               key={id}
               onClick={() => onTabChange(id)}
-              className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-all duration-200 min-w-0 flex-1"
+              className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-all duration-200 flex-shrink-0"
             >
               <div className={`p-1.5 rounded-lg transition-all duration-200 ${
                 isActive ? "bg-gold-muted shadow-gold" : "bg-transparent"
@@ -42,7 +42,7 @@ export default function BottomNav({ activeTab, onTabChange, isMaster = true }: B
                   }`}
                 />
               </div>
-              <span className={`text-[10px] font-medium truncate transition-colors duration-200 ${
+              <span className={`text-[10px] font-medium whitespace-nowrap transition-colors duration-200 ${
                 isActive ? "text-gold" : "text-muted-foreground"
               }`}>
                 {label}
