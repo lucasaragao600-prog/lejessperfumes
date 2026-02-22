@@ -22,10 +22,15 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
 
   const filtrados = useMemo(() => {
     return perfumes.filter((p) => {
+      const term = busca.toLowerCase();
       const matchBusca =
-        p.nome.toLowerCase().includes(busca.toLowerCase()) ||
-        p.codigo.toLowerCase().includes(busca.toLowerCase()) ||
-        p.marca.toLowerCase().includes(busca.toLowerCase());
+        p.nome.toLowerCase().includes(term) ||
+        p.codigo.toLowerCase().includes(term) ||
+        p.marca.toLowerCase().includes(term) ||
+        p.concentracao.toLowerCase().includes(term) ||
+        (concentracoesConfig[p.concentracao] || "").toString().toLowerCase().includes(term) ||
+        p.tamanho.toLowerCase().includes(term) ||
+        String(p.volume).includes(term);
 
       const matchTipo = tipoFiltro === "Todos" || p.tipo === tipoFiltro;
 
