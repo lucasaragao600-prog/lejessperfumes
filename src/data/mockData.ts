@@ -60,6 +60,7 @@ export interface Venda {
   bandeira: Bandeira;
   observacao: string;
   registradoPor?: string;
+  grupoVenda?: string;
 }
 
 export interface Movimentacao {
