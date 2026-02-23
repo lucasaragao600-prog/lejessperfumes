@@ -1,6 +1,7 @@
 import { useState } from "react";
 import logoLeJess from "@/assets/logo-le-jess.png";
 import BottomNav from "@/components/BottomNav";
+import SidebarNav from "@/components/SidebarNav";
 import Estoque from "@/pages/Estoque";
 import Vendas from "@/pages/Vendas";
 import Movimentacoes from "@/pages/Movimentacoes";
@@ -78,9 +79,12 @@ const Index = () => {
 
   return (
     <AppProvider>
-      <div className="min-h-screen bg-background max-w-md mx-auto relative overflow-hidden">
-        {/* Top bar */}
-        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md z-[60] px-4 pt-3 pb-2 flex items-center justify-between"
+      <div className="min-h-screen bg-background relative">
+        {/* Desktop sidebar */}
+        <SidebarNav activeTab={activeTab} onTabChange={setActiveTab} isMaster={isMaster} />
+
+        {/* Mobile top bar */}
+        <div className="md:hidden fixed top-0 left-0 right-0 z-[60] px-4 pt-3 pb-2 flex items-center justify-between"
           style={{ background: "hsl(0 0% 7%)" }}>
           <div className="flex items-center gap-2 min-w-0">
             <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-primary-foreground flex-shrink-0"
@@ -99,10 +103,37 @@ const Index = () => {
           </button>
         </div>
 
-        <div className="animate-fade-in pt-14">
-          {renderTab()}
+        {/* Desktop top bar */}
+        <div className="hidden md:flex fixed top-0 left-56 right-0 z-[60] px-6 py-3 items-center justify-between border-b border-border"
+          style={{ background: "hsl(0 0% 7%)" }}>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-primary-foreground"
+              style={{ background: "var(--gradient-gold)" }}>
+              {(profile?.nome || user.email || "U")[0].toUpperCase()}
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">{profile?.nome || user.email}</p>
+              <p className="text-xs text-muted-foreground">
+                {isMaster ? "Master" : "Vendedor"}{profile?.loja ? ` · ${profile.loja}` : ""}
+              </p>
+            </div>
+          </div>
+          <button onClick={signOut} className="text-xs text-muted-foreground hover:text-destructive transition-colors px-3 py-1.5 rounded-lg hover:bg-surface-raised">
+            Sair
+          </button>
         </div>
-        <BottomNav activeTab={activeTab} onTabChange={setActiveTab} isMaster={isMaster} />
+
+        {/* Content */}
+        <div className="animate-fade-in pt-14 md:pl-56 md:pt-16">
+          <div className="max-w-md mx-auto md:max-w-none md:px-6">
+            {renderTab()}
+          </div>
+        </div>
+
+        {/* Mobile bottom nav */}
+        <div className="md:hidden">
+          <BottomNav activeTab={activeTab} onTabChange={setActiveTab} isMaster={isMaster} />
+        </div>
       </div>
     </AppProvider>
   );
