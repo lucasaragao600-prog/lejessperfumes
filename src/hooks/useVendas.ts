@@ -2,6 +2,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Venda, Deposito, TipoPagamento, Bandeira, TipoAjusteValor } from "@/data/mockData";
 
+export interface VendaPagamento {
+  id?: string;
+  grupoVenda: string;
+  tipoPagamento: TipoPagamento;
+  bandeira: Bandeira;
+  valor: number;
+}
+
 function rowToVenda(row: any): Venda {
   return {
     id: row.id,
@@ -19,12 +27,26 @@ function rowToVenda(row: any): Venda {
     bandeira: row.bandeira as Bandeira,
     observacao: row.observacao,
     registradoPor: row.registrado_por || "",
+    grupoVenda: row.grupo_venda || "",
+  };
+}
+
+function rowToPagamento(row: any): VendaPagamento {
+  return {
+    id: row.id,
+    grupoVenda: row.grupo_venda,
+    tipoPagamento: row.tipo_pagamento as TipoPagamento,
+    bandeira: row.bandeira as Bandeira,
+    valor: Number(row.valor),
   };
 }
 
 export function useVendas() {
   const queryClient = useQueryClient();
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["vendas"] });
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["vendas"] });
+    queryClient.invalidateQueries({ queryKey: ["venda_pagamentos"] });
+  };
 
   const { data: vendas = [], isLoading } = useQuery({
     queryKey: ["vendas"],
@@ -38,8 +60,66 @@ export function useVendas() {
     },
   });
 
+  const { data: pagamentos = [] } = useQuery({
+    queryKey: ["venda_pagamentos"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("venda_pagamentos")
+        .select("*");
+      if (error) throw error;
+      return (data || []).map(rowToPagamento);
+    },
+  });
+
+  const adicionarVendaMulti = useMutation({
+    mutationFn: async ({
+      itens,
+      pagamentosVenda,
+    }: {
+      itens: Venda[];
+      pagamentosVenda: Omit<VendaPagamento, "id">[];
+    }) => {
+      const grupoVenda = crypto.randomUUID();
+
+      // Insert all items with same grupo_venda
+      const rows = itens.map((v) => ({
+        perfume_id: v.perfumeId,
+        perfume_nome: v.perfumeNome,
+        deposito: v.deposito,
+        quantidade: v.quantidade,
+        preco_unitario: v.precoUnitario,
+        tipo_ajuste: v.tipoAjuste,
+        desconto: v.desconto,
+        total: v.total,
+        vendedora: v.vendedora,
+        tipo_pagamento: pagamentosVenda[0]?.tipoPagamento || "Pix",
+        bandeira: pagamentosVenda[0]?.bandeira || "N/A",
+        observacao: v.observacao,
+        data: v.data,
+        registrado_por: v.registradoPor || "",
+        grupo_venda: grupoVenda,
+      }));
+
+      const { error: errV } = await supabase.from("vendas").insert(rows);
+      if (errV) throw errV;
+
+      // Insert payments
+      const pagRows = pagamentosVenda.map((p) => ({
+        grupo_venda: grupoVenda,
+        tipo_pagamento: p.tipoPagamento,
+        bandeira: p.bandeira,
+        valor: p.valor,
+      }));
+
+      const { error: errP } = await supabase.from("venda_pagamentos").insert(pagRows);
+      if (errP) throw errP;
+    },
+    onSuccess: invalidate,
+  });
+
   const adicionarVenda = useMutation({
     mutationFn: async (v: Venda) => {
+      const grupoVenda = crypto.randomUUID();
       const { error } = await supabase.from("vendas").insert({
         perfume_id: v.perfumeId,
         perfume_nome: v.perfumeNome,
@@ -55,6 +135,7 @@ export function useVendas() {
         observacao: v.observacao,
         data: v.data,
         registrado_por: v.registradoPor || "",
+        grupo_venda: grupoVenda,
       });
       if (error) throw error;
     },
@@ -71,8 +152,10 @@ export function useVendas() {
 
   return {
     vendas,
+    pagamentos,
     isLoading,
     adicionarVenda: adicionarVenda.mutateAsync,
+    adicionarVendaMulti: adicionarVendaMulti.mutateAsync,
     excluirVenda: excluirVenda.mutateAsync,
     setVendas: () => {},
   };

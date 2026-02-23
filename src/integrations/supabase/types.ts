@@ -272,6 +272,33 @@ export type Database = {
         }
         Relationships: []
       }
+      venda_pagamentos: {
+        Row: {
+          bandeira: string
+          created_at: string
+          grupo_venda: string
+          id: string
+          tipo_pagamento: string
+          valor: number
+        }
+        Insert: {
+          bandeira?: string
+          created_at?: string
+          grupo_venda: string
+          id?: string
+          tipo_pagamento?: string
+          valor?: number
+        }
+        Update: {
+          bandeira?: string
+          created_at?: string
+          grupo_venda?: string
+          id?: string
+          tipo_pagamento?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       vendas: {
         Row: {
           bandeira: string
@@ -279,6 +306,7 @@ export type Database = {
           data: string
           deposito: string
           desconto: number
+          grupo_venda: string | null
           id: string
           observacao: string
           perfume_id: string
@@ -297,6 +325,7 @@ export type Database = {
           data?: string
           deposito: string
           desconto?: number
+          grupo_venda?: string | null
           id?: string
           observacao?: string
           perfume_id: string
@@ -315,6 +344,7 @@ export type Database = {
           data?: string
           deposito?: string
           desconto?: number
+          grupo_venda?: string | null
           id?: string
           observacao?: string
           perfume_id?: string

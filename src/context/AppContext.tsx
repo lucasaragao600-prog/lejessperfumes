@@ -9,7 +9,7 @@ import {
 } from "@/data/mockData";
 import { usePerfumes } from "@/hooks/usePerfumes";
 import { useCasas } from "@/hooks/useCasas";
-import { useVendas } from "@/hooks/useVendas";
+import { useVendas, type VendaPagamento } from "@/hooks/useVendas";
 import { useMovimentacoes } from "@/hooks/useMovimentacoes";
 import { useTesters } from "@/hooks/useTesters";
 import { useVendedoras } from "@/hooks/useVendedoras";
@@ -20,8 +20,10 @@ interface AppContextType {
   setPerfumes: any;
   perfumesLoading: boolean;
   vendas: Venda[];
+  pagamentos: VendaPagamento[];
   setVendas: any;
   adicionarVenda: (v: Venda) => Promise<void>;
+  adicionarVendaMulti: (params: { itens: Venda[]; pagamentosVenda: Omit<VendaPagamento, "id">[] }) => Promise<void>;
   excluirVenda: (id: string) => Promise<void>;
   movimentacoes: Movimentacao[];
   setMovimentacoes: any;
@@ -72,7 +74,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   } = usePerfumes();
 
   const { casas, isLoading: casasLoading, adicionarCasa: adicionarCasaDB, removerCasa: removerCasaDB } = useCasas();
-  const { vendas, adicionarVenda, excluirVenda } = useVendas();
+  const { vendas, pagamentos, adicionarVenda, adicionarVendaMulti, excluirVenda } = useVendas();
   const { movimentacoes, adicionarMovimentacao } = useMovimentacoes();
   const { testers, adicionarTester: adicionarTesterDB, removerTester: removerTesterDB, ajustarTester: ajustarTesterDB } = useTesters();
   const { vendedoras, adicionarVendedora: adicionarVendedoraDB, removerVendedora: removerVendedoraDB } = useVendedoras();
@@ -120,8 +122,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setPerfumes: noop,
         perfumesLoading,
         vendas,
+        pagamentos,
         setVendas: noop,
         adicionarVenda,
+        adicionarVendaMulti,
         excluirVenda,
         movimentacoes,
         setMovimentacoes: noop,
