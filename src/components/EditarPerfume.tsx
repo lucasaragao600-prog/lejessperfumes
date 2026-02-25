@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { X, Check } from "lucide-react";
+import MarkupCalculator from "@/components/MarkupCalculator";
 import {
   gerarCodigo,
   type TipoPerfume,
@@ -232,6 +233,13 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
               />
             </div>
           </div>
+
+          {/* Markup Calculator */}
+          <MarkupCalculator
+            custo={parseFloat(custo) || 0}
+            precoVenda={precoVenda}
+            onPrecoChange={(preco) => setPrecoVenda(preco)}
+          />
 
           {/* Estoque mínimo */}
           <div>

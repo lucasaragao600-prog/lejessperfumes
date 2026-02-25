@@ -137,6 +137,15 @@ export function usePerfumes() {
     onSuccess: invalidate,
   });
 
+  // Set stock to an exact value (for Ajuste)
+  const ajustarEstoque = async (perfumeId: string, deposito: Deposito, novaQuantidade: number) => {
+    await atualizarEstoque.mutateAsync({
+      perfumeId,
+      deposito,
+      novaQuantidade: Math.max(0, novaQuantidade),
+    });
+  };
+
   // Helper functions matching AppContext API
   const baixarEstoque = async (perfumeId: string, deposito: Deposito, quantidade: number) => {
     const p = perfumes.find((x) => x.id === perfumeId);
@@ -192,6 +201,7 @@ export function usePerfumes() {
     atualizarPrecos: atualizarPrecos.mutateAsync,
     baixarEstoque,
     adicionarEstoque,
+    ajustarEstoque,
     transferirEstoque,
     proximaLinhaPorCasa,
     setPerfumes: () => {}, // no-op for backward compat
