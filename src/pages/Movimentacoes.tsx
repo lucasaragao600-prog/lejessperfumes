@@ -16,7 +16,7 @@ const tipoConfig = {
 };
 
 export default function Movimentacoes() {
-  const { movimentacoes, perfumes, baixarEstoque, adicionarEstoque, transferirEstoque, adicionarTester, adicionarMovimentacao, concentracoesConfig } = useApp();
+  const { movimentacoes, perfumes, baixarEstoque, adicionarEstoque, ajustarEstoque, transferirEstoque, adicionarTester, adicionarMovimentacao, concentracoesConfig } = useApp();
   const { profile } = useAuth();
   const [filtroTipo, setFiltroTipo] = useState<string>("Todos");
   const [busca, setBusca] = useState("");
@@ -66,23 +66,24 @@ export default function Movimentacoes() {
         alert(`Estoque insuficiente em ${form.depositoOrigem}. Disponível: ${est}`);
         return;
       }
-    } else if (form.tipo === "Ajuste" && form.quantidade < 0) {
-      const est = p.estoques[form.deposito as Deposito];
-      if (est < Math.abs(form.quantidade)) {
-        alert(`Estoque insuficiente em ${form.deposito}. Disponível: ${est}`);
+    } else if (form.tipo === "Ajuste") {
+      if (form.quantidade < 0) {
+        alert("A quantidade do ajuste não pode ser negativa. Informe o valor correto do estoque.");
         return;
       }
     }
 
     const hoje = new Date().toISOString().slice(0, 10);
+    const estoqueAtual = form.tipo === "Ajuste" ? p.estoques[form.deposito as Deposito] : 0;
+    const diferencaAjuste = form.tipo === "Ajuste" ? form.quantidade - estoqueAtual : 0;
     const nova: Movimentacao = {
       id: `m${Date.now()}`,
       data: hoje,
       tipo: form.tipo,
       perfumeId: form.perfumeId,
       perfumeNome: p.nome,
-      quantidade: form.tipo === "Ajuste" ? form.quantidade : Math.abs(form.quantidade),
-      observacao: form.observacao || undefined,
+      quantidade: form.tipo === "Ajuste" ? diferencaAjuste : Math.abs(form.quantidade),
+      observacao: form.tipo === "Ajuste" ? `Ajuste: ${estoqueAtual} → ${form.quantidade}${form.observacao ? ` | ${form.observacao}` : ""}` : (form.observacao || undefined),
       registradoPor: profile?.nome || "Desconhecido",
       ...(form.tipo === "Transferência"
         ? { depositoOrigem: form.depositoOrigem as Deposito, depositoDestino: form.depositoDestino as Deposito }
@@ -99,11 +100,7 @@ export default function Movimentacoes() {
     } else if (form.tipo === "Entrada") {
       adicionarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
     } else if (form.tipo === "Ajuste") {
-      if (form.quantidade > 0) {
-        adicionarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
-      } else {
-        baixarEstoque(form.perfumeId, form.deposito as Deposito, Math.abs(form.quantidade));
-      }
+      ajustarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
     }
 
     await adicionarMovimentacao(nova);
@@ -263,10 +260,24 @@ export default function Movimentacoes() {
               </div>
             )}
 
+            {form.tipo === "Ajuste" && form.perfumeId && form.deposito && (() => {
+              const pf = perfumes.find((x) => x.id === form.perfumeId);
+              const estoqueAtual = pf ? pf.estoques[form.deposito as Deposito] : 0;
+              return (
+                <div className="bg-blue-400/10 border border-blue-400/30 rounded-lg p-2.5">
+                  <p className="text-xs text-blue-400">
+                    📦 Estoque atual em <strong>{form.deposito}</strong>: <strong>{estoqueAtual}</strong> un. Informe a quantidade correta abaixo.
+                  </p>
+                </div>
+              );
+            })()}
+
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-[11px] text-muted-foreground mb-1 block">Quantidade</label>
-                <input type="number" min={1} value={form.quantidade === 0 ? "" : form.quantidade}
+                <label className="text-[11px] text-muted-foreground mb-1 block">
+                  {form.tipo === "Ajuste" ? "Qtd. Correta" : "Quantidade"}
+                </label>
+                <input type="number" min={form.tipo === "Ajuste" ? 0 : 1} value={form.quantidade === 0 ? "" : form.quantidade}
                   onChange={(e) => setForm({ ...form, quantidade: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 })}
                   className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted" />
               </div>

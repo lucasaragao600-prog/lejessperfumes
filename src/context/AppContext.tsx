@@ -50,6 +50,7 @@ interface AppContextType {
   setVolumesPadrao: (updater: React.SetStateAction<number[]>) => void;
   proximaLinhaPorCasa: (casaSigla: string) => number;
   baixarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
+  ajustarEstoque: (perfumeId: string, deposito: Deposito, novaQuantidade: number) => void;
   adicionarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
   transferirEstoque: (perfumeId: string, origem: Deposito, destino: Deposito, quantidade: number) => void;
   adicionarTester: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
@@ -69,6 +70,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     atualizarPrecos: atualizarPrecosDB,
     baixarEstoque: baixarEstoqueDB,
     adicionarEstoque: adicionarEstoqueDB,
+    ajustarEstoque: ajustarEstoqueDB,
     transferirEstoque: transferirEstoqueDB,
     proximaLinhaPorCasa,
   } = usePerfumes();
@@ -82,6 +84,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const baixarEstoque = (perfumeId: string, deposito: Deposito, quantidade: number) => {
     baixarEstoqueDB(perfumeId, deposito, quantidade);
+  };
+
+  const ajustarEstoque = (perfumeId: string, deposito: Deposito, novaQuantidade: number) => {
+    ajustarEstoqueDB(perfumeId, deposito, novaQuantidade);
   };
 
   const adicionarEstoque = (perfumeId: string, deposito: Deposito, quantidade: number) => {
@@ -152,6 +158,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setVolumesPadrao,
         proximaLinhaPorCasa,
         baixarEstoque,
+        ajustarEstoque,
         adicionarEstoque,
         transferirEstoque,
         adicionarTester,
