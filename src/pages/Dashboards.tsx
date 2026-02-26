@@ -15,7 +15,7 @@ export default function Dashboards() {
     { key: "geral", label: "Geral" },
     ...Object.entries(tiposPerfumeConfig).map(([key, label]) => ({ key, label: String(label) })),
   ], [tiposPerfumeConfig]);
-  const hoje = "2026-02-18";
+  const hoje = new Date().toISOString().slice(0, 10);
 
   // Mapa perfumeId → tipo
   const tipoMap = useMemo(() => {
@@ -112,7 +112,7 @@ export default function Dashboards() {
         {/* KPIs — sempre gerais */}
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "Faturado hoje", value: formatCurrency(totalHoje), icon: TrendingUp, sub: "18/02/2026" },
+            { label: "Faturado hoje", value: formatCurrency(totalHoje), icon: TrendingUp, sub: hoje.split("-").reverse().join("/") },
             { label: "Total histórico", value: formatCurrency(totalGeral), icon: ShoppingCart, sub: `${vendas.length} vendas` },
             { label: "Estoque (venda)", value: formatCurrency(totalEstoqueVenda), icon: Package, sub: `${perfumes.length} produtos` },
             { label: "Estoque (custo)", value: formatCurrency(totalEstoqueCusto), icon: Package, sub: "valor investido" },
