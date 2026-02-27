@@ -91,244 +91,154 @@ export default function Configuracoes() {
   };
 
   const handleResetVendedoras = async () => {
-    // Remove all and re-add defaults
-    for (const v of vendedoras) {
-      await removerVendedoraDB(v);
-    }
-    for (const v of ["Ana", "Julia", "Carla"]) {
-      await adicionarVendedoraDB(v);
-    }
+    for (const v of vendedoras) { await removerVendedoraDB(v); }
+    for (const v of ["Ana", "Julia", "Carla"]) { await adicionarVendedoraDB(v); }
   };
+
+  const SectionCard = ({ title, subtitle, onReset, children }: { title: string; subtitle: string; onReset: () => void; children: React.ReactNode }) => (
+    <section className="card-premium p-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+          <p className="text-[10px] text-muted-foreground mt-0.5">{subtitle}</p>
+        </div>
+        <button onClick={onReset} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-gold transition-colors duration-150">
+          <RotateCcw size={11} /> Restaurar
+        </button>
+      </div>
+      {children}
+    </section>
+  );
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
       <div className="sticky top-0 z-10 px-4 pt-12 pb-4"
-        style={{ background: "linear-gradient(180deg, hsl(0 0% 7%) 80%, transparent)" }}>
+        style={{ background: "var(--gradient-header)" }}>
         <div className="flex items-center gap-3 mb-1">
           <Settings size={20} className="text-gold" />
-          <h1 className="font-display text-2xl text-gold">Configurações</h1>
+          <h1 className="page-title text-2xl">Configurações</h1>
         </div>
-        <p className="text-muted-foreground text-xs">Personalize os tipos, concentrações e volumes do sistema de códigos</p>
+        <p className="page-subtitle">Personalize tipos, concentrações e volumes</p>
       </div>
 
-      <div className="px-4 space-y-6">
-
+      <div className="px-4 space-y-5">
         {/* Tipos de Perfume */}
-        <section className="bg-surface border border-border rounded-xl p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">Tipos de Perfume (TT)</h2>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Usado no início do código e como categoria</p>
-            </div>
-            <button onClick={handleResetTipos} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-gold transition-colors">
-              <RotateCcw size={11} /> Restaurar
-            </button>
-          </div>
-
+        <SectionCard title="Tipos de Perfume (TT)" subtitle="Usado no início do código e como categoria" onReset={handleResetTipos}>
           <div className="space-y-2">
             {Object.entries(tiposPerfumeConfig).map(([sigla, label]) => (
-              <div key={sigla} className="flex items-center justify-between bg-surface-overlay rounded-lg px-3 py-2">
+              <div key={sigla} className="flex items-center justify-between bg-surface-overlay rounded-xl px-4 py-2.5">
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-sm font-bold text-gold w-8">{sigla}</span>
                   <span className="text-sm text-foreground">{String(label)}</span>
                 </div>
-                <button onClick={() => handleRemoveTipo(sigla)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
+                <button onClick={() => handleRemoveTipo(sigla)} className="text-muted-foreground hover:text-destructive transition-colors duration-150 p-1">
                   <Trash2 size={14} />
                 </button>
               </div>
             ))}
           </div>
-
           <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Sigla (ex: LX)"
-              maxLength={3}
-              value={novoTipoSigla}
+            <input type="text" placeholder="Sigla" maxLength={3} value={novoTipoSigla}
               onChange={(e) => setNovoTipoSigla(e.target.value.toUpperCase())}
-              className="w-20 bg-surface-overlay border border-border rounded-lg px-2 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-gold-muted"
-            />
-            <input
-              type="text"
-              placeholder="Nome (ex: Luxo)"
-              value={novoTipoLabel}
+              className="input-premium w-20 px-2 py-2 text-xs font-mono" />
+            <input type="text" placeholder="Nome (ex: Luxo)" value={novoTipoLabel}
               onChange={(e) => setNovoTipoLabel(e.target.value)}
-              className="flex-1 bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted"
-            />
-            <button
-              onClick={handleAddTipo}
-              disabled={!novoTipoSigla || !novoTipoLabel}
-              className="px-3 py-2 rounded-lg text-xs font-semibold text-primary-foreground disabled:opacity-40 transition-opacity"
-              style={{ background: "var(--gradient-gold)" }}
-            >
-              <Plus size={14} />
-            </button>
+              className="input-premium flex-1 px-3 py-2 text-xs" />
+            <button onClick={handleAddTipo} disabled={!novoTipoSigla || !novoTipoLabel}
+              className="btn-primary px-3 py-2"><Plus size={14} /></button>
           </div>
-        </section>
+        </SectionCard>
 
         {/* Concentrações */}
-        <section className="bg-surface border border-border rounded-xl p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">Concentrações (CC)</h2>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Tipo de concentração do perfume</p>
-            </div>
-            <button onClick={handleResetConcentracoes} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-gold transition-colors">
-              <RotateCcw size={11} /> Restaurar
-            </button>
-          </div>
-
+        <SectionCard title="Concentrações (CC)" subtitle="Tipo de concentração do perfume" onReset={handleResetConcentracoes}>
           <div className="space-y-2">
             {Object.entries(concentracoesConfig).map(([sigla, label]) => (
-              <div key={sigla} className="flex items-center justify-between bg-surface-overlay rounded-lg px-3 py-2">
+              <div key={sigla} className="flex items-center justify-between bg-surface-overlay rounded-xl px-4 py-2.5">
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-sm font-bold text-gold w-10">{sigla}</span>
                   <span className="text-xs text-foreground">{String(label)}</span>
                 </div>
-                <button onClick={() => handleRemoveConcent(sigla)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
+                <button onClick={() => handleRemoveConcent(sigla)} className="text-muted-foreground hover:text-destructive transition-colors duration-150 p-1">
                   <Trash2 size={14} />
                 </button>
               </div>
             ))}
           </div>
-
           <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Sigla (ex: COL)"
-              maxLength={4}
-              value={novaConcentSigla}
+            <input type="text" placeholder="Sigla" maxLength={4} value={novaConcentSigla}
               onChange={(e) => setNovaConcentSigla(e.target.value.toUpperCase())}
-              className="w-20 bg-surface-overlay border border-border rounded-lg px-2 py-2 text-xs font-mono text-foreground focus:outline-none focus:border-gold-muted"
-            />
-            <input
-              type="text"
-              placeholder="Descrição (ex: Cologne)"
-              value={novaConcentLabel}
+              className="input-premium w-20 px-2 py-2 text-xs font-mono" />
+            <input type="text" placeholder="Descrição" value={novaConcentLabel}
               onChange={(e) => setNovaConcentLabel(e.target.value)}
-              className="flex-1 bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted"
-            />
-            <button
-              onClick={handleAddConcent}
-              disabled={!novaConcentSigla || !novaConcentLabel}
-              className="px-3 py-2 rounded-lg text-xs font-semibold text-primary-foreground disabled:opacity-40 transition-opacity"
-              style={{ background: "var(--gradient-gold)" }}
-            >
-              <Plus size={14} />
-            </button>
+              className="input-premium flex-1 px-3 py-2 text-xs" />
+            <button onClick={handleAddConcent} disabled={!novaConcentSigla || !novaConcentLabel}
+              className="btn-primary px-3 py-2"><Plus size={14} /></button>
           </div>
-        </section>
+        </SectionCard>
 
-        {/* Volumes Padrão */}
-        <section className="bg-surface border border-border rounded-xl p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">Volumes Padrão (VVV)</h2>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Volumes em ml disponíveis no cadastro</p>
-            </div>
-            <button onClick={handleResetVolumes} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-gold transition-colors">
-              <RotateCcw size={11} /> Restaurar
-            </button>
-          </div>
-
+        {/* Volumes */}
+        <SectionCard title="Volumes Padrão (VVV)" subtitle="Volumes em ml disponíveis no cadastro" onReset={handleResetVolumes}>
           <div className="flex flex-wrap gap-2">
             {volumesPadrao.map((v) => (
-              <div key={v} className="flex items-center gap-1 bg-surface-overlay border border-border rounded-lg px-2.5 py-1.5">
+              <div key={v} className="flex items-center gap-1 bg-surface-overlay border border-border rounded-lg px-3 py-1.5">
                 <span className="text-xs font-mono text-foreground">{v}ml</span>
-                <button onClick={() => handleRemoveVolume(v)} className="text-muted-foreground hover:text-destructive transition-colors ml-1">
+                <button onClick={() => handleRemoveVolume(v)} className="text-muted-foreground hover:text-destructive transition-colors duration-150 ml-1">
                   <Trash2 size={11} />
                 </button>
               </div>
             ))}
           </div>
-
           <div className="flex gap-2">
-            <input
-              type="number"
-              placeholder="Volume em ml"
-              min={1}
-              value={novoVolume}
+            <input type="number" placeholder="Volume em ml" min={1} value={novoVolume}
               onChange={(e) => setNovoVolume(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddVolume()}
-              className="flex-1 bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted"
-            />
-            <button
-              onClick={handleAddVolume}
-              disabled={!novoVolume}
-              className="px-3 py-2 rounded-lg text-xs font-semibold text-primary-foreground disabled:opacity-40 transition-opacity"
-              style={{ background: "var(--gradient-gold)" }}
-            >
-              <Plus size={14} />
-            </button>
+              className="input-premium flex-1 px-3 py-2 text-xs" />
+            <button onClick={handleAddVolume} disabled={!novoVolume}
+              className="btn-primary px-3 py-2"><Plus size={14} /></button>
           </div>
-        </section>
+        </SectionCard>
 
         {/* Vendedoras */}
-        <section className="bg-surface border border-border rounded-xl p-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Users size={14} /> Vendedoras
-              </h2>
-              <p className="text-[10px] text-muted-foreground mt-0.5">Equipe de vendas disponível no lançamento</p>
-            </div>
-            <button onClick={handleResetVendedoras} className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-gold transition-colors">
-              <RotateCcw size={11} /> Restaurar
-            </button>
-          </div>
-
+        <SectionCard title="Vendedoras" subtitle="Equipe de vendas disponível no lançamento" onReset={handleResetVendedoras}>
           <div className="flex flex-wrap gap-2">
             {vendedoras.map((v) => (
-              <div key={v} className="flex items-center gap-1 bg-surface-overlay border border-border rounded-lg px-2.5 py-1.5">
+              <div key={v} className="flex items-center gap-1 bg-surface-overlay border border-border rounded-lg px-3 py-1.5">
                 <span className="text-xs text-foreground">{v}</span>
-                <button onClick={() => handleRemoveVendedora(v)} className="text-muted-foreground hover:text-destructive transition-colors ml-1">
+                <button onClick={() => handleRemoveVendedora(v)} className="text-muted-foreground hover:text-destructive transition-colors duration-150 ml-1">
                   <Trash2 size={11} />
                 </button>
               </div>
             ))}
           </div>
-
           <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Nome da vendedora"
-              value={novaVendedora}
+            <input type="text" placeholder="Nome da vendedora" value={novaVendedora}
               onChange={(e) => setNovaVendedora(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddVendedora()}
-              className="flex-1 bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted"
-            />
-            <button
-              onClick={handleAddVendedora}
-              disabled={!novaVendedora.trim()}
-              className="px-3 py-2 rounded-lg text-xs font-semibold text-primary-foreground disabled:opacity-40 transition-opacity"
-              style={{ background: "var(--gradient-gold)" }}
-            >
-              <Plus size={14} />
-            </button>
+              className="input-premium flex-1 px-3 py-2 text-xs" />
+            <button onClick={handleAddVendedora} disabled={!novaVendedora.trim()}
+              className="btn-primary px-3 py-2"><Plus size={14} /></button>
           </div>
-        </section>
+        </SectionCard>
 
         {/* Info código */}
-        <section className="bg-gold/5 border border-gold-muted rounded-xl p-4">
-          <p className="text-[10px] text-gold font-mono font-bold mb-2 tracking-widest">FORMATO DO CÓDIGO</p>
-          <p className="font-mono text-lg text-foreground font-bold tracking-wider mb-1">TT · MM · CC · LLLL · VVV</p>
-          <div className="grid grid-cols-2 gap-1.5 mt-2">
+        <section className="card-premium p-5" style={{ background: "var(--gradient-gold-subtle)", borderColor: "hsl(var(--gold-muted))" }}>
+          <p className="page-subtitle text-gold mb-3">FORMATO DO CÓDIGO</p>
+          <p className="font-mono text-lg text-foreground font-bold tracking-wider mb-2">TT · MM · CC · LLLL · VVV</p>
+          <div className="grid grid-cols-2 gap-2 mt-3">
             {[
-              ["TT", "Tipo de Perfume (ex: NI, AR)"],
+              ["TT", "Tipo de Perfume"],
               ["MM", "Sigla da Marca / Casa"],
-              ["CC", "Concentração (ex: EDP, PAR)"],
-              ["LLLL", "Linha sequencial por casa"],
-              ["VVV", "Volume em ml (ex: 100)"],
+              ["CC", "Concentração"],
+              ["LLLL", "Linha sequencial"],
+              ["VVV", "Volume em ml"],
             ].map(([code, desc]) => (
               <div key={code} className="flex items-start gap-2">
-                <span className="font-mono text-[10px] font-bold text-gold bg-gold/10 px-1.5 py-0.5 rounded flex-shrink-0">{code}</span>
+                <span className="font-mono text-[10px] font-bold text-gold bg-primary/10 px-2 py-0.5 rounded-md flex-shrink-0">{code}</span>
                 <span className="text-[10px] text-muted-foreground">{desc}</span>
               </div>
             ))}
           </div>
         </section>
-
       </div>
     </div>
   );

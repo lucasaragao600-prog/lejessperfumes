@@ -13,7 +13,6 @@ import GerenciarUsuarios from "@/pages/GerenciarUsuarios";
 import ImportarPlanilha from "@/pages/ImportarPlanilha";
 import { AppProvider } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
-
 import PrimeiroCadastro from "@/pages/PrimeiroCadastro";
 
 const Index = () => {
@@ -24,14 +23,13 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <img src={logoLeJess} alt="Le Jess Perfumes" className="h-16 mx-auto mb-3 invert" />
-          <p className="text-muted-foreground text-sm">Carregando...</p>
+          <img src={logoLeJess} alt="Le Jess Perfumes" className="h-16 mx-auto mb-4 invert opacity-80" />
+          <div className="w-6 h-6 border-2 border-gold/30 border-t-gold rounded-full animate-spin mx-auto" />
         </div>
       </div>
     );
   }
 
-  // Primeiro acesso: nenhum master existe ainda
   if (hasMaster === false && !user) {
     return <PrimeiroCadastro onCreated={refreshUserData} />;
   }
@@ -40,20 +38,16 @@ const Index = () => {
     return <Login />;
   }
 
-  // Se não tem role atribuída, mostrar mensagem
   if (!role) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-6">
-        <div className="text-center space-y-4">
-          <h1 className="font-display text-2xl text-gold">Acesso Pendente</h1>
-          <p className="text-muted-foreground text-sm">
+        <div className="text-center space-y-5">
+          <h1 className="page-title">Acesso Pendente</h1>
+          <p className="text-muted-foreground text-sm max-w-xs mx-auto">
             Seu acesso ainda não foi configurado. Peça ao administrador para atribuir seu perfil.
           </p>
           <p className="text-xs text-muted-foreground">Logado como: {user.email}</p>
-          <button
-            onClick={signOut}
-            className="px-4 py-2 rounded-xl text-xs font-semibold bg-surface border border-border text-foreground"
-          >
+          <button onClick={signOut} className="btn-secondary px-6 py-2.5">
             Sair
           </button>
         </div>
@@ -80,35 +74,34 @@ const Index = () => {
   return (
     <AppProvider>
       <div className="min-h-screen bg-background relative">
-        {/* Desktop sidebar */}
         <SidebarNav activeTab={activeTab} onTabChange={setActiveTab} isMaster={isMaster} />
 
         {/* Mobile top bar */}
-        <div className="md:hidden fixed top-0 left-0 right-0 z-[60] px-4 pt-3 pb-2 flex items-center justify-between"
-          style={{ background: "hsl(0 0% 7%)" }}>
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-primary-foreground flex-shrink-0"
-              style={{ background: "var(--gradient-gold)" }}>
+        <div className="md:hidden fixed top-0 left-0 right-0 z-[60] px-4 pt-3 pb-2.5 flex items-center justify-between"
+          style={{ background: "hsl(var(--background))", borderBottom: "1px solid hsl(var(--border))" }}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-primary-foreground flex-shrink-0 btn-primary"
+              style={{ boxShadow: "none" }}>
               {(profile?.nome || user.email || "U")[0].toUpperCase()}
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-foreground truncate">{profile?.nome || user.email}</p>
+              <p className="text-sm font-medium text-foreground truncate">{profile?.nome || user.email}</p>
               <p className="text-[10px] text-muted-foreground">
                 {isMaster ? "Master" : "Vendedor"}{profile?.loja ? ` · ${profile.loja}` : ""}
               </p>
             </div>
           </div>
-          <button onClick={signOut} className="text-[10px] text-muted-foreground hover:text-destructive transition-colors px-2 py-1">
+          <button onClick={signOut} className="text-[11px] text-muted-foreground hover:text-destructive transition-colors duration-150 px-2 py-1">
             Sair
           </button>
         </div>
 
         {/* Desktop top bar */}
-        <div className="hidden md:flex fixed top-0 left-56 right-0 z-[60] px-6 py-3 items-center justify-between border-b border-border"
-          style={{ background: "hsl(0 0% 7%)" }}>
+        <div className="hidden md:flex fixed top-0 left-60 right-0 z-[60] px-8 py-4 items-center justify-between"
+          style={{ background: "hsl(var(--background))", borderBottom: "1px solid hsl(var(--border))" }}>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-primary-foreground"
-              style={{ background: "var(--gradient-gold)" }}>
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-primary-foreground btn-primary"
+              style={{ boxShadow: "none" }}>
               {(profile?.nome || user.email || "U")[0].toUpperCase()}
             </div>
             <div>
@@ -118,19 +111,18 @@ const Index = () => {
               </p>
             </div>
           </div>
-          <button onClick={signOut} className="text-xs text-muted-foreground hover:text-destructive transition-colors px-3 py-1.5 rounded-lg hover:bg-surface-raised">
+          <button onClick={signOut} className="btn-secondary px-4 py-2 text-xs">
             Sair
           </button>
         </div>
 
         {/* Content */}
-        <div className="animate-fade-in pt-14 md:pl-56 md:pt-16">
-          <div className="max-w-md mx-auto md:max-w-none md:px-6">
+        <div className="animate-fade-in pt-14 md:pl-60 md:pt-[72px]">
+          <div className="max-w-md mx-auto md:max-w-none md:px-8">
             {renderTab()}
           </div>
         </div>
 
-        {/* Mobile bottom nav */}
         <div className="md:hidden">
           <BottomNav activeTab={activeTab} onTabChange={setActiveTab} isMaster={isMaster} />
         </div>

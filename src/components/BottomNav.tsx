@@ -21,28 +21,33 @@ export default function BottomNav({ activeTab, onTabChange, isMaster = true }: B
   const tabs = allTabs.filter((t) => !t.masterOnly || isMaster);
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50 border-t border-gold-muted"
-      style={{ background: "hsl(0 0% 8%)", boxShadow: "0 -4px 24px hsl(0 0% 0% / 0.5)" }}>
-      <div className="flex items-center overflow-x-auto scrollbar-hide px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] gap-1">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50"
+      style={{
+        background: "hsl(240 6% 5% / 0.95)",
+        backdropFilter: "blur(16px)",
+        borderTop: "1px solid hsl(var(--border))",
+        boxShadow: "0 -8px 32px hsl(0 0% 0% / 0.4)",
+      }}>
+      <div className="flex items-center overflow-x-auto scrollbar-hide px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] gap-0.5">
         {tabs.map(({ id, label, icon: Icon }) => {
           const isActive = activeTab === id;
           return (
             <button
               key={id}
               onClick={() => onTabChange(id)}
-              className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-all duration-200 flex-shrink-0"
+              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-150 flex-shrink-0"
             >
-              <div className={`p-1.5 rounded-lg transition-all duration-200 ${
-                isActive ? "bg-gold-muted shadow-gold" : "bg-transparent"
+              <div className={`p-1.5 rounded-lg transition-all duration-150 ${
+                isActive ? "bg-primary/10" : "bg-transparent"
               }`}>
                 <Icon
                   size={20}
-                  className={`transition-colors duration-200 ${
+                  className={`transition-colors duration-150 ${
                     isActive ? "text-gold" : "text-muted-foreground"
                   }`}
                 />
               </div>
-              <span className={`text-[10px] font-medium whitespace-nowrap transition-colors duration-200 ${
+              <span className={`text-[10px] font-medium whitespace-nowrap transition-colors duration-150 ${
                 isActive ? "text-gold" : "text-muted-foreground"
               }`}>
                 {label}

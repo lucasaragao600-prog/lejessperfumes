@@ -331,72 +331,71 @@ export default function Vendas() {
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="sticky top-0 z-10 px-4 pt-12 pb-4"
-        style={{ background: "linear-gradient(180deg, hsl(0 0% 7%) 80%, transparent)" }}>
-        <div className="flex items-center justify-between mb-4">
+        style={{ background: "var(--gradient-header)" }}>
+        <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="font-display text-2xl text-gold">Vendas</h1>
-            <p className="text-muted-foreground text-xs mt-0.5">Hoje: {totalHoje.qtd} vendas · {totalHoje.itens} itens</p>
+            <h1 className="page-title">Vendas</h1>
+            <p className="page-subtitle mt-1">Hoje: {totalHoje.qtd} vendas · {totalHoje.itens} itens</p>
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowRelatorio(!showRelatorio)}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border border-border text-muted-foreground bg-surface transition-all">
+              className="btn-secondary px-3 py-2 text-xs">
               <FileText size={14} />
               Relatório
             </button>
             <button onClick={() => { setShowForm(!showForm); if (!showForm) { setCarrinho([]); setPagamentosForm([]); setVendedoraSelecionada(""); } }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-primary-foreground shadow-gold transition-all active:scale-95"
-              style={{ background: "var(--gradient-gold)" }}>
+              className="btn-primary px-4 py-2">
               <Plus size={16} />
               Lançar
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          <div className="bg-surface border border-gold-muted rounded-xl p-3">
-            <p className="text-[10px] text-muted-foreground mb-1">{isVendedor ? "Vendas hoje" : "Faturado hoje"}</p>
-            <p className="text-base font-bold text-gold">{isVendedor ? `${totalHoje.qtd} vendas` : formatCurrency(totalHoje.valor)}</p>
+        <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="kpi-card p-4" style={{ borderColor: "hsl(var(--gold-muted))" }}>
+            <p className="text-[10px] text-muted-foreground mb-1.5">{isVendedor ? "Vendas hoje" : "Faturado hoje"}</p>
+            <p className="text-lg font-bold text-gold">{isVendedor ? `${totalHoje.qtd} vendas` : formatCurrency(totalHoje.valor)}</p>
           </div>
-          <div className="bg-surface border border-border rounded-xl p-3">
-            <p className="text-[10px] text-muted-foreground mb-1">Itens vendidos</p>
-            <p className="text-base font-bold text-foreground">{totalHoje.itens} unid.</p>
+          <div className="kpi-card p-4">
+            <p className="text-[10px] text-muted-foreground mb-1.5">Itens vendidos</p>
+            <p className="text-lg font-bold text-foreground">{totalHoje.itens} unid.</p>
           </div>
         </div>
 
-        <div className="relative mb-2">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+        <div className="relative mb-3">
+          <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input type="text" value={busca} onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar por perfume ou vendedora..."
-            className="w-full bg-surface border border-border rounded-xl pl-8 pr-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted" />
+            className="input-premium pl-9 pr-3 py-2.5 text-xs" />
         </div>
 
         <div className="space-y-2 mb-1">
           <div className="grid grid-cols-2 gap-2">
             {!isVendedor ? (
               <div className="relative">
-                <Calendar size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <Calendar size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 <input type="date" value={filtroData} onChange={(e) => setFiltroData(e.target.value)}
-                  className="w-full bg-surface border border-border rounded-xl pl-8 pr-2 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted [color-scheme:dark]" />
+                  className="input-premium pl-9 pr-2 py-2.5 text-xs [color-scheme:dark]" />
               </div>
             ) : (
-              <div className="flex items-center justify-center bg-surface border border-border rounded-xl px-3 py-2 text-xs text-muted-foreground">
+              <div className="flex items-center justify-center kpi-card px-3 py-2.5 text-xs text-muted-foreground">
                 <Calendar size={13} className="mr-1.5" /> Hoje
               </div>
             )}
             <select value={filtroDeposito} onChange={(e) => setFiltroDeposito(e.target.value as Deposito | "Todos")}
-              className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted">
+              className="input-premium px-3 py-2.5 text-xs">
               <option value="Todos">Depósito</option>
               {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
             </select>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <select value={filtroVendedora} onChange={(e) => setFiltroVendedora(e.target.value)}
-              className="w-full bg-surface border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-gold-muted">
+              className="input-premium px-3 py-2.5 text-xs">
               <option value="Todas">Vendedora</option>
               {vendedoras.map((v) => <option key={v} value={v}>{v}</option>)}
             </select>
             <button onClick={() => setOrdenacao(o => o === "recente" ? "antiga" : "recente")}
-              className={`flex items-center justify-center gap-1 px-2.5 py-2 rounded-xl text-xs font-medium border transition-all ${ordenacao === "antiga" ? "border-gold-muted bg-gold/10 text-gold" : "border-border bg-surface text-muted-foreground"}`}>
+              className={`btn-secondary px-2.5 py-2.5 text-xs ${ordenacao === "antiga" ? "!border-gold-muted text-gold" : ""}`}>
               <ArrowUpDown size={13} /> {ordenacao === "recente" ? "Recente" : "Antiga"}
             </button>
           </div>
@@ -405,10 +404,10 @@ export default function Vendas() {
 
       {/* Relatório - kept same as before */}
       {showRelatorio && (
-        <div className="mx-4 mb-4 bg-surface border border-border rounded-xl p-4 animate-fade-in space-y-4">
+        <div className="mx-4 mb-5 card-premium p-5 animate-fade-in space-y-5">
           <div>
-            <h3 className="font-display text-base text-gold flex items-center gap-2 mb-3">
-              <FileText size={16} />
+            <h3 className="font-display text-lg text-foreground flex items-center gap-2 mb-4">
+              <FileText size={16} className="text-gold" />
               Relatório de Vendas
             </h3>
             <div className="mb-3">
@@ -584,9 +583,9 @@ export default function Vendas() {
 
       {/* Formulário Nova Venda - Carrinho */}
       {showForm && (
-        <div className="mx-4 mb-4 bg-surface border border-gold-muted rounded-xl p-4 animate-fade-in"
+        <div className="mx-4 mb-5 card-premium p-5 animate-fade-in"
           style={{ boxShadow: "var(--shadow-gold)" }}>
-          <h3 className="font-display text-base text-gold mb-3">Nova Venda</h3>
+          <h3 className="font-display text-lg text-foreground mb-4">Nova Venda</h3>
           <div className="space-y-3">
 
             {/* Vendedora */}
@@ -798,15 +797,14 @@ export default function Vendas() {
               </div>
             )}
 
-            <div className="flex gap-2">
+            <div className="flex gap-3 pt-1">
               <button onClick={() => { setShowForm(false); setCarrinho([]); setPagamentosForm([]); setVendedoraSelecionada(""); }}
-                className="flex-1 py-2.5 rounded-xl text-sm border border-border text-muted-foreground">
+                className="btn-secondary flex-1 py-2.5">
                 Cancelar
               </button>
               <button onClick={handleLancar}
                 disabled={carrinho.length === 0 || !vendedoraSelecionada || pagamentosForm.length === 0 || Math.abs(restantePagamento) > 0.01}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-primary-foreground disabled:opacity-40 transition-all"
-                style={{ background: "var(--gradient-gold)" }}>
+                className="btn-primary flex-1 py-2.5">
                 Confirmar Venda
               </button>
             </div>
@@ -829,15 +827,14 @@ export default function Vendas() {
           const isMulti = itens.length > 1 || grupoPags.length > 1;
 
           return (
-            <div key={grupoVenda} className="bg-surface border border-border rounded-xl p-3.5"
-              style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.3)" }}>
+            <div key={grupoVenda} className="card-premium p-4">
 
               {itens.map((v, idx) => {
                 const pf = perfumes.find((p) => p.id === v.perfumeId);
                 return (
                   <div key={v.id} className={idx > 0 ? "mt-2 pt-2 border-t border-border/50" : ""}>
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-gold/10 border border-gold-muted flex items-center justify-center flex-shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-primary/8 border border-gold-muted flex items-center justify-center flex-shrink-0">
                         <ShoppingCart size={18} className="text-gold" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -925,8 +922,8 @@ export default function Vendas() {
           );
         })}
         {filtradasAgrupadas.length === 0 && (
-          <div className="text-center py-16">
-            <ShoppingCart size={40} className="text-muted-foreground mx-auto mb-3 opacity-50" />
+          <div className="text-center py-20">
+            <ShoppingCart size={40} className="text-muted-foreground mx-auto mb-4 opacity-40" />
             <p className="text-muted-foreground text-sm">Nenhuma venda encontrada</p>
           </div>
         )}

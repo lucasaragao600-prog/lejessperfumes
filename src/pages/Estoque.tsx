@@ -33,7 +33,6 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         String(p.volume).includes(term);
 
       const matchTipo = tipoFiltro === "Todos" || p.tipo === tipoFiltro;
-
       const qtd = depositoFiltro === "Todos"
         ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
         : p.estoques[depositoFiltro];
@@ -81,77 +80,66 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
 
       {/* Header */}
       <div className="sticky top-0 z-10 px-4 pt-12 pb-4"
-        style={{ background: "linear-gradient(180deg, hsl(0 0% 7%) 80%, transparent)" }}>
-        <div className="flex items-center justify-between mb-4">
+        style={{ background: "var(--gradient-header)" }}>
+        <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="font-display text-2xl text-gold">Estoque</h1>
-            <p className="text-muted-foreground text-xs mt-0.5">{filtrados.length} produtos</p>
+            <h1 className="page-title">Estoque</h1>
+            <p className="page-subtitle mt-1">{filtrados.length} produtos</p>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowAlertas(!showAlertas)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 ${
                 showAlertas
-                  ? "bg-destructive/20 border-destructive text-destructive"
+                  ? "bg-destructive/15 border border-destructive/40 text-destructive"
                   : alertas > 0
-                  ? "bg-destructive/10 border-destructive/40 text-destructive"
-                  : "bg-surface border-border text-muted-foreground"
+                  ? "bg-destructive/8 border border-destructive/25 text-destructive"
+                  : "btn-secondary"
               }`}
             >
-              <AlertTriangle size={12} />
+              <AlertTriangle size={13} />
               {alertas}
             </button>
             {isMaster && (
-              <button
-                onClick={() => setShowCadastro(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-gold-muted bg-gold/10 text-gold transition-all"
-              >
-                <Plus size={12} /> Novo
+              <button onClick={() => setShowCadastro(true)} className="btn-primary px-4 py-2">
+                <Plus size={14} /> Novo
               </button>
             )}
           </div>
         </div>
 
-        {/* Busca */}
+        {/* Search */}
         <div className="relative mb-3">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
             placeholder="Nome, código ou marca..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            className="w-full bg-surface border border-border rounded-xl pl-9 pr-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted transition-colors"
+            className="input-premium pl-10 pr-4 py-2.5"
           />
         </div>
 
-        {/* Filtro depósito */}
+        {/* Deposit filter */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-2">
           {(["Todos", ...depositos] as const).map((d) => (
             <button
               key={d}
               onClick={() => setDepositoFiltro(d)}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                depositoFiltro === d
-                  ? "bg-gold text-primary-foreground border-gold shadow-gold"
-                  : "bg-surface border-border text-muted-foreground"
-              }`}
+              className={`pill ${depositoFiltro === d ? "pill-active" : "pill-inactive"}`}
             >
               {d}
             </button>
           ))}
         </div>
 
-        {/* Filtro tipo */}
+        {/* Type filter */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide">
           {([{ key: "Todos" as const, label: "Todos os tipos" }, ...tipos]).map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setTipoFiltro(key)}
-              className={`flex-shrink-0 px-3 py-1 rounded-full text-[11px] font-medium border transition-all ${
-                tipoFiltro === key
-                  ? "bg-gold/20 text-gold border-gold-muted"
-                  : "bg-surface border-border text-muted-foreground"
-              }`}
+              className={`pill text-[11px] ${tipoFiltro === key ? "pill-active" : "pill-inactive"}`}
             >
               {label}
             </button>
@@ -159,41 +147,39 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         </div>
       </div>
 
-      {/* Cards de quantidade */}
-      <div className="px-4 mb-2 grid grid-cols-4 gap-2">
+      {/* Quantity cards */}
+      <div className="px-4 mb-3 grid grid-cols-4 gap-2">
         {[
           { label: "Total", value: totais.unidades },
           { label: "Casa", value: totais.casa },
           { label: "Sumaúma", value: totais.sumauma },
           { label: "Amazonas", value: totais.amazonas },
         ].map(({ label, value }) => (
-          <div key={label} className="bg-surface border border-border rounded-xl p-2.5 text-center">
-            <p className="text-[9px] text-muted-foreground mb-0.5">{label}</p>
-            <p className="text-sm font-bold text-gold">{value}</p>
+          <div key={label} className="kpi-card p-3 text-center">
+            <p className="text-[9px] text-muted-foreground mb-1">{label}</p>
+            <p className="text-sm font-bold text-foreground">{value}</p>
             <p className="text-[8px] text-muted-foreground">un.</p>
           </div>
         ))}
       </div>
 
-      {/* Cards de valor - somente master */}
+      {/* Value cards - master only */}
       {isMaster && (
-        <div className="px-4 mb-4 grid grid-cols-3 gap-2">
+        <div className="px-4 mb-5 grid grid-cols-3 gap-2">
           {[
-            { label: "Custo", value: totais.custo, color: "text-muted-foreground" },
-            { label: "Venda", value: totais.venda, color: "text-gold" },
-            { label: "Lucro pot.", value: totais.venda - totais.custo, color: "text-emerald-400" },
-          ].map(({ label, value, color }) => (
-            <div key={label} className="bg-surface border border-border rounded-xl p-3">
-              <p className="text-[10px] text-muted-foreground mb-1">{label}</p>
-              <p className={`text-xs font-semibold ${color}`}>
-                {formatCurrency(value)}
-              </p>
+            { label: "Custo", value: totais.custo, cls: "text-muted-foreground" },
+            { label: "Venda", value: totais.venda, cls: "text-gold" },
+            { label: "Lucro pot.", value: totais.venda - totais.custo, cls: "text-success" },
+          ].map(({ label, value, cls }) => (
+            <div key={label} className="kpi-card p-3">
+              <p className="text-[10px] text-muted-foreground mb-1.5">{label}</p>
+              <p className={`text-xs font-semibold ${cls}`}>{formatCurrency(value)}</p>
             </div>
           ))}
         </div>
       )}
 
-      {/* Lista */}
+      {/* List */}
       <div className="px-4 space-y-3">
         {filtrados.map((p) => {
           const qtd = getQtd(p);
@@ -201,35 +187,29 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
           return (
             <div
               key={p.id}
-              className={`rounded-xl border p-4 transition-all ${
-                baixo
-                  ? "bg-destructive/5 border-destructive/30"
-                  : "bg-surface border-border"
-              }`}
-              style={{ boxShadow: "0 2px 12px hsl(0 0% 0% / 0.3)" }}
+              className={baixo ? "card-alert p-4" : "card-premium p-4"}
             >
-              <div className="flex items-start justify-between mb-2">
+              <div className="flex items-start justify-between mb-2.5">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-gold font-mono bg-gold/10 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] text-gold font-mono bg-primary/10 px-2 py-0.5 rounded-md">
                       {p.codigo}
                     </span>
                     {baixo && <AlertTriangle size={12} className="text-destructive flex-shrink-0" />}
                   </div>
-                  <h3 className="font-display text-base text-foreground mt-1 truncate">{p.nome}</h3>
-                  <p className="text-xs text-muted-foreground">{p.marca} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}</p>
+                  <h3 className="font-display text-base text-foreground mt-1.5 truncate">{p.nome}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{p.marca} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}</p>
                 </div>
-                <div className="text-right ml-3">
-                  <p className={`text-2xl font-bold ${baixo ? "text-destructive" : "text-gold"}`}>{qtd}</p>
+                <div className="text-right ml-4">
+                  <p className={`text-2xl font-bold tracking-tight ${baixo ? "text-destructive" : "text-foreground"}`}>{qtd}</p>
                   <p className="text-[10px] text-muted-foreground">unid.</p>
                 </div>
               </div>
 
-              {/* Por depósito (se Todos) */}
               {depositoFiltro === "Todos" && (
                 <div className="flex gap-2 mb-3">
                   {depositos.map((d) => (
-                    <div key={d} className="flex-1 bg-surface-overlay rounded-lg p-1.5 text-center">
+                    <div key={d} className="flex-1 bg-surface-overlay rounded-lg p-2 text-center">
                       <p className="text-[9px] text-muted-foreground">{d}</p>
                       <p className={`text-sm font-semibold ${p.estoques[d] <= 0 ? "text-destructive" : "text-foreground"}`}>
                         {p.estoques[d]}
@@ -239,21 +219,20 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                 </div>
               )}
 
-              {/* Valores + editar - somente master */}
               {isMaster && (
-                <div className="grid grid-cols-3 gap-1.5 border-t border-border pt-2 items-end">
+                <div className="grid grid-cols-3 gap-2 border-t border-border pt-3 items-end">
                   <div>
                     <p className="text-[9px] text-muted-foreground">Custo unit.</p>
                     <p className="text-xs text-foreground">{formatCurrency(p.custo)}</p>
                   </div>
                   <div>
                     <p className="text-[9px] text-muted-foreground">Venda unit.</p>
-                    <p className="text-xs text-gold">{formatCurrency(p.precoVenda)}</p>
+                    <p className="text-xs text-gold font-medium">{formatCurrency(p.precoVenda)}</p>
                   </div>
                   <div className="text-right">
                     <button
                       onClick={() => setEditandoPerfume(p)}
-                      className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-gold transition-colors ml-auto"
+                      className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-gold transition-colors duration-150 ml-auto"
                     >
                       <Pencil size={11} /> Editar
                     </button>
@@ -265,8 +244,8 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         })}
 
         {filtrados.length === 0 && (
-          <div className="text-center py-16">
-            <Package size={40} className="text-muted-foreground mx-auto mb-3 opacity-50" />
+          <div className="text-center py-20">
+            <Package size={40} className="text-muted-foreground mx-auto mb-4 opacity-40" />
             <p className="text-muted-foreground text-sm">Nenhum produto encontrado</p>
           </div>
         )}
