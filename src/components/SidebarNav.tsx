@@ -22,24 +22,33 @@ export default function SidebarNav({ activeTab, onTabChange, isMaster = true }: 
   const tabs = allTabs.filter((t) => !t.masterOnly || isMaster);
 
   return (
-    <aside className="hidden md:flex flex-col w-56 fixed left-0 top-0 h-full bg-surface border-r border-border z-50">
-      <div className="p-4 border-b border-border">
-        <img src={logoLeJess} alt="Le Jess Perfumes" className="h-10 mx-auto invert" />
+    <aside className="hidden md:flex flex-col w-60 fixed left-0 top-0 h-full z-50"
+      style={{ background: "hsl(var(--sidebar-background))", borderRight: "1px solid hsl(var(--sidebar-border))" }}>
+      <div className="px-6 py-5 border-b" style={{ borderColor: "hsl(var(--sidebar-border))" }}>
+        <img src={logoLeJess} alt="Le Jess Perfumes" className="h-10 mx-auto invert opacity-90" />
       </div>
-      <nav className="flex-1 py-3 px-2 space-y-1 overflow-y-auto">
+      <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
         {tabs.map(({ id, label, icon: Icon }) => {
           const isActive = activeTab === id;
           return (
             <button
               key={id}
               onClick={() => onTabChange(id)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
                 isActive
-                  ? "bg-gold-muted text-gold shadow-gold"
+                  ? "text-foreground"
                   : "text-muted-foreground hover:text-foreground hover:bg-surface-raised"
               }`}
+              style={isActive ? {
+                background: "hsl(43 74% 49% / 0.08)",
+                borderLeft: "3px solid hsl(var(--gold))",
+                paddingLeft: "13px",
+              } : {
+                borderLeft: "3px solid transparent",
+                paddingLeft: "13px",
+              }}
             >
-              <Icon size={18} />
+              <Icon size={18} className={isActive ? "text-gold" : ""} />
               <span>{label}</span>
             </button>
           );

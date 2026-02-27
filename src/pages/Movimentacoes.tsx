@@ -9,9 +9,9 @@ const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const tipos = ["Entrada", "Ajuste", "Transferência", "Saída Tester"] as const;
 
 const tipoConfig = {
-  "Entrada": { icon: ArrowDown, color: "text-emerald-400", bg: "bg-emerald-400/10 border-emerald-400/30" },
+  "Entrada": { icon: ArrowDown, color: "text-success", bg: "bg-success/10 border-success/30" },
   "Ajuste": { icon: RefreshCw, color: "text-blue-400", bg: "bg-blue-400/10 border-blue-400/30" },
-  "Transferência": { icon: ArrowLeftRight, color: "text-gold", bg: "bg-gold/10 border-gold-muted" },
+  "Transferência": { icon: ArrowLeftRight, color: "text-gold", bg: "bg-primary/10 border-gold-muted" },
   "Saída Tester": { icon: FlaskConical, color: "text-purple-400", bg: "bg-purple-400/10 border-purple-400/30" },
 };
 
@@ -39,9 +39,7 @@ export default function Movimentacoes() {
       return matchTipo && matchBusca;
     });
     result = [...result].sort((a, b) =>
-      ordenacao === "recente"
-        ? b.data.localeCompare(a.data)
-        : a.data.localeCompare(b.data)
+      ordenacao === "recente" ? b.data.localeCompare(a.data) : a.data.localeCompare(b.data)
     );
     return result;
   }, [movimentacoes, filtroTipo, busca, ordenacao]);
@@ -68,7 +66,7 @@ export default function Movimentacoes() {
       }
     } else if (form.tipo === "Ajuste") {
       if (form.quantidade < 0) {
-        alert("A quantidade do ajuste não pode ser negativa. Informe o valor correto do estoque.");
+        alert("A quantidade do ajuste não pode ser negativa.");
         return;
       }
     }
@@ -112,130 +110,101 @@ export default function Movimentacoes() {
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <div className="sticky top-0 z-10 px-4 pt-12 pb-4"
-        style={{ background: "linear-gradient(180deg, hsl(0 0% 7%) 80%, transparent)" }}>
-        <div className="flex items-center justify-between mb-4">
+        style={{ background: "var(--gradient-header)" }}>
+        <div className="flex items-center justify-between mb-5">
           <div>
-            <h1 className="font-display text-2xl text-gold">Movimentações</h1>
-            <p className="text-muted-foreground text-xs mt-0.5">{filtradas.length} registros</p>
+            <h1 className="page-title">Movimentações</h1>
+            <p className="page-subtitle mt-1">{filtradas.length} registros</p>
           </div>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium text-primary-foreground shadow-gold transition-all active:scale-95"
-            style={{ background: "var(--gradient-gold)" }}
-          >
-            <Plus size={16} />
-            Nova
+          <button onClick={() => setShowForm(!showForm)} className="btn-primary px-4 py-2">
+            <Plus size={16} /> Nova
           </button>
         </div>
 
-        {/* Barra de busca */}
-        <div className="relative mb-2">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
+        <div className="relative mb-3">
+          <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input type="text" value={busca} onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar por perfume..."
-            className="w-full bg-surface border border-border rounded-xl pl-8 pr-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted"
-          />
+            className="input-premium pl-9 pr-3 py-2.5 text-xs" />
         </div>
 
-        {/* Filtro tipo + ordenação */}
         <div className="flex gap-2 items-center">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide flex-1">
             {["Todos", ...tipos].map((t) => (
-              <button
-                key={t}
-                onClick={() => setFiltroTipo(t)}
-                className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                  filtroTipo === t
-                    ? "bg-gold text-primary-foreground border-gold shadow-gold"
-                    : "bg-surface border-border text-muted-foreground"
-                }`}
-              >
+              <button key={t} onClick={() => setFiltroTipo(t)}
+                className={`pill ${filtroTipo === t ? "pill-active" : "pill-inactive"}`}>
                 {t}
               </button>
             ))}
           </div>
           <button
             onClick={() => setOrdenacao(o => o === "recente" ? "antiga" : "recente")}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-medium border transition-all flex-shrink-0 ${ordenacao === "antiga" ? "border-gold-muted bg-gold/10 text-gold" : "border-border bg-surface text-muted-foreground"}`}
-          >
+            className={`btn-secondary px-2.5 py-1.5 flex-shrink-0 ${ordenacao === "antiga" ? "border-gold-muted text-gold" : ""}`}>
             <ArrowUpDown size={13} />
           </button>
         </div>
       </div>
 
-      {/* Formulário */}
+      {/* Form */}
       {showForm && (
-        <div className="mx-4 mb-4 bg-surface border border-gold-muted rounded-xl p-4 animate-fade-in"
-          style={{ boxShadow: "var(--shadow-gold)" }}>
-          <h3 className="font-display text-base text-gold mb-3">Nova Movimentação</h3>
-          <div className="space-y-3">
-            {/* Tipo */}
+        <div className="mx-4 mb-5 card-premium p-5 animate-fade-in" style={{ boxShadow: "var(--shadow-gold)" }}>
+          <h3 className="font-display text-lg text-foreground mb-4">Nova Movimentação</h3>
+          <div className="space-y-4">
             <div>
-              <label className="text-[11px] text-muted-foreground mb-1.5 block">Tipo</label>
-              <div className="grid grid-cols-2 gap-1.5">
+              <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Tipo</label>
+              <div className="grid grid-cols-2 gap-2">
                 {tipos.map((t) => (
-                  <button
-                    key={t}
+                  <button key={t}
                     onClick={() => setForm({ ...form, tipo: t, depositoOrigem: "", depositoDestino: "", deposito: "" })}
-                    className={`py-2 rounded-lg text-xs font-medium border transition-all ${
+                    className={`py-2.5 rounded-xl text-xs font-medium border transition-all duration-150 ${
                       form.tipo === t
-                        ? "border-gold bg-gold/15 text-gold"
-                        : "border-border bg-surface-overlay text-muted-foreground"
-                    }`}
-                  >
+                        ? "border-gold-muted bg-primary/10 text-gold"
+                        : "border-border bg-surface-overlay text-muted-foreground hover:text-foreground"
+                    }`}>
                     {t}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* Perfume */}
             <div>
-              <label className="text-[11px] text-muted-foreground mb-1 block">Perfume</label>
-              <PerfumeSearchSelect
-                perfumes={perfumes}
-                value={form.perfumeId}
-                onChange={(id) => setForm({ ...form, perfumeId: id })}
-                concentracoesConfig={concentracoesConfig}
-              />
+              <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Perfume</label>
+              <PerfumeSearchSelect perfumes={perfumes} value={form.perfumeId}
+                onChange={(id) => setForm({ ...form, perfumeId: id })} concentracoesConfig={concentracoesConfig} />
             </div>
 
-            {/* Depósito(s) */}
             {form.tipo === "Transferência" ? (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] text-muted-foreground mb-1 block">Origem</label>
+                  <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Origem</label>
                   <select value={form.depositoOrigem} onChange={(e) => setForm({ ...form, depositoOrigem: e.target.value as Deposito })}
-                    className="w-full bg-surface-overlay border border-border rounded-lg px-2 py-2.5 text-xs text-foreground focus:outline-none focus:border-gold-muted">
+                    className="input-premium px-3 py-2.5 text-xs">
                     <option value="">Selecione</option>
                     {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] text-muted-foreground mb-1 block">Destino</label>
+                  <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Destino</label>
                   <select value={form.depositoDestino} onChange={(e) => setForm({ ...form, depositoDestino: e.target.value as Deposito })}
-                    className="w-full bg-surface-overlay border border-border rounded-lg px-2 py-2.5 text-xs text-foreground focus:outline-none focus:border-gold-muted">
+                    className="input-premium px-3 py-2.5 text-xs">
                     <option value="">Selecione</option>
                     {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
               </div>
             ) : form.tipo === "Saída Tester" ? (
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] text-muted-foreground mb-1 block">Depósito Origem</label>
+                  <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Depósito Origem</label>
                   <select value={form.depositoOrigem} onChange={(e) => setForm({ ...form, depositoOrigem: e.target.value as Deposito })}
-                    className="w-full bg-surface-overlay border border-border rounded-lg px-2 py-2.5 text-xs text-foreground focus:outline-none focus:border-gold-muted">
+                    className="input-premium px-3 py-2.5 text-xs">
                     <option value="">Selecione</option>
                     {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-[11px] text-muted-foreground mb-1 block">Destino</label>
-                  <div className="bg-surface-overlay border border-purple-400/30 rounded-lg px-2 py-2.5 flex items-center gap-1.5">
+                  <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Destino</label>
+                  <div className="bg-purple-400/8 border border-purple-400/25 rounded-xl px-3 py-2.5 flex items-center gap-1.5">
                     <FlaskConical size={13} className="text-purple-400" />
                     <span className="text-xs text-purple-400 font-medium">Estoque Tester</span>
                   </div>
@@ -243,9 +212,9 @@ export default function Movimentacoes() {
               </div>
             ) : (
               <div>
-                <label className="text-[11px] text-muted-foreground mb-1 block">Depósito</label>
+                <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Depósito</label>
                 <select value={form.deposito} onChange={(e) => setForm({ ...form, deposito: e.target.value as Deposito })}
-                  className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted">
+                  className="input-premium px-3 py-2.5 text-sm">
                   <option value="">Selecione...</option>
                   {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
@@ -253,7 +222,7 @@ export default function Movimentacoes() {
             )}
 
             {form.tipo === "Saída Tester" && form.perfumeId && form.depositoOrigem && (
-              <div className="bg-purple-400/10 border border-purple-400/30 rounded-lg p-2.5">
+              <div className="bg-purple-400/8 border-l-4 border border-purple-400/20 rounded-xl p-3" style={{ borderLeftColor: "rgb(192 132 252)" }}>
                 <p className="text-xs text-purple-400">
                   ⚠️ Será baixado do estoque de <strong>{form.depositoOrigem}</strong> e adicionado ao estoque de testers.
                 </p>
@@ -264,40 +233,37 @@ export default function Movimentacoes() {
               const pf = perfumes.find((x) => x.id === form.perfumeId);
               const estoqueAtual = pf ? pf.estoques[form.deposito as Deposito] : 0;
               return (
-                <div className="bg-blue-400/10 border border-blue-400/30 rounded-lg p-2.5">
+                <div className="bg-blue-400/8 border-l-4 border border-blue-400/20 rounded-xl p-3" style={{ borderLeftColor: "rgb(96 165 250)" }}>
                   <p className="text-xs text-blue-400">
-                    📦 Estoque atual em <strong>{form.deposito}</strong>: <strong>{estoqueAtual}</strong> un. Informe a quantidade correta abaixo.
+                    📦 Estoque atual em <strong>{form.deposito}</strong>: <strong>{estoqueAtual}</strong> un.
                   </p>
                 </div>
               );
             })()}
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[11px] text-muted-foreground mb-1 block">
+                <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">
                   {form.tipo === "Ajuste" ? "Qtd. Correta" : "Quantidade"}
                 </label>
                 <input type="number" min={form.tipo === "Ajuste" ? 0 : 1} value={form.quantidade === 0 ? "" : form.quantidade}
                   onChange={(e) => setForm({ ...form, quantidade: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 })}
-                  className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted" />
+                  className="input-premium px-3 py-2.5 text-sm" />
               </div>
               <div>
-                <label className="text-[11px] text-muted-foreground mb-1 block">Observação</label>
+                <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Observação</label>
                 <input type="text" value={form.observacao}
                   onChange={(e) => setForm({ ...form, observacao: e.target.value })}
                   placeholder="Opcional"
-                  className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted" />
+                  className="input-premium px-3 py-2.5 text-sm" />
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <button onClick={() => setShowForm(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm border border-border text-muted-foreground">
+            <div className="flex gap-3 pt-1">
+              <button onClick={() => setShowForm(false)} className="btn-secondary flex-1 py-2.5">
                 Cancelar
               </button>
-              <button onClick={handleSalvar} disabled={!form.perfumeId}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-primary-foreground disabled:opacity-40"
-                style={{ background: "var(--gradient-gold)" }}>
+              <button onClick={handleSalvar} disabled={!form.perfumeId} className="btn-primary flex-1 py-2.5">
                 Salvar
               </button>
             </div>
@@ -305,16 +271,15 @@ export default function Movimentacoes() {
         </div>
       )}
 
-      {/* Lista */}
-      <div className="px-4 space-y-2">
+      {/* List */}
+      <div className="px-4 space-y-2.5">
         {filtradas.map((m) => {
           const cfg = tipoConfig[m.tipo];
           const Icon = cfg.icon;
           const pf = perfumes.find((p) => p.id === m.perfumeId);
           return (
-            <div key={m.id} className="bg-surface border border-border rounded-xl p-3.5 flex items-start gap-3"
-              style={{ boxShadow: "0 2px 8px hsl(0 0% 0% / 0.3)" }}>
-              <div className={`w-9 h-9 rounded-xl border flex items-center justify-center flex-shrink-0 mt-0.5 ${cfg.bg}`}>
+            <div key={m.id} className="card-premium p-4 flex items-start gap-3">
+              <div className={`w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 mt-0.5 ${cfg.bg}`}>
                 <Icon size={16} className={cfg.color} />
               </div>
               <div className="flex-1 min-w-0">
@@ -325,11 +290,11 @@ export default function Movimentacoes() {
                   </p>
                 </div>
                 {pf && (
-                  <p className="text-[10px] text-muted-foreground truncate">
+                  <p className="text-[10px] text-muted-foreground truncate mt-0.5">
                     {pf.marca} · {pf.concentracao} · {pf.volume}ml
                   </p>
                 )}
-                <p className="text-[11px] text-muted-foreground mt-0.5">
+                <p className="text-[11px] text-muted-foreground mt-1">
                   {formatDate(m.data)} · {m.tipo}
                   {m.tipo === "Saída Tester" && m.deposito && ` · ${m.deposito} → Tester`}
                   {m.tipo === "Transferência" && m.depositoOrigem && ` · ${m.depositoOrigem} → ${m.depositoDestino}`}
@@ -339,15 +304,15 @@ export default function Movimentacoes() {
                   <p className="text-[11px] text-muted-foreground italic mt-0.5">"{m.observacao}"</p>
                 )}
                 {m.registradoPor && (
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Registrado por: {m.registradoPor}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">por {m.registradoPor}</p>
                 )}
               </div>
             </div>
           );
         })}
         {filtradas.length === 0 && (
-          <div className="text-center py-16">
-            <ArrowLeftRight size={40} className="text-muted-foreground mx-auto mb-3 opacity-50" />
+          <div className="text-center py-20">
+            <ArrowLeftRight size={40} className="text-muted-foreground mx-auto mb-4 opacity-40" />
             <p className="text-muted-foreground text-sm">Nenhuma movimentação encontrada</p>
           </div>
         )}
