@@ -16,7 +16,7 @@ export default function Dashboards() {
     ...Object.entries(tiposPerfumeConfig).map(([key, label]) => ({ key, label: String(label) })),
   ], [tiposPerfumeConfig]);
 
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Manaus" })).toISOString().slice(0, 10);
 
   const tipoMap = useMemo(() => {
     const m: Record<string, TipoPerfume> = {};
