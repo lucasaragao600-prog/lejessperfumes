@@ -7,9 +7,8 @@ import { useAuth } from "@/context/AuthContext";
 import type { VendaPagamento } from "@/hooks/useVendas";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
-function getHojeManaus() {
-  return new Date(new Date().toLocaleString("en-US", { timeZone: "America/Manaus" })).toISOString().slice(0, 10);
-}
+import { getHojeManaus } from "@/lib/dateUtils";
+
 const hoje = getHojeManaus();
 
 const vendedorasFixas = ["Outra"];

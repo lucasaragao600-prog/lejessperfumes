@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { getHojeManaus } from "@/lib/dateUtils";
 import { BarChart3, TrendingUp, Package, ShoppingCart, DollarSign } from "lucide-react";
 import { formatCurrency, type TipoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
@@ -16,7 +17,7 @@ export default function Dashboards() {
     ...Object.entries(tiposPerfumeConfig).map(([key, label]) => ({ key, label: String(label) })),
   ], [tiposPerfumeConfig]);
 
-  const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Manaus" })).toISOString().slice(0, 10);
+  const hoje = getHojeManaus();
 
   const tipoMap = useMemo(() => {
     const m: Record<string, TipoPerfume> = {};
