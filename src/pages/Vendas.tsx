@@ -50,6 +50,7 @@ export default function Vendas() {
   const [busca, setBusca] = useState("");
   const [ordenacao, setOrdenacao] = useState<"recente" | "antiga">("recente");
   const [showForm, setShowForm] = useState(false);
+  const [dataVenda, setDataVenda] = useState(hoje);
   const [showRelatorio, setShowRelatorio] = useState(false);
   const [modoRelatorio, setModoRelatorio] = useState<"dia" | "periodo" | "mes">("dia");
   const [dataRelatorio, setDataRelatorio] = useState(hoje);
@@ -146,10 +147,10 @@ export default function Vendas() {
       return;
     }
 
-    const hojeAtual = getHojeManaus();
+    const dataEfetiva = isMaster ? dataVenda : getHojeManaus();
     const itens: Venda[] = carrinho.map((item, idx) => ({
       id: `v${Date.now()}_${idx}`,
-      data: hojeAtual,
+      data: dataEfetiva,
       perfumeId: item.perfumeId,
       perfumeNome: item.perfumeNome,
       deposito: item.deposito,
@@ -182,6 +183,7 @@ export default function Vendas() {
     setCarrinho([]);
     setVendedoraSelecionada("");
     setPagamentosForm([]);
+    setDataVenda(hoje);
     setItemForm({ perfumeId: "", deposito: "", quantidade: 1, ajuste: 0, tipoAjuste: "desconto", tipoCalculo: "valor", observacao: "" });
     setShowForm(false);
   };
@@ -343,7 +345,7 @@ export default function Vendas() {
               <FileText size={14} />
               Relatório
             </button>
-            <button onClick={() => { setShowForm(!showForm); if (!showForm) { setCarrinho([]); setPagamentosForm([]); setVendedoraSelecionada(""); } }}
+            <button onClick={() => { setShowForm(!showForm); if (!showForm) { setCarrinho([]); setPagamentosForm([]); setVendedoraSelecionada(""); setDataVenda(hoje); } }}
               className="btn-primary px-4 py-2">
               <Plus size={16} />
               Lançar
@@ -600,6 +602,21 @@ export default function Vendas() {
                 ))}
               </div>
             </div>
+
+            {/* Data da venda (retroativa - apenas master) */}
+            {isMaster && (
+              <div>
+                <label className="text-[11px] text-muted-foreground mb-1 block flex items-center gap-1">
+                  <Calendar size={10} /> Data da venda
+                </label>
+                <input type="date" value={dataVenda} onChange={(e) => setDataVenda(e.target.value)}
+                  max={hoje}
+                  className="input-premium px-3 py-2.5 text-xs [color-scheme:dark] w-full" />
+                {dataVenda !== hoje && (
+                  <p className="text-[10px] text-amber-400 mt-1">⚠️ Venda retroativa: {dataVenda.split("-").reverse().join("/")}</p>
+                )}
+              </div>
+            )}
 
             {/* Carrinho existente */}
             {carrinho.length > 0 && (

@@ -71,7 +71,7 @@ export default function Movimentacoes() {
       }
     }
 
-    const hoje = new Date().toISOString().slice(0, 10);
+    const hoje = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Manaus" })).toISOString().slice(0, 10);
     const estoqueAtual = form.tipo === "Ajuste" ? p.estoques[form.deposito as Deposito] : 0;
     const diferencaAjuste = form.tipo === "Ajuste" ? form.quantidade - estoqueAtual : 0;
     const nova: Movimentacao = {
