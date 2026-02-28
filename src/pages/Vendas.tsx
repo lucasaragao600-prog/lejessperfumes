@@ -51,6 +51,7 @@ export default function Vendas() {
   const [ordenacao, setOrdenacao] = useState<"recente" | "antiga">("recente");
   const [showForm, setShowForm] = useState(false);
   const [dataVenda, setDataVenda] = useState(hoje);
+  const [descontarEstoque, setDescontarEstoque] = useState(true);
   const [showRelatorio, setShowRelatorio] = useState(false);
   const [modoRelatorio, setModoRelatorio] = useState<"dia" | "periodo" | "mes">("dia");
   const [dataRelatorio, setDataRelatorio] = useState(hoje);
@@ -175,9 +176,8 @@ export default function Vendas() {
 
     await adicionarVendaMulti({ itens, pagamentosVenda });
 
-    // Baixar estoque apenas para vendas do dia atual (retroativas não alteram estoque)
-    const hojeManaus = getHojeManaus();
-    if (dataEfetiva === hojeManaus) {
+    const deveDescontar = dataEfetiva === getHojeManaus() || (isMaster && descontarEstoque);
+    if (deveDescontar) {
       for (const item of carrinho) {
         baixarEstoque(item.perfumeId, item.deposito, item.quantidade);
       }
@@ -187,6 +187,7 @@ export default function Vendas() {
     setVendedoraSelecionada("");
     setPagamentosForm([]);
     setDataVenda(hoje);
+    setDescontarEstoque(true);
     setItemForm({ perfumeId: "", deposito: "", quantidade: 1, ajuste: 0, tipoAjuste: "desconto", tipoCalculo: "valor", observacao: "" });
     setShowForm(false);
   };
@@ -348,7 +349,7 @@ export default function Vendas() {
               <FileText size={14} />
               Relatório
             </button>
-            <button onClick={() => { setShowForm(!showForm); if (!showForm) { setCarrinho([]); setPagamentosForm([]); setVendedoraSelecionada(""); setDataVenda(hoje); } }}
+            <button onClick={() => { setShowForm(!showForm); if (!showForm) { setCarrinho([]); setPagamentosForm([]); setVendedoraSelecionada(""); setDataVenda(hoje); setDescontarEstoque(true); } }}
               className="btn-primary px-4 py-2">
               <Plus size={16} />
               Lançar
@@ -616,7 +617,14 @@ export default function Vendas() {
                   max={hoje}
                   className="input-premium px-3 py-2.5 text-xs [color-scheme:dark] w-full" />
                 {dataVenda !== hoje && (
-                  <p className="text-[10px] text-amber-400 mt-1">⚠️ Venda retroativa: {dataVenda.split("-").reverse().join("/")}</p>
+                  <div className="mt-1 space-y-1">
+                    <p className="text-[10px] text-amber-400">⚠️ Venda retroativa: {dataVenda.split("-").reverse().join("/")}</p>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={descontarEstoque} onChange={(e) => setDescontarEstoque(e.target.checked)}
+                        className="accent-gold w-3.5 h-3.5" />
+                      <span className="text-[11px] text-muted-foreground">Descontar estoque</span>
+                    </label>
+                  </div>
                 )}
               </div>
             )}
