@@ -175,9 +175,12 @@ export default function Vendas() {
 
     await adicionarVendaMulti({ itens, pagamentosVenda });
 
-    // Baixar estoque
-    for (const item of carrinho) {
-      baixarEstoque(item.perfumeId, item.deposito, item.quantidade);
+    // Baixar estoque apenas para vendas do dia atual (retroativas não alteram estoque)
+    const hojeManaus = getHojeManaus();
+    if (dataEfetiva === hojeManaus) {
+      for (const item of carrinho) {
+        baixarEstoque(item.perfumeId, item.deposito, item.quantidade);
+      }
     }
 
     setCarrinho([]);
