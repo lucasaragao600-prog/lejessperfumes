@@ -84,15 +84,21 @@ export default function Vendas() {
   const totalPagamentos = pagamentosForm.reduce((a, p) => a + p.valor, 0);
   const restantePagamento = totalCarrinho - totalPagamentos;
 
+  const isRetroativa = isMaster && dataVenda !== hoje;
+  const vaiDescontar = !isRetroativa || descontarEstoque;
+
   const handleAdicionarAoCarrinho = () => {
     if (!itemForm.perfumeId || !itemForm.deposito || itemForm.quantidade < 1) return;
     const p = perfumes.find((x) => x.id === itemForm.perfumeId)!;
-    const estoqueAtual = p.estoques[itemForm.deposito as Deposito];
-    // Check existing cart items for same perfume+deposito
-    const jaNoCarrinho = carrinho.filter(i => i.perfumeId === p.id && i.deposito === itemForm.deposito).reduce((a, i) => a + i.quantidade, 0);
-    if (estoqueAtual < itemForm.quantidade + jaNoCarrinho) {
-      alert(`Estoque insuficiente em ${itemForm.deposito}. Disponível: ${estoqueAtual - jaNoCarrinho}`);
-      return;
+
+    // Only check stock if the sale will actually deduct it
+    if (vaiDescontar) {
+      const estoqueAtual = p.estoques[itemForm.deposito as Deposito];
+      const jaNoCarrinho = carrinho.filter(i => i.perfumeId === p.id && i.deposito === itemForm.deposito).reduce((a, i) => a + i.quantidade, 0);
+      if (estoqueAtual < itemForm.quantidade + jaNoCarrinho) {
+        alert(`Estoque insuficiente em ${itemForm.deposito}. Disponível: ${estoqueAtual - jaNoCarrinho}`);
+        return;
+      }
     }
 
     if (itemForm.ajuste > 0 && !itemForm.observacao.trim()) {
@@ -175,7 +181,7 @@ export default function Vendas() {
 
     await adicionarVendaMulti({ itens, pagamentosVenda });
 
-    const deveDescontar = dataEfetiva === getHojeManaus() || (isMaster && descontarEstoque);
+    const deveDescontar = vaiDescontar;
     if (deveDescontar) {
       for (const item of carrinho) {
         baixarEstoque(item.perfumeId, item.deposito, item.quantidade);
