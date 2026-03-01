@@ -17,6 +17,10 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [depositoFiltro, setDepositoFiltro] = useState<Deposito | "Todos">("Todos");
   const [tipoFiltro, setTipoFiltro] = useState<TipoPerfume | "Todos">("Todos");
   const [showAlertas, setShowAlertas] = useState(false);
+  const [custoMin, setCustoMin] = useState("");
+  const [custoMax, setCustoMax] = useState("");
+  const [vendaMin, setVendaMin] = useState("");
+  const [vendaMax, setVendaMax] = useState("");
   const [showCadastro, setShowCadastro] = useState(false);
   const [editandoPerfume, setEditandoPerfume] = useState<Perfume | null>(null);
 
@@ -33,14 +37,19 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         String(p.volume).includes(term);
 
       const matchTipo = tipoFiltro === "Todos" || p.tipo === tipoFiltro;
+      const matchCustoMin = custoMin === "" || p.custo >= Number(custoMin);
+      const matchCustoMax = custoMax === "" || p.custo <= Number(custoMax);
+      const matchVendaMin = vendaMin === "" || p.precoVenda >= Number(vendaMin);
+      const matchVendaMax = vendaMax === "" || p.precoVenda <= Number(vendaMax);
+      const matchPreco = matchCustoMin && matchCustoMax && matchVendaMin && matchVendaMax;
       const qtd = depositoFiltro === "Todos"
         ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
         : p.estoques[depositoFiltro];
 
-      if (showAlertas) return matchBusca && matchTipo && qtd <= p.estoqueMinimo;
-      return matchBusca && matchTipo;
+      if (showAlertas) return matchBusca && matchTipo && matchPreco && qtd <= p.estoqueMinimo;
+      return matchBusca && matchTipo && matchPreco;
     });
-  }, [perfumes, busca, depositoFiltro, tipoFiltro, showAlertas]);
+  }, [perfumes, busca, depositoFiltro, tipoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax]);
 
   const totais = useMemo(() => {
     return filtrados.reduce(
@@ -134,7 +143,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         </div>
 
         {/* Type filter */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-2">
           {([{ key: "Todos" as const, label: "Todos os tipos" }, ...tipos]).map(({ key, label }) => (
             <button
               key={key}
@@ -145,6 +154,26 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
             </button>
           ))}
         </div>
+
+        {/* Price filters */}
+        {isMaster && (
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex gap-1.5 items-center">
+              <input type="number" placeholder="Custo mín" value={custoMin} onChange={(e) => setCustoMin(e.target.value)}
+                className="input-premium px-2.5 py-2 text-[11px] w-full" />
+              <span className="text-[10px] text-muted-foreground">-</span>
+              <input type="number" placeholder="Custo máx" value={custoMax} onChange={(e) => setCustoMax(e.target.value)}
+                className="input-premium px-2.5 py-2 text-[11px] w-full" />
+            </div>
+            <div className="flex gap-1.5 items-center">
+              <input type="number" placeholder="Venda mín" value={vendaMin} onChange={(e) => setVendaMin(e.target.value)}
+                className="input-premium px-2.5 py-2 text-[11px] w-full" />
+              <span className="text-[10px] text-muted-foreground">-</span>
+              <input type="number" placeholder="Venda máx" value={vendaMax} onChange={(e) => setVendaMax(e.target.value)}
+                className="input-premium px-2.5 py-2 text-[11px] w-full" />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Quantity cards */}
