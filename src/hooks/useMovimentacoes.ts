@@ -25,12 +25,22 @@ export function useMovimentacoes() {
   const { data: movimentacoes = [], isLoading } = useQuery({
     queryKey: ["movimentacoes"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("movimentacoes")
-        .select("*")
-        .order("data", { ascending: false });
-      if (error) throw error;
-      return (data || []).map(rowToMov);
+      const allRows: any[] = [];
+      const PAGE_SIZE = 1000;
+      let from = 0;
+      let hasMore = true;
+      while (hasMore) {
+        const { data, error } = await supabase
+          .from("movimentacoes")
+          .select("*")
+          .order("data", { ascending: false })
+          .range(from, from + PAGE_SIZE - 1);
+        if (error) throw error;
+        allRows.push(...(data || []));
+        hasMore = (data?.length || 0) === PAGE_SIZE;
+        from += PAGE_SIZE;
+      }
+      return allRows.map(rowToMov);
     },
   });
 
