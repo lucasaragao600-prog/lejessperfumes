@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Package, Search, AlertTriangle, Plus, Pencil } from "lucide-react";
+import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image } from "lucide-react";
 import { formatCurrency, type Deposito, type Perfume, type TipoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import CadastroPerfume from "@/components/CadastroPerfume";
@@ -8,7 +8,7 @@ import EditarPerfume from "@/components/EditarPerfume";
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
-  const { perfumes, tiposPerfumeConfig, concentracoesConfig } = useApp();
+  const { perfumes, testers, tiposPerfumeConfig, concentracoesConfig } = useApp();
   const tipos = useMemo(() =>
     Object.entries(tiposPerfumeConfig).map(([key, label]) => ({ key: key as TipoPerfume, label: String(label) })),
     [tiposPerfumeConfig]
@@ -23,6 +23,26 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [vendaMax, setVendaMax] = useState("");
   const [showCadastro, setShowCadastro] = useState(false);
   const [editandoPerfume, setEditandoPerfume] = useState<Perfume | null>(null);
+
+  // Build tester lookup: perfumeId+deposito -> quantity
+  const testerMap = useMemo(() => {
+    const map = new Map<string, number>();
+    testers.forEach((t) => {
+      const key = `${t.perfumeId}-${t.deposito}`;
+      map.set(key, (map.get(key) || 0) + t.quantidade);
+    });
+    // Also total per perfume
+    testers.forEach((t) => {
+      const key = `${t.perfumeId}-total`;
+      map.set(key, (map.get(key) || 0) + t.quantidade);
+    });
+    return map;
+  }, [testers]);
+
+  const getTesterQtd = (perfumeId: string, deposito?: Deposito) => {
+    if (deposito) return testerMap.get(`${perfumeId}-${deposito}`) || 0;
+    return testerMap.get(`${perfumeId}-total`) || 0;
+  };
 
   const filtrados = useMemo(() => {
     return perfumes.filter((p) => {
@@ -213,12 +233,25 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         {filtrados.map((p) => {
           const qtd = getQtd(p);
           const baixo = isBaixo(p);
+          const testerTotal = depositoFiltro === "Todos"
+            ? getTesterQtd(p.id)
+            : getTesterQtd(p.id, depositoFiltro as Deposito);
+
           return (
             <div
               key={p.id}
               className={baixo ? "card-alert p-4" : "card-premium p-4"}
             >
-              <div className="flex items-start justify-between mb-2.5">
+              <div className="flex items-start gap-3 mb-2.5">
+                {/* Product image */}
+                <div className="w-12 h-12 rounded-xl border border-border bg-surface-overlay flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  {p.imageUrl ? (
+                    <img src={p.imageUrl} alt={p.nome} className="w-full h-full object-cover" />
+                  ) : (
+                    <Image size={20} className="text-muted-foreground opacity-40" />
+                  )}
+                </div>
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-gold font-mono bg-primary/10 px-2 py-0.5 rounded-md">
@@ -229,7 +262,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                   <h3 className="font-display text-base text-foreground mt-1.5 truncate">{p.nome}</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">{p.marca} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}</p>
                 </div>
-                <div className="text-right ml-4">
+                <div className="text-right ml-2">
                   <p className={`text-2xl font-bold tracking-tight ${baixo ? "text-destructive" : "text-foreground"}`}>{qtd}</p>
                   <p className="text-[10px] text-muted-foreground">unid.</p>
                 </div>
@@ -237,16 +270,43 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
 
               {depositoFiltro === "Todos" && (
                 <div className="flex gap-2 mb-3">
-                  {depositos.map((d) => (
-                    <div key={d} className="flex-1 bg-surface-overlay rounded-lg p-2 text-center">
-                      <p className="text-[9px] text-muted-foreground">{d}</p>
-                      <p className={`text-sm font-semibold ${p.estoques[d] <= 0 ? "text-destructive" : "text-foreground"}`}>
-                        {p.estoques[d]}
-                      </p>
-                    </div>
-                  ))}
+                  {depositos.map((d) => {
+                    const testerDeposito = getTesterQtd(p.id, d);
+                    return (
+                      <div key={d} className="flex-1 bg-surface-overlay rounded-lg p-2 text-center">
+                        <p className="text-[9px] text-muted-foreground">{d}</p>
+                        <p className={`text-sm font-semibold ${p.estoques[d] <= 0 ? "text-destructive" : "text-foreground"}`}>
+                          {p.estoques[d]}
+                        </p>
+                        {testerDeposito > 0 && (
+                          <p className="text-[8px] text-purple-400 mt-0.5 flex items-center justify-center gap-0.5">
+                            <FlaskConical size={8} /> {testerDeposito}
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
+
+              {/* Tester indicator */}
+              <div className="mb-2">
+                {testerTotal > 0 ? (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-500/8 border border-purple-500/20">
+                    <FlaskConical size={12} className="text-purple-400" />
+                    <span className="text-[11px] text-purple-400 font-medium">
+                      {testerTotal === 1 ? "Tester disponível" : `Testers: ${testerTotal} unidades`}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-surface-overlay">
+                    <FlaskConical size={12} className="text-muted-foreground opacity-40" />
+                    <span className="text-[11px] text-muted-foreground">
+                      {depositoFiltro === "Todos" ? "Sem tester" : `Sem tester neste depósito`}
+                    </span>
+                  </div>
+                )}
+              </div>
 
               {isMaster && (
                 <div className="grid grid-cols-3 gap-2 border-t border-border pt-3 items-end">

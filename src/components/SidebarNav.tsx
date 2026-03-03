@@ -1,5 +1,6 @@
-import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet } from "lucide-react";
+import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, Sun, Moon } from "lucide-react";
 import logoLeJess from "@/assets/logo-le-jess.png";
+import { useTheme } from "@/context/ThemeContext";
 
 interface SidebarNavProps {
   activeTab: string;
@@ -20,12 +21,13 @@ const allTabs = [
 
 export default function SidebarNav({ activeTab, onTabChange, isMaster = true }: SidebarNavProps) {
   const tabs = allTabs.filter((t) => !t.masterOnly || isMaster);
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <aside className="hidden md:flex flex-col w-60 fixed left-0 top-0 h-full z-50"
       style={{ background: "hsl(var(--sidebar-background))", borderRight: "1px solid hsl(var(--sidebar-border))" }}>
       <div className="px-6 py-5 border-b" style={{ borderColor: "hsl(var(--sidebar-border))" }}>
-        <img src={logoLeJess} alt="Le Jess Perfumes" className="h-10 mx-auto invert opacity-90" />
+        <img src={logoLeJess} alt="Le Jess Perfumes" className={`h-10 mx-auto opacity-90 ${theme === "dark" ? "invert" : ""}`} />
       </div>
       <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
         {tabs.map(({ id, label, icon: Icon }) => {
@@ -54,6 +56,16 @@ export default function SidebarNav({ activeTab, onTabChange, isMaster = true }: 
           );
         })}
       </nav>
+      <div className="px-3 py-4 border-t" style={{ borderColor: "hsl(var(--sidebar-border))" }}>
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all duration-150"
+          style={{ borderLeft: "3px solid transparent", paddingLeft: "13px" }}
+        >
+          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+          <span>{theme === "dark" ? "Tema Claro" : "Tema Escuro"}</span>
+        </button>
+      </div>
     </aside>
   );
 }

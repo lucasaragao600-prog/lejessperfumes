@@ -22,6 +22,7 @@ function rowToPerfume(row: any): Perfume {
       Amazonas: row.estoque_amazonas,
     },
     estoqueMinimo: row.estoque_minimo,
+    imageUrl: row.image_url || "",
   };
 }
 
@@ -100,6 +101,7 @@ export function usePerfumes() {
       if (p.precoVenda !== undefined) updateData.preco_venda = p.precoVenda;
       if (p.estoqueMinimo !== undefined) updateData.estoque_minimo = p.estoqueMinimo;
       if (p.codigo !== undefined) updateData.codigo = p.codigo;
+      if (p.imageUrl !== undefined) updateData.image_url = p.imageUrl;
       const { error } = await supabase
         .from("perfumes")
         .update(updateData)

@@ -124,6 +124,7 @@ export type Database = {
           estoque_minimo: number
           estoque_sumauma: number
           id: string
+          image_url: string | null
           marca: string
           nome: string
           preco_venda: number
@@ -143,6 +144,7 @@ export type Database = {
           estoque_minimo?: number
           estoque_sumauma?: number
           id?: string
+          image_url?: string | null
           marca: string
           nome: string
           preco_venda?: number
@@ -162,6 +164,7 @@ export type Database = {
           estoque_minimo?: number
           estoque_sumauma?: number
           id?: string
+          image_url?: string | null
           marca?: string
           nome?: string
           preco_venda?: number

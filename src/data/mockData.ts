@@ -38,6 +38,7 @@ export interface Perfume {
   precoVenda: number;
   estoques: Record<Deposito, number>;
   estoqueMinimo: number;
+  imageUrl?: string;
 }
 
 export type TipoAjusteValor = "desconto" | "acrescimo";
