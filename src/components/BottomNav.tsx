@@ -1,4 +1,5 @@
-import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet } from "lucide-react";
+import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, Sun, Moon } from "lucide-react";
+import { useTheme } from "@/context/ThemeContext";
 
 interface BottomNavProps {
   activeTab: string;
@@ -19,14 +20,15 @@ const allTabs = [
 
 export default function BottomNav({ activeTab, onTabChange, isMaster = true }: BottomNavProps) {
   const tabs = allTabs.filter((t) => !t.masterOnly || isMaster);
+  const { theme, toggleTheme } = useTheme();
 
   return (
     <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md z-50"
       style={{
-        background: "hsl(240 6% 5% / 0.95)",
+        background: "hsl(var(--background) / 0.95)",
         backdropFilter: "blur(16px)",
         borderTop: "1px solid hsl(var(--border))",
-        boxShadow: "0 -8px 32px hsl(0 0% 0% / 0.4)",
+        boxShadow: "var(--shadow-card)",
       }}>
       <div className="flex items-center overflow-x-auto scrollbar-hide px-2 py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] gap-0.5">
         {tabs.map(({ id, label, icon: Icon }) => {
@@ -55,6 +57,22 @@ export default function BottomNav({ activeTab, onTabChange, isMaster = true }: B
             </button>
           );
         })}
+        {/* Theme toggle */}
+        <button
+          onClick={toggleTheme}
+          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-150 flex-shrink-0"
+        >
+          <div className="p-1.5 rounded-lg bg-transparent">
+            {theme === "dark" ? (
+              <Sun size={20} className="text-muted-foreground" />
+            ) : (
+              <Moon size={20} className="text-muted-foreground" />
+            )}
+          </div>
+          <span className="text-[10px] font-medium whitespace-nowrap text-muted-foreground">
+            {theme === "dark" ? "Claro" : "Escuro"}
+          </span>
+        </button>
       </div>
     </nav>
   );

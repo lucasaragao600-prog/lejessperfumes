@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { X, Check } from "lucide-react";
 import MarkupCalculator from "@/components/MarkupCalculator";
+import ProductImageUpload from "@/components/ProductImageUpload";
 import {
   gerarCodigo,
   type TipoPerfume,
@@ -27,6 +28,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
   const [precoVenda, setPrecoVenda] = useState(String(perfume.precoVenda));
   const [estoqueMinimo, setEstoqueMinimo] = useState(String(perfume.estoqueMinimo));
   const [salvando, setSalvando] = useState(false);
+  const [imageUrl, setImageUrl] = useState(perfume.imageUrl || "");
 
   const casasFiltradas = casas.filter((c) => c.tipo === tipo);
   const casaSelecionada = casas.find((c) => c.sigla === casaSigla) || null;
@@ -63,6 +65,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
         precoVenda: parseFloat(precoVenda),
         estoqueMinimo: parseInt(estoqueMinimo) || 2,
         codigo: codigoPreview,
+        imageUrl,
       });
       onClose();
     } finally {
@@ -198,6 +201,9 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
               />
             )}
           </div>
+
+          {/* Foto do Produto */}
+          <ProductImageUpload currentUrl={imageUrl} onUpload={setImageUrl} />
 
           <div className="border-t border-border" />
 
