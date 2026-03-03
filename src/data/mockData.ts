@@ -78,6 +78,7 @@ export interface Movimentacao {
   quantidade: number;
   observacao?: string;
   registradoPor?: string;
+  criadoEm?: string;
 }
 
 export interface Tester {

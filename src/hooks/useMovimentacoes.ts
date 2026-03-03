@@ -15,6 +15,7 @@ function rowToMov(row: any): Movimentacao {
     quantidade: row.quantidade,
     observacao: row.observacao || undefined,
     registradoPor: row.registrado_por || "",
+    criadoEm: row.created_at || undefined,
   };
 }
 

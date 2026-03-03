@@ -1,5 +1,19 @@
 import { useState, useMemo } from "react";
 import { getHojeManaus } from "@/lib/dateUtils";
+
+function formatHoraManaus(iso?: string): string {
+  if (!iso) return "";
+  try {
+    const d = new Date(iso);
+    return new Intl.DateTimeFormat("pt-BR", {
+      timeZone: "America/Manaus",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(d);
+  } catch {
+    return "";
+  }
+}
 import { ArrowLeftRight, ArrowDown, RefreshCw, FlaskConical, Plus, Search, ArrowUpDown } from "lucide-react";
 import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
 import { formatDate, type Deposito, type Movimentacao } from "@/data/mockData";
@@ -306,7 +320,9 @@ export default function Movimentacoes() {
                   <p className="text-[11px] text-muted-foreground italic mt-0.5">"{m.observacao}"</p>
                 )}
                 {m.registradoPor && (
-                  <p className="text-[10px] text-muted-foreground mt-0.5">por {m.registradoPor}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    por {m.registradoPor}{m.criadoEm ? ` às ${formatHoraManaus(m.criadoEm)}` : ""}
+                  </p>
                 )}
               </div>
             </div>
