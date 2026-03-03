@@ -46,7 +46,8 @@ export default function Movimentacoes() {
   }, [movimentacoes, filtroTipo, busca, ordenacao]);
 
   const handleSalvar = async () => {
-    if (!form.perfumeId || form.quantidade < 1) return;
+    if (!form.perfumeId) return;
+    if (form.tipo !== "Ajuste" && form.quantidade < 1) return;
     if (form.tipo === "Saída Tester" && !form.depositoOrigem) return;
     if (form.tipo === "Transferência" && (!form.depositoOrigem || !form.depositoDestino)) return;
     if (form.tipo !== "Transferência" && form.tipo !== "Saída Tester" && !form.deposito) return;

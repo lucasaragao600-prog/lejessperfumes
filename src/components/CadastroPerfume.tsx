@@ -134,7 +134,7 @@ export default function CadastroPerfume({ onClose }: Props) {
   };
 
   const handleAdicionarCasa = async () => {
-    if (!novaCasaNome || novaCasaSigla.length < 2) return;
+    if (!novaCasaNome || novaCasaSigla.length < 2 || novaCasaSigla.length > 3) return;
     const nova: Casa = {
       sigla: novaCasaSigla.toUpperCase().slice(0, 3),
       nome: novaCasaNome,

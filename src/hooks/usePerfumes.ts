@@ -23,6 +23,8 @@ function rowToPerfume(row: any): Perfume {
     },
     estoqueMinimo: row.estoque_minimo,
     imageUrl: row.image_url || "",
+    custoMedio: Number(row.custo_medio) || 0,
+    ultimoCustoEm: row.ultimo_custo_em || "",
   };
 }
 
