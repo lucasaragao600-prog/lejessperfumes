@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image } from "lucide-react";
+import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X } from "lucide-react";
 import { formatCurrency, type Deposito, type Perfume, type TipoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import CadastroPerfume from "@/components/CadastroPerfume";
@@ -23,6 +23,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [vendaMax, setVendaMax] = useState("");
   const [showCadastro, setShowCadastro] = useState(false);
   const [editandoPerfume, setEditandoPerfume] = useState<Perfume | null>(null);
+  const [imagemExpandida, setImagemExpandida] = useState<{ url: string; nome: string } | null>(null);
 
   // Build tester lookup: perfumeId+deposito -> quantity
   const testerMap = useMemo(() => {
@@ -244,11 +245,14 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
             >
               <div className="flex items-start gap-3 mb-2.5">
                 {/* Product image */}
-                <div className="w-12 h-12 rounded-xl border border-border bg-surface-overlay flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <div
+                  onClick={() => p.imageUrl ? setImagemExpandida({ url: p.imageUrl, nome: p.nome }) : null}
+                  className={`w-14 h-14 rounded-xl border border-border bg-surface-overlay flex items-center justify-center flex-shrink-0 overflow-hidden ${p.imageUrl ? "cursor-pointer hover:border-gold-muted" : ""} transition-colors`}
+                >
                   {p.imageUrl ? (
                     <img src={p.imageUrl} alt={p.nome} className="w-full h-full object-cover" />
                   ) : (
-                    <Image size={20} className="text-muted-foreground opacity-40" />
+                    <Image size={22} className="text-muted-foreground opacity-40" />
                   )}
                 </div>
 
@@ -339,6 +343,29 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
           </div>
         )}
       </div>
+
+      {/* Image expanded modal */}
+      {imagemExpandida && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-background/80 backdrop-blur-sm"
+          onClick={() => setImagemExpandida(null)}
+        >
+          <div className="relative max-w-[90vw] max-h-[80vh]" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setImagemExpandida(null)}
+              className="absolute -top-3 -right-3 p-2 rounded-full bg-card border border-border text-muted-foreground hover:text-foreground z-10"
+            >
+              <X size={16} />
+            </button>
+            <img
+              src={imagemExpandida.url}
+              alt={imagemExpandida.nome}
+              className="max-w-[90vw] max-h-[80vh] rounded-2xl border border-border object-contain shadow-elevated"
+            />
+            <p className="text-center text-sm text-muted-foreground mt-3 font-display">{imagemExpandida.nome}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
