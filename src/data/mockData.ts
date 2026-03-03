@@ -19,14 +19,14 @@ export const CONCENTRACOES: Record<Concentracao, string> = {
 export const VOLUMES_PADRAO = [30, 50, 75, 100, 150, 200, 250];
 
 export interface Casa {
-  sigla: string; // 2 chars, ex: "TF"
+  sigla: string; // 2-3 chars, ex: "TF", "CH2"
   nome: string;
   tipo: TipoPerfume;
 }
 
 export interface Perfume {
   id: string;
-  codigo: string; // TTMMCCLLLLVVV gerado automaticamente
+  codigo: string; // TTMMMCCLLLLVVV gerado automaticamente
   nome: string;
   marca: string;
   casaSigla: string;
@@ -39,6 +39,8 @@ export interface Perfume {
   estoques: Record<Deposito, number>;
   estoqueMinimo: number;
   imageUrl?: string;
+  custoMedio?: number;
+  ultimoCustoEm?: string;
 }
 
 export type TipoAjusteValor = "desconto" | "acrescimo";
@@ -103,21 +105,21 @@ export const casasPadrao: Casa[] = [
   { sigla: "LA", nome: "Lattafa", tipo: "AR" },
 ];
 
-// Geração de código automático TTMMCCLLLL VVV
-// LLLL = sequencial por casa (não global)
+// Geração de código automático TTMMMCCLLLLVVV
+// MMM = sigla da casa (3 chars), LLLL = sequencial por casa
 export function gerarCodigo(
   tipo: TipoPerfume,
   casaSigla: string,
   concentracao: Concentracao,
-  linhaPorCasa: number, // número sequencial por casa
+  linhaPorCasa: number,
   volume: number
 ): string {
   const tt = tipo.padEnd(2, "X").slice(0, 2);
-  const mm = casaSigla.replace(/[^A-Z0-9]/gi, "").toUpperCase().padEnd(2, "X").slice(0, 2);
+  const mmm = casaSigla.replace(/[^A-Z0-9]/gi, "").toUpperCase().padEnd(3, "X").slice(0, 3);
   const cc = concentracao.slice(0, 2).toUpperCase();
   const llll = String(linhaPorCasa).padStart(4, "0");
   const vvv = String(volume).padStart(3, "0");
-  return `${tt}${mm}${cc}${llll}${vvv}`;
+  return `${tt}${mmm}${cc}${llll}${vvv}`;
 }
 
 export const perfumes: Perfume[] = [

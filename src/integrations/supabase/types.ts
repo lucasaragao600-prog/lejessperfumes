@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      alertas_estoque: {
+        Row: {
+          criado_em: string
+          id: string
+          loja: string
+          produto_id: string
+          resolvido_em: string | null
+          status: string
+          tipo: string
+        }
+        Insert: {
+          criado_em?: string
+          id?: string
+          loja: string
+          produto_id: string
+          resolvido_em?: string | null
+          status?: string
+          tipo: string
+        }
+        Update: {
+          criado_em?: string
+          id?: string
+          loja?: string
+          produto_id?: string
+          resolvido_em?: string | null
+          status?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alertas_estoque_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      auditoria_importacao: {
+        Row: {
+          arquivo_nome: string
+          created_at: string
+          data: string
+          id: string
+          resumo: string
+          total_alterados: number
+          usuario_id: string | null
+          usuario_nome: string
+        }
+        Insert: {
+          arquivo_nome?: string
+          created_at?: string
+          data?: string
+          id?: string
+          resumo?: string
+          total_alterados?: number
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Update: {
+          arquivo_nome?: string
+          created_at?: string
+          data?: string
+          id?: string
+          resumo?: string
+          total_alterados?: number
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Relationships: []
+      }
       casas: {
         Row: {
           created_at: string
@@ -112,6 +183,99 @@ export type Database = {
           },
         ]
       }
+      notas_fiscais: {
+        Row: {
+          cnpj: string
+          conciliada_em: string | null
+          conciliada_por: string | null
+          created_at: string
+          data_emissao: string | null
+          deposito_destino: string | null
+          fornecedor: string
+          id: string
+          numero: string
+          status: string
+          xml_url: string | null
+        }
+        Insert: {
+          cnpj?: string
+          conciliada_em?: string | null
+          conciliada_por?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          deposito_destino?: string | null
+          fornecedor?: string
+          id?: string
+          numero: string
+          status?: string
+          xml_url?: string | null
+        }
+        Update: {
+          cnpj?: string
+          conciliada_em?: string | null
+          conciliada_por?: string | null
+          created_at?: string
+          data_emissao?: string | null
+          deposito_destino?: string | null
+          fornecedor?: string
+          id?: string
+          numero?: string
+          status?: string
+          xml_url?: string | null
+        }
+        Relationships: []
+      }
+      notas_fiscais_itens: {
+        Row: {
+          codigo_xml: string | null
+          created_at: string
+          descricao_xml: string
+          id: string
+          nota_id: string
+          perfume_id: string | null
+          quantidade: number
+          status_correspondencia: string
+          valor_unitario: number
+        }
+        Insert: {
+          codigo_xml?: string | null
+          created_at?: string
+          descricao_xml?: string
+          id?: string
+          nota_id: string
+          perfume_id?: string | null
+          quantidade?: number
+          status_correspondencia?: string
+          valor_unitario?: number
+        }
+        Update: {
+          codigo_xml?: string | null
+          created_at?: string
+          descricao_xml?: string
+          id?: string
+          nota_id?: string
+          perfume_id?: string | null
+          quantidade?: number
+          status_correspondencia?: string
+          valor_unitario?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_fiscais_itens_nota_id_fkey"
+            columns: ["nota_id"]
+            isOneToOne: false
+            referencedRelation: "notas_fiscais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_itens_perfume_id_fkey"
+            columns: ["perfume_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       perfumes: {
         Row: {
           casa_sigla: string
@@ -119,6 +283,7 @@ export type Database = {
           concentracao: string
           created_at: string
           custo: number
+          custo_medio: number
           estoque_amazonas: number
           estoque_casa: number
           estoque_minimo: number
@@ -130,6 +295,7 @@ export type Database = {
           preco_venda: number
           tamanho: string
           tipo: string
+          ultimo_custo_em: string | null
           updated_at: string
           volume: number
         }
@@ -139,6 +305,7 @@ export type Database = {
           concentracao: string
           created_at?: string
           custo?: number
+          custo_medio?: number
           estoque_amazonas?: number
           estoque_casa?: number
           estoque_minimo?: number
@@ -150,6 +317,7 @@ export type Database = {
           preco_venda?: number
           tamanho: string
           tipo: string
+          ultimo_custo_em?: string | null
           updated_at?: string
           volume: number
         }
@@ -159,6 +327,7 @@ export type Database = {
           concentracao?: string
           created_at?: string
           custo?: number
+          custo_medio?: number
           estoque_amazonas?: number
           estoque_casa?: number
           estoque_minimo?: number
@@ -170,6 +339,7 @@ export type Database = {
           preco_venda?: number
           tamanho?: string
           tipo?: string
+          ultimo_custo_em?: string | null
           updated_at?: string
           volume?: number
         }
@@ -180,6 +350,44 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "casas"
             referencedColumns: ["sigla"]
+          },
+        ]
+      }
+      produto_custos: {
+        Row: {
+          created_at: string
+          custo_unitario: number
+          data: string
+          id: string
+          nota_id: string | null
+          origem: string
+          produto_id: string
+        }
+        Insert: {
+          created_at?: string
+          custo_unitario?: number
+          data?: string
+          id?: string
+          nota_id?: string | null
+          origem?: string
+          produto_id: string
+        }
+        Update: {
+          created_at?: string
+          custo_unitario?: number
+          data?: string
+          id?: string
+          nota_id?: string | null
+          origem?: string
+          produto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produto_custos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
           },
         ]
       }

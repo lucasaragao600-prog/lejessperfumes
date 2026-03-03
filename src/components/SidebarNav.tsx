@@ -1,4 +1,4 @@
-import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, Sun, Moon } from "lucide-react";
+import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon } from "lucide-react";
 import logoLeJess from "@/assets/logo-le-jess.png";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -13,6 +13,7 @@ const allTabs = [
   { id: "vendas", label: "Vendas", icon: ShoppingCart, masterOnly: false },
   { id: "movimentacoes", label: "Movimentações", icon: ArrowLeftRight, masterOnly: false },
   { id: "testers", label: "Testers", icon: FlaskConical, masterOnly: false },
+  { id: "notas", label: "Notas Fiscais", icon: FileText, masterOnly: true },
   { id: "dashboards", label: "Dashboard", icon: BarChart3, masterOnly: true },
   { id: "importar", label: "Importar", icon: FileSpreadsheet, masterOnly: true },
   { id: "configuracoes", label: "Configurações", icon: Settings, masterOnly: true },

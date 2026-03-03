@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
-import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download } from "lucide-react";
 import { formatCurrency, type Deposito, type Perfume, type TipoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import CadastroPerfume from "@/components/CadastroPerfume";
 import EditarPerfume from "@/components/EditarPerfume";
+import * as XLSX from "xlsx";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
@@ -103,6 +104,28 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
 
   const isBaixo = (p: Perfume) => getQtd(p) <= p.estoqueMinimo;
 
+  const exportarExcel = useCallback(() => {
+    const dados = filtrados.map((p) => ({
+      SKU: p.codigo,
+      Nome: p.nome,
+      Marca: p.marca,
+      "Custo Atual": p.custo,
+      "Preço Venda": p.precoVenda,
+      "Estoque Total": Object.values(p.estoques).reduce((a, b) => a + b, 0),
+      "Estoque Casa": p.estoques.Casa,
+      "Estoque Sumaúma": p.estoques["Sumaúma"],
+      "Estoque Amazonas": p.estoques.Amazonas,
+      "Estoque Mínimo": p.estoqueMinimo,
+      Concentração: p.concentracao,
+      Volume: p.volume,
+      Tipo: p.tipo,
+    }));
+    const ws = XLSX.utils.json_to_sheet(dados);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Produtos");
+    XLSX.writeFile(wb, `produtos_${new Date().toISOString().split("T")[0]}.xlsx`);
+  }, [filtrados]);
+
   return (
     <div className="min-h-screen bg-background pb-24">
       {showCadastro && <CadastroPerfume onClose={() => setShowCadastro(false)} />}
@@ -130,6 +153,11 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
               <AlertTriangle size={13} />
               {alertas}
             </button>
+            {isMaster && (
+              <button onClick={exportarExcel} className="btn-secondary px-3 py-2">
+                <Download size={14} />
+              </button>
+            )}
             {isMaster && (
               <button onClick={() => setShowCadastro(true)} className="btn-primary px-4 py-2">
                 <Plus size={14} /> Novo
