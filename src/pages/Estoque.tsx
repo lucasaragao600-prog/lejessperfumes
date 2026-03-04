@@ -251,16 +251,8 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         )}
       </div>
 
-      {/* Quantity cards */}
-      {userLoja ? (
-        <div className="px-4 mb-3">
-          <div className="kpi-card p-3 text-center">
-            <p className="text-[9px] text-muted-foreground mb-1">{userLoja}</p>
-            <p className="text-sm font-bold text-foreground">{totais.unidades}</p>
-            <p className="text-[8px] text-muted-foreground">unidades</p>
-          </div>
-        </div>
-      ) : (
+      {/* Quantity cards - hidden for vendedores */}
+      {userLoja ? null : (
         <div className="px-4 mb-3 grid grid-cols-4 gap-2">
           {[
             { label: "Total", value: totais.unidades },
