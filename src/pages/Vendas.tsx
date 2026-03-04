@@ -36,6 +36,7 @@ interface PagamentoItem {
   tipoPagamento: TipoPagamento;
   bandeira: Bandeira;
   valor: number;
+  observacao?: string;
 }
 
 export default function Vendas() {
@@ -187,7 +188,7 @@ export default function Vendas() {
           vendedora: vendedoraSelecionada,
           tipoPagamento: pagamentosForm[0].tipoPagamento,
           bandeira: pagamentosForm[0].bandeira,
-          observacao: ajusteVenda > 0 ? observacaoAjuste : item.observacao,
+          observacao: ajusteVenda > 0 ? observacaoAjuste : (pagamentosForm.some(p => p.tipoPagamento === "Conta Assinada" && p.observacao) ? pagamentosForm.filter(p => p.tipoPagamento === "Conta Assinada").map(p => `Conta Assinada: ${p.observacao}`).join("; ") : item.observacao),
           registradoPor: profile?.nome || "Desconhecido",
         };
       });
@@ -839,6 +840,12 @@ export default function Vendas() {
                         className="input-premium px-2 py-1.5 text-xs">
                         {bandeiras.map((b) => <option key={b} value={b}>{b}</option>)}
                       </select>
+                    )}
+                    {pag.tipoPagamento === "Conta Assinada" && (
+                      <input type="text" placeholder="Nome do funcionário / observação"
+                        value={pag.observacao || ""}
+                        onChange={(e) => updatePagamento(idx, { observacao: e.target.value })}
+                        className="input-premium px-2 py-1.5 text-xs" />
                     )}
                     <input type="number" min={0} step="0.01" value={pag.valor}
                       onChange={(e) => updatePagamento(idx, { valor: parseFloat(e.target.value) || 0 })}
