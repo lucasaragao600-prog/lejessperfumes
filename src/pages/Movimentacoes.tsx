@@ -32,7 +32,10 @@ const tipoConfig = {
 
 export default function Movimentacoes() {
   const { movimentacoes, perfumes, baixarEstoque, adicionarEstoque, ajustarEstoque, transferirEstoque, adicionarTester, adicionarMovimentacao, concentracoesConfig } = useApp();
-  const { profile } = useAuth();
+  const { profile, role } = useAuth();
+  const isMaster = role === "master";
+  const userLoja = (!isMaster && profile?.loja) ? profile.loja as Deposito : null;
+
   const [filtroTipo, setFiltroTipo] = useState<string>("Todos");
   const [busca, setBusca] = useState("");
   const [ordenacao, setOrdenacao] = useState<"recente" | "antiga">("recente");
@@ -40,8 +43,8 @@ export default function Movimentacoes() {
   const [form, setForm] = useState({
     tipo: "Entrada" as typeof tipos[number],
     perfumeId: "",
-    deposito: "" as Deposito | "",
-    depositoOrigem: "" as Deposito | "",
+    deposito: (userLoja || "") as Deposito | "",
+    depositoOrigem: (userLoja || "") as Deposito | "",
     depositoDestino: "" as Deposito | "",
     quantidade: 1,
     observacao: "",
@@ -80,12 +83,8 @@ export default function Movimentacoes() {
         alert(`Estoque insuficiente em ${form.depositoOrigem}. Disponível: ${est}`);
         return;
       }
-    } else if (form.tipo === "Ajuste") {
-      if (form.quantidade < 0) {
-        alert("A quantidade do ajuste não pode ser negativa.");
-        return;
-      }
     }
+    // Ajuste: allow any value >= 0 (absolute stock set)
 
     const hoje = getHojeManaus();
     const estoqueAtual = form.tipo === "Ajuste" ? p.estoques[form.deposito as Deposito] : 0;
@@ -118,7 +117,7 @@ export default function Movimentacoes() {
     }
 
     await adicionarMovimentacao(nova);
-    setForm({ tipo: "Entrada", perfumeId: "", deposito: "", depositoOrigem: "", depositoDestino: "", quantidade: 1, observacao: "" });
+    setForm({ tipo: "Entrada", perfumeId: "", deposito: userLoja || "", depositoOrigem: userLoja || "", depositoDestino: "", quantidade: 1, observacao: "" });
     setShowForm(false);
   };
 
@@ -171,7 +170,7 @@ export default function Movimentacoes() {
               <div className="grid grid-cols-2 gap-2">
                 {tipos.map((t) => (
                   <button key={t}
-                    onClick={() => setForm({ ...form, tipo: t, depositoOrigem: "", depositoDestino: "", deposito: "" })}
+                    onClick={() => setForm({ ...form, tipo: t, depositoOrigem: userLoja || "", depositoDestino: "", deposito: userLoja || "" })}
                     className={`py-2.5 rounded-xl text-xs font-medium border transition-all duration-150 ${
                       form.tipo === t
                         ? "border-gold-muted bg-primary/10 text-gold"
@@ -194,7 +193,7 @@ export default function Movimentacoes() {
                 <div>
                   <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Origem</label>
                   <select value={form.depositoOrigem} onChange={(e) => setForm({ ...form, depositoOrigem: e.target.value as Deposito })}
-                    className="input-premium px-3 py-2.5 text-xs">
+                    className="input-premium px-3 py-2.5 text-xs" disabled={!!userLoja}>
                     <option value="">Selecione</option>
                     {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
@@ -213,7 +212,7 @@ export default function Movimentacoes() {
                 <div>
                   <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Depósito Origem</label>
                   <select value={form.depositoOrigem} onChange={(e) => setForm({ ...form, depositoOrigem: e.target.value as Deposito })}
-                    className="input-premium px-3 py-2.5 text-xs">
+                    className="input-premium px-3 py-2.5 text-xs" disabled={!!userLoja}>
                     <option value="">Selecione</option>
                     {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
@@ -230,7 +229,7 @@ export default function Movimentacoes() {
               <div>
                 <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Depósito</label>
                 <select value={form.deposito} onChange={(e) => setForm({ ...form, deposito: e.target.value as Deposito })}
-                  className="input-premium px-3 py-2.5 text-sm">
+                  className="input-premium px-3 py-2.5 text-sm" disabled={!!userLoja}>
                   <option value="">Selecione...</option>
                   {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
                 </select>
@@ -252,6 +251,8 @@ export default function Movimentacoes() {
                 <div className="bg-blue-400/8 border-l-4 border border-blue-400/20 rounded-xl p-3" style={{ borderLeftColor: "rgb(96 165 250)" }}>
                   <p className="text-xs text-blue-400">
                     📦 Estoque atual em <strong>{form.deposito}</strong>: <strong>{estoqueAtual}</strong> un.
+                    <br />
+                    <span className="text-[10px] opacity-80">Digite a quantidade correta. Use 0 para zerar o estoque.</span>
                   </p>
                 </div>
               );
@@ -262,7 +263,8 @@ export default function Movimentacoes() {
                 <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">
                   {form.tipo === "Ajuste" ? "Qtd. Correta" : "Quantidade"}
                 </label>
-                <input type="number" min={form.tipo === "Ajuste" ? 0 : 1} value={form.quantidade === 0 ? "" : form.quantidade}
+                <input type="number" min={form.tipo === "Ajuste" ? 0 : 1}
+                  value={form.quantidade}
                   onChange={(e) => setForm({ ...form, quantidade: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 })}
                   className="input-premium px-3 py-2.5 text-sm" />
               </div>

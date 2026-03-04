@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { X, Check, History } from "lucide-react";
+import { X, Check, History, DollarSign } from "lucide-react";
 import MarkupCalculator from "@/components/MarkupCalculator";
 import ProductImageUpload from "@/components/ProductImageUpload";
 import {
@@ -10,7 +10,9 @@ import {
   type Perfume,
 } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 import { useProdutoCustos } from "@/hooks/useProdutoCustos";
+import { usePrecoHistorico } from "@/hooks/usePrecoHistorico";
 
 interface Props {
   perfume: Perfume;
@@ -19,6 +21,7 @@ interface Props {
 
 export default function EditarPerfume({ perfume, onClose }: Props) {
   const { casas, editarPerfume, proximaLinhaPorCasa, tiposPerfumeConfig, concentracoesConfig, volumesPadrao } = useApp();
+  const { profile } = useAuth();
 
   const [tipo, setTipo] = useState<TipoPerfume>(perfume.tipo);
   const [casaSigla, setCasaSigla] = useState(perfume.casaSigla);
@@ -31,17 +34,15 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
   const [estoqueMinimo, setEstoqueMinimo] = useState(String(perfume.estoqueMinimo));
   const [salvando, setSalvando] = useState(false);
   const [imageUrl, setImageUrl] = useState(perfume.imageUrl || "");
-  const [tab, setTab] = useState<"editar" | "custos">("editar");
+  const [tab, setTab] = useState<"editar" | "custos" | "precos">("editar");
   const { historico, isLoading: historicoLoading } = useProdutoCustos(perfume.id);
+  const { historico: precoHistorico, isLoading: precoLoading, registrar: registrarPreco } = usePrecoHistorico(perfume.id);
 
   const casasFiltradas = casas.filter((c) => c.tipo === tipo);
   const casaSelecionada = casas.find((c) => c.sigla === casaSigla) || null;
 
-  // Recalculate code based on current selections
   const linhaPorCasa = useMemo(() => {
-    // Keep the same line number if casa didn't change
     if (casaSigla === perfume.casaSigla) {
-      // Extract line from original code
       const code = perfume.codigo;
       return parseInt(code.slice(7, 11)) || 1;
     }
@@ -56,6 +57,17 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
     if (!casaSelecionada || !nome || !custo || !precoVenda) return;
     setSalvando(true);
     try {
+      const novoPrecoVenda = parseFloat(precoVenda);
+      // Track price change if sale price changed
+      if (novoPrecoVenda !== perfume.precoVenda) {
+        await registrarPreco({
+          produtoId: perfume.id,
+          precoAntigo: perfume.precoVenda,
+          precoNovo: novoPrecoVenda,
+          alteradoPor: profile?.nome || "Desconhecido",
+        });
+      }
+
       await editarPerfume({
         id: perfume.id,
         nome,
@@ -66,7 +78,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
         tamanho: `${volume}ml`,
         volume,
         custo: parseFloat(custo),
-        precoVenda: parseFloat(precoVenda),
+        precoVenda: novoPrecoVenda,
         estoqueMinimo: parseInt(estoqueMinimo) || 2,
         codigo: codigoPreview,
         imageUrl,
@@ -92,7 +104,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
 
       {/* Tabs */}
       <div className="flex border-b border-border">
-        {([["editar", "Dados do Produto"], ["custos", "Histórico de Custos"]] as const).map(([t, label]) => (
+        {([["editar", "Dados"], ["custos", "Custos"], ["precos", "Preços"]] as const).map(([t, label]) => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -278,10 +290,9 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
             />
           </div>
         </div>
-        ) : (
+        ) : tab === "custos" ? (
           /* Cost History Tab */
           <div className="px-4 pt-4 space-y-4">
-            {/* Current cost info */}
             <div className="grid grid-cols-2 gap-3">
               <div className="card-premium p-4">
                 <p className="text-[10px] text-muted-foreground mb-1">Custo Atual</p>
@@ -293,10 +304,9 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
               </div>
             </div>
 
-            {/* Timeline */}
             <div>
               <h3 className="text-xs font-semibold text-foreground mb-3 flex items-center gap-1.5">
-                <History size={14} className="text-gold" /> Linha do Tempo
+                <History size={14} className="text-gold" /> Linha do Tempo de Custos
               </h3>
               {historicoLoading ? (
                 <p className="text-xs text-muted-foreground">Carregando...</p>
@@ -322,6 +332,52 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
                       }`}>
                         {h.origem}
                       </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Price History Tab */
+          <div className="px-4 pt-4 space-y-4">
+            <div className="card-premium p-4">
+              <p className="text-[10px] text-muted-foreground mb-1">Preço de Venda Atual</p>
+              <p className="text-lg font-bold text-gold">{formatCurrency(perfume.precoVenda)}</p>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-semibold text-foreground mb-3 flex items-center gap-1.5">
+                <DollarSign size={14} className="text-gold" /> Histórico de Alterações de Preço
+              </h3>
+              {precoLoading ? (
+                <p className="text-xs text-muted-foreground">Carregando...</p>
+              ) : precoHistorico.length === 0 ? (
+                <div className="text-center py-10">
+                  <DollarSign size={32} className="text-muted-foreground mx-auto mb-3 opacity-40" />
+                  <p className="text-xs text-muted-foreground">Nenhuma alteração de preço registrada</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {precoHistorico.map((h) => (
+                    <div key={h.id} className="card-premium p-3">
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground line-through">{formatCurrency(h.precoAntigo)}</span>
+                          <span className="text-xs text-muted-foreground">→</span>
+                          <span className={`text-xs font-bold ${h.precoNovo > h.precoAntigo ? "text-success" : "text-destructive"}`}>
+                            {formatCurrency(h.precoNovo)}
+                          </span>
+                        </div>
+                        <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ${
+                          h.precoNovo > h.precoAntigo ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
+                        }`}>
+                          {h.precoNovo > h.precoAntigo ? "↑" : "↓"} {Math.abs(((h.precoNovo - h.precoAntigo) / h.precoAntigo) * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground">
+                        {new Date(h.data).toLocaleDateString("pt-BR")} · por {h.alteradoPor}
+                      </p>
                     </div>
                   ))}
                 </div>

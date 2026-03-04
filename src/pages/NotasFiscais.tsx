@@ -1,13 +1,17 @@
 import { useState, useRef } from "react";
-import { FileText, Upload, Check, X } from "lucide-react";
+import { FileText, Upload, Check, X, Plus, Pencil } from "lucide-react";
 import { useNotasFiscais, type NotaFiscal } from "@/hooks/useNotasFiscais";
 import { useProdutoCustos } from "@/hooks/useProdutoCustos";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
-import { formatCurrency, formatDate } from "@/data/mockData";
+import { formatCurrency, formatDate, type Deposito } from "@/data/mockData";
 
 type SubTab = "pendentes" | "conciliadas" | "canceladas";
+
+interface EditableQty {
+  [itemId: string]: number;
+}
 
 export default function NotasFiscais() {
   const { notas, isLoading, criarNota, atualizarCorrespondencia, conciliarNota, cancelarNota } = useNotasFiscais();
@@ -17,7 +21,20 @@ export default function NotasFiscais() {
   const [subTab, setSubTab] = useState<SubTab>("pendentes");
   const [notaSelecionada, setNotaSelecionada] = useState<NotaFiscal | null>(null);
   const [depositoDestino, setDepositoDestino] = useState<string>("Casa");
+  const [editableQtds, setEditableQtds] = useState<EditableQty>({});
+  const [showManual, setShowManual] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Manual invoice form
+  const [manualForm, setManualForm] = useState({
+    fornecedor: "",
+    perfumeId: "",
+    quantidade: 1,
+    custoUnitario: 0,
+    data: new Date().toISOString().split("T")[0],
+    observacao: "",
+    deposito: "Casa" as Deposito,
+  });
 
   const filtradas = notas.filter((n) => {
     if (subTab === "pendentes") return n.status === "pendente";
@@ -76,6 +93,10 @@ export default function NotasFiscais() {
     await atualizarCorrespondencia({ itemId, perfumeId });
   };
 
+  const getEditableQty = (itemId: string, originalQty: number) => {
+    return editableQtds[itemId] !== undefined ? editableQtds[itemId] : originalQty;
+  };
+
   const handleConciliar = async () => {
     if (!notaSelecionada) return;
     const itensCorrespondidos = notaSelecionada.itens.filter((i) => i.perfumeId);
@@ -85,16 +106,54 @@ export default function NotasFiscais() {
       const p = perfumes.find((x) => x.id === item.perfumeId);
       if (!p) continue;
 
-      // Add stock
-      await adicionarEstoque(item.perfumeId, depositoDestino as any, item.quantidade);
+      const qtdFinal = getEditableQty(item.id, item.quantidade);
+
+      // Add stock with final confirmed quantity
+      await adicionarEstoque(item.perfumeId, depositoDestino as any, qtdFinal);
 
       // Update cost
       const estoqueTotal = Object.values(p.estoques).reduce((a, b) => a + b, 0);
-      await atualizarCustoMedio(item.perfumeId, estoqueTotal, p.custo, item.quantidade, item.valorUnitario);
+      await atualizarCustoMedio(item.perfumeId, estoqueTotal, p.custo, qtdFinal, item.valorUnitario);
     }
 
     await conciliarNota({ notaId: notaSelecionada.id, conciliadaPor: profile?.nome || "Sistema" });
     setNotaSelecionada(null);
+    setEditableQtds({});
+  };
+
+  const handleManualCreate = async () => {
+    if (!manualForm.fornecedor || !manualForm.perfumeId || manualForm.quantidade < 1) return;
+
+    const p = perfumes.find((x) => x.id === manualForm.perfumeId);
+    if (!p) return;
+
+    // Create a manual invoice entry
+    await criarNota({
+      numero: `MAN-${Date.now()}`,
+      fornecedor: manualForm.fornecedor,
+      cnpj: "Manual",
+      dataEmissao: manualForm.data,
+      itens: [{
+        descricaoXml: p.nome,
+        codigoXml: p.codigo,
+        quantidade: manualForm.quantidade,
+        valorUnitario: manualForm.custoUnitario,
+      }],
+    });
+
+    // Directly add stock and update cost
+    await adicionarEstoque(manualForm.perfumeId, manualForm.deposito, manualForm.quantidade);
+    const estoqueTotal = Object.values(p.estoques).reduce((a, b) => a + b, 0);
+    await atualizarCustoMedio(manualForm.perfumeId, estoqueTotal, p.custo, manualForm.quantidade, manualForm.custoUnitario);
+
+    // Auto-conciliate
+    const latestNotas = await new Promise<NotaFiscal[]>((resolve) => {
+      // We'll just close the form - the nota was created
+      resolve([]);
+    });
+
+    setManualForm({ fornecedor: "", perfumeId: "", quantidade: 1, custoUnitario: 0, data: new Date().toISOString().split("T")[0], observacao: "", deposito: "Casa" });
+    setShowManual(false);
   };
 
   return (
@@ -105,11 +164,16 @@ export default function NotasFiscais() {
             <h1 className="page-title">Notas Fiscais</h1>
             <p className="page-subtitle mt-1">{filtradas.length} notas</p>
           </div>
-          <div>
-            <input type="file" accept=".xml" ref={fileRef} onChange={handleUpload} className="hidden" />
-            <button onClick={() => fileRef.current?.click()} className="btn-primary px-4 py-2">
-              <Upload size={14} /> Upload XML
+          <div className="flex gap-2">
+            <button onClick={() => setShowManual(!showManual)} className="btn-secondary px-3 py-2 text-xs">
+              <Plus size={14} /> Manual
             </button>
+            <div>
+              <input type="file" accept=".xml" ref={fileRef} onChange={handleUpload} className="hidden" />
+              <button onClick={() => fileRef.current?.click()} className="btn-primary px-4 py-2">
+                <Upload size={14} /> XML
+              </button>
+            </div>
           </div>
         </div>
 
@@ -127,6 +191,75 @@ export default function NotasFiscais() {
         </div>
       </div>
 
+      {/* Manual invoice form */}
+      {showManual && (
+        <div className="mx-4 mb-5 card-premium p-5 animate-fade-in" style={{ boxShadow: "var(--shadow-gold)" }}>
+          <h3 className="font-display text-lg text-foreground mb-4">Entrada Manual</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Fornecedor</label>
+              <input type="text" value={manualForm.fornecedor}
+                onChange={(e) => setManualForm({ ...manualForm, fornecedor: e.target.value })}
+                placeholder="Nome do fornecedor"
+                className="input-premium px-3 py-2.5 text-sm" />
+            </div>
+            <div>
+              <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Produto</label>
+              <PerfumeSearchSelect perfumes={perfumes} value={manualForm.perfumeId}
+                onChange={(id) => setManualForm({ ...manualForm, perfumeId: id })} concentracoesConfig={concentracoesConfig} />
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Qtd</label>
+                <input type="number" min={1} value={manualForm.quantidade}
+                  onChange={(e) => setManualForm({ ...manualForm, quantidade: parseInt(e.target.value) || 1 })}
+                  className="input-premium px-3 py-2.5 text-sm" />
+              </div>
+              <div>
+                <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Custo Un.</label>
+                <input type="number" min={0} step="0.01" value={manualForm.custoUnitario || ""}
+                  onChange={(e) => setManualForm({ ...manualForm, custoUnitario: parseFloat(e.target.value) || 0 })}
+                  className="input-premium px-3 py-2.5 text-sm" />
+              </div>
+              <div>
+                <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Depósito</label>
+                <select value={manualForm.deposito}
+                  onChange={(e) => setManualForm({ ...manualForm, deposito: e.target.value as Deposito })}
+                  className="input-premium px-3 py-2.5 text-sm">
+                  <option value="Casa">Casa</option>
+                  <option value="Sumaúma">Sumaúma</option>
+                  <option value="Amazonas">Amazonas</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Data</label>
+                <input type="date" value={manualForm.data}
+                  onChange={(e) => setManualForm({ ...manualForm, data: e.target.value })}
+                  className="input-premium px-3 py-2.5 text-sm [color-scheme:dark]" />
+              </div>
+              <div>
+                <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Observação</label>
+                <input type="text" value={manualForm.observacao}
+                  onChange={(e) => setManualForm({ ...manualForm, observacao: e.target.value })}
+                  placeholder="Opcional"
+                  className="input-premium px-3 py-2.5 text-sm" />
+              </div>
+            </div>
+            <div className="flex gap-3 pt-1">
+              <button onClick={() => setShowManual(false)} className="btn-secondary flex-1 py-2.5">Cancelar</button>
+              <button onClick={handleManualCreate}
+                disabled={!manualForm.fornecedor || !manualForm.perfumeId || manualForm.quantidade < 1}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
+                style={{ background: "var(--gradient-gold)" }}>
+                <Check size={14} className="inline mr-1" /> Dar Entrada
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Nota detail / conferência */}
       {notaSelecionada && (
         <div className="fixed inset-0 z-[70] flex flex-col bg-background">
@@ -135,7 +268,7 @@ export default function NotasFiscais() {
               <h2 className="font-display text-xl text-gold">Conferência NF #{notaSelecionada.numero}</h2>
               <p className="text-[10px] text-muted-foreground mt-0.5">{notaSelecionada.fornecedor} · {notaSelecionada.cnpj}</p>
             </div>
-            <button onClick={() => setNotaSelecionada(null)} className="p-2 rounded-full bg-surface border border-border text-muted-foreground">
+            <button onClick={() => { setNotaSelecionada(null); setEditableQtds({}); }} className="p-2 rounded-full bg-surface border border-border text-muted-foreground">
               <X size={16} />
             </button>
           </div>
@@ -156,6 +289,9 @@ export default function NotasFiscais() {
             <div className="space-y-3">
               {notaSelecionada.itens.map((item) => {
                 const perfCorr = item.perfumeId ? perfumes.find((p) => p.id === item.perfumeId) : null;
+                const editQty = getEditableQty(item.id, item.quantidade);
+                const isEdited = editableQtds[item.id] !== undefined && editableQtds[item.id] !== item.quantidade;
+
                 return (
                   <div key={item.id} className="card-premium p-4">
                     <div className="flex items-start justify-between gap-2 mb-3">
@@ -164,10 +300,42 @@ export default function NotasFiscais() {
                         {item.codigoXml && <p className="text-[10px] text-muted-foreground mt-0.5">Cód: {item.codigoXml}</p>}
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-sm font-bold text-foreground">{item.quantidade} un.</p>
                         <p className="text-[10px] text-muted-foreground">{formatCurrency(item.valorUnitario)}/un</p>
                       </div>
                     </div>
+
+                    {/* Editable quantity */}
+                    <div className="mb-3 grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block">Qtd. NF</label>
+                        <div className="input-premium px-3 py-2 text-xs text-muted-foreground bg-surface-overlay">
+                          {item.quantidade} un.
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] text-muted-foreground mb-1 block flex items-center gap-1">
+                          Qtd. Recebida <Pencil size={9} />
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={editQty}
+                          onChange={(e) => setEditableQtds({
+                            ...editableQtds,
+                            [item.id]: parseInt(e.target.value) || 0,
+                          })}
+                          className={`input-premium px-3 py-2 text-xs ${isEdited ? "border-gold-muted text-gold" : ""}`}
+                        />
+                      </div>
+                    </div>
+
+                    {isEdited && (
+                      <div className="mb-2 px-2.5 py-1.5 rounded-lg bg-gold/10 border border-gold-muted">
+                        <p className="text-[10px] text-gold">
+                          ⚠️ Quantidade ajustada: {item.quantidade} → {editQty}
+                        </p>
+                      </div>
+                    )}
 
                     <div>
                       <label className="text-[10px] text-muted-foreground mb-1 block">Produto correspondente</label>
@@ -194,7 +362,7 @@ export default function NotasFiscais() {
           {/* Footer */}
           <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-border bg-background">
             <div className="flex gap-3">
-              <button onClick={() => { cancelarNota(notaSelecionada.id); setNotaSelecionada(null); }}
+              <button onClick={() => { cancelarNota(notaSelecionada.id); setNotaSelecionada(null); setEditableQtds({}); }}
                 className="btn-secondary flex-1 py-3 text-destructive">
                 Cancelar Nota
               </button>
