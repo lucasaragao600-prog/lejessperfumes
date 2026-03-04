@@ -911,6 +911,7 @@ export default function Vendas() {
                         <span>{v.deposito}</span>
                         <span>{v.quantidade}x {formatCurrency(v.precoUnitario)}</span>
                         <span>{v.vendedora}</span>
+                        {v.registradoPor && <span>por {v.registradoPor}</span>}
                       </div>
                       {v.desconto > 0 && (
                         <p className="text-[10px] mt-0.5">
