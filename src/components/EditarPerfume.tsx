@@ -53,19 +53,40 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
     ? gerarCodigo(tipo, casaSigla, concentracao, linhaPorCasa, volume)
     : "——";
 
+  const { registrarCusto } = useProdutoCustos(perfume.id);
+
   const handleSubmit = async () => {
     if (!casaSelecionada || !nome || !custo || !precoVenda) return;
     setSalvando(true);
     try {
+      const novoCusto = parseFloat(custo);
       const novoPrecoVenda = parseFloat(precoVenda);
+
       // Track price change if sale price changed
       if (novoPrecoVenda !== perfume.precoVenda) {
-        await registrarPreco({
-          produtoId: perfume.id,
-          precoAntigo: perfume.precoVenda,
-          precoNovo: novoPrecoVenda,
-          alteradoPor: profile?.nome || "Desconhecido",
-        });
+        try {
+          await registrarPreco({
+            produtoId: perfume.id,
+            precoAntigo: perfume.precoVenda,
+            precoNovo: novoPrecoVenda,
+            alteradoPor: profile?.nome || "Desconhecido",
+          });
+        } catch (e) {
+          console.error("Erro ao registrar histórico de preço:", e);
+        }
+      }
+
+      // Track cost change if cost changed
+      if (novoCusto !== perfume.custo) {
+        try {
+          await registrarCusto({
+            produtoId: perfume.id,
+            custoUnitario: novoCusto,
+            origem: "manual",
+          });
+        } catch (e) {
+          console.error("Erro ao registrar histórico de custo:", e);
+        }
       }
 
       await editarPerfume({
@@ -77,7 +98,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
         concentracao,
         tamanho: `${volume}ml`,
         volume,
-        custo: parseFloat(custo),
+        custo: novoCusto,
         precoVenda: novoPrecoVenda,
         estoqueMinimo: parseInt(estoqueMinimo) || 2,
         codigo: codigoPreview,
