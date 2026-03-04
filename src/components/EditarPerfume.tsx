@@ -76,14 +76,31 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
         }
       }
 
-      // Track cost change if cost changed
+      // Track cost change and recalculate average cost
       if (novoCusto !== perfume.custo) {
         try {
+          const estoqueTotal = Object.values(perfume.estoques || {}).reduce((sum, v) => sum + v, 0);
+          // For manual cost change, treat as if re-evaluating current stock at new cost
+          const custoMedioAtual = perfume.custoMedio || perfume.custo;
+          const novoCustoMedio = estoqueTotal > 0
+            ? ((custoMedioAtual * estoqueTotal + novoCusto * estoqueTotal) / (estoqueTotal * 2))
+            : novoCusto;
+
           await registrarCusto({
             produtoId: perfume.id,
             custoUnitario: novoCusto,
             origem: "manual",
           });
+
+          // Update custo_medio on perfumes table
+          const { supabase } = await import("@/integrations/supabase/client");
+          await supabase
+            .from("perfumes")
+            .update({
+              custo_medio: novoCustoMedio,
+              ultimo_custo_em: new Date().toISOString(),
+            })
+            .eq("id", perfume.id);
         } catch (e) {
           console.error("Erro ao registrar histórico de custo:", e);
         }
