@@ -28,9 +28,6 @@ interface CarrinhoItem {
   deposito: Deposito;
   quantidade: number;
   precoUnitario: number;
-  tipoAjuste: TipoAjusteValor;
-  ajuste: number;
-  tipoCalculo: "valor" | "percent";
   total: number;
   observacao: string;
 }
@@ -80,21 +77,21 @@ export default function Vendas() {
     perfumeId: "",
     deposito: (userLoja || "") as Deposito | "",
     quantidade: 1,
-    ajuste: 0,
-    tipoAjuste: "desconto" as TipoAjusteValor,
-    tipoCalculo: "valor" as "valor" | "percent",
     observacao: "",
   });
 
+  // Sale-level adjustment (moved from per-item)
+  const [tipoAjusteVenda, setTipoAjusteVenda] = useState<TipoAjusteValor>("desconto");
+  const [ajusteVenda, setAjusteVenda] = useState(0);
+  const [tipoCalculoVenda, setTipoCalculoVenda] = useState<"valor" | "percent">("valor");
+  const [observacaoAjuste, setObservacaoAjuste] = useState("");
+
   const perfumeSelecionado = perfumes.find((p) => p.id === itemForm.perfumeId);
   const subtotalItem = perfumeSelecionado ? perfumeSelecionado.precoVenda * itemForm.quantidade : 0;
-  const ajusteCalcItem = itemForm.tipoCalculo === "percent" ? (subtotalItem * itemForm.ajuste) / 100 : itemForm.ajuste;
-  const totalItem = itemForm.tipoAjuste === "desconto" ? Math.max(0, subtotalItem - ajusteCalcItem) : subtotalItem + ajusteCalcItem;
 
-  const totalCarrinho = carrinho.reduce((a, i) => a + i.total, 0);
   const subtotalCarrinho = carrinho.reduce((a, i) => a + i.precoUnitario * i.quantidade, 0);
-  const descontoCarrinho = carrinho.filter(i => i.tipoAjuste === "desconto").reduce((a, i) => a + i.ajuste, 0);
-  const acrescimoCarrinho = carrinho.filter(i => i.tipoAjuste === "acrescimo").reduce((a, i) => a + i.ajuste, 0);
+  const ajusteCalcVenda = tipoCalculoVenda === "percent" ? (subtotalCarrinho * ajusteVenda) / 100 : ajusteVenda;
+  const totalCarrinho = tipoAjusteVenda === "desconto" ? Math.max(0, subtotalCarrinho - ajusteCalcVenda) : subtotalCarrinho + ajusteCalcVenda;
   const totalPagamentos = pagamentosForm.reduce((a, p) => a + p.valor, 0);
   const restantePagamento = totalCarrinho - totalPagamentos;
 
@@ -114,10 +111,7 @@ export default function Vendas() {
       }
     }
 
-    if (itemForm.ajuste > 0 && !itemForm.observacao.trim()) {
-      alert("Preencha a observação para justificar o ajuste de valor.");
-      return;
-    }
+    const itemTotal = p.precoVenda * itemForm.quantidade;
 
     setCarrinho([...carrinho, {
       perfumeId: p.id,
@@ -128,13 +122,10 @@ export default function Vendas() {
       deposito: itemForm.deposito as Deposito,
       quantidade: itemForm.quantidade,
       precoUnitario: p.precoVenda,
-      tipoAjuste: itemForm.tipoAjuste,
-      ajuste: ajusteCalcItem,
-      tipoCalculo: itemForm.tipoCalculo,
-      total: totalItem,
+      total: itemTotal,
       observacao: itemForm.observacao,
     }]);
-    setItemForm({ perfumeId: "", deposito: userLoja || "", quantidade: 1, ajuste: 0, tipoAjuste: "desconto", tipoCalculo: "valor", observacao: "" });
+    setItemForm({ perfumeId: "", deposito: userLoja || "", quantidade: 1, observacao: "" });
   };
 
   const handleRemoverDoCarrinho = (idx: number) => {
@@ -166,26 +157,40 @@ export default function Vendas() {
       return;
     }
 
+    if (ajusteVenda > 0 && !observacaoAjuste.trim()) {
+      alert("Preencha a observação para justificar o ajuste de valor.");
+      return;
+    }
+
     setIsLancando(true);
     try {
       const dataEfetiva = isMaster ? dataVenda : getHojeManaus();
-      const itens: Venda[] = carrinho.map((item, idx) => ({
-        id: `v${Date.now()}_${idx}`,
-        data: dataEfetiva,
-        perfumeId: item.perfumeId,
-        perfumeNome: item.perfumeNome,
-        deposito: item.deposito,
-        quantidade: item.quantidade,
-        precoUnitario: item.precoUnitario,
-        tipoAjuste: item.tipoAjuste,
-        desconto: item.ajuste,
-        total: item.total,
-        vendedora: vendedoraSelecionada,
-        tipoPagamento: pagamentosForm[0].tipoPagamento,
-        bandeira: pagamentosForm[0].bandeira,
-        observacao: item.observacao,
-        registradoPor: profile?.nome || "Desconhecido",
-      }));
+      // Distribute the sale-level adjustment proportionally across items
+      const itens: Venda[] = carrinho.map((item, idx) => {
+        const proporcao = subtotalCarrinho > 0 ? (item.precoUnitario * item.quantidade) / subtotalCarrinho : 1 / carrinho.length;
+        const ajusteItem = ajusteCalcVenda * proporcao;
+        const totalItem = tipoAjusteVenda === "desconto"
+          ? Math.max(0, item.precoUnitario * item.quantidade - ajusteItem)
+          : item.precoUnitario * item.quantidade + ajusteItem;
+
+        return {
+          id: `v${Date.now()}_${idx}`,
+          data: dataEfetiva,
+          perfumeId: item.perfumeId,
+          perfumeNome: item.perfumeNome,
+          deposito: item.deposito,
+          quantidade: item.quantidade,
+          precoUnitario: item.precoUnitario,
+          tipoAjuste: ajusteVenda > 0 ? tipoAjusteVenda : "desconto" as TipoAjusteValor,
+          desconto: ajusteItem,
+          total: totalItem,
+          vendedora: vendedoraSelecionada,
+          tipoPagamento: pagamentosForm[0].tipoPagamento,
+          bandeira: pagamentosForm[0].bandeira,
+          observacao: ajusteVenda > 0 ? observacaoAjuste : item.observacao,
+          registradoPor: profile?.nome || "Desconhecido",
+        };
+      });
 
       const pagamentosVenda: Omit<VendaPagamento, "id">[] = pagamentosForm.map((p) => ({
         grupoVenda: "",
@@ -207,7 +212,11 @@ export default function Vendas() {
       setPagamentosForm([]);
       setDataVenda(hoje);
       setDescontarEstoque(true);
-      setItemForm({ perfumeId: "", deposito: userLoja || "", quantidade: 1, ajuste: 0, tipoAjuste: "desconto", tipoCalculo: "valor", observacao: "" });
+      setAjusteVenda(0);
+      setTipoAjusteVenda("desconto");
+      setTipoCalculoVenda("valor");
+      setObservacaoAjuste("");
+      setItemForm({ perfumeId: "", deposito: userLoja || "", quantidade: 1, observacao: "" });
       setShowForm(false);
     } finally {
       setIsLancando(false);
@@ -701,46 +710,10 @@ export default function Vendas() {
                 </div>
               </div>
 
-              {/* Ajuste */}
-              <div>
-                <div className="flex gap-1.5 mb-2">
-                  {(["desconto", "acrescimo"] as TipoAjusteValor[]).map((t) => (
-                    <button key={t} onClick={() => setItemForm({ ...itemForm, tipoAjuste: t })}
-                      className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
-                        itemForm.tipoAjuste === t ? "border-gold-muted bg-primary/10 text-gold" : "border-border bg-surface-overlay text-muted-foreground"
-                      }`}>
-                      {t === "desconto" ? "Desconto" : "Acréscimo"}
-                    </button>
-                  ))}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex gap-1">
-                    {(["valor", "percent"] as const).map((tc) => (
-                      <button key={tc} onClick={() => setItemForm({ ...itemForm, tipoCalculo: tc })}
-                        className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
-                          itemForm.tipoCalculo === tc ? "border-gold-muted bg-primary/10 text-gold" : "border-border bg-surface-overlay text-muted-foreground"
-                        }`}>
-                        {tc === "valor" ? "R$" : "%"}
-                      </button>
-                    ))}
-                  </div>
-                  <input type="number" min={0} value={itemForm.ajuste || ""} placeholder="0"
-                    onChange={(e) => setItemForm({ ...itemForm, ajuste: parseFloat(e.target.value) || 0 })}
-                    className="input-premium px-3 py-1.5 text-xs" />
-                </div>
-              </div>
-
-              {itemForm.ajuste > 0 && (
-                <input type="text" value={itemForm.observacao}
-                  onChange={(e) => setItemForm({ ...itemForm, observacao: e.target.value })}
-                  placeholder="Observação (obrigatória com ajuste)"
-                  className="input-premium px-3 py-2.5 text-xs" />
-              )}
-
               {perfumeSelecionado && (
                 <div className="flex justify-between items-center bg-surface-overlay rounded-xl px-4 py-3">
                   <span className="text-xs text-muted-foreground">Subtotal do item</span>
-                  <span className="text-sm font-bold text-gold">{formatCurrency(totalItem)}</span>
+                  <span className="text-sm font-bold text-gold">{formatCurrency(subtotalItem)}</span>
                 </div>
               )}
 
@@ -760,7 +733,7 @@ export default function Vendas() {
                 <ShoppingCart size={16} className="text-gold" />
                 Carrinho ({carrinho.length})
               </h3>
-              <div className="space-y-2 mb-4">
+              <div className="space-y-2">
                 {carrinho.map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between bg-surface-overlay rounded-xl px-3 py-2.5">
                     <div className="flex-1 min-w-0">
@@ -774,39 +747,78 @@ export default function Vendas() {
                   </div>
                 ))}
               </div>
-
-              <div className="border-t border-border pt-3 space-y-1.5">
-                <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span className="text-foreground">{formatCurrency(subtotalCarrinho)}</span>
-                </div>
-                {descontoCarrinho > 0 && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Descontos</span>
-                    <span className="text-destructive">-{formatCurrency(descontoCarrinho)}</span>
-                  </div>
-                )}
-                {acrescimoCarrinho > 0 && (
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">Acréscimos</span>
-                    <span className="text-emerald-400">+{formatCurrency(acrescimoCarrinho)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-base font-bold pt-1">
-                  <span className="text-foreground">Total</span>
-                  <span className="text-gold">{formatCurrency(totalCarrinho)}</span>
-                </div>
-              </div>
             </div>
           )}
 
-          {/* Pagamentos */}
+          {/* Pagamento e Ajuste */}
           {carrinho.length > 0 && (
             <div className="card-premium p-5">
               <h3 className="font-display text-lg text-foreground mb-4 flex items-center gap-2">
                 <CreditCard size={16} className="text-gold" />
                 Pagamento
               </h3>
+
+              {/* Ajuste no valor total */}
+              <div className="mb-4 p-3 bg-surface-overlay rounded-xl space-y-2">
+                <p className="text-[11px] text-muted-foreground font-medium">Desconto / Acréscimo na venda</p>
+                <div className="flex gap-1.5">
+                  {(["desconto", "acrescimo"] as TipoAjusteValor[]).map((t) => (
+                    <button key={t} onClick={() => setTipoAjusteVenda(t)}
+                      className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
+                        tipoAjusteVenda === t ? "border-gold-muted bg-primary/10 text-gold" : "border-border bg-surface-overlay text-muted-foreground"
+                      }`}>
+                      {t === "desconto" ? "Desconto" : "Acréscimo"}
+                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex gap-1">
+                    {(["valor", "percent"] as const).map((tc) => (
+                      <button key={tc} onClick={() => setTipoCalculoVenda(tc)}
+                        className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
+                          tipoCalculoVenda === tc ? "border-gold-muted bg-primary/10 text-gold" : "border-border bg-surface-overlay text-muted-foreground"
+                        }`}>
+                        {tc === "valor" ? "R$" : "%"}
+                      </button>
+                    ))}
+                  </div>
+                  <input type="number" min={0} value={ajusteVenda || ""} placeholder="0"
+                    onChange={(e) => setAjusteVenda(parseFloat(e.target.value) || 0)}
+                    className="input-premium px-3 py-1.5 text-xs" />
+                </div>
+                {ajusteVenda > 0 && (
+                  <input type="text" value={observacaoAjuste}
+                    onChange={(e) => setObservacaoAjuste(e.target.value)}
+                    placeholder="Observação (obrigatória com ajuste)"
+                    className="input-premium px-3 py-2 text-xs" />
+                )}
+              </div>
+
+              {/* Resumo do total */}
+              <div className="mb-4 space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Subtotal</span>
+                  <span className="text-foreground">{formatCurrency(subtotalCarrinho)}</span>
+                </div>
+                {ajusteCalcVenda > 0 && tipoAjusteVenda === "desconto" && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Desconto</span>
+                    <span className="text-destructive">-{formatCurrency(ajusteCalcVenda)}</span>
+                  </div>
+                )}
+                {ajusteCalcVenda > 0 && tipoAjusteVenda === "acrescimo" && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Acréscimo</span>
+                    <span className="text-success">+{formatCurrency(ajusteCalcVenda)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-base font-bold pt-1 border-t border-border">
+                  <span className="text-foreground">Total da Venda</span>
+                  <span className="text-gold">{formatCurrency(totalCarrinho)}</span>
+                </div>
+              </div>
+
+              {/* Formas de pagamento */}
               <div className="space-y-2 mb-3">
                 {pagamentosForm.map((pag, idx) => (
                   <div key={idx} className="bg-surface-overlay rounded-xl p-3 space-y-2">
