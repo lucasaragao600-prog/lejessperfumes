@@ -915,6 +915,7 @@ export default function Vendas() {
                         <span>{v.deposito}</span>
                         <span>{v.quantidade}x {formatCurrency(v.precoUnitario)}</span>
                         <span>{v.vendedora}</span>
+                        <span>{v.tipoPagamento}{v.bandeira && v.bandeira !== "N/A" ? ` (${v.bandeira})` : ""}</span>
                         {v.registradoPor && <span>por {v.registradoPor}</span>}
                       </div>
                       {v.desconto > 0 && (
