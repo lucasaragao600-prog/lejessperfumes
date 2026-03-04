@@ -205,15 +205,21 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         {/* Deposit filter - hidden for vendedores with assigned loja */}
         {!userLoja && (
           <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-2">
-            {(["Todos", ...depositos] as const).map((d) => (
-              <button
-                key={d}
-                onClick={() => setDepositoFiltro(d)}
-                className={`pill ${depositoFiltro === d ? "pill-active" : "pill-inactive"}`}
-              >
-                {d}
-              </button>
-            ))}
+            {(["Todos", ...depositos] as const).map((d) => {
+              const qtdDeposito = perfumes.reduce((sum, p) => {
+                if (d === "Todos") return sum + Object.values(p.estoques).reduce((a, b) => a + b, 0);
+                return sum + (p.estoques[d as Deposito] || 0);
+              }, 0);
+              return (
+                <button
+                  key={d}
+                  onClick={() => setDepositoFiltro(d)}
+                  className={`pill ${depositoFiltro === d ? "pill-active" : "pill-inactive"}`}
+                >
+                  {d} ({qtdDeposito})
+                </button>
+              );
+            })}
           </div>
         )}
 
