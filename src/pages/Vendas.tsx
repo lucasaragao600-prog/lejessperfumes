@@ -694,7 +694,11 @@ export default function Vendas() {
                     <select value={itemForm.deposito} onChange={(e) => setItemForm({ ...itemForm, deposito: e.target.value as Deposito })}
                       className="input-premium px-3 py-2.5 text-xs">
                       <option value="">Selecione</option>
-                      {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
+                      {depositos.map((d) => {
+                        const selectedPerfume = perfumes.find((p) => p.id === itemForm.perfumeId);
+                        const qtd = selectedPerfume ? selectedPerfume.estoques[d as Deposito] ?? 0 : null;
+                        return <option key={d} value={d}>{d}{qtd !== null ? ` (${qtd})` : ""}</option>;
+                      })}
                     </select>
                   )}
                 </div>
