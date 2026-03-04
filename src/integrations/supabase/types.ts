@@ -353,6 +353,41 @@ export type Database = {
           },
         ]
       }
+      preco_historico: {
+        Row: {
+          alterado_por: string
+          data: string
+          id: string
+          preco_antigo: number
+          preco_novo: number
+          produto_id: string
+        }
+        Insert: {
+          alterado_por?: string
+          data?: string
+          id?: string
+          preco_antigo?: number
+          preco_novo?: number
+          produto_id: string
+        }
+        Update: {
+          alterado_por?: string
+          data?: string
+          id?: string
+          preco_antigo?: number
+          preco_novo?: number
+          produto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preco_historico_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       produto_custos: {
         Row: {
           created_at: string

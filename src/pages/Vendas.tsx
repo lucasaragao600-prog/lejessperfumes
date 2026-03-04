@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import {
-  ShoppingCart, Plus, Calendar, User, Tag, FileText, CreditCard,
+  ShoppingCart, Plus, Calendar, User, FileText, CreditCard,
   Search, ArrowUpDown, Store, Trash2, X, Package, Minus, Loader2
 } from "lucide-react";
 import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
@@ -50,10 +50,11 @@ export default function Vendas() {
   const { role, profile } = useAuth();
   const isVendedor = role === "vendedor";
   const isMaster = role === "master";
+  const userLoja = (isVendedor && profile?.loja) ? profile.loja as Deposito : null;
   const vendedoras = [...vendedorasCtx, ...vendedorasFixas];
 
   const [filtroData, setFiltroData] = useState("");
-  const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
+  const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">(userLoja || "Todos");
   const [filtroVendedora, setFiltroVendedora] = useState("Todas");
   const [busca, setBusca] = useState("");
   const [ordenacao, setOrdenacao] = useState<"recente" | "antiga">("recente");
@@ -66,7 +67,7 @@ export default function Vendas() {
   const [periodoInicio, setPeriodoInicio] = useState("");
   const [periodoFim, setPeriodoFim] = useState("");
   const [mesRelatorio, setMesRelatorio] = useState("2026-02");
-  const [lojaRelatorio, setLojaRelatorio] = useState<Deposito | "Geral">("Geral");
+  const [lojaRelatorio, setLojaRelatorio] = useState<Deposito | "Geral">(userLoja || "Geral");
   const [isLancando, setIsLancando] = useState(false);
 
   // Cart state
@@ -77,7 +78,7 @@ export default function Vendas() {
   // Item being added to cart
   const [itemForm, setItemForm] = useState({
     perfumeId: "",
-    deposito: "" as Deposito | "",
+    deposito: (userLoja || "") as Deposito | "",
     quantidade: 1,
     ajuste: 0,
     tipoAjuste: "desconto" as TipoAjusteValor,
@@ -133,7 +134,7 @@ export default function Vendas() {
       total: totalItem,
       observacao: itemForm.observacao,
     }]);
-    setItemForm({ perfumeId: "", deposito: "", quantidade: 1, ajuste: 0, tipoAjuste: "desconto", tipoCalculo: "valor", observacao: "" });
+    setItemForm({ perfumeId: "", deposito: userLoja || "", quantidade: 1, ajuste: 0, tipoAjuste: "desconto", tipoCalculo: "valor", observacao: "" });
   };
 
   const handleRemoverDoCarrinho = (idx: number) => {
@@ -206,7 +207,7 @@ export default function Vendas() {
       setPagamentosForm([]);
       setDataVenda(hoje);
       setDescontarEstoque(true);
-      setItemForm({ perfumeId: "", deposito: "", quantidade: 1, ajuste: 0, tipoAjuste: "desconto", tipoCalculo: "valor", observacao: "" });
+      setItemForm({ perfumeId: "", deposito: userLoja || "", quantidade: 1, ajuste: 0, tipoAjuste: "desconto", tipoCalculo: "valor", observacao: "" });
       setShowForm(false);
     } finally {
       setIsLancando(false);
@@ -218,7 +219,6 @@ export default function Vendas() {
     const venda = vendas.find(v => v.id === id);
     if (venda) {
       await excluirVenda(id);
-      // Return stock
       adicionarEstoque(venda.perfumeId, venda.deposito as Deposito, venda.quantidade);
     }
   };
@@ -237,7 +237,7 @@ export default function Vendas() {
   const filtradas = useMemo(() => {
     let result = vendas.filter((v) => {
       const matchData = isVendedor ? v.data === hoje : (filtroData ? v.data === filtroData : true);
-      const matchDeposito = filtroDeposito === "Todos" || v.deposito === filtroDeposito;
+      const matchDeposito = userLoja ? v.deposito === userLoja : (filtroDeposito === "Todos" || v.deposito === filtroDeposito);
       const matchVendedora = filtroVendedora === "Todas" || v.vendedora === filtroVendedora;
       const matchBusca = busca.trim() === "" || v.perfumeNome.toLowerCase().includes(busca.toLowerCase()) || v.vendedora.toLowerCase().includes(busca.toLowerCase());
       return matchData && matchDeposito && matchVendedora && matchBusca;
@@ -246,7 +246,7 @@ export default function Vendas() {
       ordenacao === "recente" ? b.data.localeCompare(a.data) : a.data.localeCompare(b.data)
     );
     return result;
-  }, [vendas, filtroData, filtroDeposito, filtroVendedora, busca, ordenacao]);
+  }, [vendas, filtroData, filtroDeposito, filtroVendedora, busca, ordenacao, userLoja]);
 
   const filtradasAgrupadas = useMemo(() => {
     const grupos: Record<string, Venda[]> = {};
@@ -263,13 +263,17 @@ export default function Vendas() {
   }, [filtradas]);
 
   const totalHoje = useMemo(() => {
-    const vendasHoje = vendas.filter((v) => v.data === hoje);
+    const vendasHoje = vendas.filter((v) => {
+      const matchHoje = v.data === hoje;
+      const matchLoja = userLoja ? v.deposito === userLoja : true;
+      return matchHoje && matchLoja;
+    });
     return {
       valor: vendasHoje.reduce((a, v) => a + v.total, 0),
       itens: vendasHoje.reduce((a, v) => a + v.quantidade, 0),
       qtd: vendasHoje.length,
     };
-  }, [vendas]);
+  }, [vendas, userLoja]);
 
   const totalFiltrado = useMemo(() => ({
     valor: filtradas.reduce((a, v) => a + v.total, 0),
@@ -280,7 +284,7 @@ export default function Vendas() {
     const modo = isVendedor ? "dia" : modoRelatorio;
     const dataEfetiva = isVendedor ? hoje : dataRelatorio;
     return vendas.filter((v) => {
-      const matchLoja = lojaRelatorio === "Geral" || v.deposito === lojaRelatorio;
+      const matchLoja = userLoja ? v.deposito === userLoja : (lojaRelatorio === "Geral" || v.deposito === lojaRelatorio);
       if (!matchLoja) return false;
       if (modo === "dia") return v.data === dataEfetiva;
       if (modo === "mes") return v.data.startsWith(mesRelatorio);
@@ -288,15 +292,15 @@ export default function Vendas() {
       const ok2 = periodoFim ? v.data <= periodoFim : true;
       return ok1 && ok2;
     });
-  }, [vendas, modoRelatorio, dataRelatorio, mesRelatorio, periodoInicio, periodoFim, lojaRelatorio, isVendedor]);
+  }, [vendas, modoRelatorio, dataRelatorio, mesRelatorio, periodoInicio, periodoFim, lojaRelatorio, isVendedor, userLoja]);
 
   const vendasPorLoja = useMemo(() => {
-    if (lojaRelatorio !== "Geral") return null;
+    if (userLoja || lojaRelatorio !== "Geral") return null;
     return depositos.map((dep) => {
       const vLoja = vendasRelatorio.filter((v) => v.deposito === dep);
       return { loja: dep, total: vLoja.reduce((a, v) => a + v.total, 0), qtd: vLoja.length, itens: vLoja.reduce((a, v) => a + v.quantidade, 0) };
     }).filter((l) => l.qtd > 0);
-  }, [vendasRelatorio, lojaRelatorio]);
+  }, [vendasRelatorio, lojaRelatorio, userLoja]);
 
   const relatorio = useMemo(() => {
     const porProduto: Record<string, { nome: string; marca: string; qtd: number; valor: number }> = {};
@@ -356,6 +360,7 @@ export default function Vendas() {
   const incrementQty = () => setItemForm(f => ({ ...f, quantidade: f.quantidade + 1 }));
   const decrementQty = () => setItemForm(f => ({ ...f, quantidade: Math.max(1, f.quantidade - 1) }));
 
+  // Available depositos for this user
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
@@ -363,7 +368,10 @@ export default function Vendas() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h1 className="page-title">Vendas</h1>
-            <p className="page-subtitle mt-1">Hoje: {totalHoje.qtd} vendas · {totalHoje.itens} itens</p>
+            <p className="page-subtitle mt-1">
+              Hoje: {totalHoje.qtd} vendas · {totalHoje.itens} itens
+              {userLoja ? ` · ${userLoja}` : ""}
+            </p>
           </div>
           <div className="flex gap-2">
             <button onClick={() => setShowRelatorio(!showRelatorio)} className="btn-secondary px-3 py-2 text-xs">
@@ -411,11 +419,17 @@ export default function Vendas() {
                     <Calendar size={13} className="mr-1.5" /> Hoje
                   </div>
                 )}
-                <select value={filtroDeposito} onChange={(e) => setFiltroDeposito(e.target.value as Deposito | "Todos")}
-                  className="input-premium px-3 py-2.5 text-xs">
-                  <option value="Todos">Depósito</option>
-                  {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
-                </select>
+                {!userLoja ? (
+                  <select value={filtroDeposito} onChange={(e) => setFiltroDeposito(e.target.value as Deposito | "Todos")}
+                    className="input-premium px-3 py-2.5 text-xs">
+                    <option value="Todos">Depósito</option>
+                    {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                ) : (
+                  <div className="flex items-center justify-center kpi-card px-3 py-2.5 text-xs text-muted-foreground">
+                    <Store size={13} className="mr-1.5" /> {userLoja}
+                  </div>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <select value={filtroVendedora} onChange={(e) => setFiltroVendedora(e.target.value)}
@@ -441,17 +455,19 @@ export default function Vendas() {
               <FileText size={16} className="text-gold" />
               Relatório de Vendas
             </h3>
-            <div className="mb-3">
-              <p className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1"><Store size={10} />Loja</p>
-              <div className="flex gap-1.5 flex-wrap">
-                {(["Geral", ...depositos] as const).map((loja) => (
-                  <button key={loja} onClick={() => setLojaRelatorio(loja as Deposito | "Geral")}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all duration-150 ${lojaRelatorio === loja ? "bg-primary/15 text-gold border-gold-muted" : "bg-surface-overlay border-border text-muted-foreground"}`}>
-                    {loja}
-                  </button>
-                ))}
+            {!userLoja && (
+              <div className="mb-3">
+                <p className="text-[10px] text-muted-foreground mb-1.5 flex items-center gap-1"><Store size={10} />Loja</p>
+                <div className="flex gap-1.5 flex-wrap">
+                  {(["Geral", ...depositos] as const).map((loja) => (
+                    <button key={loja} onClick={() => setLojaRelatorio(loja as Deposito | "Geral")}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-medium border transition-all duration-150 ${lojaRelatorio === loja ? "bg-primary/15 text-gold border-gold-muted" : "bg-surface-overlay border-border text-muted-foreground"}`}>
+                      {loja}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
             {!isVendedor && (
               <div className="flex gap-1.5 mb-3">
                 {(["dia", "mes", "periodo"] as const).map((m) => (
@@ -493,7 +509,7 @@ export default function Vendas() {
             <p className="text-xs text-muted-foreground text-center py-4">Sem vendas no período selecionado</p>
           ) : (
             <>
-              {lojaRelatorio === "Geral" && vendasPorLoja && vendasPorLoja.length > 0 && (
+              {!userLoja && lojaRelatorio === "Geral" && vendasPorLoja && vendasPorLoja.length > 0 && (
                 <div>
                   <p className="text-[11px] font-semibold text-foreground mb-2 flex items-center gap-1"><Store size={11} /> Por Loja</p>
                   <div className="space-y-1.5">
@@ -605,443 +621,317 @@ export default function Vendas() {
         </div>
       )}
 
-      {/* ═══════════ NOVA VENDA — Premium POS ═══════════ */}
+      {/* Nova Venda Form */}
       {showForm && (
-        <div className="mx-4 mb-5 animate-fade-in space-y-4">
-
-          {/* ─── 1️⃣ Vendedora Selection ─── */}
-          <div className="rounded-2xl border border-border p-5" style={{ background: "hsl(var(--surface-raised))", boxShadow: "var(--shadow-card)" }}>
-            <label className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
-              <User size={14} className="text-gold" /> Vendedora
-            </label>
-            <div className="grid grid-cols-4 sm:grid-cols-4 gap-2 mt-2">
+        <div className="mx-4 mb-5 space-y-4 animate-fade-in">
+          {/* Vendedora selection */}
+          <div className="card-premium p-5" style={{ boxShadow: "var(--shadow-gold)" }}>
+            <h3 className="font-display text-lg text-foreground mb-4 flex items-center gap-2">
+              <User size={16} className="text-gold" />
+              Vendedora
+            </h3>
+            <div className="grid grid-cols-4 gap-2">
               {vendedoras.map((v) => (
                 <button key={v} onClick={() => setVendedoraSelecionada(v)}
-                  className={`py-3 rounded-xl text-xs font-semibold border-2 transition-all duration-150
-                    ${vendedoraSelecionada === v
-                      ? "border-gold bg-primary/20 text-gold shadow-gold"
-                      : "border-border bg-surface text-muted-foreground hover:border-muted-foreground hover:text-foreground"
-                    }`}>
+                  className={`py-2.5 rounded-xl text-xs font-medium border transition-all duration-150 ${
+                    vendedoraSelecionada === v
+                      ? "border-gold-muted text-gold" : "border-border bg-surface-overlay text-muted-foreground"
+                  }`}
+                  style={vendedoraSelecionada === v ? { background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" } : {}}>
                   {v}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* ─── 2️⃣ Data da Venda ─── */}
-          {isMaster && (
-            <div className="rounded-2xl border border-border p-5" style={{ background: "hsl(var(--surface-raised))", boxShadow: "var(--shadow-card)" }}>
-              <label className="text-xs font-semibold text-foreground mb-2 flex items-center gap-2">
-                <Calendar size={14} className="text-gold" /> Data da Venda
-              </label>
-              <input type="date" value={dataVenda} onChange={(e) => setDataVenda(e.target.value)}
-                max={hoje}
-                className="w-full mt-2 rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground focus:outline-none focus:border-gold-muted [color-scheme:dark]" />
-              {dataVenda !== hoje && (
-                <div className="mt-2 space-y-1.5">
-                  <p className="text-[11px] text-amber-400 flex items-center gap-1">⚠️ Venda retroativa: {dataVenda.split("-").reverse().join("/")}</p>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={descontarEstoque} onChange={(e) => setDescontarEstoque(e.target.checked)}
-                      className="accent-[hsl(var(--gold))] w-4 h-4 rounded" />
-                    <span className="text-xs text-muted-foreground">Descontar estoque</span>
-                  </label>
-                </div>
-              )}
+          {/* Data + Retroativa */}
+          <div className="card-premium p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <Calendar size={14} className="text-gold" />
+              <label className="text-xs text-muted-foreground">Data da Venda</label>
             </div>
-          )}
+            <input type="date" value={dataVenda}
+              onChange={(e) => setDataVenda(e.target.value)}
+              disabled={isVendedor}
+              className="input-premium px-3 py-2.5 text-sm [color-scheme:dark]" />
+            {isRetroativa && (
+              <label className="flex items-center gap-2 mt-3 cursor-pointer">
+                <input type="checkbox" checked={descontarEstoque} onChange={(e) => setDescontarEstoque(e.target.checked)}
+                  className="w-4 h-4 rounded border-border accent-gold" />
+                <span className="text-xs text-muted-foreground">Descontar do estoque atual</span>
+              </label>
+            )}
+          </div>
 
-          {/* ─── 3️⃣ Adicionar Produto ─── */}
-          <div className="rounded-2xl border border-border p-5" style={{ background: "hsl(var(--surface-raised))", boxShadow: "var(--shadow-card)" }}>
-            <p className="text-xs font-semibold text-foreground mb-4 flex items-center gap-2">
-              <ShoppingCart size={14} className="text-gold" /> Adicionar Produto
-            </p>
-
+          {/* Add product */}
+          <div className="card-premium p-5" style={{ boxShadow: "var(--shadow-gold)" }}>
+            <h3 className="font-display text-lg text-foreground mb-4 flex items-center gap-2">
+              <Package size={16} className="text-gold" />
+              Adicionar Produto
+            </h3>
             <div className="space-y-3">
-              {/* Perfume search */}
-              <div>
-                <label className="text-[11px] text-muted-foreground mb-1 block">Perfume</label>
-                <PerfumeSearchSelect
-                  perfumes={perfumes}
-                  value={itemForm.perfumeId}
-                  onChange={(id) => setItemForm({ ...itemForm, perfumeId: id, ajuste: 0 })}
-                  concentracoesConfig={concentracoesConfig}
-                  placeholder="Digite para buscar perfume..."
-                />
-              </div>
+              <PerfumeSearchSelect perfumes={perfumes} value={itemForm.perfumeId}
+                onChange={(id) => setItemForm({ ...itemForm, perfumeId: id })}
+                concentracoesConfig={concentracoesConfig} />
 
-              {/* Depósito + Quantidade */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[11px] text-muted-foreground mb-1 block">Depósito</label>
-                  <select value={itemForm.deposito} onChange={(e) => setItemForm({ ...itemForm, deposito: e.target.value as Deposito })}
-                    className="w-full rounded-xl border border-border bg-surface px-3 py-3 text-sm text-foreground focus:outline-none focus:border-gold-muted">
-                    <option value="">Selecione...</option>
-                    {depositos.map((d) => {
-                      const estoque = perfumeSelecionado ? perfumeSelecionado.estoques[d] : 0;
-                      return <option key={d} value={d}>{d} ({estoque})</option>;
-                    })}
-                  </select>
+                  <label className="text-[11px] text-muted-foreground mb-1.5 block">Depósito</label>
+                  {userLoja ? (
+                    <div className="input-premium px-3 py-2.5 text-xs text-muted-foreground bg-surface-overlay flex items-center gap-1">
+                      <Store size={12} /> {userLoja}
+                    </div>
+                  ) : (
+                    <select value={itemForm.deposito} onChange={(e) => setItemForm({ ...itemForm, deposito: e.target.value as Deposito })}
+                      className="input-premium px-3 py-2.5 text-xs">
+                      <option value="">Selecione</option>
+                      {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
+                    </select>
+                  )}
                 </div>
                 <div>
-                  <label className="text-[11px] text-muted-foreground mb-1 block">Quantidade</label>
-                  <div className="flex items-center gap-0 rounded-xl border border-border bg-surface overflow-hidden">
-                    <button onClick={decrementQty} className="px-3 py-3 text-muted-foreground hover:text-foreground hover:bg-surface-overlay transition-colors">
-                      <Minus size={14} />
-                    </button>
-                    <input type="number" min={1} value={itemForm.quantidade === 0 ? "" : itemForm.quantidade}
-                      onChange={(e) => setItemForm({ ...itemForm, quantidade: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 })}
-                      onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                      className="flex-1 text-center py-3 text-sm font-semibold text-foreground bg-transparent focus:outline-none min-w-0" />
-                    <button onClick={incrementQty} className="px-3 py-3 text-muted-foreground hover:text-foreground hover:bg-surface-overlay transition-colors">
-                      <Plus size={14} />
-                    </button>
+                  <label className="text-[11px] text-muted-foreground mb-1.5 block">Quantidade</label>
+                  <div className="flex items-center gap-1">
+                    <button onClick={decrementQty} className="btn-secondary p-2"><Minus size={12} /></button>
+                    <input type="number" min={1} value={itemForm.quantidade}
+                      onChange={(e) => setItemForm({ ...itemForm, quantidade: parseInt(e.target.value) || 1 })}
+                      className="input-premium px-2 py-2 text-center text-sm flex-1" />
+                    <button onClick={incrementQty} className="btn-secondary p-2"><Plus size={12} /></button>
                   </div>
                 </div>
               </div>
 
-              {/* Ajuste de valor */}
+              {/* Ajuste */}
               <div>
-                <label className="text-[11px] text-muted-foreground mb-1.5 block flex items-center gap-1">
-                  <Tag size={10} /> Ajuste de Valor
-                </label>
-                <div className="flex gap-2">
-                  {/* Tipo toggle */}
-                  <div className="flex rounded-xl overflow-hidden border border-border">
-                    <button onClick={() => setItemForm({ ...itemForm, tipoAjuste: "desconto", ajuste: 0 })}
-                      className={`px-3 py-2.5 text-[11px] font-semibold transition-all duration-150 ${itemForm.tipoAjuste === "desconto" ? "bg-destructive/20 text-destructive" : "bg-surface text-muted-foreground"}`}>
-                      Desc.
+                <div className="flex gap-1.5 mb-2">
+                  {(["desconto", "acrescimo"] as TipoAjusteValor[]).map((t) => (
+                    <button key={t} onClick={() => setItemForm({ ...itemForm, tipoAjuste: t })}
+                      className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
+                        itemForm.tipoAjuste === t ? "border-gold-muted bg-primary/10 text-gold" : "border-border bg-surface-overlay text-muted-foreground"
+                      }`}>
+                      {t === "desconto" ? "Desconto" : "Acréscimo"}
                     </button>
-                    <button onClick={() => setItemForm({ ...itemForm, tipoAjuste: "acrescimo", ajuste: 0 })}
-                      className={`px-3 py-2.5 text-[11px] font-semibold transition-all duration-150 ${itemForm.tipoAjuste === "acrescimo" ? "bg-emerald-500/20 text-emerald-400" : "bg-surface text-muted-foreground"}`}>
-                      Acrés.
-                    </button>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex gap-1">
+                    {(["valor", "percent"] as const).map((tc) => (
+                      <button key={tc} onClick={() => setItemForm({ ...itemForm, tipoCalculo: tc })}
+                        className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
+                          itemForm.tipoCalculo === tc ? "border-gold-muted bg-primary/10 text-gold" : "border-border bg-surface-overlay text-muted-foreground"
+                        }`}>
+                        {tc === "valor" ? "R$" : "%"}
+                      </button>
+                    ))}
                   </div>
-                  {/* Calc toggle */}
-                  <div className="flex rounded-xl overflow-hidden border border-border">
-                    <button onClick={() => setItemForm({ ...itemForm, tipoCalculo: "valor", ajuste: 0 })}
-                      className={`px-3 py-2.5 text-[11px] font-semibold transition-all duration-150 ${itemForm.tipoCalculo === "valor" ? "bg-primary/20 text-gold" : "bg-surface text-muted-foreground"}`}>
-                      R$
-                    </button>
-                    <button onClick={() => setItemForm({ ...itemForm, tipoCalculo: "percent", ajuste: 0 })}
-                      className={`px-3 py-2.5 text-[11px] font-semibold transition-all duration-150 ${itemForm.tipoCalculo === "percent" ? "bg-primary/20 text-gold" : "bg-surface text-muted-foreground"}`}>
-                      %
-                    </button>
-                  </div>
-                  <input type="number" min={0} value={itemForm.ajuste || ""}
+                  <input type="number" min={0} value={itemForm.ajuste || ""} placeholder="0"
                     onChange={(e) => setItemForm({ ...itemForm, ajuste: parseFloat(e.target.value) || 0 })}
-                    onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                    placeholder="0"
-                    className="flex-1 rounded-xl border border-border bg-surface px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted min-w-0" />
+                    className="input-premium px-3 py-1.5 text-xs" />
                 </div>
               </div>
 
-              {/* Observação */}
-              <div>
-                <label className="text-[11px] text-muted-foreground mb-1 block">Observação</label>
-                <input type="text" value={itemForm.observacao} onChange={(e) => setItemForm({ ...itemForm, observacao: e.target.value })}
-                  placeholder={itemForm.ajuste > 0 ? "Obrigatório: justifique o ajuste..." : "Opcional..."}
-                  className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted" />
-              </div>
+              {itemForm.ajuste > 0 && (
+                <input type="text" value={itemForm.observacao}
+                  onChange={(e) => setItemForm({ ...itemForm, observacao: e.target.value })}
+                  placeholder="Observação (obrigatória com ajuste)"
+                  className="input-premium px-3 py-2.5 text-xs" />
+              )}
 
-              {/* Item subtotal */}
               {perfumeSelecionado && (
-                <div className="flex justify-between items-center bg-primary/8 border border-gold-muted rounded-xl px-4 py-3">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground">Preço unitário</p>
-                    <p className="text-xs text-foreground">{formatCurrency(perfumeSelecionado.precoVenda)}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] text-muted-foreground">Subtotal item</p>
-                    <p className="text-lg font-bold text-gold">{formatCurrency(totalItem)}</p>
-                  </div>
+                <div className="flex justify-between items-center bg-surface-overlay rounded-xl px-4 py-3">
+                  <span className="text-xs text-muted-foreground">Subtotal do item</span>
+                  <span className="text-sm font-bold text-gold">{formatCurrency(totalItem)}</span>
                 </div>
               )}
 
-              {/* Add to cart button */}
               <button onClick={handleAdicionarAoCarrinho}
                 disabled={!itemForm.perfumeId || !itemForm.deposito || itemForm.quantidade < 1}
-                className="w-full py-3 rounded-xl text-sm font-bold transition-all duration-150 disabled:opacity-30
-                  bg-primary/15 border-2 border-gold text-gold hover:bg-primary/25 active:scale-[0.98]"
-                style={{ minHeight: 48 }}>
-                <Plus size={16} className="inline mr-1.5 -mt-0.5" />
-                Adicionar ao Carrinho
+                className="w-full py-3 rounded-xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
+                style={{ background: "var(--gradient-gold)" }}>
+                <Plus size={14} className="inline mr-1" /> Adicionar ao Carrinho
               </button>
             </div>
           </div>
 
-          {/* ─── 4️⃣ Cart Items ─── */}
+          {/* Cart */}
           {carrinho.length > 0 && (
-            <div className="rounded-2xl border border-border p-5" style={{ background: "hsl(var(--surface-raised))", boxShadow: "var(--shadow-card)" }}>
-              <p className="text-xs font-semibold text-foreground mb-3 flex items-center gap-2">
-                <Package size={14} className="text-gold" /> Carrinho ({carrinho.length} {carrinho.length === 1 ? "item" : "itens"})
-              </p>
-              <div className="space-y-2">
+            <div className="card-premium p-5">
+              <h3 className="font-display text-lg text-foreground mb-4 flex items-center gap-2">
+                <ShoppingCart size={16} className="text-gold" />
+                Carrinho ({carrinho.length})
+              </h3>
+              <div className="space-y-2 mb-4">
                 {carrinho.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-3 bg-surface border border-border rounded-xl px-4 py-3 group hover:border-gold-muted transition-all duration-150">
+                  <div key={idx} className="flex items-center justify-between bg-surface-overlay rounded-xl px-3 py-2.5">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{item.perfumeNome}</p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {item.marca} · {item.deposito} · {item.quantidade} un. × {formatCurrency(item.precoUnitario)}
-                      </p>
-                      {item.ajuste > 0 && (
-                        <p className={`text-[11px] font-medium ${item.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"}`}>
-                          {item.tipoAjuste === "desconto" ? "−" : "+"} {formatCurrency(item.ajuste)}
-                        </p>
-                      )}
+                      <p className="text-xs font-medium text-foreground truncate">{item.perfumeNome}</p>
+                      <p className="text-[10px] text-muted-foreground">{item.quantidade}x {formatCurrency(item.precoUnitario)} · {item.deposito}</p>
                     </div>
-                    <p className="text-sm font-bold text-gold flex-shrink-0">{formatCurrency(item.total)}</p>
-                    <button onClick={() => handleRemoverDoCarrinho(idx)}
-                      className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-150">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ─── 5️⃣ Pagamentos ─── */}
-          {carrinho.length > 0 && (
-            <div className="rounded-2xl border border-border p-5" style={{ background: "hsl(var(--surface-raised))", boxShadow: "var(--shadow-card)" }}>
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-foreground flex items-center gap-2">
-                  <CreditCard size={14} className="text-gold" /> Formas de Pagamento
-                </p>
-              </div>
-
-              <div className="space-y-2.5">
-                {pagamentosForm.map((pag, idx) => (
-                  <div key={idx} className="bg-surface border border-border rounded-xl p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <p className="text-[11px] text-muted-foreground font-medium">Pagamento {idx + 1}</p>
-                      <button onClick={() => handleRemoverPagamento(idx)} className="p-1 text-muted-foreground hover:text-destructive transition-colors">
-                        <X size={14} />
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-3 gap-1.5">
-                      {tiposPagamento.map((tp) => (
-                        <button key={tp} onClick={() => updatePagamento(idx, { tipoPagamento: tp, bandeira: "N/A" })}
-                          className={`py-2 rounded-xl text-[11px] font-semibold border transition-all duration-150
-                            ${pag.tipoPagamento === tp
-                              ? "border-gold bg-primary/15 text-gold"
-                              : "border-border bg-surface-overlay text-muted-foreground hover:text-foreground"
-                            }`}>
-                          {tp}
-                        </button>
-                      ))}
-                    </div>
-                    {(pag.tipoPagamento === "Crédito" || pag.tipoPagamento === "Débito") && (
-                      <div className="flex gap-1.5 flex-wrap">
-                        {bandeiras.map((b) => (
-                          <button key={b} onClick={() => updatePagamento(idx, { bandeira: b })}
-                            className={`px-3 py-1.5 rounded-xl text-[11px] font-medium border transition-all duration-150
-                              ${pag.bandeira === b
-                                ? "border-gold bg-primary/15 text-gold"
-                                : "border-border bg-surface text-muted-foreground"
-                              }`}>
-                            {b}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    <div>
-                      <label className="text-[11px] text-muted-foreground mb-1 block">Valor (R$)</label>
-                      <input type="number" min={0} step={0.01} value={pag.valor || ""}
-                        onChange={(e) => updatePagamento(idx, { valor: parseFloat(e.target.value) || 0 })}
-                        onWheel={(e) => (e.target as HTMLInputElement).blur()}
-                        className="w-full rounded-xl border border-border bg-surface-overlay px-4 py-3 text-sm text-foreground focus:outline-none focus:border-gold-muted" />
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-bold text-gold">{formatCurrency(item.total)}</p>
+                      <button onClick={() => handleRemoverDoCarrinho(idx)} className="text-muted-foreground hover:text-destructive"><X size={14} /></button>
                     </div>
                   </div>
                 ))}
-
-                {/* Restante / Completo */}
-                {restantePagamento > 0.01 && (
-                  <div className="flex items-center justify-between bg-destructive/10 border border-destructive/30 rounded-xl px-4 py-3">
-                    <p className="text-xs text-destructive font-medium">Restante</p>
-                    <p className="text-sm font-bold text-destructive">{formatCurrency(restantePagamento)}</p>
-                  </div>
-                )}
-                {Math.abs(restantePagamento) < 0.01 && pagamentosForm.length > 0 && (
-                  <div className="flex items-center justify-center bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-4 py-3">
-                    <p className="text-xs text-emerald-400 font-semibold">✓ Pagamento completo</p>
-                  </div>
-                )}
-
-                <button onClick={handleAdicionarPagamento}
-                  disabled={restantePagamento <= 0.01}
-                  className="w-full py-2.5 rounded-xl text-xs font-medium border border-border text-muted-foreground bg-surface-overlay disabled:opacity-30 hover:border-gold-muted transition-all duration-150">
-                  <Plus size={12} className="inline mr-1" /> Adicionar Forma de Pagamento
-                </button>
               </div>
-            </div>
-          )}
 
-          {/* ─── 6️⃣ Resumo + Ações ─── */}
-          {carrinho.length > 0 && (
-            <div className="rounded-2xl border-2 border-gold-muted p-5 space-y-3"
-              style={{ background: "linear-gradient(135deg, hsl(var(--surface-raised)), hsl(43 74% 49% / 0.04))", boxShadow: "var(--shadow-gold)" }}>
-              <p className="text-xs font-semibold text-foreground mb-2">Resumo da Venda</p>
-              <div className="space-y-1.5">
+              <div className="border-t border-border pt-3 space-y-1.5">
                 <div className="flex justify-between text-xs">
-                  <span className="text-muted-foreground">Subtotal ({carrinho.reduce((a, i) => a + i.quantidade, 0)} un.)</span>
+                  <span className="text-muted-foreground">Subtotal</span>
                   <span className="text-foreground">{formatCurrency(subtotalCarrinho)}</span>
                 </div>
                 {descontoCarrinho > 0 && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-destructive">Descontos</span>
-                    <span className="text-destructive">−{formatCurrency(descontoCarrinho)}</span>
+                    <span className="text-muted-foreground">Descontos</span>
+                    <span className="text-destructive">-{formatCurrency(descontoCarrinho)}</span>
                   </div>
                 )}
                 {acrescimoCarrinho > 0 && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-emerald-400">Acréscimos</span>
+                    <span className="text-muted-foreground">Acréscimos</span>
                     <span className="text-emerald-400">+{formatCurrency(acrescimoCarrinho)}</span>
                   </div>
                 )}
-                <div className="border-t border-gold-muted pt-2 mt-2 flex justify-between items-baseline">
-                  <span className="text-sm font-bold text-gold">Total</span>
-                  <span className="text-2xl font-bold text-gold">{formatCurrency(totalCarrinho)}</span>
+                <div className="flex justify-between text-base font-bold pt-1">
+                  <span className="text-foreground">Total</span>
+                  <span className="text-gold">{formatCurrency(totalCarrinho)}</span>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Action bar */}
-          <div className="flex gap-3">
-            <button onClick={() => { setShowForm(false); setCarrinho([]); setPagamentosForm([]); setVendedoraSelecionada(""); }}
-              className="flex-1 py-3 rounded-xl text-sm font-semibold border-2 border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground transition-all duration-150"
-              style={{ minHeight: 48 }}>
-              Cancelar
-            </button>
-            <button onClick={handleLancar}
-              disabled={carrinho.length === 0 || !vendedoraSelecionada || pagamentosForm.length === 0 || Math.abs(restantePagamento) > 0.01 || isLancando}
-              className="flex-1 py-3 rounded-xl text-sm font-bold transition-all duration-150 disabled:opacity-30 active:scale-[0.98]"
-              style={{
-                minHeight: 48,
-                background: "var(--gradient-gold)",
-                color: "hsl(var(--primary-foreground))",
-                boxShadow: "0 4px 16px hsl(43 74% 49% / 0.3)",
-              }}>
-              {isLancando ? (
-                <span className="flex items-center justify-center gap-2">
-                  <Loader2 size={16} className="animate-spin" /> Lançando...
-                </span>
-              ) : (
-                "Confirmar Venda"
+          {/* Pagamentos */}
+          {carrinho.length > 0 && (
+            <div className="card-premium p-5">
+              <h3 className="font-display text-lg text-foreground mb-4 flex items-center gap-2">
+                <CreditCard size={16} className="text-gold" />
+                Pagamento
+              </h3>
+              <div className="space-y-2 mb-3">
+                {pagamentosForm.map((pag, idx) => (
+                  <div key={idx} className="bg-surface-overlay rounded-xl p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <select value={pag.tipoPagamento}
+                        onChange={(e) => updatePagamento(idx, { tipoPagamento: e.target.value as TipoPagamento, bandeira: ["Crédito", "Débito"].includes(e.target.value) ? "Visa" : "N/A" })}
+                        className="input-premium px-2 py-1.5 text-xs flex-1 mr-2">
+                        {tiposPagamento.map((t) => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                      <button onClick={() => handleRemoverPagamento(idx)} className="text-muted-foreground hover:text-destructive"><X size={14} /></button>
+                    </div>
+                    {["Crédito", "Débito"].includes(pag.tipoPagamento) && (
+                      <select value={pag.bandeira} onChange={(e) => updatePagamento(idx, { bandeira: e.target.value as Bandeira })}
+                        className="input-premium px-2 py-1.5 text-xs">
+                        {bandeiras.map((b) => <option key={b} value={b}>{b}</option>)}
+                      </select>
+                    )}
+                    <input type="number" min={0} step="0.01" value={pag.valor}
+                      onChange={(e) => updatePagamento(idx, { valor: parseFloat(e.target.value) || 0 })}
+                      className="input-premium px-2 py-1.5 text-xs" />
+                  </div>
+                ))}
+              </div>
+              {restantePagamento > 0.01 && (
+                <button onClick={handleAdicionarPagamento} className="btn-secondary w-full py-2.5 text-xs mb-3">
+                  <Plus size={12} /> Adicionar pagamento ({formatCurrency(restantePagamento)} restante)
+                </button>
               )}
-            </button>
-          </div>
+              {Math.abs(restantePagamento) <= 0.01 && pagamentosForm.length > 0 && (
+                <div className="bg-success/10 border border-success/20 rounded-xl px-3 py-2 text-center">
+                  <p className="text-xs text-success font-medium">✓ Pagamento completo</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Actions */}
+          {carrinho.length > 0 && (
+            <div className="flex gap-3">
+              <button onClick={() => { setShowForm(false); setCarrinho([]); setPagamentosForm([]); }}
+                className="btn-secondary flex-1 py-3">
+                Cancelar
+              </button>
+              <button onClick={handleLancar}
+                disabled={isLancando || carrinho.length === 0 || !vendedoraSelecionada || pagamentosForm.length === 0 || Math.abs(restantePagamento) > 0.01}
+                className="flex-1 py-3 rounded-xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
+                style={{ background: "var(--gradient-gold)" }}>
+                {isLancando ? <><Loader2 size={14} className="inline mr-1 animate-spin" /> Lançando...</> : "Confirmar Venda"}
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      {temFiltroAtivo && !showForm && (
-        <div className="mx-4 mb-3 bg-surface border border-border rounded-xl p-3 flex justify-between items-center">
-          <p className="text-xs text-muted-foreground">Total filtrado ({filtradas.length} vendas)</p>
-          {!isVendedor && <p className="text-sm font-bold text-gold">{formatCurrency(totalFiltrado.valor)}</p>}
-        </div>
-      )}
-
-      {/* Lista de vendas */}
+      {/* Sales list */}
       {!showForm && (
-        <div className="px-4 space-y-2">
+        <div className="px-4 space-y-2.5">
+          {temFiltroAtivo && (
+            <div className="flex justify-between items-center mb-2 px-1">
+              <p className="text-[11px] text-muted-foreground">{filtradas.length} venda(s) encontrada(s)</p>
+              {!isVendedor && <p className="text-[11px] font-semibold text-gold">{formatCurrency(totalFiltrado.valor)}</p>}
+            </div>
+          )}
+
           {filtradasAgrupadas.map(({ grupoVenda, itens }) => {
-            const grupoPags = pagamentos.filter(p => p.grupoVenda === grupoVenda);
-            const totalGrupo = itens.reduce((a, v) => a + v.total, 0);
-            const isMulti = itens.length > 1 || grupoPags.length > 1;
+            const grupoPags = pagamentos.filter((p) => p.grupoVenda === grupoVenda);
+            const grupoTotal = itens.reduce((a, v) => a + v.total, 0);
+            const isGroup = itens.length > 1;
 
             return (
-              <div key={grupoVenda} className="card-premium p-4">
-                {itens.map((v, idx) => {
-                  const pf = perfumes.find((p) => p.id === v.perfumeId);
-                  return (
-                    <div key={v.id} className={idx > 0 ? "mt-2 pt-2 border-t border-border/50" : ""}>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-primary/8 border border-gold-muted flex items-center justify-center flex-shrink-0">
-                          <ShoppingCart size={18} className="text-gold" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">{v.perfumeNome}</p>
-                          {pf && (
-                            <p className="text-[10px] text-muted-foreground truncate">
-                              {pf.marca} · {pf.concentracao} · {pf.volume}ml
-                            </p>
-                          )}
-                          <p className="text-[11px] text-muted-foreground">
-                            {formatDate(v.data)} · {v.deposito} · {v.quantidade} unid.
-                          </p>
-                        </div>
-                        {!isVendedor && (
-                          <div className="text-right flex-shrink-0">
-                            <p className="text-sm font-bold text-gold">{formatCurrency(v.total)}</p>
-                            <p className="text-[10px] text-muted-foreground">{formatCurrency(v.precoUnitario)}/un</p>
-                          </div>
-                        )}
-                      </div>
-                      {v.desconto > 0 && !isVendedor && (
-                        <div className="flex items-center gap-1 mt-1 ml-13">
-                          <Tag size={10} className={v.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"} />
-                          <p className={`text-[11px] ${v.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"}`}>
-                            {v.tipoAjuste === "desconto" ? "-" : "+"}{formatCurrency(v.desconto)}
-                          </p>
-                        </div>
-                      )}
-                      {v.observacao && (
-                        <p className="text-[10px] text-muted-foreground mt-1 italic ml-13">"{v.observacao}"</p>
-                      )}
+              <div key={grupoVenda} className="card-premium overflow-hidden">
+                {isGroup && (
+                  <div className="px-4 py-2 border-b border-border flex items-center justify-between bg-surface-overlay">
+                    <div className="flex items-center gap-2">
+                      <ShoppingCart size={12} className="text-gold" />
+                      <span className="text-[10px] font-semibold text-gold">{itens.length} itens</span>
                     </div>
-                  );
-                })}
-
-                {isMulti && !isVendedor && (
-                  <div className="mt-2 pt-2 border-t border-gold-muted flex justify-between items-center">
-                    <p className="text-[10px] text-muted-foreground">{itens.length} itens</p>
-                    <p className="text-sm font-bold text-gold">{formatCurrency(totalGrupo)}</p>
+                    <span className="text-xs font-bold text-gold">{formatCurrency(grupoTotal)}</span>
                   </div>
                 )}
-
-                <div className="flex flex-wrap items-center justify-between gap-1 mt-2 pt-2 border-t border-border">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <div className="flex items-center gap-1">
-                      <User size={10} className="text-muted-foreground" />
-                      <p className="text-[11px] text-muted-foreground">{itens[0].vendedora}</p>
-                    </div>
-                    {grupoPags.length > 0 ? (
-                      grupoPags.map((pg, i) => (
-                        <div key={i} className="flex items-center gap-1">
-                          <CreditCard size={10} className="text-muted-foreground" />
-                          <p className="text-[11px] text-muted-foreground">
-                            {pg.tipoPagamento}{pg.bandeira !== "N/A" ? ` · ${pg.bandeira}` : ""}: {formatCurrency(pg.valor)}
-                          </p>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="flex items-center gap-1">
-                        <CreditCard size={10} className="text-muted-foreground" />
-                        <p className="text-[11px] text-muted-foreground">
-                          {itens[0].tipoPagamento}{itens[0].bandeira !== "N/A" ? ` · ${itens[0].bandeira}` : ""}
-                        </p>
+                {itens.map((v) => (
+                  <div key={v.id} className="p-4 flex items-start gap-3 border-b border-border last:border-b-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <p className="text-sm font-medium text-foreground truncate">{v.perfumeNome}</p>
+                        {!isVendedor && <p className="text-sm font-bold text-gold flex-shrink-0">{formatCurrency(v.total)}</p>}
                       </div>
-                    )}
-                    {itens[0].registradoPor && (
-                      <p className="text-[10px] text-muted-foreground">Reg: {itens[0].registradoPor}</p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-muted-foreground">
+                        <span>{formatDate(v.data)}</span>
+                        <span>{v.deposito}</span>
+                        <span>{v.quantidade}x {formatCurrency(v.precoUnitario)}</span>
+                        <span>{v.vendedora}</span>
+                      </div>
+                      {v.desconto > 0 && (
+                        <p className="text-[10px] mt-0.5">
+                          <span className={v.tipoAjuste === "desconto" ? "text-destructive" : "text-emerald-400"}>
+                            {v.tipoAjuste === "desconto" ? "-" : "+"}{formatCurrency(v.desconto)}
+                          </span>
+                        </p>
+                      )}
+                      {v.observacao && <p className="text-[10px] text-muted-foreground italic mt-0.5">"{v.observacao}"</p>}
+                    </div>
+                    {isMaster && (
+                      <button onClick={() => handleExcluirVenda(v.id)} className="text-muted-foreground hover:text-destructive transition-colors p-1">
+                        <Trash2 size={14} />
+                      </button>
                     )}
                   </div>
-                  {isMaster && (
-                    <div className="flex gap-1">
-                      {itens.map(v => (
-                        <button key={v.id} onClick={() => handleExcluirVenda(v.id)}
-                          className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-150"
-                          title={`Excluir ${v.perfumeNome}`}>
-                          <Trash2 size={13} />
-                        </button>
+                ))}
+                {isGroup && grupoPags.length > 0 && (
+                  <div className="px-4 py-2 bg-surface-overlay border-t border-border">
+                    <div className="flex flex-wrap gap-2">
+                      {grupoPags.map((pg, i) => (
+                        <span key={i} className="text-[10px] bg-primary/10 text-gold px-2 py-0.5 rounded-full">
+                          {pg.tipoPagamento}{pg.bandeira !== "N/A" ? ` · ${pg.bandeira}` : ""}: {formatCurrency(pg.valor)}
+                        </span>
                       ))}
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             );
           })}
-          {filtradasAgrupadas.length === 0 && (
+
+          {filtradas.length === 0 && (
             <div className="text-center py-20">
               <ShoppingCart size={40} className="text-muted-foreground mx-auto mb-4 opacity-40" />
               <p className="text-muted-foreground text-sm">Nenhuma venda encontrada</p>

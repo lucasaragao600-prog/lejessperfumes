@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { Users, Plus, Shield, Trash2 } from "lucide-react";
+import { Users, Plus, Shield, Trash2, Store } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+
+const LOJAS = ["Casa", "Sumaúma", "Amazonas"] as const;
 
 interface UserItem {
   id: string;
@@ -48,6 +50,10 @@ export default function GerenciarUsuarios() {
 
   const handleCreate = async () => {
     if (!form.email || !form.password || !form.nome) return;
+    if (form.role === "vendedor" && !form.loja) {
+      toast({ title: "Erro", description: "Vendedoras devem ter uma loja atribuída.", variant: "destructive" });
+      return;
+    }
     setCreating(true);
     
     const { data, error } = await supabase.functions.invoke("create-user", {
@@ -128,19 +134,12 @@ export default function GerenciarUsuarios() {
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted"
               />
-              <input
-                type="text"
-                placeholder="Loja (opcional)"
-                value={form.loja}
-                onChange={(e) => setForm({ ...form, loja: e.target.value })}
-                className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted"
-              />
               
               <div className="flex gap-2">
                 {(["master", "vendedor"] as const).map((r) => (
                   <button
                     key={r}
-                    onClick={() => setForm({ ...form, role: r })}
+                    onClick={() => setForm({ ...form, role: r, loja: r === "master" ? "" : form.loja })}
                     className={`flex-1 py-2 rounded-lg text-xs font-medium border transition-all ${
                       form.role === r
                         ? "bg-gold/20 text-gold border-gold-muted"
@@ -151,11 +150,35 @@ export default function GerenciarUsuarios() {
                   </button>
                 ))}
               </div>
+
+              {/* Loja selection - only for vendedor */}
+              {form.role === "vendedor" && (
+                <div>
+                  <label className="text-[10px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium flex items-center gap-1">
+                    <Store size={10} /> Loja (obrigatório)
+                  </label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {LOJAS.map((loja) => (
+                      <button
+                        key={loja}
+                        onClick={() => setForm({ ...form, loja })}
+                        className={`py-2.5 rounded-lg text-xs font-medium border transition-all ${
+                          form.loja === loja
+                            ? "bg-gold/20 text-gold border-gold-muted"
+                            : "bg-surface-overlay border-border text-muted-foreground"
+                        }`}
+                      >
+                        {loja}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <button
               onClick={handleCreate}
-              disabled={creating || !form.email || !form.password || !form.nome}
+              disabled={creating || !form.email || !form.password || !form.nome || (form.role === "vendedor" && !form.loja)}
               className="w-full py-2.5 rounded-xl text-xs font-semibold text-primary-foreground disabled:opacity-40 transition-opacity"
               style={{ background: "var(--gradient-gold)" }}
             >
@@ -184,11 +207,14 @@ export default function GerenciarUsuarios() {
                       {u.role || "Sem papel"}
                     </span>
                   </div>
-                  {u.loja && <p className="text-[10px] text-muted-foreground mt-0.5">{u.loja}</p>}
+                  {u.loja && (
+                    <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <Store size={9} /> {u.loja}
+                    </p>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {/* Delete button - don't show for own user */}
                   {u.id !== auth.user?.id && (
                     confirmDeleteId === u.id ? (
                       <div className="flex items-center gap-1">

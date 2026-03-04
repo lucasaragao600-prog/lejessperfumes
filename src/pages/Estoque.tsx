@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download } from "lucide-react";
 import { formatCurrency, type Deposito, type Perfume, type TipoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
 import CadastroPerfume from "@/components/CadastroPerfume";
 import EditarPerfume from "@/components/EditarPerfume";
 import * as XLSX from "xlsx";
@@ -10,12 +11,15 @@ const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const { perfumes, testers, tiposPerfumeConfig, concentracoesConfig } = useApp();
+  const { profile } = useAuth();
+  const userLoja = (!isMaster && profile?.loja) ? profile.loja as Deposito : null;
+
   const tipos = useMemo(() =>
     Object.entries(tiposPerfumeConfig).map(([key, label]) => ({ key: key as TipoPerfume, label: String(label) })),
     [tiposPerfumeConfig]
   );
   const [busca, setBusca] = useState("");
-  const [depositoFiltro, setDepositoFiltro] = useState<Deposito | "Todos">("Todos");
+  const [depositoFiltro, setDepositoFiltro] = useState<Deposito | "Todos">(userLoja || "Todos");
   const [tipoFiltro, setTipoFiltro] = useState<TipoPerfume | "Todos">("Todos");
   const [showAlertas, setShowAlertas] = useState(false);
   const [custoMin, setCustoMin] = useState("");
@@ -26,14 +30,15 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [editandoPerfume, setEditandoPerfume] = useState<Perfume | null>(null);
   const [imagemExpandida, setImagemExpandida] = useState<{ url: string; nome: string } | null>(null);
 
-  // Build tester lookup: perfumeId+deposito -> quantity
+  // Force deposit filter for vendedores
+  const effectiveDeposito = userLoja || depositoFiltro;
+
   const testerMap = useMemo(() => {
     const map = new Map<string, number>();
     testers.forEach((t) => {
       const key = `${t.perfumeId}-${t.deposito}`;
       map.set(key, (map.get(key) || 0) + t.quantidade);
     });
-    // Also total per perfume
     testers.forEach((t) => {
       const key = `${t.perfumeId}-total`;
       map.set(key, (map.get(key) || 0) + t.quantidade);
@@ -63,21 +68,35 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
       const matchCustoMax = custoMax === "" || p.custo <= Number(custoMax);
       const matchVendaMin = vendaMin === "" || p.precoVenda >= Number(vendaMin);
       const matchVendaMax = vendaMax === "" || p.precoVenda <= Number(vendaMax);
-      const matchPreco = matchCustoMin && matchCustoMax && matchVendaMin && matchVendaMax;
-      const qtd = depositoFiltro === "Todos"
+      const matchPreco = isMaster ? (matchCustoMin && matchCustoMax && matchVendaMin && matchVendaMax) : true;
+      
+      // For vendedores with assigned loja, only show products with stock > 0 in their store
+      if (userLoja) {
+        const qtdLoja = p.estoques[userLoja];
+        if (showAlertas) return matchBusca && matchTipo && matchPreco && qtdLoja <= p.estoqueMinimo;
+        return matchBusca && matchTipo && matchPreco;
+      }
+
+      const qtd = effectiveDeposito === "Todos"
         ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
-        : p.estoques[depositoFiltro];
+        : p.estoques[effectiveDeposito as Deposito];
 
       if (showAlertas) return matchBusca && matchTipo && matchPreco && qtd <= p.estoqueMinimo;
       return matchBusca && matchTipo && matchPreco;
     });
-  }, [perfumes, busca, depositoFiltro, tipoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax]);
+  }, [perfumes, busca, effectiveDeposito, tipoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, userLoja, isMaster]);
 
   const totais = useMemo(() => {
     return filtrados.reduce(
       (acc, p) => {
+        if (userLoja) {
+          const qtd = p.estoques[userLoja];
+          acc.venda += qtd * p.precoVenda;
+          acc.unidades += qtd;
+          return acc;
+        }
         const qtdGeral = Object.values(p.estoques).reduce((a, b) => a + b, 0);
-        const qtd = depositoFiltro === "Todos" ? qtdGeral : p.estoques[depositoFiltro as Deposito];
+        const qtd = effectiveDeposito === "Todos" ? qtdGeral : p.estoques[effectiveDeposito as Deposito];
         acc.custo += qtd * p.custo;
         acc.venda += qtd * p.precoVenda;
         acc.unidades += qtd;
@@ -88,19 +107,22 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
       },
       { custo: 0, venda: 0, unidades: 0, casa: 0, sumauma: 0, amazonas: 0 }
     );
-  }, [filtrados, depositoFiltro]);
+  }, [filtrados, effectiveDeposito, userLoja]);
 
   const alertas = perfumes.filter((p) => {
-    const qtd = depositoFiltro === "Todos"
+    if (userLoja) return p.estoques[userLoja] <= p.estoqueMinimo;
+    const qtd = effectiveDeposito === "Todos"
       ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
-      : p.estoques[depositoFiltro as Deposito];
+      : p.estoques[effectiveDeposito as Deposito];
     return qtd <= p.estoqueMinimo;
   }).length;
 
-  const getQtd = (p: Perfume) =>
-    depositoFiltro === "Todos"
+  const getQtd = (p: Perfume) => {
+    if (userLoja) return p.estoques[userLoja];
+    return effectiveDeposito === "Todos"
       ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
-      : p.estoques[depositoFiltro as Deposito];
+      : p.estoques[effectiveDeposito as Deposito];
+  };
 
   const isBaixo = (p: Perfume) => getQtd(p) <= p.estoqueMinimo;
 
@@ -137,7 +159,9 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h1 className="page-title">Estoque</h1>
-            <p className="page-subtitle mt-1">{filtrados.length} produtos</p>
+            <p className="page-subtitle mt-1">
+              {filtrados.length} produtos{userLoja ? ` · ${userLoja}` : ""}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -178,18 +202,20 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
           />
         </div>
 
-        {/* Deposit filter */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-2">
-          {(["Todos", ...depositos] as const).map((d) => (
-            <button
-              key={d}
-              onClick={() => setDepositoFiltro(d)}
-              className={`pill ${depositoFiltro === d ? "pill-active" : "pill-inactive"}`}
-            >
-              {d}
-            </button>
-          ))}
-        </div>
+        {/* Deposit filter - hidden for vendedores with assigned loja */}
+        {!userLoja && (
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-2">
+            {(["Todos", ...depositos] as const).map((d) => (
+              <button
+                key={d}
+                onClick={() => setDepositoFiltro(d)}
+                className={`pill ${depositoFiltro === d ? "pill-active" : "pill-inactive"}`}
+              >
+                {d}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Type filter */}
         <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-2">
@@ -204,7 +230,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
           ))}
         </div>
 
-        {/* Price filters */}
+        {/* Price filters - master only */}
         {isMaster && (
           <div className="grid grid-cols-2 gap-2">
             <div className="flex gap-1.5 items-center">
@@ -226,20 +252,30 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
       </div>
 
       {/* Quantity cards */}
-      <div className="px-4 mb-3 grid grid-cols-4 gap-2">
-        {[
-          { label: "Total", value: totais.unidades },
-          { label: "Casa", value: totais.casa },
-          { label: "Sumaúma", value: totais.sumauma },
-          { label: "Amazonas", value: totais.amazonas },
-        ].map(({ label, value }) => (
-          <div key={label} className="kpi-card p-3 text-center">
-            <p className="text-[9px] text-muted-foreground mb-1">{label}</p>
-            <p className="text-sm font-bold text-foreground">{value}</p>
-            <p className="text-[8px] text-muted-foreground">un.</p>
+      {userLoja ? (
+        <div className="px-4 mb-3">
+          <div className="kpi-card p-3 text-center">
+            <p className="text-[9px] text-muted-foreground mb-1">{userLoja}</p>
+            <p className="text-sm font-bold text-foreground">{totais.unidades}</p>
+            <p className="text-[8px] text-muted-foreground">unidades</p>
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        <div className="px-4 mb-3 grid grid-cols-4 gap-2">
+          {[
+            { label: "Total", value: totais.unidades },
+            { label: "Casa", value: totais.casa },
+            { label: "Sumaúma", value: totais.sumauma },
+            { label: "Amazonas", value: totais.amazonas },
+          ].map(({ label, value }) => (
+            <div key={label} className="kpi-card p-3 text-center">
+              <p className="text-[9px] text-muted-foreground mb-1">{label}</p>
+              <p className="text-sm font-bold text-foreground">{value}</p>
+              <p className="text-[8px] text-muted-foreground">un.</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Value cards - master only */}
       {isMaster && (
@@ -262,9 +298,11 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         {filtrados.map((p) => {
           const qtd = getQtd(p);
           const baixo = isBaixo(p);
-          const testerTotal = depositoFiltro === "Todos"
+          const testerTotal = userLoja
+            ? getTesterQtd(p.id, userLoja)
+            : effectiveDeposito === "Todos"
             ? getTesterQtd(p.id)
-            : getTesterQtd(p.id, depositoFiltro as Deposito);
+            : getTesterQtd(p.id, effectiveDeposito as Deposito);
 
           return (
             <div
@@ -272,7 +310,6 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
               className={baixo ? "card-alert p-4" : "card-premium p-4"}
             >
               <div className="flex items-start gap-3 mb-2.5">
-                {/* Product image */}
                 <div
                   onClick={() => p.imageUrl ? setImagemExpandida({ url: p.imageUrl, nome: p.nome }) : null}
                   className={`w-14 h-14 rounded-xl border border-border bg-surface-overlay flex items-center justify-center flex-shrink-0 overflow-hidden ${p.imageUrl ? "cursor-pointer hover:border-gold-muted" : ""} transition-colors`}
@@ -300,7 +337,8 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                 </div>
               </div>
 
-              {depositoFiltro === "Todos" && (
+              {/* Per-deposit breakdown - only for master/all deposits */}
+              {!userLoja && effectiveDeposito === "Todos" && (
                 <div className="flex gap-2 mb-3">
                   {depositos.map((d) => {
                     const testerDeposito = getTesterQtd(p.id, d);
@@ -334,13 +372,14 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                   <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-surface-overlay">
                     <FlaskConical size={12} className="text-muted-foreground opacity-40" />
                     <span className="text-[11px] text-muted-foreground">
-                      {depositoFiltro === "Todos" ? "Sem tester" : `Sem tester neste depósito`}
+                      {userLoja ? "Sem tester nesta loja" : effectiveDeposito === "Todos" ? "Sem tester" : `Sem tester neste depósito`}
                     </span>
                   </div>
                 )}
               </div>
 
-              {isMaster && (
+              {/* Price info - vendedor only sees sale price */}
+              {isMaster ? (
                 <div className="grid grid-cols-3 gap-2 border-t border-border pt-3 items-end">
                   <div>
                     <p className="text-[9px] text-muted-foreground">Custo unit.</p>
@@ -357,6 +396,13 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                     >
                       <Pencil size={11} /> Editar
                     </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="border-t border-border pt-3">
+                  <div>
+                    <p className="text-[9px] text-muted-foreground">Preço de Venda</p>
+                    <p className="text-xs text-gold font-medium">{formatCurrency(p.precoVenda)}</p>
                   </div>
                 </div>
               )}
