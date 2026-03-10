@@ -54,8 +54,15 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     return testerMap.get(`${perfumeId}-total`) || 0;
   };
 
+  const getQtdForFilter = useCallback((p: Perfume) => {
+    if (userLoja) return p.estoques[userLoja];
+    return effectiveDeposito === "Todos"
+      ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
+      : p.estoques[effectiveDeposito as Deposito];
+  }, [userLoja, effectiveDeposito]);
+
   const filtrados = useMemo(() => {
-    return perfumes.filter((p) => {
+    const result = perfumes.filter((p) => {
       const term = busca.toLowerCase();
       const matchBusca =
         p.nome.toLowerCase().includes(term) ||
@@ -72,22 +79,29 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
       const matchVendaMin = vendaMin === "" || p.precoVenda >= Number(vendaMin);
       const matchVendaMax = vendaMax === "" || p.precoVenda <= Number(vendaMax);
       const matchPreco = isMaster ? (matchCustoMin && matchCustoMax && matchVendaMin && matchVendaMax) : true;
-      
-      // For vendedores with assigned loja, only show products with stock > 0 in their store
+
+      const qtd = getQtdForFilter(p);
+      const matchEstoqueMin = estoqueMin === "" || qtd >= Number(estoqueMin);
+      const matchEstoqueMax = estoqueMax === "" || qtd <= Number(estoqueMax);
+      const matchEstoque = matchEstoqueMin && matchEstoqueMax;
+
       if (userLoja) {
-        const qtdLoja = p.estoques[userLoja];
-        if (showAlertas) return matchBusca && matchTipo && matchPreco && qtdLoja <= p.estoqueMinimo;
-        return matchBusca && matchTipo && matchPreco;
+        if (showAlertas) return matchBusca && matchTipo && matchPreco && matchEstoque && qtd <= p.estoqueMinimo;
+        return matchBusca && matchTipo && matchPreco && matchEstoque;
       }
 
-      const qtd = effectiveDeposito === "Todos"
-        ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
-        : p.estoques[effectiveDeposito as Deposito];
-
-      if (showAlertas) return matchBusca && matchTipo && matchPreco && qtd <= p.estoqueMinimo;
-      return matchBusca && matchTipo && matchPreco;
+      if (showAlertas) return matchBusca && matchTipo && matchPreco && matchEstoque && qtd <= p.estoqueMinimo;
+      return matchBusca && matchTipo && matchPreco && matchEstoque;
     });
-  }, [perfumes, busca, effectiveDeposito, tipoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, userLoja, isMaster]);
+
+    if (ordenacaoEstoque === "asc") {
+      result.sort((a, b) => getQtdForFilter(a) - getQtdForFilter(b));
+    } else if (ordenacaoEstoque === "desc") {
+      result.sort((a, b) => getQtdForFilter(b) - getQtdForFilter(a));
+    }
+
+    return result;
+  }, [perfumes, busca, effectiveDeposito, tipoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax, ordenacaoEstoque, userLoja, isMaster, getQtdForFilter, concentracoesConfig]);
 
   const totais = useMemo(() => {
     return filtrados.reduce(
