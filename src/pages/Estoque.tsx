@@ -26,6 +26,9 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [custoMax, setCustoMax] = useState("");
   const [vendaMin, setVendaMin] = useState("");
   const [vendaMax, setVendaMax] = useState("");
+  const [estoqueMin, setEstoqueMin] = useState("");
+  const [estoqueMax, setEstoqueMax] = useState("");
+  const [ordenacaoEstoque, setOrdenacaoEstoque] = useState<"none" | "asc" | "desc">("none");
   const [showCadastro, setShowCadastro] = useState(false);
   const [editandoPerfume, setEditandoPerfume] = useState<Perfume | null>(null);
   const [imagemExpandida, setImagemExpandida] = useState<{ url: string; nome: string } | null>(null);
@@ -51,8 +54,15 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     return testerMap.get(`${perfumeId}-total`) || 0;
   };
 
+  const getQtdForFilter = useCallback((p: Perfume) => {
+    if (userLoja) return p.estoques[userLoja];
+    return effectiveDeposito === "Todos"
+      ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
+      : p.estoques[effectiveDeposito as Deposito];
+  }, [userLoja, effectiveDeposito]);
+
   const filtrados = useMemo(() => {
-    return perfumes.filter((p) => {
+    const result = perfumes.filter((p) => {
       const term = busca.toLowerCase();
       const matchBusca =
         p.nome.toLowerCase().includes(term) ||
@@ -69,22 +79,29 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
       const matchVendaMin = vendaMin === "" || p.precoVenda >= Number(vendaMin);
       const matchVendaMax = vendaMax === "" || p.precoVenda <= Number(vendaMax);
       const matchPreco = isMaster ? (matchCustoMin && matchCustoMax && matchVendaMin && matchVendaMax) : true;
-      
-      // For vendedores with assigned loja, only show products with stock > 0 in their store
+
+      const qtd = getQtdForFilter(p);
+      const matchEstoqueMin = estoqueMin === "" || qtd >= Number(estoqueMin);
+      const matchEstoqueMax = estoqueMax === "" || qtd <= Number(estoqueMax);
+      const matchEstoque = matchEstoqueMin && matchEstoqueMax;
+
       if (userLoja) {
-        const qtdLoja = p.estoques[userLoja];
-        if (showAlertas) return matchBusca && matchTipo && matchPreco && qtdLoja <= p.estoqueMinimo;
-        return matchBusca && matchTipo && matchPreco;
+        if (showAlertas) return matchBusca && matchTipo && matchPreco && matchEstoque && qtd <= p.estoqueMinimo;
+        return matchBusca && matchTipo && matchPreco && matchEstoque;
       }
 
-      const qtd = effectiveDeposito === "Todos"
-        ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
-        : p.estoques[effectiveDeposito as Deposito];
-
-      if (showAlertas) return matchBusca && matchTipo && matchPreco && qtd <= p.estoqueMinimo;
-      return matchBusca && matchTipo && matchPreco;
+      if (showAlertas) return matchBusca && matchTipo && matchPreco && matchEstoque && qtd <= p.estoqueMinimo;
+      return matchBusca && matchTipo && matchPreco && matchEstoque;
     });
-  }, [perfumes, busca, effectiveDeposito, tipoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, userLoja, isMaster]);
+
+    if (ordenacaoEstoque === "asc") {
+      result.sort((a, b) => getQtdForFilter(a) - getQtdForFilter(b));
+    } else if (ordenacaoEstoque === "desc") {
+      result.sort((a, b) => getQtdForFilter(b) - getQtdForFilter(a));
+    }
+
+    return result;
+  }, [perfumes, busca, effectiveDeposito, tipoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax, ordenacaoEstoque, userLoja, isMaster, getQtdForFilter, concentracoesConfig]);
 
   const totais = useMemo(() => {
     return filtrados.reduce(
@@ -249,6 +266,25 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
             </div>
           </div>
         )}
+
+        {/* Stock filters */}
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <div className="flex gap-1.5 items-center">
+            <input type="number" placeholder="Estoque mín" value={estoqueMin} onChange={(e) => setEstoqueMin(e.target.value)}
+              className="input-premium px-2.5 py-2 text-[11px] w-full" />
+            <span className="text-[10px] text-muted-foreground">-</span>
+            <input type="number" placeholder="Estoque máx" value={estoqueMax} onChange={(e) => setEstoqueMax(e.target.value)}
+              className="input-premium px-2.5 py-2 text-[11px] w-full" />
+          </div>
+          <div className="flex gap-1.5 items-center">
+            <select value={ordenacaoEstoque} onChange={(e) => setOrdenacaoEstoque(e.target.value as "none" | "asc" | "desc")}
+              className="input-premium px-2.5 py-2 text-[11px] w-full">
+              <option value="none">Ordenar estoque</option>
+              <option value="asc">Menor → Maior</option>
+              <option value="desc">Maior → Menor</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       {/* Quantity cards - hidden for vendedores */}
