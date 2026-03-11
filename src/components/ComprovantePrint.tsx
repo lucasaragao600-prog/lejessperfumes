@@ -11,11 +11,11 @@ export interface ComprovanteData {
   endereco: string;
   cidade: string;
   telefone: string;
+  logoUrl?: string;
   // Sale info
   pedido: string;
   data: string;
   hora: string;
-  dataPrevista?: string;
   vendedor: string;
   operador: string;
   cliente: Cliente | null;
@@ -40,6 +40,8 @@ export interface ComprovanteData {
   subtotal: number;
   desconto: number;
   acrescimo: number;
+  descontoLabel?: string;
+  acrescimoLabel?: string;
   total: number;
   troco: number;
   // Footer
@@ -105,7 +107,7 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
     <>
       {/* ── HEADER: Logo left + Company info right ── */}
       <div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "flex-start" }}>
-        {/* Logo placeholder */}
+        {/* Logo */}
         <div style={{
           width: "60px",
           minWidth: "60px",
@@ -118,11 +120,16 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
           fontSize: "8px",
           textAlign: "center",
           color: mutedColor,
+          overflow: "hidden",
         }}>
-          <div>
-            <div style={{ fontWeight: "bold", fontSize: "10px", color: accentColor }}>Le Jess</div>
-            <div style={{ fontSize: "7px" }}>PERFUMES</div>
-          </div>
+          {data.logoUrl ? (
+            <img src={data.logoUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          ) : (
+            <div>
+              <div style={{ fontWeight: "bold", fontSize: "10px", color: accentColor }}>Le Jess</div>
+              <div style={{ fontSize: "7px" }}>PERFUMES</div>
+            </div>
+          )}
         </div>
 
         {/* Company info */}
@@ -144,10 +151,7 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       <div style={{ fontSize: "10px", margin: "6px 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>Pedido: {data.pedido}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>Data: {data.data}</span>
-          <span>Data prevista: {data.dataPrevista || "00/00/0000"}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>Vendedor: {data.vendedor}</span>
@@ -231,13 +235,13 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
         </div>
         {data.desconto > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>Desconto:</span>
+            <span>Desconto{data.descontoLabel ? ` (${data.descontoLabel})` : ""}:</span>
             <span>-{formatCurrency(data.desconto)}</span>
           </div>
         )}
         {data.acrescimo > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>Acréscimo:</span>
+            <span>Acréscimo{data.acrescimoLabel ? ` (${data.acrescimoLabel})` : ""}:</span>
             <span>+{formatCurrency(data.acrescimo)}</span>
           </div>
         )}

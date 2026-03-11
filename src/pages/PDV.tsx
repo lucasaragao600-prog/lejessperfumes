@@ -273,13 +273,13 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
       razaoSocial: configFiscal?.razaoSocial || "MAISON LE JESS COMERCIO DE PERFUMARIA LTDA",
       cnpj: configFiscal?.cnpj || "",
       inscricaoEstadual: configFiscal?.inscricaoEstadual || "",
-      endereco: configFiscal ? `${configFiscal.endereco}, ${configFiscal.numero}` : "",
+      endereco: configFiscal ? `${configFiscal.endereco}, ${configFiscal.numero}${configFiscal.complemento ? ` - ${configFiscal.complemento}` : ""}` : "",
       cidade: configFiscal ? `${configFiscal.bairro}\n${configFiscal.cidade} - Cep ${configFiscal.cep}\n${configFiscal.uf}` : "",
       telefone: configFiscal?.telefone || "",
+      logoUrl: configFiscal?.logoUrl || "",
       pedido: grupoVenda.slice(0, 8).toUpperCase(),
       data: agora.toLocaleDateString("pt-BR"),
       hora: agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
-      dataPrevista: undefined,
       vendedor: vendedora,
       operador: profile?.nome || "",
       cliente: clienteSelecionado,
@@ -316,6 +316,8 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
       subtotal,
       desconto: tipoAjuste === "desconto" ? valorAjuste : 0,
       acrescimo: tipoAjuste === "acrescimo" ? valorAjuste : 0,
+      descontoLabel: tipoAjuste === "desconto" && ajusteMode === "%" && ajusteValor > 0 ? `${ajusteValor}%` : undefined,
+      acrescimoLabel: tipoAjuste === "acrescimo" && ajusteMode === "%" && ajusteValor > 0 ? `${ajusteValor}%` : undefined,
       total: totalFinal,
       troco: trocoCalculado,
       observacao: observacao || undefined,
@@ -416,9 +418,9 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   @page { size: 80mm auto; margin: 0; }
   body { font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.4; color: #000; background: #fff; padding: 4mm; margin: 0; width: 80mm; }
   .header { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
-  .logo { width: 60px; min-width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+  .logo { width: 60px; min-width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border: 1px solid #ccc; border-radius: 4px; text-align: center; overflow: hidden; }
+  .logo img { width: 100%; height: 100%; object-fit: contain; }
   .logo-name { font-weight: bold; font-size: 10px; }
-  .logo-sub { font-size: 7px; }
   .company { flex: 1; text-align: right; font-size: 9px; }
   .company-name { font-weight: bold; font-size: 10px; }
   .sep { color: #999; font-size: 9px; }
@@ -436,7 +438,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   .footer { text-align: center; font-size: 9px; color: #666; margin-top: 8px; }
 </style></head><body>
 <div class="header">
-  <div class="logo"><div><div class="logo-name">Le Jess</div><div class="logo-sub">PERFUMES</div></div></div>
+  ${comprovanteData.logoUrl ? `<div class="logo"><img src="${comprovanteData.logoUrl}" alt="Logo" /></div>` : `<div class="logo"><div><div class="logo-name">Le Jess</div><div style="font-size:7px">PERFUMES</div></div></div>`}
   <div class="company">
     <div class="company-name">${comprovanteData.razaoSocial || comprovanteData.nomeFantasia}</div>
     ${comprovanteData.cnpj ? `<div>${comprovanteData.cnpj}</div>` : ""}
@@ -449,7 +451,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
 <div class="sep">${"─".repeat(52)}</div>
 <div class="sm">
   <div>Pedido: ${comprovanteData.pedido}</div>
-  <div class="flex"><span>Data: ${comprovanteData.data}</span><span>Data prevista: ${comprovanteData.dataPrevista || "00/00/0000"}</span></div>
+  <div>Data: ${comprovanteData.data}</div>
   <div>Vendedor: ${comprovanteData.vendedor}</div>
   ${comprovanteData.cliente ? `<div>Cliente: ${comprovanteData.cliente.nome}</div>` : ""}
 </div>
@@ -474,8 +476,8 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
 </table>
 <div class="sep">${"─".repeat(52)}</div>
 <div class="sm flex"><span>Sub Total:</span><span>R$ ${comprovanteData.subtotal.toFixed(2)}</span></div>
-${comprovanteData.desconto > 0 ? `<div class="sm flex"><span>Desconto:</span><span>-R$ ${comprovanteData.desconto.toFixed(2)}</span></div>` : ""}
-${comprovanteData.acrescimo > 0 ? `<div class="sm flex"><span>Acréscimo:</span><span>+R$ ${comprovanteData.acrescimo.toFixed(2)}</span></div>` : ""}
+${comprovanteData.desconto > 0 ? `<div class="sm flex"><span>Desconto${comprovanteData.descontoLabel ? ` (${comprovanteData.descontoLabel})` : ""}:</span><span>-R$ ${comprovanteData.desconto.toFixed(2)}</span></div>` : ""}
+${comprovanteData.acrescimo > 0 ? `<div class="sm flex"><span>Acréscimo${comprovanteData.acrescimoLabel ? ` (${comprovanteData.acrescimoLabel})` : ""}:</span><span>+R$ ${comprovanteData.acrescimo.toFixed(2)}</span></div>` : ""}
 <div class="total-line flex"><span>Total:</span><span>R$ ${comprovanteData.total.toFixed(2)}</span></div>
 ${comprovanteData.troco > 0 ? `<div class="sm flex"><span>Troco:</span><span>R$ ${comprovanteData.troco.toFixed(2)}</span></div>` : ""}
 ${comprovanteData.observacao ? `<div class="xs">Obs: ${comprovanteData.observacao}</div>` : ""}
