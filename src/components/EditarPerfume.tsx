@@ -125,6 +125,10 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
         estoqueMinimo: parseInt(estoqueMinimo) || 2,
         codigo: codigoPreview,
         imageUrl,
+        ncm,
+        cfop,
+        cstCsosn,
+        unidadeFiscal,
       });
       onClose();
     } finally {
