@@ -316,6 +316,8 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
       subtotal,
       desconto: tipoAjuste === "desconto" ? valorAjuste : 0,
       acrescimo: tipoAjuste === "acrescimo" ? valorAjuste : 0,
+      descontoLabel: tipoAjuste === "desconto" && ajusteMode === "%" && ajusteValor > 0 ? `${ajusteValor}%` : undefined,
+      acrescimoLabel: tipoAjuste === "acrescimo" && ajusteMode === "%" && ajusteValor > 0 ? `${ajusteValor}%` : undefined,
       total: totalFinal,
       troco: trocoCalculado,
       observacao: observacao || undefined,
