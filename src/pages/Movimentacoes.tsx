@@ -195,7 +195,11 @@ export default function Movimentacoes() {
                   <select value={form.depositoOrigem} onChange={(e) => setForm({ ...form, depositoOrigem: e.target.value as Deposito })}
                     className="input-premium px-3 py-2.5 text-xs" disabled={!!userLoja}>
                     <option value="">Selecione</option>
-                    {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
+                    {depositos.map((d) => {
+                      const pf = perfumes.find((x) => x.id === form.perfumeId);
+                      const qtd = pf ? pf.estoques[d] : 0;
+                      return <option key={d} value={d}>{d} ({qtd})</option>;
+                    })}
                   </select>
                 </div>
                 <div>
@@ -203,7 +207,11 @@ export default function Movimentacoes() {
                   <select value={form.depositoDestino} onChange={(e) => setForm({ ...form, depositoDestino: e.target.value as Deposito })}
                     className="input-premium px-3 py-2.5 text-xs">
                     <option value="">Selecione</option>
-                    {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
+                    {depositos.map((d) => {
+                      const pf = perfumes.find((x) => x.id === form.perfumeId);
+                      const qtd = pf ? pf.estoques[d] : 0;
+                      return <option key={d} value={d}>{d} ({qtd})</option>;
+                    })}
                   </select>
                 </div>
               </div>
@@ -214,7 +222,11 @@ export default function Movimentacoes() {
                   <select value={form.depositoOrigem} onChange={(e) => setForm({ ...form, depositoOrigem: e.target.value as Deposito })}
                     className="input-premium px-3 py-2.5 text-xs" disabled={!!userLoja}>
                     <option value="">Selecione</option>
-                    {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
+                    {depositos.map((d) => {
+                      const pf = perfumes.find((x) => x.id === form.perfumeId);
+                      const qtd = pf ? pf.estoques[d] : 0;
+                      return <option key={d} value={d}>{d} ({qtd})</option>;
+                    })}
                   </select>
                 </div>
                 <div>
@@ -230,8 +242,12 @@ export default function Movimentacoes() {
                 <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Depósito</label>
                 <select value={form.deposito} onChange={(e) => setForm({ ...form, deposito: e.target.value as Deposito })}
                   className="input-premium px-3 py-2.5 text-sm" disabled={!!userLoja}>
-                  <option value="">Selecione...</option>
-                  {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
+                  <option value="">Selecione</option>
+                  {depositos.map((d) => {
+                    const pf = perfumes.find((x) => x.id === form.perfumeId);
+                    const qtd = pf ? pf.estoques[d] : 0;
+                    return <option key={d} value={d}>{d} ({qtd})</option>;
+                  })}
                 </select>
               </div>
             )}
