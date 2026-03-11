@@ -374,42 +374,139 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
     }
   };
 
+  // Print comprovante
+  const handlePrint = () => {
+    if (!comprovanteData) return;
+    // Create print window with receipt content
+    const printWindow = window.open("", "_blank", "width=320,height=600");
+    if (!printWindow) return;
+    
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Comprovante</title>
+<style>
+  @page { size: 80mm auto; margin: 0; }
+  body { font-family: 'Courier New', monospace; font-size: 12px; line-height: 1.4; color: #000; background: #fff; padding: 4mm; margin: 0; width: 80mm; }
+  .center { text-align: center; }
+  .bold { font-weight: bold; }
+  .flex { display: flex; justify-content: space-between; }
+  .sep { color: #999; font-size: 10px; }
+  .sm { font-size: 10px; }
+  .xs { font-size: 9px; color: #666; }
+  .total-line { font-size: 14px; font-weight: bold; margin: 4px 0; }
+  .header-title { font-size: 16px; font-weight: bold; letter-spacing: 1px; }
+</style></head><body>
+<div class="center">
+  <div class="header-title">${comprovanteData.nomeFantasia}</div>
+  ${comprovanteData.cnpj ? `<div class="sm">CNPJ: ${comprovanteData.cnpj}</div>` : ""}
+  ${comprovanteData.endereco ? `<div class="xs">${comprovanteData.endereco}</div>` : ""}
+  ${comprovanteData.cidade ? `<div class="xs">${comprovanteData.cidade}</div>` : ""}
+  ${comprovanteData.telefone ? `<div class="xs">Tel: ${comprovanteData.telefone}</div>` : ""}
+</div>
+<div class="center sep">${"═".repeat(48)}</div>
+<div class="center bold">COMPROVANTE NÃO FISCAL</div>
+<div class="center sep">${"═".repeat(48)}</div>
+<div class="sm">
+  <div>Pedido: ${comprovanteData.pedido}</div>
+  <div>Data: ${comprovanteData.data} ${comprovanteData.hora}</div>
+  <div>Vendedor: ${comprovanteData.vendedor}</div>
+  ${comprovanteData.operador ? `<div>Operador: ${comprovanteData.operador}</div>` : ""}
+  ${comprovanteData.cliente ? `
+    <div class="sep">${"─".repeat(48)}</div>
+    <div>Cliente: ${comprovanteData.cliente.nome}</div>
+    ${comprovanteData.cliente.cpfCnpj ? `<div>CPF/CNPJ: ${comprovanteData.cliente.cpfCnpj}</div>` : ""}
+  ` : ""}
+</div>
+<div class="sep">${"─".repeat(48)}</div>
+${comprovanteData.itens.map(item => `
+<div class="sm">
+  <div class="flex"><span>${item.item}. ${item.descricao}</span></div>
+  <div class="flex xs" style="padding-left:12px">
+    <span>${item.quantidade}x R$ ${item.valorUnitario.toFixed(2)}</span>
+    <span>R$ ${item.total.toFixed(2)}</span>
+  </div>
+</div>`).join("")}
+<div class="sep">${"─".repeat(48)}</div>
+<div class="sm bold">PAGAMENTOS</div>
+${comprovanteData.pagamentos.map(p => `
+<div class="sm flex"><span>${p.forma}${p.parcelas > 1 ? ` ${p.parcelas}x` : ""}</span><span>R$ ${p.valor.toFixed(2)}</span></div>`).join("")}
+<div class="sep">${"═".repeat(48)}</div>
+<div class="sm flex"><span>Subtotal:</span><span>R$ ${comprovanteData.subtotal.toFixed(2)}</span></div>
+${comprovanteData.desconto > 0 ? `<div class="sm flex"><span>Desconto:</span><span>-R$ ${comprovanteData.desconto.toFixed(2)}</span></div>` : ""}
+${comprovanteData.acrescimo > 0 ? `<div class="sm flex"><span>Acréscimo:</span><span>+R$ ${comprovanteData.acrescimo.toFixed(2)}</span></div>` : ""}
+<div class="total-line flex"><span>TOTAL:</span><span>R$ ${comprovanteData.total.toFixed(2)}</span></div>
+${comprovanteData.troco > 0 ? `<div class="sm flex"><span>Troco:</span><span>R$ ${comprovanteData.troco.toFixed(2)}</span></div>` : ""}
+<div class="sep">${"─".repeat(48)}</div>
+${comprovanteData.observacao ? `<div class="xs">Obs: ${comprovanteData.observacao}</div>` : ""}
+<div class="center" style="margin-top:8px">
+  <div class="xs">Obrigada pela preferência!</div>
+  <div class="xs">LE JESS PERFUMES</div>
+  <div class="xs" style="opacity:0.6;margin-top:4px">Documento sem valor fiscal</div>
+</div>
+</body></html>`;
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = () => { printWindow.print(); };
+  };
+
   // ═══════════════════════════════════════════
   // SUCCESS SCREEN
   // ═══════════════════════════════════════════
   if (vendaConcluida) {
     return (
-      <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: "hsl(var(--background))" }}>
-        <div className="text-center space-y-6 animate-fade-in max-w-md mx-auto px-6">
-          <div className="w-24 h-24 rounded-full mx-auto flex items-center justify-center" style={{ background: "hsl(var(--success) / 0.15)" }}>
-            <CheckCircle2 size={48} className="text-success" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Venda concluída!</h1>
-            <p className="text-muted-foreground mt-2">Estoque atualizado automaticamente.</p>
-            {tipoDocumento === "nfce" && (
-              <p className="text-xs mt-1" style={{ color: "hsl(var(--warning))" }}>NFC-e: status pendente de emissão</p>
-            )}
-          </div>
-          <div className="text-2xl font-bold text-gold">{formatCurrency(totalFinal)}</div>
-          {clienteSelecionado && (
-            <p className="text-sm text-muted-foreground">Cliente: {clienteSelecionado.nome}</p>
-          )}
-          {troco > 0 && (
-            <div className="px-6 py-3 rounded-xl mx-auto inline-block" style={{ background: "hsl(var(--warning) / 0.15)" }}>
-              <span className="text-sm text-muted-foreground">Troco: </span>
-              <span className="text-lg font-bold" style={{ color: "hsl(var(--warning))" }}>{formatCurrency(troco)}</span>
+      <div className="fixed inset-0 z-[100] flex" style={{ background: "hsl(var(--background))" }}>
+        {/* Left: Success info */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center space-y-6 animate-fade-in max-w-md mx-auto px-6">
+            <div className="w-24 h-24 rounded-full mx-auto flex items-center justify-center" style={{ background: "hsl(var(--success) / 0.15)" }}>
+              <CheckCircle2 size={48} className="text-success" />
             </div>
-          )}
-          <div className="flex gap-3 justify-center pt-4">
-            <button onClick={novaVenda} className="btn-primary px-8 py-3 text-sm font-semibold">
-              Nova Venda (F2)
-            </button>
-            {onBack && (
-              <button onClick={onBack} className="btn-secondary px-6 py-3 text-sm">Voltar ao ERP</button>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Venda concluída!</h1>
+              <p className="text-muted-foreground mt-2">Estoque atualizado automaticamente.</p>
+              {tipoDocumento === "nfce" && (
+                <div className="mt-3 px-4 py-2 rounded-xl inline-flex items-center gap-2" style={{ background: "hsl(var(--warning) / 0.15)" }}>
+                  <AlertTriangle size={14} style={{ color: "hsl(var(--warning))" }} />
+                  <span className="text-xs" style={{ color: "hsl(var(--warning))" }}>
+                    NFC-e pendente — será emitida quando a API fiscal estiver configurada
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="text-2xl font-bold text-gold">{formatCurrency(totalFinal)}</div>
+            {clienteSelecionado && (
+              <p className="text-sm text-muted-foreground">Cliente: {clienteSelecionado.nome}</p>
             )}
+            {troco > 0 && (
+              <div className="px-6 py-3 rounded-xl mx-auto inline-block" style={{ background: "hsl(var(--warning) / 0.15)" }}>
+                <span className="text-sm text-muted-foreground">Troco: </span>
+                <span className="text-lg font-bold" style={{ color: "hsl(var(--warning))" }}>{formatCurrency(troco)}</span>
+              </div>
+            )}
+            <div className="flex gap-3 justify-center pt-4">
+              <button onClick={handlePrint} className="btn-secondary px-6 py-3 text-sm flex items-center gap-2">
+                <Printer size={16} /> Imprimir
+              </button>
+              <button onClick={() => setShowComprovante(prev => !prev)} className="btn-secondary px-6 py-3 text-sm flex items-center gap-2">
+                <Eye size={16} /> {showComprovante ? "Ocultar" : "Ver"} Comprovante
+              </button>
+            </div>
+            <div className="flex gap-3 justify-center">
+              <button onClick={novaVenda} className="btn-primary px-8 py-3 text-sm font-semibold">
+                Nova Venda (F2)
+              </button>
+              {onBack && (
+                <button onClick={onBack} className="btn-secondary px-6 py-3 text-sm">Voltar ao ERP</button>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Right: Comprovante preview */}
+        {showComprovante && comprovanteData && (
+          <div className="w-[380px] flex-shrink-0 overflow-y-auto p-6 hidden md:block" style={{ borderLeft: "1px solid hsl(var(--border))" }}>
+            <ComprovantePreview data={comprovanteData} />
+          </div>
+        )}
       </div>
     );
   }
