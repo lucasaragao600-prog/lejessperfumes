@@ -57,6 +57,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   const userLoja = (isVendedor && profile?.loja) ? profile.loja as Deposito : null;
   const vendedoras = [...vendedorasCtx, "Outra"];
   const { clientes, adicionarCliente } = useClientes();
+  const { configFiscal, criarEmissao, gerarXmlNfce } = useNfce();
 
   // Search
   const [busca, setBusca] = useState("");
