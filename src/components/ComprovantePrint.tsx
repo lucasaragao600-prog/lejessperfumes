@@ -148,16 +148,13 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       </div>
       <div style={{ color: mutedColor, fontSize: "9px" }}>{dash}</div>
 
-      {/* ── ITENS COM SEPARADOR ── */}
+      {/* ── ITENS ── */}
       {data.itens.map((item, idx) => (
-        <div key={idx}>
-          <div style={{ fontSize: "9px", display: "flex", padding: "3px 0", alignItems: "flex-start" }}>
-            <span style={{ flex: 1, wordBreak: "break-word" }}>{item.descricao}</span>
-            <span style={{ width: "30px", textAlign: "center", flexShrink: 0 }}>{item.quantidade}</span>
-            <span style={{ width: "60px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.valorUnitario)}</span>
-            <span style={{ width: "60px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.total)}</span>
-          </div>
-          <div style={{ color: mutedColor, fontSize: "9px" }}>{dash}</div>
+        <div key={idx} style={{ fontSize: "9px", display: "flex", padding: "3px 0", alignItems: "flex-start" }}>
+          <span style={{ flex: 1, wordBreak: "break-word" }}>{item.descricao}</span>
+          <span style={{ width: "30px", textAlign: "center", flexShrink: 0 }}>{item.quantidade}</span>
+          <span style={{ width: "60px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.valorUnitario)}</span>
+          <span style={{ width: "60px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.total)}</span>
         </div>
       ))}
 
