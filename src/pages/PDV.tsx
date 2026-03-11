@@ -438,7 +438,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   .footer { text-align: center; font-size: 9px; color: #666; margin-top: 8px; }
 </style></head><body>
 <div class="header">
-  <div class="logo"><div><div class="logo-name">Le Jess</div><div class="logo-sub">PERFUMES</div></div></div>
+  ${comprovanteData.logoUrl ? `<div class="logo"><img src="${comprovanteData.logoUrl}" alt="Logo" /></div>` : `<div class="logo"><div><div class="logo-name">Le Jess</div><div style="font-size:7px">PERFUMES</div></div></div>`}
   <div class="company">
     <div class="company-name">${comprovanteData.razaoSocial || comprovanteData.nomeFantasia}</div>
     ${comprovanteData.cnpj ? `<div>${comprovanteData.cnpj}</div>` : ""}
