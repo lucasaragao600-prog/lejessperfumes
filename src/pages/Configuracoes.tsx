@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Settings, Plus, Trash2, RotateCcw, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Settings, Plus, Trash2, RotateCcw, Loader2, Upload, X } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { TipoPerfume, Concentracao } from "@/data/mockData";
 import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
@@ -18,12 +18,16 @@ export default function Configuracoes() {
 
   const { configFiscal, salvarConfigFiscal } = useConfiguracoesFiscais();
   const [isSaving, setIsSaving] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [empresa, setEmpresa] = useState({
     razaoSocial: "", nomeFantasia: "", cnpj: "", inscricaoEstadual: "",
-    endereco: "", numero: "", bairro: "", cidade: "", uf: "AM", cep: "", telefone: "",
+    endereco: "", numero: "", complemento: "", bairro: "", cidade: "", uf: "AM", cep: "", telefone: "",
     regimeTributario: "simples_nacional" as string,
     ambiente: "homologacao" as "homologacao" | "producao",
     serieNfce: 1, proximoNumeroNfce: 1, cscId: "", cscToken: "",
+    logoUrl: "",
   });
 
   useEffect(() => {
@@ -35,6 +39,7 @@ export default function Configuracoes() {
         inscricaoEstadual: configFiscal.inscricaoEstadual,
         endereco: configFiscal.endereco,
         numero: configFiscal.numero,
+        complemento: configFiscal.complemento,
         bairro: configFiscal.bairro,
         cidade: configFiscal.cidade,
         uf: configFiscal.uf,
@@ -46,9 +51,33 @@ export default function Configuracoes() {
         proximoNumeroNfce: configFiscal.proximoNumeroNfce,
         cscId: configFiscal.cscId,
         cscToken: configFiscal.cscToken,
+        logoUrl: configFiscal.logoUrl,
       });
+      if (configFiscal.logoUrl) {
+        setLogoPreview(configFiscal.logoUrl);
+      }
     }
   }, [configFiscal]);
+
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 2MB");
+      return;
+    }
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    setEmpresa(p => ({ ...p, logoUrl: "" }));
+    if (logoInputRef.current) logoInputRef.current.value = "";
+  };
 
   const handleSalvarEmpresa = async () => {
     if (!empresa.razaoSocial.trim() || !empresa.cnpj.trim()) {
@@ -57,7 +86,24 @@ export default function Configuracoes() {
     }
     setIsSaving(true);
     try {
-      await salvarConfigFiscal(empresa);
+      let logoUrl = empresa.logoUrl;
+
+      // Upload logo if new file selected
+      if (logoFile) {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const ext = logoFile.name.split('.').pop();
+        const filePath = `logo-empresa.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("product-photos")
+          .upload(filePath, logoFile, { upsert: true });
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage
+          .from("product-photos")
+          .getPublicUrl(filePath);
+        logoUrl = urlData.publicUrl;
+      }
+
+      await salvarConfigFiscal({ ...empresa, logoUrl });
       toast.success("Dados da empresa salvos com sucesso!");
     } catch {
       toast.error("Erro ao salvar dados da empresa");
@@ -183,6 +229,33 @@ export default function Configuracoes() {
             <p className="text-[10px] text-muted-foreground mt-0.5">Informações que aparecem no comprovante e NFC-e</p>
           </div>
 
+          {/* Logo upload */}
+          <div className="flex items-center gap-4">
+            <div className="relative w-20 h-20 rounded-xl border border-border bg-surface-overlay flex items-center justify-center overflow-hidden flex-shrink-0">
+              {logoPreview ? (
+                <>
+                  <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
+                  <button onClick={handleRemoveLogo} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                    <X size={10} />
+                  </button>
+                </>
+              ) : (
+                <div className="text-center text-muted-foreground">
+                  <Upload size={16} className="mx-auto mb-1" />
+                  <span className="text-[8px]">Logo</span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Logo da Empresa</label>
+              <p className="text-[9px] text-muted-foreground mb-2">PNG ou JPG, máx. 2MB. Aparece no comprovante.</p>
+              <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleLogoChange} className="hidden" />
+              <button onClick={() => logoInputRef.current?.click()} className="text-xs text-gold hover:underline flex items-center gap-1">
+                <Upload size={12} /> {logoPreview ? "Trocar imagem" : "Enviar imagem"}
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="md:col-span-2">
               <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Razão Social *</label>
@@ -235,6 +308,13 @@ export default function Configuracoes() {
                 <input type="text" value={empresa.numero}
                   onChange={e => setEmpresa(p => ({ ...p, numero: e.target.value }))}
                   placeholder="1762"
+                  className="input-premium w-full px-3 py-2 text-xs mt-1" />
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground">Complemento</label>
+                <input type="text" value={empresa.complemento}
+                  onChange={e => setEmpresa(p => ({ ...p, complemento: e.target.value }))}
+                  placeholder="Sala 2, Bloco A"
                   className="input-premium w-full px-3 py-2 text-xs mt-1" />
               </div>
               <div>

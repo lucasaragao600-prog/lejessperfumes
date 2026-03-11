@@ -253,11 +253,13 @@ export type Database = {
           cep: string
           cidade: string
           cnpj: string
+          complemento: string
           csc_id: string
           csc_token: string
           endereco: string
           id: string
           inscricao_estadual: string
+          logo_url: string
           nome_fantasia: string
           numero: string
           proximo_numero_nfce: number
@@ -274,11 +276,13 @@ export type Database = {
           cep?: string
           cidade?: string
           cnpj?: string
+          complemento?: string
           csc_id?: string
           csc_token?: string
           endereco?: string
           id?: string
           inscricao_estadual?: string
+          logo_url?: string
           nome_fantasia?: string
           numero?: string
           proximo_numero_nfce?: number
@@ -295,11 +299,13 @@ export type Database = {
           cep?: string
           cidade?: string
           cnpj?: string
+          complemento?: string
           csc_id?: string
           csc_token?: string
           endereco?: string
           id?: string
           inscricao_estadual?: string
+          logo_url?: string
           nome_fantasia?: string
           numero?: string
           proximo_numero_nfce?: number

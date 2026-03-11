@@ -27,6 +27,7 @@ export interface ConfiguracaoFiscal {
   nomeFantasia: string;
   endereco: string;
   numero: string;
+  complemento: string;
   bairro: string;
   cidade: string;
   uf: string;
@@ -38,6 +39,7 @@ export interface ConfiguracaoFiscal {
   proximoNumeroNfce: number;
   cscId: string;
   cscToken: string;
+  logoUrl: string;
 }
 
 function rowToNfce(row: any): NfceEmissao {
@@ -69,6 +71,7 @@ function rowToConfig(row: any): ConfiguracaoFiscal {
     nomeFantasia: row.nome_fantasia,
     endereco: row.endereco,
     numero: row.numero,
+    complemento: row.complemento || "",
     bairro: row.bairro,
     cidade: row.cidade,
     uf: row.uf,
@@ -80,6 +83,7 @@ function rowToConfig(row: any): ConfiguracaoFiscal {
     proximoNumeroNfce: row.proximo_numero_nfce,
     cscId: row.csc_id,
     cscToken: row.csc_token,
+    logoUrl: row.logo_url || "",
   };
 }
 
@@ -189,6 +193,7 @@ export function useNfce() {
             nome_fantasia: config.nomeFantasia,
             endereco: config.endereco,
             numero: config.numero,
+            complemento: config.complemento,
             bairro: config.bairro,
             cidade: config.cidade,
             uf: config.uf,
@@ -200,6 +205,7 @@ export function useNfce() {
             proximo_numero_nfce: config.proximoNumeroNfce,
             csc_id: config.cscId,
             csc_token: config.cscToken,
+            logo_url: config.logoUrl,
           })
           .eq("id", existing.id);
         if (error) throw error;
@@ -213,6 +219,7 @@ export function useNfce() {
             nome_fantasia: config.nomeFantasia,
             endereco: config.endereco,
             numero: config.numero,
+            complemento: config.complemento,
             bairro: config.bairro,
             cidade: config.cidade,
             uf: config.uf,
@@ -224,6 +231,7 @@ export function useNfce() {
             proximo_numero_nfce: config.proximoNumeroNfce,
             csc_id: config.cscId,
             csc_token: config.cscToken,
+            logo_url: config.logoUrl,
           });
         if (error) throw error;
       }
