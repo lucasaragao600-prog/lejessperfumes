@@ -34,7 +34,12 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
   const [estoqueMinimo, setEstoqueMinimo] = useState(String(perfume.estoqueMinimo));
   const [salvando, setSalvando] = useState(false);
   const [imageUrl, setImageUrl] = useState(perfume.imageUrl || "");
-  const [tab, setTab] = useState<"editar" | "custos" | "precos">("editar");
+  const [tab, setTab] = useState<"editar" | "custos" | "precos" | "fiscal">("editar");
+  // Fiscal fields
+  const [ncm, setNcm] = useState(perfume.ncm || "");
+  const [cfop, setCfop] = useState(perfume.cfop || "");
+  const [cstCsosn, setCstCsosn] = useState(perfume.cstCsosn || "");
+  const [unidadeFiscal, setUnidadeFiscal] = useState(perfume.unidadeFiscal || "UN");
   const { historico, isLoading: historicoLoading } = useProdutoCustos(perfume.id);
   const { historico: precoHistorico, isLoading: precoLoading, registrar: registrarPreco } = usePrecoHistorico(perfume.id);
 
