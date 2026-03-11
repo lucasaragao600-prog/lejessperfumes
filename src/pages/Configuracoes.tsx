@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { Settings, Plus, Trash2, RotateCcw, Users, Building2, Save, Loader2 } from "lucide-react";
+import { Settings, Plus, Trash2, RotateCcw, Loader2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { TipoPerfume, Concentracao } from "@/data/mockData";
-import { useConfiguracoesFiscais, type ConfiguracaoFiscal } from "@/hooks/useConfiguracoesFiscais";
+import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
 import { toast } from "sonner";
 
-const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
+const UFS_LIST = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
 export default function Configuracoes() {
   const {
@@ -57,17 +57,14 @@ export default function Configuracoes() {
     }
     setIsSaving(true);
     try {
-      await salvarConfigFiscal.mutateAsync(empresa);
+      await salvarConfigFiscal(empresa);
       toast.success("Dados da empresa salvos com sucesso!");
-    } catch (err) {
+    } catch {
       toast.error("Erro ao salvar dados da empresa");
     } finally {
       setIsSaving(false);
     }
   };
-
-  const novoTipoSigla_init = "";
-  const novoTipoLabel_init = "";
 
   const [novoTipoSigla, setNovoTipoSigla] = useState("");
   const [novoTipoLabel, setNovoTipoLabel] = useState("");
