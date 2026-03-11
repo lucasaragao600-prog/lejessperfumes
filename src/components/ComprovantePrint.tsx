@@ -11,11 +11,11 @@ export interface ComprovanteData {
   endereco: string;
   cidade: string;
   telefone: string;
+  logoUrl?: string;
   // Sale info
   pedido: string;
   data: string;
   hora: string;
-  dataPrevista?: string;
   vendedor: string;
   operador: string;
   cliente: Cliente | null;
@@ -40,6 +40,8 @@ export interface ComprovanteData {
   subtotal: number;
   desconto: number;
   acrescimo: number;
+  descontoLabel?: string;
+  acrescimoLabel?: string;
   total: number;
   troco: number;
   // Footer
