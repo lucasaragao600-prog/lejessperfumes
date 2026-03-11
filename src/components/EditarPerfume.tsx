@@ -151,7 +151,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
 
       {/* Tabs */}
       <div className="flex border-b border-border">
-        {([["editar", "Dados"], ["custos", "Custos"], ["precos", "Preços"]] as const).map(([t, label]) => (
+        {([["editar", "Dados"], ["fiscal", "Fiscal"], ["custos", "Custos"], ["precos", "Preços"]] as const).map(([t, label]) => (
           <button
             key={t}
             onClick={() => setTab(t)}
