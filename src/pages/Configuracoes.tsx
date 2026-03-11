@@ -311,6 +311,13 @@ export default function Configuracoes() {
                   className="input-premium w-full px-3 py-2 text-xs mt-1" />
               </div>
               <div>
+                <label className="text-[10px] text-muted-foreground">Complemento</label>
+                <input type="text" value={empresa.complemento}
+                  onChange={e => setEmpresa(p => ({ ...p, complemento: e.target.value }))}
+                  placeholder="Sala 2, Bloco A"
+                  className="input-premium w-full px-3 py-2 text-xs mt-1" />
+              </div>
+              <div>
                 <label className="text-[10px] text-muted-foreground">Bairro</label>
                 <input type="text" value={empresa.bairro}
                   onChange={e => setEmpresa(p => ({ ...p, bairro: e.target.value }))}
