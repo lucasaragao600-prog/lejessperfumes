@@ -5,7 +5,9 @@ import type { Cliente } from "@/hooks/useClientes";
 export interface ComprovanteData {
   // Store info
   nomeFantasia: string;
+  razaoSocial: string;
   cnpj: string;
+  inscricaoEstadual: string;
   endereco: string;
   cidade: string;
   telefone: string;
@@ -13,6 +15,7 @@ export interface ComprovanteData {
   pedido: string;
   data: string;
   hora: string;
+  dataPrevista?: string;
   vendedor: string;
   operador: string;
   cliente: Cliente | null;
@@ -28,8 +31,10 @@ export interface ComprovanteData {
   // Payments
   pagamentos: {
     forma: string;
+    codigoFiscal: string;
     parcelas: number;
     valor: number;
+    dataParcelas?: { data: string; valor: number }[];
   }[];
   // Totals
   subtotal: number;
@@ -41,101 +46,187 @@ export interface ComprovanteData {
   observacao?: string;
 }
 
+// ──────────────────────────────────────────────
+// PRINT VERSION (hidden, triggered by window.print)
+// ──────────────────────────────────────────────
 const ComprovantePrint = forwardRef<HTMLDivElement, { data: ComprovanteData }>(({ data }, ref) => {
-  const separador = "─".repeat(48);
-  const separadorDuplo = "═".repeat(48);
-
   return (
     <div ref={ref} className="hidden print:block" style={{
       width: "80mm",
       fontFamily: "'Courier New', monospace",
-      fontSize: "12px",
+      fontSize: "11px",
       lineHeight: "1.4",
       color: "#000",
       background: "#fff",
       padding: "4mm",
     }}>
-      {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: "4px" }}>
-        <div style={{ fontSize: "16px", fontWeight: "bold", letterSpacing: "1px" }}>
-          {data.nomeFantasia || "LE JESS PERFUMES"}
+      <ReceiptContent data={data} />
+    </div>
+  );
+});
+
+ComprovantePrint.displayName = "ComprovantePrint";
+export default ComprovantePrint;
+
+// ──────────────────────────────────────────────
+// SCREEN PREVIEW (for the modal)
+// ──────────────────────────────────────────────
+export function ComprovantePreview({ data }: { data: ComprovanteData }) {
+  return (
+    <div style={{
+      width: "100%",
+      maxWidth: "360px",
+      fontFamily: "'Courier New', monospace",
+      fontSize: "10px",
+      lineHeight: "1.4",
+      color: "hsl(var(--foreground))",
+      background: "hsl(var(--card))",
+      padding: "16px",
+      borderRadius: "12px",
+      border: "1px solid hsl(var(--border))",
+      margin: "0 auto",
+      maxHeight: "60vh",
+      overflowY: "auto",
+    }}>
+      <ReceiptContent data={data} preview />
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────
+// SHARED RECEIPT CONTENT
+// ──────────────────────────────────────────────
+function ReceiptContent({ data, preview = false }: { data: ComprovanteData; preview?: boolean }) {
+  const sep = "─".repeat(52);
+  const mutedColor = preview ? "hsl(var(--muted-foreground))" : "#666";
+  const accentColor = preview ? "hsl(var(--gold))" : "#000";
+
+  return (
+    <>
+      {/* ── HEADER: Logo left + Company info right ── */}
+      <div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "flex-start" }}>
+        {/* Logo placeholder */}
+        <div style={{
+          width: "60px",
+          minWidth: "60px",
+          height: "60px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          border: `1px solid ${mutedColor}`,
+          borderRadius: "4px",
+          fontSize: "8px",
+          textAlign: "center",
+          color: mutedColor,
+        }}>
+          <div>
+            <div style={{ fontWeight: "bold", fontSize: "10px", color: accentColor }}>Le Jess</div>
+            <div style={{ fontSize: "7px" }}>PERFUMES</div>
+          </div>
         </div>
-        {data.cnpj && <div style={{ fontSize: "11px" }}>CNPJ: {data.cnpj}</div>}
-        {data.endereco && <div style={{ fontSize: "10px" }}>{data.endereco}</div>}
-        {data.cidade && <div style={{ fontSize: "10px" }}>{data.cidade}</div>}
-        {data.telefone && <div style={{ fontSize: "10px" }}>Tel: {data.telefone}</div>}
+
+        {/* Company info */}
+        <div style={{ flex: 1, textAlign: "right", fontSize: "9px" }}>
+          <div style={{ fontWeight: "bold", fontSize: "10px" }}>
+            {data.razaoSocial || data.nomeFantasia || "LE JESS PERFUMES"}
+          </div>
+          {data.cnpj && <div>{data.cnpj}</div>}
+          {data.inscricaoEstadual && <div>{data.inscricaoEstadual}</div>}
+          {data.telefone && <div>Tel.: {data.telefone}</div>}
+          {data.endereco && <div>{data.endereco}</div>}
+          {data.cidade && <div>{data.cidade}</div>}
+        </div>
       </div>
 
-      <div style={{ textAlign: "center", fontSize: "11px", margin: "6px 0" }}>
-        {separadorDuplo}
-        <div style={{ fontWeight: "bold", fontSize: "13px" }}>COMPROVANTE NÃO FISCAL</div>
-        {separadorDuplo}
-      </div>
+      <div style={{ color: mutedColor, fontSize: "9px" }}>{sep}</div>
 
-      {/* Sale info */}
-      <div style={{ fontSize: "11px", marginBottom: "4px" }}>
-        <div>Pedido: {data.pedido}</div>
-        <div>Data: {data.data} {data.hora}</div>
-        <div>Vendedor: {data.vendedor}</div>
-        {data.operador && <div>Operador: {data.operador}</div>}
+      {/* ── SALE INFO ── */}
+      <div style={{ fontSize: "10px", margin: "6px 0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>Pedido: {data.pedido}</span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>Data: {data.data}</span>
+          <span>Data prevista: {data.dataPrevista || "00/00/0000"}</span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>Vendedor: {data.vendedor}</span>
+        </div>
         {data.cliente && (
-          <>
-            <div>{separador}</div>
-            <div>Cliente: {data.cliente.nome}</div>
-            {data.cliente.cpfCnpj && <div>CPF/CNPJ: {data.cliente.cpfCnpj}</div>}
-            {data.cliente.telefone && <div>Tel: {data.cliente.telefone}</div>}
-          </>
+          <div>Cliente: {data.cliente.nome}</div>
         )}
       </div>
 
-      <div style={{ fontSize: "10px" }}>{separador}</div>
+      <div style={{ color: mutedColor, fontSize: "9px" }}>{sep}</div>
 
-      {/* Items header */}
-      <div style={{ fontSize: "10px", display: "flex", justifyContent: "space-between", fontWeight: "bold", marginBottom: "2px" }}>
-        <span style={{ width: "5%" }}>#</span>
-        <span style={{ width: "45%", textAlign: "left" }}>DESCRIÇÃO</span>
-        <span style={{ width: "10%", textAlign: "center" }}>QTD</span>
-        <span style={{ width: "18%", textAlign: "right" }}>VALOR</span>
-        <span style={{ width: "20%", textAlign: "right" }}>TOTAL</span>
-      </div>
+      {/* ── ITEMS TABLE ── */}
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px", margin: "4px 0" }}>
+        <thead>
+          <tr style={{ borderBottom: `1px solid ${mutedColor}` }}>
+            <th style={{ textAlign: "left", padding: "2px 0", fontWeight: "bold" }}>Item da venda</th>
+            <th style={{ textAlign: "center", padding: "2px 4px", fontWeight: "bold", width: "40px" }}>Qtde</th>
+            <th style={{ textAlign: "right", padding: "2px 4px", fontWeight: "bold", width: "60px" }}>Valor</th>
+            <th style={{ textAlign: "right", padding: "2px 0", fontWeight: "bold", width: "60px" }}>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.itens.map((item, idx) => (
+            <tr key={idx}>
+              <td style={{ padding: "3px 0", fontSize: "9px" }}>{item.descricao}</td>
+              <td style={{ textAlign: "center", padding: "3px 4px" }}>{item.quantidade}</td>
+              <td style={{ textAlign: "right", padding: "3px 4px" }}>{formatCurrency(item.valorUnitario)}</td>
+              <td style={{ textAlign: "right", padding: "3px 0" }}>{formatCurrency(item.total)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
-      <div style={{ fontSize: "10px" }}>{separador}</div>
+      <div style={{ color: mutedColor, fontSize: "9px" }}>{sep}</div>
 
-      {/* Items */}
-      {data.itens.map((item, idx) => (
-        <div key={idx} style={{ fontSize: "11px", marginBottom: "2px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span style={{ width: "5%" }}>{item.item}</span>
-            <span style={{ width: "45%", textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {item.descricao}
-            </span>
-            <span style={{ width: "10%", textAlign: "center" }}>{item.quantidade}</span>
-            <span style={{ width: "18%", textAlign: "right" }}>{formatCurrency(item.valorUnitario)}</span>
-            <span style={{ width: "20%", textAlign: "right" }}>{formatCurrency(item.total)}</span>
-          </div>
-          <div style={{ fontSize: "9px", color: "#666", paddingLeft: "5%" }}>
-            {item.codigo}
-          </div>
-        </div>
-      ))}
+      {/* ── PAYMENTS TABLE ── */}
+      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px", margin: "4px 0" }}>
+        <thead>
+          <tr style={{ borderBottom: `1px solid ${mutedColor}` }}>
+            <th style={{ textAlign: "left", padding: "2px 0", fontWeight: "bold" }}>Data</th>
+            <th style={{ textAlign: "left", padding: "2px 4px", fontWeight: "bold" }}>Forma pgto.</th>
+            <th style={{ textAlign: "center", padding: "2px 4px", fontWeight: "bold" }}>Cód. fiscal</th>
+            <th style={{ textAlign: "right", padding: "2px 0", fontWeight: "bold" }}>Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.pagamentos.map((pag, idx) => {
+            // If has installment dates, show each one
+            if (pag.dataParcelas && pag.dataParcelas.length > 0) {
+              return pag.dataParcelas.map((parcela, pIdx) => (
+                <tr key={`${idx}-${pIdx}`}>
+                  <td style={{ padding: "2px 0", fontSize: "9px" }}>{parcela.data}</td>
+                  <td style={{ padding: "2px 4px", fontSize: "9px" }}>
+                    {pag.forma}{pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""}
+                  </td>
+                  <td style={{ textAlign: "center", padding: "2px 4px", fontSize: "9px" }}>{pag.codigoFiscal}</td>
+                  <td style={{ textAlign: "right", padding: "2px 0", fontSize: "9px" }}>{formatCurrency(parcela.valor)}</td>
+                </tr>
+              ));
+            }
+            // Single payment
+            return (
+              <tr key={idx}>
+                <td style={{ padding: "2px 0", fontSize: "9px" }}>{data.data}</td>
+                <td style={{ padding: "2px 4px", fontSize: "9px" }}>{pag.forma}</td>
+                <td style={{ textAlign: "center", padding: "2px 4px", fontSize: "9px" }}>{pag.codigoFiscal}</td>
+                <td style={{ textAlign: "right", padding: "2px 0", fontSize: "9px" }}>{formatCurrency(pag.valor)}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
 
-      <div style={{ fontSize: "10px" }}>{separador}</div>
+      <div style={{ color: mutedColor, fontSize: "9px" }}>{sep}</div>
 
-      {/* Payments */}
-      <div style={{ fontSize: "11px", fontWeight: "bold", marginBottom: "2px" }}>PAGAMENTOS</div>
-      {data.pagamentos.map((pag, idx) => (
-        <div key={idx} style={{ fontSize: "11px", display: "flex", justifyContent: "space-between" }}>
-          <span>{pag.forma}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ""}</span>
-          <span>{formatCurrency(pag.valor)}</span>
-        </div>
-      ))}
-
-      <div style={{ fontSize: "10px" }}>{separadorDuplo}</div>
-
-      {/* Totals */}
-      <div style={{ fontSize: "11px" }}>
+      {/* ── TOTALS ── */}
+      <div style={{ fontSize: "10px", margin: "4px 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>Subtotal:</span>
+          <span>Sub Total:</span>
           <span>{formatCurrency(data.subtotal)}</span>
         </div>
         {data.desconto > 0 && (
@@ -152,159 +243,31 @@ const ComprovantePrint = forwardRef<HTMLDivElement, { data: ComprovanteData }>((
         )}
       </div>
 
-      <div style={{ fontSize: "14px", fontWeight: "bold", display: "flex", justifyContent: "space-between", margin: "4px 0" }}>
-        <span>TOTAL:</span>
+      <div style={{ fontWeight: "bold", fontSize: "12px", display: "flex", justifyContent: "space-between", margin: "4px 0" }}>
+        <span>Total:</span>
         <span>{formatCurrency(data.total)}</span>
       </div>
 
       {data.troco > 0 && (
-        <div style={{ fontSize: "12px", display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+        <div style={{ fontSize: "10px", display: "flex", justifyContent: "space-between" }}>
           <span>Troco:</span>
           <span>{formatCurrency(data.troco)}</span>
         </div>
       )}
 
-      <div style={{ fontSize: "10px" }}>{separador}</div>
-
-      {/* Observation */}
       {data.observacao && (
-        <div style={{ fontSize: "10px", margin: "4px 0" }}>
-          Obs: {data.observacao}
-        </div>
+        <>
+          <div style={{ color: mutedColor, fontSize: "9px" }}>{sep}</div>
+          <div style={{ fontSize: "9px", margin: "4px 0" }}>Obs: {data.observacao}</div>
+        </>
       )}
 
-      {/* Footer */}
-      <div style={{ textAlign: "center", fontSize: "10px", marginTop: "8px" }}>
+      {/* ── FOOTER ── */}
+      <div style={{ color: mutedColor, fontSize: "9px" }}>{sep}</div>
+      <div style={{ textAlign: "center", fontSize: "9px", marginTop: "8px", color: mutedColor }}>
         <div>Obrigada pela preferência!</div>
-        <div style={{ marginTop: "2px" }}>LE JESS PERFUMES</div>
-        <div style={{ fontSize: "9px", color: "#999", marginTop: "4px" }}>
-          Documento sem valor fiscal
-        </div>
+        <div style={{ marginTop: "4px", fontSize: "8px" }}>{data.data} {data.hora}</div>
       </div>
-    </div>
-  );
-});
-
-ComprovantePrint.displayName = "ComprovantePrint";
-
-export default ComprovantePrint;
-
-// Screen preview version (for the modal)
-export function ComprovantePreview({ data }: { data: ComprovanteData }) {
-  const separador = "─".repeat(48);
-  const separadorDuplo = "═".repeat(48);
-
-  return (
-    <div style={{
-      width: "100%",
-      maxWidth: "320px",
-      fontFamily: "'Courier New', monospace",
-      fontSize: "11px",
-      lineHeight: "1.4",
-      color: "hsl(var(--foreground))",
-      background: "hsl(var(--card))",
-      padding: "16px",
-      borderRadius: "12px",
-      border: "1px solid hsl(var(--border))",
-      margin: "0 auto",
-      maxHeight: "60vh",
-      overflowY: "auto",
-    }}>
-      {/* Header */}
-      <div style={{ textAlign: "center", marginBottom: "8px" }}>
-        <div style={{ fontSize: "14px", fontWeight: "bold", letterSpacing: "1px", color: "hsl(var(--gold))" }}>
-          {data.nomeFantasia || "LE JESS PERFUMES"}
-        </div>
-        {data.cnpj && <div style={{ fontSize: "10px", color: "hsl(var(--muted-foreground))" }}>CNPJ: {data.cnpj}</div>}
-        {data.endereco && <div style={{ fontSize: "9px", color: "hsl(var(--muted-foreground))" }}>{data.endereco}</div>}
-        {data.cidade && <div style={{ fontSize: "9px", color: "hsl(var(--muted-foreground))" }}>{data.cidade}</div>}
-      </div>
-
-      <div style={{ textAlign: "center", fontSize: "10px", color: "hsl(var(--muted-foreground))" }}>
-        {separadorDuplo}
-      </div>
-      <div style={{ textAlign: "center", fontWeight: "bold", fontSize: "12px", margin: "4px 0" }}>
-        COMPROVANTE NÃO FISCAL
-      </div>
-      <div style={{ textAlign: "center", fontSize: "10px", color: "hsl(var(--muted-foreground))" }}>
-        {separadorDuplo}
-      </div>
-
-      {/* Sale info */}
-      <div style={{ fontSize: "10px", margin: "8px 0", color: "hsl(var(--muted-foreground))" }}>
-        <div>Pedido: {data.pedido}</div>
-        <div>Data: {data.data} {data.hora}</div>
-        <div>Vendedor: {data.vendedor}</div>
-        {data.cliente && (
-          <>
-            <div style={{ color: "hsl(var(--muted-foreground))" }}>{separador}</div>
-            <div>Cliente: {data.cliente.nome}</div>
-            {data.cliente.cpfCnpj && <div>CPF/CNPJ: {data.cliente.cpfCnpj}</div>}
-          </>
-        )}
-      </div>
-
-      <div style={{ color: "hsl(var(--muted-foreground))", fontSize: "9px" }}>{separador}</div>
-
-      {/* Items */}
-      {data.itens.map((item, idx) => (
-        <div key={idx} style={{ fontSize: "10px", margin: "4px 0" }}>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>{item.item}. {item.descricao}</span>
-          </div>
-          <div style={{ display: "flex", justifyContent: "space-between", paddingLeft: "12px", color: "hsl(var(--muted-foreground))" }}>
-            <span>{item.quantidade}x {formatCurrency(item.valorUnitario)}</span>
-            <span>{formatCurrency(item.total)}</span>
-          </div>
-        </div>
-      ))}
-
-      <div style={{ color: "hsl(var(--muted-foreground))", fontSize: "9px" }}>{separador}</div>
-
-      {/* Payments */}
-      <div style={{ fontSize: "10px", fontWeight: "bold", margin: "4px 0" }}>PAGAMENTOS</div>
-      {data.pagamentos.map((pag, idx) => (
-        <div key={idx} style={{ fontSize: "10px", display: "flex", justifyContent: "space-between", color: "hsl(var(--muted-foreground))" }}>
-          <span>{pag.forma}{pag.parcelas > 1 ? ` ${pag.parcelas}x` : ""}</span>
-          <span>{formatCurrency(pag.valor)}</span>
-        </div>
-      ))}
-
-      <div style={{ color: "hsl(var(--muted-foreground))", fontSize: "9px" }}>{separadorDuplo}</div>
-
-      {/* Totals */}
-      <div style={{ fontSize: "10px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", color: "hsl(var(--muted-foreground))" }}>
-          <span>Subtotal:</span><span>{formatCurrency(data.subtotal)}</span>
-        </div>
-        {data.desconto > 0 && (
-          <div style={{ display: "flex", justifyContent: "space-between", color: "hsl(var(--success))" }}>
-            <span>Desconto:</span><span>-{formatCurrency(data.desconto)}</span>
-          </div>
-        )}
-        {data.acrescimo > 0 && (
-          <div style={{ display: "flex", justifyContent: "space-between" }} className="text-warning">
-            <span>Acréscimo:</span><span>+{formatCurrency(data.acrescimo)}</span>
-          </div>
-        )}
-      </div>
-
-      <div style={{ fontSize: "14px", fontWeight: "bold", display: "flex", justifyContent: "space-between", margin: "6px 0", color: "hsl(var(--gold))" }}>
-        <span>TOTAL:</span><span>{formatCurrency(data.total)}</span>
-      </div>
-
-      {data.troco > 0 && (
-        <div style={{ fontSize: "11px", display: "flex", justifyContent: "space-between", color: "hsl(var(--success))" }}>
-          <span>Troco:</span><span>{formatCurrency(data.troco)}</span>
-        </div>
-      )}
-
-      <div style={{ color: "hsl(var(--muted-foreground))", fontSize: "9px" }}>{separador}</div>
-
-      <div style={{ textAlign: "center", fontSize: "9px", marginTop: "8px", color: "hsl(var(--muted-foreground))" }}>
-        <div>Obrigada pela preferência!</div>
-        <div style={{ fontSize: "8px", marginTop: "4px", opacity: 0.6 }}>Documento sem valor fiscal</div>
-      </div>
-    </div>
+    </>
   );
 }
