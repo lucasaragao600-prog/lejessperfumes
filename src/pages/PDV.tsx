@@ -156,6 +156,8 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
         marca: p.marca,
         codigo: p.codigo,
         volume: p.volume,
+        concentracao: p.concentracao,
+        casaSigla: p.casaSigla,
         imageUrl: p.imageUrl || "",
         deposito,
         quantidade: 1,
