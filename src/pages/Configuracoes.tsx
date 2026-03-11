@@ -59,6 +59,26 @@ export default function Configuracoes() {
     }
   }, [configFiscal]);
 
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("A imagem deve ter no máximo 2MB");
+      return;
+    }
+    setLogoFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setLogoPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    setEmpresa(p => ({ ...p, logoUrl: "" }));
+    if (logoInputRef.current) logoInputRef.current.value = "";
+  };
+
   const handleSalvarEmpresa = async () => {
     if (!empresa.razaoSocial.trim() || !empresa.cnpj.trim()) {
       toast.error("Razão Social e CNPJ são obrigatórios");
@@ -66,7 +86,24 @@ export default function Configuracoes() {
     }
     setIsSaving(true);
     try {
-      await salvarConfigFiscal(empresa);
+      let logoUrl = empresa.logoUrl;
+
+      // Upload logo if new file selected
+      if (logoFile) {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const ext = logoFile.name.split('.').pop();
+        const filePath = `logo-empresa.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("product-photos")
+          .upload(filePath, logoFile, { upsert: true });
+        if (uploadError) throw uploadError;
+        const { data: urlData } = supabase.storage
+          .from("product-photos")
+          .getPublicUrl(filePath);
+        logoUrl = urlData.publicUrl;
+      }
+
+      await salvarConfigFiscal({ ...empresa, logoUrl });
       toast.success("Dados da empresa salvos com sucesso!");
     } catch {
       toast.error("Erro ao salvar dados da empresa");
