@@ -151,10 +151,7 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       <div style={{ fontSize: "10px", margin: "6px 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>Pedido: {data.pedido}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>Data: {data.data}</span>
-          <span>Data prevista: {data.dataPrevista || "00/00/0000"}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>Vendedor: {data.vendedor}</span>
