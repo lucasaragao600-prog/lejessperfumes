@@ -39,6 +39,7 @@ export default function Configuracoes() {
         inscricaoEstadual: configFiscal.inscricaoEstadual,
         endereco: configFiscal.endereco,
         numero: configFiscal.numero,
+        complemento: configFiscal.complemento,
         bairro: configFiscal.bairro,
         cidade: configFiscal.cidade,
         uf: configFiscal.uf,
@@ -50,7 +51,11 @@ export default function Configuracoes() {
         proximoNumeroNfce: configFiscal.proximoNumeroNfce,
         cscId: configFiscal.cscId,
         cscToken: configFiscal.cscToken,
+        logoUrl: configFiscal.logoUrl,
       });
+      if (configFiscal.logoUrl) {
+        setLogoPreview(configFiscal.logoUrl);
+      }
     }
   }, [configFiscal]);
 
