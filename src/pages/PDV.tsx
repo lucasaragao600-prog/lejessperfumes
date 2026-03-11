@@ -418,9 +418,9 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   @page { size: 80mm auto; margin: 0; }
   body { font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.4; color: #000; background: #fff; padding: 4mm; margin: 0; width: 80mm; }
   .header { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
-  .logo { width: 60px; min-width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border: 1px solid #ccc; border-radius: 4px; text-align: center; }
+  .logo { width: 60px; min-width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border: 1px solid #ccc; border-radius: 4px; text-align: center; overflow: hidden; }
+  .logo img { width: 100%; height: 100%; object-fit: contain; }
   .logo-name { font-weight: bold; font-size: 10px; }
-  .logo-sub { font-size: 7px; }
   .company { flex: 1; text-align: right; font-size: 9px; }
   .company-name { font-weight: bold; font-size: 10px; }
   .sep { color: #999; font-size: 9px; }
