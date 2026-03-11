@@ -256,18 +256,30 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
     ).slice(0, 20);
   }, [clientes, buscaCliente]);
 
+  // Map payment type to fiscal code
+  const codigoFiscalMap: Record<string, string> = {
+    "Dinheiro": "01 - Dinheiro",
+    "Pix": "17 - Pix",
+    "Débito": "02 - Cartão de Débito",
+    "Crédito": "03 - Cartão de Crédito",
+    "Conta Assinada": "99 - Outros",
+  };
+
   // Build comprovante data from current sale state
   const buildComprovanteData = (grupoVenda: string): ComprovanteData => {
     const agora = new Date();
     return {
       nomeFantasia: configFiscal?.nomeFantasia || "LE JESS PERFUMES",
+      razaoSocial: configFiscal?.razaoSocial || "MAISON LE JESS COMERCIO DE PERFUMARIA LTDA",
       cnpj: configFiscal?.cnpj || "",
-      endereco: configFiscal ? `${configFiscal.endereco}, ${configFiscal.numero} - ${configFiscal.bairro}` : "",
-      cidade: configFiscal ? `${configFiscal.cidade} - ${configFiscal.uf}` : "",
+      inscricaoEstadual: configFiscal?.inscricaoEstadual || "",
+      endereco: configFiscal ? `${configFiscal.endereco}, ${configFiscal.numero}` : "",
+      cidade: configFiscal ? `${configFiscal.bairro}\n${configFiscal.cidade} - Cep ${configFiscal.cep}\n${configFiscal.uf}` : "",
       telefone: configFiscal?.telefone || "",
       pedido: grupoVenda.slice(0, 8).toUpperCase(),
       data: agora.toLocaleDateString("pt-BR"),
-      hora: agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+      hora: agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
+      dataPrevista: undefined,
       vendedor: vendedora,
       operador: profile?.nome || "",
       cliente: clienteSelecionado,
@@ -279,11 +291,28 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
         valorUnitario: item.precoUnitario,
         total: item.precoUnitario * item.quantidade,
       })),
-      pagamentos: pagamentos.map(p => ({
-        forma: p.tipoPagamento,
-        parcelas: p.parcelas,
-        valor: p.valor,
-      })),
+      pagamentos: pagamentos.map(p => {
+        const codigoFiscal = codigoFiscalMap[p.tipoPagamento] || "99 - Outros";
+        // Generate installment dates for credit
+        let dataParcelas: { data: string; valor: number }[] | undefined;
+        if (p.parcelas > 1) {
+          dataParcelas = Array.from({ length: p.parcelas }, (_, i) => {
+            const d = new Date(agora);
+            d.setMonth(d.getMonth() + i + 1);
+            return {
+              data: d.toLocaleDateString("pt-BR"),
+              valor: Number((p.valor / p.parcelas).toFixed(2)),
+            };
+          });
+        }
+        return {
+          forma: p.tipoPagamento,
+          codigoFiscal,
+          parcelas: p.parcelas,
+          valor: p.valor,
+          dataParcelas,
+        };
+      }),
       subtotal,
       desconto: tipoAjuste === "desconto" ? valorAjuste : 0,
       acrescimo: tipoAjuste === "acrescimo" ? valorAjuste : 0,
