@@ -408,22 +408,29 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
 
               {/* Price info - vendedor only sees sale price */}
               {isMaster ? (
-                <div className="grid grid-cols-3 gap-2 border-t border-border pt-3 items-end">
-                  <div>
-                    <p className="text-[9px] text-muted-foreground">Custo unit.</p>
-                    <p className="text-xs text-foreground">{formatCurrency(p.custo)}</p>
+                <div className="border-t border-border pt-3">
+                  {/* Custo Médio - destaque principal */}
+                  <div className="flex items-center justify-between mb-2.5 px-2.5 py-2 rounded-lg bg-amber-500/8 border border-amber-500/20">
+                    <p className="text-[10px] font-medium text-amber-400/80">Custo Médio</p>
+                    <p className="text-sm font-bold text-amber-400">{formatCurrency(p.custoMedio || 0)}</p>
                   </div>
-                  <div>
-                    <p className="text-[9px] text-muted-foreground">Venda unit.</p>
-                    <p className="text-xs text-gold font-medium">{formatCurrency(p.precoVenda)}</p>
-                  </div>
-                  <div className="text-right">
-                    <button
-                      onClick={() => setEditandoPerfume(p)}
-                      className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-gold transition-colors duration-150 ml-auto"
-                    >
-                      <Pencil size={11} /> Editar
-                    </button>
+                  <div className="grid grid-cols-3 gap-2 items-end">
+                    <div>
+                      <p className="text-[9px] text-muted-foreground">Custo unit.</p>
+                      <p className="text-xs text-foreground">{formatCurrency(p.custo)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] text-muted-foreground">Venda unit.</p>
+                      <p className="text-xs text-gold font-medium">{formatCurrency(p.precoVenda)}</p>
+                    </div>
+                    <div className="text-right">
+                      <button
+                        onClick={() => setEditandoPerfume(p)}
+                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-gold transition-colors duration-150 ml-auto"
+                      >
+                        <Pencil size={11} /> Editar
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : (
