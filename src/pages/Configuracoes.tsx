@@ -229,6 +229,33 @@ export default function Configuracoes() {
             <p className="text-[10px] text-muted-foreground mt-0.5">Informações que aparecem no comprovante e NFC-e</p>
           </div>
 
+          {/* Logo upload */}
+          <div className="flex items-center gap-4">
+            <div className="relative w-20 h-20 rounded-xl border border-border bg-surface-overlay flex items-center justify-center overflow-hidden flex-shrink-0">
+              {logoPreview ? (
+                <>
+                  <img src={logoPreview} alt="Logo" className="w-full h-full object-contain" />
+                  <button onClick={handleRemoveLogo} className="absolute top-0.5 right-0.5 bg-destructive text-destructive-foreground rounded-full p-0.5">
+                    <X size={10} />
+                  </button>
+                </>
+              ) : (
+                <div className="text-center text-muted-foreground">
+                  <Upload size={16} className="mx-auto mb-1" />
+                  <span className="text-[8px]">Logo</span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1">
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Logo da Empresa</label>
+              <p className="text-[9px] text-muted-foreground mb-2">PNG ou JPG, máx. 2MB. Aparece no comprovante.</p>
+              <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleLogoChange} className="hidden" />
+              <button onClick={() => logoInputRef.current?.click()} className="text-xs text-gold hover:underline flex items-center gap-1">
+                <Upload size={12} /> {logoPreview ? "Trocar imagem" : "Enviar imagem"}
+              </button>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="md:col-span-2">
               <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Razão Social *</label>
