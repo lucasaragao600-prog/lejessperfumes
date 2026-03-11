@@ -337,6 +337,72 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
             />
           </div>
         </div>
+        ) : tab === "fiscal" ? (
+          /* Fiscal Tab */
+          <div className="px-4 pt-4 space-y-5">
+            <div className="bg-gold/10 border border-gold-muted rounded-xl p-4">
+              <p className="text-xs font-semibold text-gold mb-1">Cadastro Fiscal</p>
+              <p className="text-[10px] text-muted-foreground">Campos obrigatórios para emissão de NFC-e. Preencha NCM, CFOP e CST/CSOSN para este produto.</p>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-1.5 block">NCM (Nomenclatura Comum do Mercosul)</label>
+              <input
+                type="text"
+                value={ncm}
+                onChange={(e) => setNcm(e.target.value)}
+                placeholder="Ex: 3303.00.20"
+                maxLength={10}
+                className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-foreground font-mono focus:outline-none focus:border-gold-muted"
+              />
+              <p className="text-[9px] text-muted-foreground mt-1">Perfumes: 3303.00.20 · Cosméticos: 3304.99.90</p>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-1.5 block">CFOP (Código Fiscal de Operações)</label>
+              <input
+                type="text"
+                value={cfop}
+                onChange={(e) => setCfop(e.target.value)}
+                placeholder="Ex: 5102"
+                maxLength={4}
+                className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-foreground font-mono focus:outline-none focus:border-gold-muted"
+              />
+              <p className="text-[9px] text-muted-foreground mt-1">Venda dentro do estado: 5102 · Venda fora do estado: 6102</p>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-1.5 block">CST ou CSOSN</label>
+              <input
+                type="text"
+                value={cstCsosn}
+                onChange={(e) => setCstCsosn(e.target.value)}
+                placeholder="Ex: 102 (Simples Nacional)"
+                maxLength={4}
+                className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-foreground font-mono focus:outline-none focus:border-gold-muted"
+              />
+              <p className="text-[9px] text-muted-foreground mt-1">Simples Nacional: 102 · Regime Normal: 00, 40, 60</p>
+            </div>
+
+            <div>
+              <label className="text-xs text-muted-foreground mb-1.5 block">Unidade Fiscal</label>
+              <div className="flex flex-wrap gap-1.5">
+                {["UN", "CX", "KG", "LT", "ML", "PCT"].map(u => (
+                  <button
+                    key={u}
+                    onClick={() => setUnidadeFiscal(u)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold border transition-all ${
+                      unidadeFiscal === u
+                        ? "bg-gold text-primary-foreground border-gold"
+                        : "bg-surface border-border text-muted-foreground"
+                    }`}
+                  >
+                    {u}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
         ) : tab === "custos" ? (
           /* Cost History Tab */
           <div className="px-4 pt-4 space-y-4">
