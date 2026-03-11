@@ -256,6 +256,43 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
     ).slice(0, 20);
   }, [clientes, buscaCliente]);
 
+  // Build comprovante data from current sale state
+  const buildComprovanteData = (grupoVenda: string): ComprovanteData => {
+    const agora = new Date();
+    return {
+      nomeFantasia: configFiscal?.nomeFantasia || "LE JESS PERFUMES",
+      cnpj: configFiscal?.cnpj || "",
+      endereco: configFiscal ? `${configFiscal.endereco}, ${configFiscal.numero} - ${configFiscal.bairro}` : "",
+      cidade: configFiscal ? `${configFiscal.cidade} - ${configFiscal.uf}` : "",
+      telefone: configFiscal?.telefone || "",
+      pedido: grupoVenda.slice(0, 8).toUpperCase(),
+      data: agora.toLocaleDateString("pt-BR"),
+      hora: agora.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+      vendedor: vendedora,
+      operador: profile?.nome || "",
+      cliente: clienteSelecionado,
+      itens: cart.map((item, idx) => ({
+        item: idx + 1,
+        descricao: item.perfumeNome,
+        codigo: item.codigo,
+        quantidade: item.quantidade,
+        valorUnitario: item.precoUnitario,
+        total: item.precoUnitario * item.quantidade,
+      })),
+      pagamentos: pagamentos.map(p => ({
+        forma: p.tipoPagamento,
+        parcelas: p.parcelas,
+        valor: p.valor,
+      })),
+      subtotal,
+      desconto: tipoAjuste === "desconto" ? valorAjuste : 0,
+      acrescimo: tipoAjuste === "acrescimo" ? valorAjuste : 0,
+      total: totalFinal,
+      troco: trocoCalculado,
+      observacao: observacao || undefined,
+    };
+  };
+
   // Finalize sale
   const finalizarVenda = async () => {
     if (isFinalizando || cart.length === 0 || !vendedora) return;
@@ -265,6 +302,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
     try {
       const hoje = getHojeManaus();
       const registradoPor = profile?.nome || "";
+      const grupoVenda = crypto.randomUUID();
 
       const itens: Venda[] = cart.map(item => {
         const proporcao = subtotal > 0 ? (item.precoUnitario * item.quantidade) / subtotal : 1 / cart.length;
@@ -279,7 +317,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
           tipoAjuste, desconto: ajusteItem, total: Math.max(0, totalItem),
           vendedora, tipoPagamento: pagamentos[0]?.tipoPagamento || "Pix",
           bandeira: pagamentos[0]?.bandeira || ("N/A" as Bandeira),
-          observacao, registradoPor, grupoVenda: "",
+          observacao, registradoPor, grupoVenda,
         };
       });
 
@@ -291,6 +329,20 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
 
       for (const item of cart) {
         baixarEstoque(item.perfumeId, item.deposito, item.quantidade);
+      }
+
+      // Generate comprovante data
+      const compData = buildComprovanteData(grupoVenda);
+      setComprovanteData(compData);
+      setGrupoVendaAtual(grupoVenda);
+
+      // If NFC-e, create emission record
+      if (tipoDocumento === "nfce") {
+        try {
+          await criarEmissao({ vendaGrupoVenda: grupoVenda });
+        } catch (err) {
+          console.error("Erro ao criar emissão NFC-e:", err);
+        }
       }
 
       setTroco(trocoCalculado);
@@ -307,6 +359,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
     setAjusteValor(0); setPagamentos([]); setShowPagamento(false);
     setVendaConcluida(false); setTroco(0); setClienteId(null);
     setTipoDocumento("comprovante"); setShowFinalizacao(false);
+    setShowComprovante(false); setComprovanteData(null); setGrupoVendaAtual("");
     searchRef.current?.focus();
   };
 
