@@ -27,6 +27,7 @@ export interface ConfiguracaoFiscal {
   nomeFantasia: string;
   endereco: string;
   numero: string;
+  complemento: string;
   bairro: string;
   cidade: string;
   uf: string;
@@ -38,6 +39,7 @@ export interface ConfiguracaoFiscal {
   proximoNumeroNfce: number;
   cscId: string;
   cscToken: string;
+  logoUrl: string;
 }
 
 function rowToNfce(row: any): NfceEmissao {
