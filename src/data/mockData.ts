@@ -41,6 +41,11 @@ export interface Perfume {
   imageUrl?: string;
   custoMedio?: number;
   ultimoCustoEm?: string;
+  // Fiscal fields
+  ncm?: string;
+  cfop?: string;
+  cstCsosn?: string;
+  unidadeFiscal?: string;
 }
 
 export type TipoAjusteValor = "desconto" | "acrescimo";

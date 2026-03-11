@@ -108,6 +108,10 @@ export function usePerfumes() {
       if (p.estoqueMinimo !== undefined) updateData.estoque_minimo = p.estoqueMinimo;
       if (p.codigo !== undefined) updateData.codigo = p.codigo;
       if (p.imageUrl !== undefined) updateData.image_url = p.imageUrl;
+      if (p.ncm !== undefined) updateData.ncm = p.ncm;
+      if (p.cfop !== undefined) updateData.cfop = p.cfop;
+      if (p.cstCsosn !== undefined) updateData.cst_csosn = p.cstCsosn;
+      if (p.unidadeFiscal !== undefined) updateData.unidade_fiscal = p.unidadeFiscal;
       const { error } = await supabase
         .from("perfumes")
         .update(updateData)
