@@ -246,6 +246,72 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes_fiscais: {
+        Row: {
+          ambiente: string
+          bairro: string
+          cep: string
+          cidade: string
+          cnpj: string
+          csc_id: string
+          csc_token: string
+          endereco: string
+          id: string
+          inscricao_estadual: string
+          nome_fantasia: string
+          numero: string
+          proximo_numero_nfce: number
+          razao_social: string
+          regime_tributario: string
+          serie_nfce: number
+          telefone: string
+          uf: string
+          updated_at: string
+        }
+        Insert: {
+          ambiente?: string
+          bairro?: string
+          cep?: string
+          cidade?: string
+          cnpj?: string
+          csc_id?: string
+          csc_token?: string
+          endereco?: string
+          id?: string
+          inscricao_estadual?: string
+          nome_fantasia?: string
+          numero?: string
+          proximo_numero_nfce?: number
+          razao_social?: string
+          regime_tributario?: string
+          serie_nfce?: number
+          telefone?: string
+          uf?: string
+          updated_at?: string
+        }
+        Update: {
+          ambiente?: string
+          bairro?: string
+          cep?: string
+          cidade?: string
+          cnpj?: string
+          csc_id?: string
+          csc_token?: string
+          endereco?: string
+          id?: string
+          inscricao_estadual?: string
+          nome_fantasia?: string
+          numero?: string
+          proximo_numero_nfce?: number
+          razao_social?: string
+          regime_tributario?: string
+          serie_nfce?: number
+          telefone?: string
+          uf?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       movimentacoes: {
         Row: {
           created_at: string
@@ -298,6 +364,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      nfce_emissoes: {
+        Row: {
+          chave_acesso: string | null
+          contingencia: boolean | null
+          created_at: string
+          danfe_url: string | null
+          data_cancelamento: string | null
+          data_emissao: string | null
+          id: string
+          motivo_cancelamento: string | null
+          motivo_rejeicao: string | null
+          numero_nfce: number | null
+          protocolo_autorizacao: string | null
+          serie: number | null
+          status: string
+          updated_at: string
+          venda_grupo_venda: string
+          xml_contingencia: string | null
+          xml_url: string | null
+        }
+        Insert: {
+          chave_acesso?: string | null
+          contingencia?: boolean | null
+          created_at?: string
+          danfe_url?: string | null
+          data_cancelamento?: string | null
+          data_emissao?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          motivo_rejeicao?: string | null
+          numero_nfce?: number | null
+          protocolo_autorizacao?: string | null
+          serie?: number | null
+          status?: string
+          updated_at?: string
+          venda_grupo_venda: string
+          xml_contingencia?: string | null
+          xml_url?: string | null
+        }
+        Update: {
+          chave_acesso?: string | null
+          contingencia?: boolean | null
+          created_at?: string
+          danfe_url?: string | null
+          data_cancelamento?: string | null
+          data_emissao?: string | null
+          id?: string
+          motivo_cancelamento?: string | null
+          motivo_rejeicao?: string | null
+          numero_nfce?: number | null
+          protocolo_autorizacao?: string | null
+          serie?: number | null
+          status?: string
+          updated_at?: string
+          venda_grupo_venda?: string
+          xml_contingencia?: string | null
+          xml_url?: string | null
+        }
+        Relationships: []
       }
       notas_fiscais: {
         Row: {
@@ -395,9 +521,11 @@ export type Database = {
       perfumes: {
         Row: {
           casa_sigla: string
+          cfop: string
           codigo: string
           concentracao: string
           created_at: string
+          cst_csosn: string
           custo: number
           custo_medio: number
           estoque_amazonas: number
@@ -407,19 +535,23 @@ export type Database = {
           id: string
           image_url: string | null
           marca: string
+          ncm: string
           nome: string
           preco_venda: number
           tamanho: string
           tipo: string
           ultimo_custo_em: string | null
+          unidade_fiscal: string
           updated_at: string
           volume: number
         }
         Insert: {
           casa_sigla: string
+          cfop?: string
           codigo: string
           concentracao: string
           created_at?: string
+          cst_csosn?: string
           custo?: number
           custo_medio?: number
           estoque_amazonas?: number
@@ -429,19 +561,23 @@ export type Database = {
           id?: string
           image_url?: string | null
           marca: string
+          ncm?: string
           nome: string
           preco_venda?: number
           tamanho: string
           tipo: string
           ultimo_custo_em?: string | null
+          unidade_fiscal?: string
           updated_at?: string
           volume: number
         }
         Update: {
           casa_sigla?: string
+          cfop?: string
           codigo?: string
           concentracao?: string
           created_at?: string
+          cst_csosn?: string
           custo?: number
           custo_medio?: number
           estoque_amazonas?: number
@@ -451,11 +587,13 @@ export type Database = {
           id?: string
           image_url?: string | null
           marca?: string
+          ncm?: string
           nome?: string
           preco_venda?: number
           tamanho?: string
           tipo?: string
           ultimo_custo_em?: string | null
+          unidade_fiscal?: string
           updated_at?: string
           volume?: number
         }
