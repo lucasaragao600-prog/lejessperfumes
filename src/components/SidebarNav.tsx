@@ -9,6 +9,7 @@ interface SidebarNavProps {
 }
 
 const allTabs = [
+  { id: "pdv", label: "PDV", icon: Monitor, masterOnly: false, highlight: true },
   { id: "estoque", label: "Estoque", icon: Package, masterOnly: false },
   { id: "vendas", label: "Vendas", icon: ShoppingCart, masterOnly: false },
   { id: "movimentacoes", label: "Movimentações", icon: ArrowLeftRight, masterOnly: false },

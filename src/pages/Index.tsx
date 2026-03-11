@@ -95,6 +95,14 @@ function IndexContent({
   const [showAlertas, setShowAlertas] = useState(false);
   const alertCount = pendentes.length;
 
+  if (activeTab === "pdv") {
+    return (
+      <AppProvider>
+        <PDV onBack={() => setActiveTab("estoque")} />
+      </AppProvider>
+    );
+  }
+
   const renderTab = () => {
     switch (activeTab) {
       case "estoque": return <Estoque isMaster={isMaster} />;
