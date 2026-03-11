@@ -235,13 +235,13 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
         </div>
         {data.desconto > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>Desconto:</span>
+            <span>Desconto{data.descontoLabel ? ` (${data.descontoLabel})` : ""}:</span>
             <span>-{formatCurrency(data.desconto)}</span>
           </div>
         )}
         {data.acrescimo > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>Acréscimo:</span>
+            <span>Acréscimo{data.acrescimoLabel ? ` (${data.acrescimoLabel})` : ""}:</span>
             <span>+{formatCurrency(data.acrescimo)}</span>
           </div>
         )}
