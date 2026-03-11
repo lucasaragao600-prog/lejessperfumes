@@ -15,6 +15,7 @@ import ImportarPlanilha from "@/pages/ImportarPlanilha";
 import NotasFiscais from "@/pages/NotasFiscais";
 import Alertas from "@/pages/Alertas";
 import PDV from "@/pages/PDV";
+import FechamentoCaixa from "@/pages/FechamentoCaixa";
 import { AppProvider } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useAlertas } from "@/hooks/useAlertas";
@@ -112,6 +113,7 @@ function IndexContent({
       case "notas": return isMaster ? <NotasFiscais /> : <Estoque isMaster={false} />;
       case "dashboards": return isMaster ? <Dashboards /> : <Estoque isMaster={false} />;
       case "importar": return isMaster ? <ImportarPlanilha /> : <Estoque isMaster={false} />;
+      case "caixa": return <FechamentoCaixa />;
       case "configuracoes": return isMaster ? <Configuracoes /> : <Estoque isMaster={false} />;
       case "usuarios": return isMaster ? <GerenciarUsuarios /> : <Estoque isMaster={false} />;
       default: return <Estoque isMaster={isMaster} />;

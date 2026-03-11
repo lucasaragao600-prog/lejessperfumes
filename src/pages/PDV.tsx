@@ -1,8 +1,9 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import {
-  Search, Plus, Minus, Trash2, ShoppingCart, CreditCard, X,
-  Package, Barcode, CheckCircle2, ArrowLeft, Receipt, DollarSign,
-  Percent, Tag, Store, User, MessageSquare, Loader2, Calculator
+  Search, Plus, Minus, Trash2, ShoppingCart, X,
+  Package, CheckCircle2, ArrowLeft, Receipt, DollarSign,
+  Percent, Store, User, Loader2, UserPlus, FileText,
+  CreditCard, Banknote, QrCode, BookOpen, ChevronDown
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
@@ -11,6 +12,7 @@ import {
   type TipoPagamento, type Bandeira, type TipoAjusteValor, type Perfume
 } from "@/data/mockData";
 import type { VendaPagamento } from "@/hooks/useVendas";
+import { useClientes, type Cliente } from "@/hooks/useClientes";
 import { getHojeManaus } from "@/lib/dateUtils";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
@@ -22,6 +24,8 @@ interface CartItem {
   perfumeNome: string;
   marca: string;
   codigo: string;
+  volume: number;
+  imageUrl: string;
   deposito: Deposito;
   quantidade: number;
   precoUnitario: number;
@@ -32,19 +36,24 @@ interface PagamentoItem {
   tipoPagamento: TipoPagamento;
   bandeira: Bandeira;
   valor: number;
+  parcelas: number;
+  valorParcela: number;
   observacao?: string;
 }
 
+type TipoDocumento = "comprovante" | "nfce";
+
 export default function PDV({ onBack }: { onBack?: () => void }) {
   const {
-    perfumes, baixarEstoque, adicionarVendaMulti, excluirVenda,
-    vendedoras: vendedorasCtx
+    perfumes, baixarEstoque, adicionarVendaMulti,
+    vendedoras: vendedorasCtx, concentracoesConfig
   } = useApp();
-  const { role, profile } = useAuth();
+  const { role, profile, user } = useAuth();
   const isMaster = role === "master";
   const isVendedor = role === "vendedor";
   const userLoja = (isVendedor && profile?.loja) ? profile.loja as Deposito : null;
   const vendedoras = [...vendedorasCtx, "Outra"];
+  const { clientes, adicionarCliente } = useClientes();
 
   // Search
   const [busca, setBusca] = useState("");
@@ -69,11 +78,24 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   const [isFinalizando, setIsFinalizando] = useState(false);
   const [vendaConcluida, setVendaConcluida] = useState(false);
 
-  // Keyboard shortcut: focus search with F2
+  // Client
+  const [clienteId, setClienteId] = useState<string | null>(null);
+  const [showClienteModal, setShowClienteModal] = useState(false);
+  const [showNovoCliente, setShowNovoCliente] = useState(false);
+  const [buscaCliente, setBuscaCliente] = useState("");
+  const [novoCliente, setNovoCliente] = useState({ nome: "", cpfCnpj: "", telefone: "", email: "", dataNascimento: "" });
+
+  // Document type
+  const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>("comprovante");
+  const [showFinalizacao, setShowFinalizacao] = useState(false);
+
+  const clienteSelecionado = clientes.find(c => c.id === clienteId) || null;
+
+  // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "F2") { e.preventDefault(); searchRef.current?.focus(); }
-      if (e.key === "F9") { e.preventDefault(); if (cart.length > 0) setShowPagamento(true); }
+      if (e.key === "F9" && cart.length > 0) { e.preventDefault(); setShowFinalizacao(true); }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -82,19 +104,15 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   // Search results
   const resultadosBusca = useMemo(() => {
     if (!busca.trim()) return [];
-    const q = busca.toLowerCase();
+    const q = busca.toLowerCase().trim();
     return perfumes
       .filter(p => {
-        const totalEstoque = p.estoques[deposito] || 0;
-        return (
-          (p.nome.toLowerCase().includes(q) ||
-          p.codigo.toLowerCase().includes(q) ||
-          p.marca.toLowerCase().includes(q)) &&
-          totalEstoque > 0
-        );
+        const estoque = p.estoques[deposito] || 0;
+        const text = `${p.nome} ${p.codigo} ${p.marca} ${concentracoesConfig[p.concentracao] || p.concentracao} ${p.volume}ml`.toLowerCase();
+        return text.includes(q) && estoque > 0;
       })
-      .slice(0, 8);
-  }, [busca, perfumes, deposito]);
+      .slice(0, 10);
+  }, [busca, perfumes, deposito, concentracoesConfig]);
 
   // Cart totals
   const subtotal = useMemo(() => cart.reduce((s, i) => s + i.precoUnitario * i.quantidade, 0), [cart]);
@@ -117,6 +135,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   // Add item to cart
   const addToCart = useCallback((p: Perfume) => {
     const estoque = p.estoques[deposito] || 0;
+    if (estoque <= 0) return;
     const existing = cart.find(i => i.perfumeId === p.id);
     if (existing) {
       if (existing.quantidade >= estoque) return;
@@ -127,6 +146,8 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
         perfumeNome: p.nome,
         marca: p.marca,
         codigo: p.codigo,
+        volume: p.volume,
+        imageUrl: p.imageUrl || "",
         deposito,
         quantidade: 1,
         precoUnitario: p.precoVenda,
@@ -137,6 +158,14 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
     searchRef.current?.focus();
   }, [cart, deposito]);
 
+  // Enter to add first result
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && resultadosBusca.length > 0) {
+      e.preventDefault();
+      addToCart(resultadosBusca[0]);
+    }
+  };
+
   const updateQty = (id: string, delta: number) => {
     setCart(prev => prev.map(i => {
       if (i.perfumeId !== id) return i;
@@ -145,27 +174,80 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
     }));
   };
 
-  const removeItem = (id: string) => {
-    setCart(prev => prev.filter(i => i.perfumeId !== id));
-  };
+  const removeItem = (id: string) => setCart(prev => prev.filter(i => i.perfumeId !== id));
 
-  // Payment
+  // Payment helpers
   const addPagamento = () => {
     const valorRestante = Math.max(0, Number((totalFinal - totalPagamentos).toFixed(2)));
     setPagamentos(prev => [...prev, {
-      tipoPagamento: "Pix",
-      bandeira: "N/A" as Bandeira,
-      valor: valorRestante,
+      tipoPagamento: "Pix", bandeira: "N/A" as Bandeira, valor: valorRestante,
+      parcelas: 1, valorParcela: valorRestante,
     }]);
   };
 
   const updatePagamento = (idx: number, updates: Partial<PagamentoItem>) => {
-    setPagamentos(prev => prev.map((p, i) => i === idx ? { ...p, ...updates } : p));
+    setPagamentos(prev => prev.map((p, i) => {
+      if (i !== idx) return p;
+      const updated = { ...p, ...updates };
+      // Auto-calc parcela value
+      if (updates.parcelas && !updates.valorParcela) {
+        updated.valorParcela = Number((updated.valor / updates.parcelas).toFixed(2));
+      }
+      if (updates.valor && !updates.valorParcela) {
+        updated.valorParcela = Number((updates.valor / updated.parcelas).toFixed(2));
+      }
+      return updated;
+    }));
   };
 
-  const removePagamento = (idx: number) => {
-    setPagamentos(prev => prev.filter((_, i) => i !== idx));
+  const removePagamento = (idx: number) => setPagamentos(prev => prev.filter((_, i) => i !== idx));
+
+  // Calculate troco for cash payments
+  const trocoCalculado = useMemo(() => {
+    if (totalPagamentos <= totalFinal) return 0;
+    const dinheiroTotal = pagamentos
+      .filter(p => p.tipoPagamento === "Dinheiro")
+      .reduce((s, p) => s + p.valor, 0);
+    const outrosTotal = pagamentos
+      .filter(p => p.tipoPagamento !== "Dinheiro")
+      .reduce((s, p) => s + p.valor, 0);
+    const sobraEmDinheiro = totalFinal - outrosTotal;
+    if (dinheiroTotal > sobraEmDinheiro && sobraEmDinheiro >= 0) {
+      return dinheiroTotal - sobraEmDinheiro;
+    }
+    return 0;
+  }, [pagamentos, totalFinal, totalPagamentos]);
+
+  // Save new client
+  const handleSalvarCliente = async () => {
+    if (!novoCliente.nome.trim()) return;
+    try {
+      const created = await adicionarCliente({
+        nome: novoCliente.nome,
+        cpfCnpj: novoCliente.cpfCnpj,
+        telefone: novoCliente.telefone,
+        email: novoCliente.email,
+        dataNascimento: novoCliente.dataNascimento || null,
+      });
+      setClienteId(created.id);
+      setShowNovoCliente(false);
+      setShowClienteModal(false);
+      setNovoCliente({ nome: "", cpfCnpj: "", telefone: "", email: "", dataNascimento: "" });
+    } catch (err) {
+      console.error("Erro ao cadastrar cliente:", err);
+    }
   };
+
+  // Filtered clients
+  const clientesFiltrados = useMemo(() => {
+    if (!buscaCliente.trim()) return clientes.slice(0, 20);
+    const q = buscaCliente.toLowerCase();
+    return clientes.filter(c =>
+      c.nome.toLowerCase().includes(q) ||
+      c.cpfCnpj.includes(q) ||
+      c.telefone.includes(q)
+    ).slice(0, 20);
+  }, [clientes, buscaCliente]);
 
   // Finalize sale
   const finalizarVenda = async () => {
@@ -177,7 +259,6 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
       const hoje = getHojeManaus();
       const registradoPor = profile?.nome || "";
 
-      // Distribute adjustment proportionally
       const itens: Venda[] = cart.map(item => {
         const proporcao = subtotal > 0 ? (item.precoUnitario * item.quantidade) / subtotal : 1 / cart.length;
         const ajusteItem = valorAjuste * proporcao;
@@ -186,47 +267,26 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
         else totalItem += ajusteItem;
 
         return {
-          id: "",
-          data: hoje,
-          perfumeId: item.perfumeId,
-          perfumeNome: item.perfumeNome,
-          deposito: item.deposito,
-          quantidade: item.quantidade,
-          precoUnitario: item.precoUnitario,
-          tipoAjuste,
-          desconto: ajusteItem,
-          total: Math.max(0, totalItem),
-          vendedora,
-          tipoPagamento: pagamentos[0]?.tipoPagamento || "Pix",
+          id: "", data: hoje, perfumeId: item.perfumeId, perfumeNome: item.perfumeNome,
+          deposito: item.deposito, quantidade: item.quantidade, precoUnitario: item.precoUnitario,
+          tipoAjuste, desconto: ajusteItem, total: Math.max(0, totalItem),
+          vendedora, tipoPagamento: pagamentos[0]?.tipoPagamento || "Pix",
           bandeira: pagamentos[0]?.bandeira || ("N/A" as Bandeira),
-          observacao: observacao,
-          registradoPor,
-          grupoVenda: "",
+          observacao, registradoPor, grupoVenda: "",
         };
       });
 
       const pagamentosVenda: Omit<VendaPagamento, "id">[] = pagamentos.map(p => ({
-        grupoVenda: "",
-        tipoPagamento: p.tipoPagamento,
-        bandeira: p.bandeira,
-        valor: p.valor,
+        grupoVenda: "", tipoPagamento: p.tipoPagamento, bandeira: p.bandeira, valor: p.valor,
       }));
 
       await adicionarVendaMulti({ itens, pagamentosVenda });
 
-      // Lower stock
       for (const item of cart) {
         baixarEstoque(item.perfumeId, item.deposito, item.quantidade);
       }
 
-      // Calculate change for cash
-      const dinheiroTotal = pagamentos
-        .filter(p => p.tipoPagamento === "Dinheiro")
-        .reduce((s, p) => s + p.valor, 0);
-      if (dinheiroTotal > totalFinal) {
-        setTroco(dinheiroTotal - totalFinal);
-      }
-
+      setTroco(trocoCalculado);
       setVendaConcluida(true);
     } catch (err) {
       console.error("Erro ao finalizar venda:", err);
@@ -236,31 +296,45 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   };
 
   const novaVenda = () => {
-    setCart([]);
-    setBusca("");
-    setVendedora("");
-    setObservacao("");
-    setAjusteValor(0);
-    setPagamentos([]);
-    setShowPagamento(false);
-    setVendaConcluida(false);
-    setTroco(0);
+    setCart([]); setBusca(""); setVendedora(""); setObservacao("");
+    setAjusteValor(0); setPagamentos([]); setShowPagamento(false);
+    setVendaConcluida(false); setTroco(0); setClienteId(null);
+    setTipoDocumento("comprovante"); setShowFinalizacao(false);
     searchRef.current?.focus();
   };
 
-  // Success screen
+  // ─── Payment icon helper ───
+  const paymentIcon = (tipo: TipoPagamento) => {
+    switch (tipo) {
+      case "Dinheiro": return <Banknote size={14} />;
+      case "Pix": return <QrCode size={14} />;
+      case "Débito": case "Crédito": return <CreditCard size={14} />;
+      case "Conta Assinada": return <BookOpen size={14} />;
+      default: return <DollarSign size={14} />;
+    }
+  };
+
+  // ═══════════════════════════════════════════
+  // SUCCESS SCREEN
+  // ═══════════════════════════════════════════
   if (vendaConcluida) {
     return (
       <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: "hsl(var(--background))" }}>
-        <div className="text-center space-y-6 animate-fade-in">
+        <div className="text-center space-y-6 animate-fade-in max-w-md mx-auto px-6">
           <div className="w-24 h-24 rounded-full mx-auto flex items-center justify-center" style={{ background: "hsl(var(--success) / 0.15)" }}>
             <CheckCircle2 size={48} className="text-success" />
           </div>
           <div>
             <h1 className="text-3xl font-bold text-foreground">Venda concluída!</h1>
             <p className="text-muted-foreground mt-2">Estoque atualizado automaticamente.</p>
+            {tipoDocumento === "nfce" && (
+              <p className="text-xs mt-1" style={{ color: "hsl(var(--warning))" }}>NFC-e: status pendente de emissão</p>
+            )}
           </div>
           <div className="text-2xl font-bold text-gold">{formatCurrency(totalFinal)}</div>
+          {clienteSelecionado && (
+            <p className="text-sm text-muted-foreground">Cliente: {clienteSelecionado.nome}</p>
+          )}
           {troco > 0 && (
             <div className="px-6 py-3 rounded-xl mx-auto inline-block" style={{ background: "hsl(var(--warning) / 0.15)" }}>
               <span className="text-sm text-muted-foreground">Troco: </span>
@@ -272,9 +346,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
               Nova Venda (F2)
             </button>
             {onBack && (
-              <button onClick={onBack} className="btn-secondary px-6 py-3 text-sm">
-                Voltar ao ERP
-              </button>
+              <button onClick={onBack} className="btn-secondary px-6 py-3 text-sm">Voltar ao ERP</button>
             )}
           </div>
         </div>
@@ -282,9 +354,232 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
     );
   }
 
+  // ═══════════════════════════════════════════
+  // FINALIZATION MODAL (document type + client + confirm)
+  // ═══════════════════════════════════════════
+  const FinalizacaoModal = () => {
+    if (!showFinalizacao) return null;
+    const canFinalize = cart.length > 0 && vendedora && restante <= 0.01 && pagamentos.length > 0;
+
+    return (
+      <div className="fixed inset-0 z-[120] flex items-center justify-center p-4" style={{ background: "hsla(0,0%,0%,0.7)" }}>
+        <div className="w-full max-w-lg rounded-2xl overflow-hidden" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: "1px solid hsl(var(--border))" }}>
+            <h2 className="text-lg font-bold text-foreground">Finalizar Venda</h2>
+            <button onClick={() => setShowFinalizacao(false)} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className="p-6 space-y-5">
+            {/* Document type */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">Tipo de documento</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setTipoDocumento("comprovante")}
+                  className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    tipoDocumento === "comprovante" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  style={tipoDocumento === "comprovante"
+                    ? { background: "hsl(var(--gold))" }
+                    : { background: "hsl(var(--surface-raised))", border: "1px solid hsl(var(--border))" }}
+                >
+                  <Receipt size={16} /> Comprovante
+                </button>
+                <button
+                  onClick={() => setTipoDocumento("nfce")}
+                  className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
+                    tipoDocumento === "nfce" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  style={tipoDocumento === "nfce"
+                    ? { background: "hsl(var(--gold))" }
+                    : { background: "hsl(var(--surface-raised))", border: "1px solid hsl(var(--border))" }}
+                >
+                  <FileText size={16} /> NFC-e
+                </button>
+              </div>
+            </div>
+
+            {/* Client */}
+            <div>
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                Cliente {tipoDocumento === "nfce" ? "(recomendado para NFC-e)" : "(opcional)"}
+              </label>
+              {clienteSelecionado ? (
+                <div className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ background: "hsl(var(--surface-raised))" }}>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{clienteSelecionado.nome}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {clienteSelecionado.cpfCnpj && `CPF/CNPJ: ${clienteSelecionado.cpfCnpj}`}
+                      {clienteSelecionado.telefone && ` · ${clienteSelecionado.telefone}`}
+                    </p>
+                  </div>
+                  <button onClick={() => setClienteId(null)} className="text-xs text-muted-foreground hover:text-foreground">
+                    <X size={14} />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <button onClick={() => setShowClienteModal(true)}
+                    className="flex-1 px-4 py-2.5 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground flex items-center justify-center gap-2 transition-all"
+                    style={{ background: "hsl(var(--surface-raised))", border: "1px solid hsl(var(--border))" }}>
+                    <Search size={14} /> Buscar cliente
+                  </button>
+                  <button onClick={() => { setShowNovoCliente(true); setShowClienteModal(true); }}
+                    className="px-4 py-2.5 rounded-xl text-xs font-medium text-gold hover:text-gold-light flex items-center gap-2 transition-all"
+                    style={{ background: "hsl(var(--gold) / 0.1)", border: "1px solid hsl(var(--gold) / 0.2)" }}>
+                    <UserPlus size={14} /> Novo
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Summary */}
+            <div className="rounded-xl p-4 space-y-2" style={{ background: "hsl(var(--surface-raised))" }}>
+              <div className="flex justify-between text-xs text-muted-foreground">
+                <span>{totalItens} {totalItens === 1 ? "item" : "itens"}</span>
+                <span>{formatCurrency(subtotal)}</span>
+              </div>
+              {valorAjuste > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className={tipoAjuste === "desconto" ? "text-success" : ""} style={tipoAjuste !== "desconto" ? { color: "hsl(var(--warning))" } : {}}>
+                    {tipoAjuste === "desconto" ? "Desconto" : "Acréscimo"}
+                  </span>
+                  <span className={tipoAjuste === "desconto" ? "text-success" : ""} style={tipoAjuste !== "desconto" ? { color: "hsl(var(--warning))" } : {}}>
+                    {tipoAjuste === "desconto" ? "-" : "+"}{formatCurrency(valorAjuste)}
+                  </span>
+                </div>
+              )}
+              <div className="flex justify-between items-baseline pt-2" style={{ borderTop: "1px solid hsl(var(--border))" }}>
+                <span className="text-sm font-medium text-foreground">Total</span>
+                <span className="text-xl font-bold text-gold">{formatCurrency(totalFinal)}</span>
+              </div>
+              {trocoCalculado > 0 && (
+                <div className="flex justify-between text-xs" style={{ color: "hsl(var(--warning))" }}>
+                  <span>Troco</span>
+                  <span>{formatCurrency(trocoCalculado)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="px-6 pb-6 flex gap-3">
+            <button onClick={() => setShowFinalizacao(false)} className="btn-secondary flex-1 py-3 text-sm">
+              Voltar
+            </button>
+            <button
+              onClick={finalizarVenda}
+              disabled={!canFinalize || isFinalizando}
+              className="flex-1 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+              style={{
+                background: canFinalize ? "var(--gradient-gold)" : "hsl(var(--muted))",
+                color: canFinalize ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                boxShadow: canFinalize ? "var(--shadow-gold)" : "none",
+              }}
+            >
+              {isFinalizando ? <><Loader2 size={16} className="animate-spin" /> Finalizando...</> : <><CheckCircle2 size={16} /> Confirmar Venda</>}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ═══════════════════════════════════════════
+  // CLIENT MODAL
+  // ═══════════════════════════════════════════
+  const ClienteModal = () => {
+    if (!showClienteModal) return null;
+
+    return (
+      <div className="fixed inset-0 z-[130] flex items-center justify-center p-4" style={{ background: "hsla(0,0%,0%,0.7)" }}>
+        <div className="w-full max-w-md rounded-2xl overflow-hidden max-h-[80vh] flex flex-col" style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>
+          <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid hsl(var(--border))" }}>
+            <h3 className="text-sm font-bold text-foreground">{showNovoCliente ? "Novo Cliente" : "Buscar Cliente"}</h3>
+            <button onClick={() => { setShowClienteModal(false); setShowNovoCliente(false); }} className="text-muted-foreground hover:text-foreground">
+              <X size={16} />
+            </button>
+          </div>
+
+          {showNovoCliente ? (
+            <div className="p-5 space-y-3 overflow-y-auto">
+              <input type="text" placeholder="Nome *" value={novoCliente.nome} onChange={e => setNovoCliente(p => ({ ...p, nome: e.target.value }))}
+                className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none border border-transparent focus:border-gold/30"
+                style={{ background: "hsl(var(--surface-raised))" }} autoFocus />
+              <input type="text" placeholder="CPF / CNPJ" value={novoCliente.cpfCnpj} onChange={e => setNovoCliente(p => ({ ...p, cpfCnpj: e.target.value }))}
+                className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none border border-transparent focus:border-gold/30"
+                style={{ background: "hsl(var(--surface-raised))" }} />
+              <input type="text" placeholder="Telefone" value={novoCliente.telefone} onChange={e => setNovoCliente(p => ({ ...p, telefone: e.target.value }))}
+                className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none border border-transparent focus:border-gold/30"
+                style={{ background: "hsl(var(--surface-raised))" }} />
+              <input type="email" placeholder="E-mail" value={novoCliente.email} onChange={e => setNovoCliente(p => ({ ...p, email: e.target.value }))}
+                className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none border border-transparent focus:border-gold/30"
+                style={{ background: "hsl(var(--surface-raised))" }} />
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Data de nascimento (opcional)</label>
+                <input type="date" value={novoCliente.dataNascimento} onChange={e => setNovoCliente(p => ({ ...p, dataNascimento: e.target.value }))}
+                  className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground outline-none border border-transparent focus:border-gold/30"
+                  style={{ background: "hsl(var(--surface-raised))" }} />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => setShowNovoCliente(false)} className="btn-secondary flex-1 py-2.5 text-xs">Voltar</button>
+                <button onClick={handleSalvarCliente} disabled={!novoCliente.nome.trim()} className="btn-primary flex-1 py-2.5 text-xs disabled:opacity-40">
+                  Cadastrar e Selecionar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="px-5 pt-4">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input type="text" placeholder="Buscar por nome, CPF ou telefone..." value={buscaCliente}
+                    onChange={e => setBuscaCliente(e.target.value)} autoFocus
+                    className="w-full pl-9 pr-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none border border-transparent focus:border-gold/30"
+                    style={{ background: "hsl(var(--surface-raised))" }} />
+                </div>
+              </div>
+              <div className="flex-1 overflow-y-auto px-2 py-2">
+                {clientesFiltrados.length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-8">Nenhum cliente encontrado</p>
+                ) : (
+                  clientesFiltrados.map(c => (
+                    <button key={c.id} onClick={() => { setClienteId(c.id); setShowClienteModal(false); setBuscaCliente(""); }}
+                      className="w-full text-left px-4 py-3 rounded-lg hover:bg-surface-raised transition-colors">
+                      <p className="text-sm font-medium text-foreground">{c.nome}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {c.cpfCnpj && `${c.cpfCnpj} · `}{c.telefone || "Sem telefone"}
+                      </p>
+                    </button>
+                  ))
+                )}
+              </div>
+              <div className="px-5 pb-4">
+                <button onClick={() => setShowNovoCliente(true)}
+                  className="w-full py-2.5 rounded-lg text-xs font-medium text-gold flex items-center justify-center gap-2 transition-all"
+                  style={{ background: "hsl(var(--gold) / 0.1)", border: "1px solid hsl(var(--gold) / 0.2)" }}>
+                  <UserPlus size={14} /> Cadastrar novo cliente
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ═══════════════════════════════════════════
+  // MAIN RENDER
+  // ═══════════════════════════════════════════
   return (
     <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: "hsl(var(--background))" }}>
-      {/* Top bar */}
+      <FinalizacaoModal />
+      <ClienteModal />
+
+      {/* ─── TOP BAR ─── */}
       <header className="flex items-center justify-between px-4 md:px-6 py-3 flex-shrink-0" style={{ borderBottom: "1px solid hsl(var(--border))" }}>
         <div className="flex items-center gap-3">
           {onBack && (
@@ -294,43 +589,32 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
           )}
           <div className="flex items-center gap-2">
             <Receipt size={22} className="text-gold" />
-            <h1 className="text-lg font-bold text-foreground tracking-tight">PDV</h1>
+            <h1 className="text-lg font-bold text-foreground tracking-tight" style={{ fontFamily: "'Inter', sans-serif" }}>PDV</h1>
           </div>
           <span className="text-xs text-muted-foreground hidden md:inline">Le Jess Perfumes</span>
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Store selector */}
           {!userLoja && (
             <div className="flex items-center gap-2">
               <Store size={14} className="text-muted-foreground" />
               <div className="flex gap-1">
                 {depositos.map(d => (
-                  <button
-                    key={d}
-                    onClick={() => {
-                      setDeposito(d);
-                      // Update cart stock levels
-                      setCart(prev => prev.map(item => {
-                        const p = perfumes.find(x => x.id === item.perfumeId);
-                        return { ...item, deposito: d, estoqueDisponivel: p?.estoques[d] || 0 };
-                      }));
-                    }}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      deposito === d
-                        ? "text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                    style={deposito === d ? { background: "hsl(var(--gold))" } : { background: "hsl(var(--surface-raised))" }}
-                  >
+                  <button key={d} onClick={() => {
+                    setDeposito(d);
+                    setCart(prev => prev.map(item => {
+                      const p = perfumes.find(x => x.id === item.perfumeId);
+                      return { ...item, deposito: d, estoqueDisponivel: p?.estoques[d] || 0 };
+                    }));
+                  }}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${deposito === d ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    style={deposito === d ? { background: "hsl(var(--gold))" } : { background: "hsl(var(--surface-raised))" }}>
                     {d}
                   </button>
                 ))}
               </div>
             </div>
           )}
-
-          {/* Operator */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <User size={14} />
             <span>{profile?.nome || "Operador"}</span>
@@ -338,9 +622,9 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
         </div>
       </header>
 
-      {/* Main content */}
+      {/* ─── MAIN CONTENT ─── */}
       <div className="flex flex-1 overflow-hidden">
-        {/* LEFT: Products + Cart */}
+        {/* LEFT: Search + Cart */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Search bar */}
           <div className="px-4 md:px-6 py-4">
@@ -351,15 +635,16 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
                 type="text"
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
                 onFocus={() => setBuscaFocused(true)}
                 onBlur={() => setTimeout(() => setBuscaFocused(false), 200)}
-                placeholder="Buscar por nome, código, marca... (F2)"
-                className="w-full pl-12 pr-4 py-3.5 rounded-xl text-sm bg-surface-raised border border-transparent focus:border-gold/30 focus:ring-1 focus:ring-gold/20 text-foreground placeholder:text-muted-foreground outline-none transition-all"
+                placeholder="Buscar por nome, código, marca... (F2) — Enter para adicionar"
+                className="w-full pl-12 pr-4 py-3.5 rounded-xl text-sm border border-transparent focus:border-gold/30 focus:ring-1 focus:ring-gold/20 text-foreground placeholder:text-muted-foreground outline-none transition-all"
                 style={{ background: "hsl(var(--surface-raised))" }}
                 autoFocus
               />
               {busca && (
-                <button onClick={() => setBusca("")} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                <button onClick={() => { setBusca(""); searchRef.current?.focus(); }} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                   <X size={16} />
                 </button>
               )}
@@ -372,29 +657,27 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
                 {resultadosBusca.length === 0 ? (
                   <div className="px-4 py-6 text-center text-sm text-muted-foreground">Nenhum produto encontrado</div>
                 ) : (
-                  resultadosBusca.map(p => {
+                  resultadosBusca.map((p, idx) => {
                     const estoque = p.estoques[deposito] || 0;
                     return (
-                      <button
-                        key={p.id}
-                        onMouseDown={() => addToCart(p)}
-                        className="w-full flex items-center gap-4 px-4 py-3 hover:bg-surface-raised transition-colors text-left"
-                      >
-                        <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: "hsl(var(--surface-raised))" }}>
+                      <button key={p.id} onMouseDown={() => addToCart(p)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-raised transition-colors text-left ${idx === 0 ? "bg-surface-raised/50" : ""}`}>
+                        <div className="w-11 h-11 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden" style={{ background: "hsl(var(--surface-raised))" }}>
                           {p.imageUrl ? (
-                            <img src={p.imageUrl} alt="" className="w-full h-full object-cover rounded-lg" />
+                            <img src={p.imageUrl} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <Package size={18} className="text-muted-foreground" />
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{p.nome}</p>
-                          <p className="text-xs text-muted-foreground">{p.marca} · {p.codigo}</p>
+                          <p className="text-xs text-muted-foreground">{p.marca} · {p.codigo} · {p.volume}ml</p>
                         </div>
                         <div className="text-right flex-shrink-0">
                           <p className="text-sm font-bold text-gold">{formatCurrency(p.precoVenda)}</p>
                           <p className="text-[10px] text-muted-foreground">{estoque} em estoque</p>
                         </div>
+                        {idx === 0 && <span className="text-[9px] px-1.5 py-0.5 rounded text-muted-foreground" style={{ background: "hsl(var(--surface-overlay))" }}>Enter</span>}
                       </button>
                     );
                   })
@@ -409,32 +692,69 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
               <div className="flex flex-col items-center justify-center h-full text-center py-20 opacity-50">
                 <ShoppingCart size={56} className="text-muted-foreground mb-4" />
                 <p className="text-sm text-muted-foreground">Carrinho vazio</p>
-                <p className="text-xs text-muted-foreground mt-1">Busque um produto para iniciar a venda</p>
+                <p className="text-xs text-muted-foreground mt-1">Busque um produto ou escaneie o código de barras</p>
               </div>
             ) : (
               <div className="space-y-2">
+                {/* Cart header */}
+                <div className="flex items-center gap-3 px-4 py-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+                  <span className="w-6 text-center">#</span>
+                  <span className="w-10" />
+                  <span className="flex-1">Produto</span>
+                  <span className="w-20 text-center">Qtd</span>
+                  <span className="w-24 text-right">Subtotal</span>
+                  <span className="w-8" />
+                </div>
+
                 {cart.map((item, idx) => (
                   <div key={item.perfumeId} className="flex items-center gap-3 px-4 py-3 rounded-xl transition-all hover:bg-surface-raised/50"
                     style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}>
+                    {/* Index */}
                     <span className="text-xs text-muted-foreground w-6 text-center font-mono">{idx + 1}</span>
+
+                    {/* Photo */}
+                    <div className="w-10 h-10 rounded-lg flex-shrink-0 overflow-hidden flex items-center justify-center" style={{ background: "hsl(var(--surface-raised))" }}>
+                      {item.imageUrl ? (
+                        <img src={item.imageUrl} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <Package size={16} className="text-muted-foreground" />
+                      )}
+                    </div>
+
+                    {/* Product info */}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-foreground truncate">{item.perfumeNome}</p>
-                      <p className="text-xs text-muted-foreground">{item.marca} · {item.codigo}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {item.marca} · {item.codigo} · {item.volume}ml
+                        <span className="ml-2 text-[10px]" style={{ color: item.estoqueDisponivel <= 3 ? "hsl(var(--warning))" : "hsl(var(--muted-foreground))" }}>
+                          ({item.estoqueDisponivel} disp.)
+                        </span>
+                      </p>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => updateQty(item.perfumeId, -1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all">
+
+                    {/* Quantity controls */}
+                    <div className="flex items-center gap-1 w-20 justify-center">
+                      <button onClick={() => updateQty(item.perfumeId, -1)}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all">
                         <Minus size={14} />
                       </button>
                       <span className="w-8 text-center text-sm font-bold text-foreground">{item.quantidade}</span>
-                      <button onClick={() => updateQty(item.perfumeId, 1)} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all">
+                      <button onClick={() => updateQty(item.perfumeId, 1)}
+                        disabled={item.quantidade >= item.estoqueDisponivel}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all disabled:opacity-30">
                         <Plus size={14} />
                       </button>
                     </div>
+
+                    {/* Subtotal */}
                     <div className="text-right w-24">
                       <p className="text-sm font-bold text-foreground">{formatCurrency(item.precoUnitario * item.quantidade)}</p>
                       <p className="text-[10px] text-muted-foreground">{formatCurrency(item.precoUnitario)} un.</p>
                     </div>
-                    <button onClick={() => removeItem(item.perfumeId)} className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all">
+
+                    {/* Remove */}
+                    <button onClick={() => removeItem(item.perfumeId)}
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all w-8 flex items-center justify-center">
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -444,8 +764,8 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
           </div>
         </div>
 
-        {/* RIGHT: Payment panel */}
-        <aside className="w-[360px] flex-shrink-0 flex flex-col overflow-y-auto hidden md:flex"
+        {/* ─── RIGHT SIDEBAR ─── */}
+        <aside className="w-[380px] flex-shrink-0 flex flex-col overflow-y-auto hidden md:flex"
           style={{ background: "hsl(var(--card))", borderLeft: "1px solid hsl(var(--border))" }}>
           <div className="p-5 space-y-5 flex-1">
             {/* Seller */}
@@ -453,16 +773,9 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
               <label className="text-xs font-medium text-muted-foreground mb-2 block">Vendedora</label>
               <div className="flex flex-wrap gap-1.5">
                 {vendedoras.map(v => (
-                  <button
-                    key={v}
-                    onClick={() => setVendedora(v)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      vendedora === v
-                        ? "text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                    style={vendedora === v ? { background: "hsl(var(--gold))" } : { background: "hsl(var(--surface-raised))" }}
-                  >
+                  <button key={v} onClick={() => setVendedora(v)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${vendedora === v ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    style={vendedora === v ? { background: "hsl(var(--gold))" } : { background: "hsl(var(--surface-raised))" }}>
                     {v}
                   </button>
                 ))}
@@ -472,32 +785,24 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
             {/* Observation */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Observação</label>
-              <textarea
-                value={observacao}
-                onChange={e => setObservacao(e.target.value)}
-                placeholder="Notas da venda..."
-                rows={2}
+              <textarea value={observacao} onChange={e => setObservacao(e.target.value)}
+                placeholder="Notas da venda..." rows={2}
                 className="w-full px-3 py-2 rounded-lg text-xs resize-none text-foreground placeholder:text-muted-foreground outline-none transition-all border border-transparent focus:border-gold/30"
-                style={{ background: "hsl(var(--surface-raised))" }}
-              />
+                style={{ background: "hsl(var(--surface-raised))" }} />
             </div>
 
             {/* Adjustment */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-2 block">Ajuste no total</label>
               <div className="flex gap-1.5 mb-2">
-                <button
-                  onClick={() => setTipoAjuste("desconto")}
+                <button onClick={() => setTipoAjuste("desconto")}
                   className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${tipoAjuste === "desconto" ? "text-primary-foreground" : "text-muted-foreground"}`}
-                  style={tipoAjuste === "desconto" ? { background: "hsl(var(--gold))" } : { background: "hsl(var(--surface-raised))" }}
-                >
+                  style={tipoAjuste === "desconto" ? { background: "hsl(var(--gold))" } : { background: "hsl(var(--surface-raised))" }}>
                   Desconto
                 </button>
-                <button
-                  onClick={() => setTipoAjuste("acrescimo")}
+                <button onClick={() => setTipoAjuste("acrescimo")}
                   className={`flex-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${tipoAjuste === "acrescimo" ? "text-primary-foreground" : "text-muted-foreground"}`}
-                  style={tipoAjuste === "acrescimo" ? { background: "hsl(var(--gold))" } : { background: "hsl(var(--surface-raised))" }}
-                >
+                  style={tipoAjuste === "acrescimo" ? { background: "hsl(var(--gold))" } : { background: "hsl(var(--surface-raised))" }}>
                   Acréscimo
                 </button>
               </div>
@@ -506,15 +811,10 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
                   <button onClick={() => setAjusteMode("%")} className={`px-3 py-1.5 text-xs font-medium transition-all ${ajusteMode === "%" ? "text-gold" : "text-muted-foreground"}`}>%</button>
                   <button onClick={() => setAjusteMode("R$")} className={`px-3 py-1.5 text-xs font-medium transition-all ${ajusteMode === "R$" ? "text-gold" : "text-muted-foreground"}`}>R$</button>
                 </div>
-                <input
-                  type="number"
-                  min={0}
-                  value={ajusteValor || ""}
-                  onChange={e => setAjusteValor(Number(e.target.value))}
+                <input type="number" min={0} value={ajusteValor || ""} onChange={e => setAjusteValor(Number(e.target.value))}
                   placeholder="0"
                   className="flex-1 px-3 py-1.5 rounded-lg text-xs text-foreground placeholder:text-muted-foreground outline-none border border-transparent focus:border-gold/30"
-                  style={{ background: "hsl(var(--surface-raised))" }}
-                />
+                  style={{ background: "hsl(var(--surface-raised))" }} />
               </div>
             </div>
 
@@ -528,52 +828,55 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
               </div>
               <div className="space-y-2">
                 {pagamentos.map((pag, idx) => (
-                  <div key={idx} className="rounded-lg p-3 space-y-2" style={{ background: "hsl(var(--surface-raised))" }}>
-                    <div className="flex gap-2">
-                      <select
-                        value={pag.tipoPagamento}
+                  <div key={idx} className="rounded-xl p-3 space-y-2" style={{ background: "hsl(var(--surface-raised))" }}>
+                    <div className="flex gap-2 items-center">
+                      <span className="text-muted-foreground">{paymentIcon(pag.tipoPagamento)}</span>
+                      <select value={pag.tipoPagamento}
                         onChange={e => updatePagamento(idx, {
                           tipoPagamento: e.target.value as TipoPagamento,
                           bandeira: ["Débito", "Crédito"].includes(e.target.value) ? "Visa" : "N/A" as Bandeira,
+                          parcelas: 1, valorParcela: pag.valor,
                         })}
-                        className="flex-1 px-2 py-1.5 rounded-lg text-xs text-foreground outline-none"
-                        style={{ background: "hsl(var(--background))" }}
-                      >
+                        className="flex-1 px-2 py-1.5 rounded-lg text-xs text-foreground outline-none" style={{ background: "hsl(var(--background))" }}>
                         {tiposPagamento.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
-                      <input
-                        type="number"
-                        min={0}
-                        step={0.01}
-                        value={pag.valor || ""}
-                        onChange={e => updatePagamento(idx, { valor: Number(e.target.value) })}
-                        className="w-24 px-2 py-1.5 rounded-lg text-xs text-foreground text-right outline-none"
-                        style={{ background: "hsl(var(--background))" }}
-                        placeholder="R$ 0,00"
-                      />
+                      <input type="number" min={0} step={0.01} value={pag.valor || ""} onChange={e => updatePagamento(idx, { valor: Number(e.target.value) })}
+                        className="w-24 px-2 py-1.5 rounded-lg text-xs text-foreground text-right outline-none" style={{ background: "hsl(var(--background))" }} placeholder="R$ 0,00" />
                       <button onClick={() => removePagamento(idx)} className="text-muted-foreground hover:text-destructive transition-colors">
                         <X size={14} />
                       </button>
                     </div>
+
+                    {/* Card brand */}
                     {["Débito", "Crédito"].includes(pag.tipoPagamento) && (
-                      <select
-                        value={pag.bandeira}
-                        onChange={e => updatePagamento(idx, { bandeira: e.target.value as Bandeira })}
-                        className="w-full px-2 py-1.5 rounded-lg text-xs text-foreground outline-none"
-                        style={{ background: "hsl(var(--background))" }}
-                      >
+                      <select value={pag.bandeira} onChange={e => updatePagamento(idx, { bandeira: e.target.value as Bandeira })}
+                        className="w-full px-2 py-1.5 rounded-lg text-xs text-foreground outline-none" style={{ background: "hsl(var(--background))" }}>
                         {bandeiras.map(b => <option key={b} value={b}>{b}</option>)}
                       </select>
                     )}
+
+                    {/* Credit card installments */}
+                    {pag.tipoPagamento === "Crédito" && (
+                      <div className="flex gap-2 items-center">
+                        <label className="text-[10px] text-muted-foreground whitespace-nowrap">Parcelas:</label>
+                        <select value={pag.parcelas} onChange={e => {
+                          const p = Number(e.target.value);
+                          updatePagamento(idx, { parcelas: p, valorParcela: Number((pag.valor / p).toFixed(2)) });
+                        }}
+                          className="flex-1 px-2 py-1.5 rounded-lg text-xs text-foreground outline-none" style={{ background: "hsl(var(--background))" }}>
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map(n => (
+                            <option key={n} value={n}>{n}x de {formatCurrency(pag.valor / n)}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {/* Conta Assinada observation */}
                     {pag.tipoPagamento === "Conta Assinada" && (
-                      <input
-                        type="text"
-                        placeholder="Nome do funcionário / observação"
-                        value={pag.observacao || ""}
+                      <input type="text" placeholder="Nome do funcionário / observação" value={pag.observacao || ""}
                         onChange={e => updatePagamento(idx, { observacao: e.target.value })}
                         className="w-full px-2 py-1.5 rounded-lg text-xs text-foreground placeholder:text-muted-foreground outline-none"
-                        style={{ background: "hsl(var(--background))" }}
-                      />
+                        style={{ background: "hsl(var(--background))" }} />
                     )}
                   </div>
                 ))}
@@ -584,7 +887,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
             </div>
           </div>
 
-          {/* Totals + CTA */}
+          {/* ─── TOTALS + CTA ─── */}
           <div className="p-5 space-y-3 flex-shrink-0" style={{ borderTop: "1px solid hsl(var(--border))" }}>
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs text-muted-foreground">
@@ -593,16 +896,24 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
               </div>
               {valorAjuste > 0 && (
                 <div className="flex justify-between text-xs">
-                  <span className={tipoAjuste === "desconto" ? "text-success" : "text-warning"}>{tipoAjuste === "desconto" ? "Desconto" : "Acréscimo"}</span>
-                  <span className={tipoAjuste === "desconto" ? "text-success" : "text-warning"}>
+                  <span className={tipoAjuste === "desconto" ? "text-success" : ""} style={tipoAjuste !== "desconto" ? { color: "hsl(var(--warning))" } : {}}>
+                    {tipoAjuste === "desconto" ? "Desconto" : "Acréscimo"}
+                  </span>
+                  <span className={tipoAjuste === "desconto" ? "text-success" : ""} style={tipoAjuste !== "desconto" ? { color: "hsl(var(--warning))" } : {}}>
                     {tipoAjuste === "desconto" ? "-" : "+"}{formatCurrency(valorAjuste)}
                   </span>
                 </div>
               )}
               {totalPagamentos > 0 && restante > 0.01 && (
-                <div className="flex justify-between text-xs text-warning">
+                <div className="flex justify-between text-xs" style={{ color: "hsl(var(--warning))" }}>
                   <span>Restante</span>
                   <span>{formatCurrency(restante)}</span>
+                </div>
+              )}
+              {trocoCalculado > 0 && (
+                <div className="flex justify-between text-xs text-success">
+                  <span>Troco</span>
+                  <span>{formatCurrency(trocoCalculado)}</span>
                 </div>
               )}
             </div>
@@ -612,72 +923,58 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
             </div>
 
             <button
-              onClick={finalizarVenda}
-              disabled={cart.length === 0 || !vendedora || restante > 0.01 || isFinalizando}
+              onClick={() => setShowFinalizacao(true)}
+              disabled={cart.length === 0 || !vendedora || pagamentos.length === 0 || restante > 0.01}
               className="w-full py-4 rounded-xl text-sm font-bold transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               style={{
-                background: cart.length > 0 && vendedora && restante <= 0.01
-                  ? "var(--gradient-gold)"
-                  : "hsl(var(--muted))",
-                color: cart.length > 0 && vendedora && restante <= 0.01
-                  ? "hsl(var(--primary-foreground))"
-                  : "hsl(var(--muted-foreground))",
-                boxShadow: cart.length > 0 && vendedora && restante <= 0.01
-                  ? "var(--shadow-gold)"
-                  : "none",
+                background: cart.length > 0 && vendedora && pagamentos.length > 0 && restante <= 0.01
+                  ? "var(--gradient-gold)" : "hsl(var(--muted))",
+                color: cart.length > 0 && vendedora && pagamentos.length > 0 && restante <= 0.01
+                  ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
+                boxShadow: cart.length > 0 && vendedora && pagamentos.length > 0 && restante <= 0.01
+                  ? "var(--shadow-gold)" : "none",
               }}
             >
-              {isFinalizando ? (
-                <><Loader2 size={18} className="animate-spin" /> Finalizando...</>
-              ) : (
-                <><CheckCircle2 size={18} /> Finalizar Venda (F9)</>
-              )}
+              <CheckCircle2 size={18} /> Finalizar Venda (F9)
             </button>
 
             {!vendedora && cart.length > 0 && (
-              <p className="text-[10px] text-center text-warning">Selecione uma vendedora para finalizar</p>
+              <p className="text-[10px] text-center" style={{ color: "hsl(var(--warning))" }}>Selecione uma vendedora</p>
             )}
           </div>
         </aside>
       </div>
 
-      {/* Mobile: floating cart summary */}
+      {/* ─── MOBILE: floating cart ─── */}
       {cart.length > 0 && !showPagamento && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 z-50" style={{ background: "hsl(var(--card))", borderTop: "1px solid hsl(var(--border))" }}>
-          <button
-            onClick={() => setShowPagamento(true)}
+          <button onClick={() => setShowPagamento(true)}
             className="w-full py-4 rounded-xl text-sm font-bold flex items-center justify-between px-6"
-            style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}
-          >
-            <span className="flex items-center gap-2">
-              <ShoppingCart size={18} />
-              {totalItens} {totalItens === 1 ? "item" : "itens"}
-            </span>
+            style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}>
+            <span className="flex items-center gap-2"><ShoppingCart size={18} /> {totalItens} {totalItens === 1 ? "item" : "itens"}</span>
             <span>{formatCurrency(totalFinal)}</span>
           </button>
         </div>
       )}
 
-      {/* Mobile: payment sheet */}
+      {/* ─── MOBILE: payment sheet ─── */}
       {showPagamento && (
         <div className="md:hidden fixed inset-0 z-[110] flex flex-col" style={{ background: "hsl(var(--background))" }}>
           <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: "1px solid hsl(var(--border))" }}>
-            <button onClick={() => setShowPagamento(false)} className="p-2 text-muted-foreground">
-              <ArrowLeft size={20} />
-            </button>
+            <button onClick={() => setShowPagamento(false)} className="p-2 text-muted-foreground"><ArrowLeft size={20} /></button>
             <h2 className="text-sm font-bold text-foreground">Pagamento</h2>
             <div className="w-9" />
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {/* Same payment UI as desktop sidebar — vendedora, observation, adjustment, payments */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-2 block">Vendedora</label>
               <div className="flex flex-wrap gap-1.5">
                 {vendedoras.map(v => (
                   <button key={v} onClick={() => setVendedora(v)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${vendedora === v ? "text-primary-foreground" : "text-muted-foreground"}`}
-                    style={vendedora === v ? { background: "hsl(var(--gold))" } : { background: "hsl(var(--surface-raised))" }}
-                  >{v}</button>
+                    style={vendedora === v ? { background: "hsl(var(--gold))" } : { background: "hsl(var(--surface-raised))" }}>
+                    {v}
+                  </button>
                 ))}
               </div>
             </div>
@@ -687,7 +984,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
                 <button onClick={addPagamento} className="text-xs text-gold flex items-center gap-1"><Plus size={12} /> Adicionar</button>
               </div>
               {pagamentos.map((pag, idx) => (
-                <div key={idx} className="rounded-lg p-3 space-y-2 mb-2" style={{ background: "hsl(var(--surface-raised))" }}>
+                <div key={idx} className="rounded-xl p-3 space-y-2 mb-2" style={{ background: "hsl(var(--surface-raised))" }}>
                   <div className="flex gap-2">
                     <select value={pag.tipoPagamento} onChange={e => updatePagamento(idx, { tipoPagamento: e.target.value as TipoPagamento, bandeira: ["Débito", "Crédito"].includes(e.target.value) ? "Visa" : "N/A" as Bandeira })}
                       className="flex-1 px-2 py-1.5 rounded-lg text-xs text-foreground outline-none" style={{ background: "hsl(var(--background))" }}>
@@ -701,6 +998,17 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
                     <select value={pag.bandeira} onChange={e => updatePagamento(idx, { bandeira: e.target.value as Bandeira })}
                       className="w-full px-2 py-1.5 rounded-lg text-xs text-foreground outline-none" style={{ background: "hsl(var(--background))" }}>
                       {bandeiras.map(b => <option key={b} value={b}>{b}</option>)}
+                    </select>
+                  )}
+                  {pag.tipoPagamento === "Crédito" && (
+                    <select value={pag.parcelas} onChange={e => {
+                      const p = Number(e.target.value);
+                      updatePagamento(idx, { parcelas: p, valorParcela: Number((pag.valor / p).toFixed(2)) });
+                    }}
+                      className="w-full px-2 py-1.5 rounded-lg text-xs text-foreground outline-none" style={{ background: "hsl(var(--background))" }}>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map(n => (
+                        <option key={n} value={n}>{n}x de {formatCurrency(pag.valor / n)}</option>
+                      ))}
                     </select>
                   )}
                   {pag.tipoPagamento === "Conta Assinada" && (
@@ -717,11 +1025,12 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
               <span className="text-sm text-foreground">Total</span>
               <span className="text-2xl font-bold text-gold">{formatCurrency(totalFinal)}</span>
             </div>
-            {restante > 0.01 && <p className="text-xs text-warning text-center">Faltam {formatCurrency(restante)}</p>}
-            <button onClick={finalizarVenda} disabled={!vendedora || restante > 0.01 || isFinalizando}
+            {restante > 0.01 && <p className="text-xs text-center" style={{ color: "hsl(var(--warning))" }}>Faltam {formatCurrency(restante)}</p>}
+            <button onClick={() => { setShowPagamento(false); setShowFinalizacao(true); }}
+              disabled={!vendedora || restante > 0.01 || pagamentos.length === 0}
               className="w-full py-4 rounded-xl text-sm font-bold disabled:opacity-40 flex items-center justify-center gap-2"
               style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}>
-              {isFinalizando ? <><Loader2 size={18} className="animate-spin" /> Finalizando...</> : <><CheckCircle2 size={18} /> Finalizar Venda</>}
+              <CheckCircle2 size={18} /> Finalizar Venda
             </button>
           </div>
         </div>

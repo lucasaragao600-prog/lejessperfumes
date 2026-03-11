@@ -85,6 +85,89 @@ export type Database = {
         }
         Relationships: []
       }
+      caixa_movimentacoes: {
+        Row: {
+          created_at: string
+          id: string
+          motivo: string | null
+          registrado_por: string
+          sessao_id: string
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          registrado_por?: string
+          sessao_id: string
+          tipo: string
+          valor?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          motivo?: string | null
+          registrado_por?: string
+          sessao_id?: string
+          tipo?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caixa_movimentacoes_sessao_id_fkey"
+            columns: ["sessao_id"]
+            isOneToOne: false
+            referencedRelation: "caixa_sessoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      caixa_sessoes: {
+        Row: {
+          aberto_em: string
+          diferenca: number | null
+          fechado_em: string | null
+          id: string
+          loja: string
+          observacao: string | null
+          operador_id: string
+          operador_nome: string
+          status: string
+          valor_abertura: number
+          valor_esperado: number | null
+          valor_fechamento: number | null
+        }
+        Insert: {
+          aberto_em?: string
+          diferenca?: number | null
+          fechado_em?: string | null
+          id?: string
+          loja: string
+          observacao?: string | null
+          operador_id: string
+          operador_nome?: string
+          status?: string
+          valor_abertura?: number
+          valor_esperado?: number | null
+          valor_fechamento?: number | null
+        }
+        Update: {
+          aberto_em?: string
+          diferenca?: number | null
+          fechado_em?: string | null
+          id?: string
+          loja?: string
+          observacao?: string | null
+          operador_id?: string
+          operador_nome?: string
+          status?: string
+          valor_abertura?: number
+          valor_esperado?: number | null
+          valor_fechamento?: number | null
+        }
+        Relationships: []
+      }
       casas: {
         Row: {
           created_at: string
@@ -106,6 +189,39 @@ export type Database = {
           nome?: string
           sigla?: string
           tipo?: string
+        }
+        Relationships: []
+      }
+      clientes: {
+        Row: {
+          cpf_cnpj: string | null
+          created_at: string
+          data_nascimento: string | null
+          email: string | null
+          id: string
+          nome: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          cpf_cnpj?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cpf_cnpj?: string | null
+          created_at?: string
+          data_nascimento?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -524,91 +640,126 @@ export type Database = {
           created_at: string
           grupo_venda: string
           id: string
+          parcelas: number
           tipo_pagamento: string
           valor: number
+          valor_parcela: number
         }
         Insert: {
           bandeira?: string
           created_at?: string
           grupo_venda: string
           id?: string
+          parcelas?: number
           tipo_pagamento?: string
           valor?: number
+          valor_parcela?: number
         }
         Update: {
           bandeira?: string
           created_at?: string
           grupo_venda?: string
           id?: string
+          parcelas?: number
           tipo_pagamento?: string
           valor?: number
+          valor_parcela?: number
         }
         Relationships: []
       }
       vendas: {
         Row: {
           bandeira: string
+          cliente_id: string | null
           created_at: string
           data: string
           deposito: string
           desconto: number
           grupo_venda: string | null
           id: string
+          nfce_chave: string | null
+          nfce_status: string | null
           observacao: string
           perfume_id: string
           perfume_nome: string
           preco_unitario: number
           quantidade: number
           registrado_por: string
+          sessao_caixa_id: string | null
           tipo_ajuste: string
+          tipo_documento: string
           tipo_pagamento: string
           total: number
           vendedora: string
         }
         Insert: {
           bandeira?: string
+          cliente_id?: string | null
           created_at?: string
           data?: string
           deposito: string
           desconto?: number
           grupo_venda?: string | null
           id?: string
+          nfce_chave?: string | null
+          nfce_status?: string | null
           observacao?: string
           perfume_id: string
           perfume_nome: string
           preco_unitario?: number
           quantidade?: number
           registrado_por?: string
+          sessao_caixa_id?: string | null
           tipo_ajuste?: string
+          tipo_documento?: string
           tipo_pagamento?: string
           total?: number
           vendedora?: string
         }
         Update: {
           bandeira?: string
+          cliente_id?: string | null
           created_at?: string
           data?: string
           deposito?: string
           desconto?: number
           grupo_venda?: string | null
           id?: string
+          nfce_chave?: string | null
+          nfce_status?: string | null
           observacao?: string
           perfume_id?: string
           perfume_nome?: string
           preco_unitario?: number
           quantidade?: number
           registrado_por?: string
+          sessao_caixa_id?: string | null
           tipo_ajuste?: string
+          tipo_documento?: string
           tipo_pagamento?: string
           total?: number
           vendedora?: string
         }
         Relationships: [
           {
+            foreignKeyName: "vendas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "vendas_perfume_id_fkey"
             columns: ["perfume_id"]
             isOneToOne: false
             referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendas_sessao_caixa_id_fkey"
+            columns: ["sessao_caixa_id"]
+            isOneToOne: false
+            referencedRelation: "caixa_sessoes"
             referencedColumns: ["id"]
           },
         ]
