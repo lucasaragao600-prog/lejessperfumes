@@ -48,9 +48,6 @@ export interface ComprovanteData {
   observacao?: string;
 }
 
-// ──────────────────────────────────────────────
-// PRINT VERSION (hidden, triggered by window.print)
-// ──────────────────────────────────────────────
 const ComprovantePrint = forwardRef<HTMLDivElement, { data: ComprovanteData }>(({ data }, ref) => {
   return (
     <div ref={ref} className="hidden print:block" style={{
@@ -70,9 +67,6 @@ const ComprovantePrint = forwardRef<HTMLDivElement, { data: ComprovanteData }>((
 ComprovantePrint.displayName = "ComprovantePrint";
 export default ComprovantePrint;
 
-// ──────────────────────────────────────────────
-// SCREEN PREVIEW (for the modal)
-// ──────────────────────────────────────────────
 export function ComprovantePreview({ data }: { data: ComprovanteData }) {
   return (
     <div style={{
@@ -95,179 +89,149 @@ export function ComprovantePreview({ data }: { data: ComprovanteData }) {
   );
 }
 
-// ──────────────────────────────────────────────
-// SHARED RECEIPT CONTENT
-// ──────────────────────────────────────────────
 function ReceiptContent({ data, preview = false }: { data: ComprovanteData; preview?: boolean }) {
-  const sep = "─".repeat(52);
-  const mutedColor = preview ? "hsl(var(--muted-foreground))" : "#666";
-  const accentColor = preview ? "hsl(var(--gold))" : "#000";
+  const dash = "─".repeat(48);
+  const doubleLine = "═".repeat(48);
+  const mutedColor = preview ? "hsl(var(--muted-foreground))" : "#999";
 
   return (
     <>
-      {/* ── HEADER: Logo left + Company info right ── */}
-      <div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "flex-start" }}>
-        {/* Logo */}
-        <div style={{
-          width: "60px",
-          minWidth: "60px",
-          height: "60px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          border: `1px solid ${mutedColor}`,
-          borderRadius: "4px",
-          fontSize: "8px",
-          textAlign: "center",
-          color: mutedColor,
-          overflow: "hidden",
-        }}>
-          {data.logoUrl ? (
-            <img src={data.logoUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
-          ) : (
-            <div>
-              <div style={{ fontWeight: "bold", fontSize: "10px", color: accentColor }}>Le Jess</div>
-              <div style={{ fontSize: "7px" }}>PERFUMES</div>
-            </div>
-          )}
+      {/* ── LOGO CENTRALIZADA GRANDE ── */}
+      {data.logoUrl ? (
+        <div style={{ textAlign: "center", marginBottom: "8px" }}>
+          <img src={data.logoUrl} alt="Logo" style={{
+            width: "70%",
+            maxHeight: "80px",
+            objectFit: "contain",
+            margin: "0 auto",
+            display: "block",
+          }} />
         </div>
+      ) : (
+        <div style={{ textAlign: "center", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>
+          {data.nomeFantasia || "LE JESS PERFUMES"}
+        </div>
+      )}
 
-        {/* Company info */}
-        <div style={{ flex: 1, textAlign: "right", fontSize: "9px" }}>
-          <div style={{ fontWeight: "bold", fontSize: "10px" }}>
-            {data.razaoSocial || data.nomeFantasia || "LE JESS PERFUMES"}
-          </div>
-          {data.cnpj && <div>{data.cnpj}</div>}
-          {data.inscricaoEstadual && <div>{data.inscricaoEstadual}</div>}
-          {data.telefone && <div>Tel.: {data.telefone}</div>}
-          {data.endereco && <div>{data.endereco}</div>}
-          {data.cidade && <div>{data.cidade}</div>}
+      {/* ── DADOS DA EMPRESA ── */}
+      <div style={{ textAlign: "center", fontSize: "9px", marginBottom: "6px" }}>
+        <div style={{ fontWeight: "bold", fontSize: "10px" }}>
+          {data.razaoSocial || data.nomeFantasia || "LE JESS PERFUMES"}
         </div>
+        {data.cnpj && <div>CNPJ: {data.cnpj}</div>}
+        {data.inscricaoEstadual && <div>IE: {data.inscricaoEstadual}</div>}
+        {data.telefone && <div>Tel.: {data.telefone}</div>}
+        {data.endereco && <div>{data.endereco}</div>}
+        {data.cidade && <div>{data.cidade}</div>}
       </div>
 
-      <div style={{ color: mutedColor, fontSize: "9px" }}>{sep}</div>
+      <div style={{ color: mutedColor, fontSize: "9px" }}>{dash}</div>
 
-      {/* ── SALE INFO ── */}
-      <div style={{ fontSize: "10px", margin: "6px 0" }}>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>Pedido: {data.pedido}</span>
-          <span>Data: {data.data}</span>
-        </div>
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>Vendedor: {data.vendedor}</span>
-        </div>
-        {data.cliente && (
-          <div>Cliente: {data.cliente.nome}</div>
-        )}
-      </div>
-
-      <div style={{ color: mutedColor, fontSize: "9px" }}>{sep}</div>
-
-      {/* ── ITEMS TABLE ── */}
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px", margin: "4px 0" }}>
-        <thead>
-          <tr style={{ borderBottom: `1px solid ${mutedColor}` }}>
-            <th style={{ textAlign: "left", padding: "2px 0", fontWeight: "bold" }}>Item da venda</th>
-            <th style={{ textAlign: "center", padding: "2px 4px", fontWeight: "bold", width: "40px" }}>Qtde</th>
-            <th style={{ textAlign: "right", padding: "2px 4px", fontWeight: "bold", width: "60px" }}>Valor</th>
-            <th style={{ textAlign: "right", padding: "2px 0", fontWeight: "bold", width: "60px" }}>Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.itens.map((item, idx) => (
-            <tr key={idx}>
-              <td style={{ padding: "3px 0", fontSize: "9px" }}>{item.descricao}</td>
-              <td style={{ textAlign: "center", padding: "3px 4px" }}>{item.quantidade}</td>
-              <td style={{ textAlign: "right", padding: "3px 4px" }}>{formatCurrency(item.valorUnitario)}</td>
-              <td style={{ textAlign: "right", padding: "3px 0" }}>{formatCurrency(item.total)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div style={{ color: mutedColor, fontSize: "9px" }}>{sep}</div>
-
-      {/* ── PAYMENTS TABLE ── */}
-      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "10px", margin: "4px 0" }}>
-        <thead>
-          <tr style={{ borderBottom: `1px solid ${mutedColor}` }}>
-            <th style={{ textAlign: "left", padding: "2px 0", fontWeight: "bold" }}>Data</th>
-            <th style={{ textAlign: "left", padding: "2px 4px", fontWeight: "bold" }}>Forma pgto.</th>
-            <th style={{ textAlign: "center", padding: "2px 4px", fontWeight: "bold" }}>Cód. fiscal</th>
-            <th style={{ textAlign: "right", padding: "2px 0", fontWeight: "bold" }}>Valor</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.pagamentos.map((pag, idx) => {
-            // If has installment dates, show each one
-            if (pag.dataParcelas && pag.dataParcelas.length > 0) {
-              return pag.dataParcelas.map((parcela, pIdx) => (
-                <tr key={`${idx}-${pIdx}`}>
-                  <td style={{ padding: "2px 0", fontSize: "9px" }}>{parcela.data}</td>
-                  <td style={{ padding: "2px 4px", fontSize: "9px" }}>
-                    {pag.forma}{pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""}
-                  </td>
-                  <td style={{ textAlign: "center", padding: "2px 4px", fontSize: "9px" }}>{pag.codigoFiscal}</td>
-                  <td style={{ textAlign: "right", padding: "2px 0", fontSize: "9px" }}>{formatCurrency(parcela.valor)}</td>
-                </tr>
-              ));
-            }
-            // Single payment
-            return (
-              <tr key={idx}>
-                <td style={{ padding: "2px 0", fontSize: "9px" }}>{data.data}</td>
-                <td style={{ padding: "2px 4px", fontSize: "9px" }}>{pag.forma}</td>
-                <td style={{ textAlign: "center", padding: "2px 4px", fontSize: "9px" }}>{pag.codigoFiscal}</td>
-                <td style={{ textAlign: "right", padding: "2px 0", fontSize: "9px" }}>{formatCurrency(pag.valor)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-
-      <div style={{ color: mutedColor, fontSize: "9px" }}>{sep}</div>
-
-      {/* ── TOTALS ── */}
+      {/* ── INFO DA VENDA ── */}
       <div style={{ fontSize: "10px", margin: "4px 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span>Sub Total:</span>
+          <span>Pedido: {data.pedido}</span>
+          <span>{data.data}</span>
+        </div>
+        <div>Vendedor: {data.vendedor}</div>
+        {data.cliente && <div>Cliente: {data.cliente.nome}</div>}
+      </div>
+
+      <div style={{ color: mutedColor, fontSize: "9px" }}>{dash}</div>
+
+      {/* ── CABEÇALHO ITENS ── */}
+      <div style={{ fontSize: "9px", fontWeight: "bold", display: "flex", padding: "3px 0" }}>
+        <span style={{ flex: 1 }}>ITEM</span>
+        <span style={{ width: "30px", textAlign: "center" }}>QTD</span>
+        <span style={{ width: "60px", textAlign: "right" }}>VALOR</span>
+        <span style={{ width: "60px", textAlign: "right" }}>TOTAL</span>
+      </div>
+      <div style={{ color: mutedColor, fontSize: "9px" }}>{dash}</div>
+
+      {/* ── ITENS COM SEPARADOR ── */}
+      {data.itens.map((item, idx) => (
+        <div key={idx}>
+          <div style={{ fontSize: "9px", display: "flex", padding: "3px 0", alignItems: "flex-start" }}>
+            <span style={{ flex: 1, wordBreak: "break-word" }}>{item.descricao}</span>
+            <span style={{ width: "30px", textAlign: "center", flexShrink: 0 }}>{item.quantidade}</span>
+            <span style={{ width: "60px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.valorUnitario)}</span>
+            <span style={{ width: "60px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.total)}</span>
+          </div>
+          <div style={{ color: mutedColor, fontSize: "9px" }}>{dash}</div>
+        </div>
+      ))}
+
+      {/* ── PAGAMENTOS ── */}
+      <div style={{ fontSize: "9px", fontWeight: "bold", display: "flex", padding: "3px 0", marginTop: "2px" }}>
+        <span style={{ flex: 1 }}>FORMA PGTO.</span>
+        <span style={{ width: "70px", textAlign: "right" }}>VALOR</span>
+      </div>
+      <div style={{ color: mutedColor, fontSize: "9px" }}>{dash}</div>
+      {data.pagamentos.map((pag, idx) => {
+        if (pag.dataParcelas && pag.dataParcelas.length > 0) {
+          return pag.dataParcelas.map((parcela, pIdx) => (
+            <div key={`${idx}-${pIdx}`} style={{ fontSize: "9px", display: "flex", padding: "2px 0" }}>
+              <span style={{ flex: 1 }}>
+                {pag.forma}{pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""} ({parcela.data})
+              </span>
+              <span style={{ width: "70px", textAlign: "right" }}>{formatCurrency(parcela.valor)}</span>
+            </div>
+          ));
+        }
+        return (
+          <div key={idx} style={{ fontSize: "9px", display: "flex", padding: "2px 0" }}>
+            <span style={{ flex: 1 }}>{pag.forma}</span>
+            <span style={{ width: "70px", textAlign: "right" }}>{formatCurrency(pag.valor)}</span>
+          </div>
+        );
+      })}
+
+      <div style={{ color: mutedColor, fontSize: "9px" }}>{dash}</div>
+
+      {/* ── SUBTOTAL / DESCONTO ── */}
+      <div style={{ fontSize: "10px", margin: "4px 0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <span>SUBTOTAL:</span>
           <span>{formatCurrency(data.subtotal)}</span>
         </div>
         {data.desconto > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>Desconto{data.descontoLabel ? ` (${data.descontoLabel})` : ""}:</span>
+            <span>DESCONTO{data.descontoLabel ? ` (${data.descontoLabel})` : ""}:</span>
             <span>-{formatCurrency(data.desconto)}</span>
           </div>
         )}
         {data.acrescimo > 0 && (
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span>Acréscimo{data.acrescimoLabel ? ` (${data.acrescimoLabel})` : ""}:</span>
+            <span>ACRÉSCIMO{data.acrescimoLabel ? ` (${data.acrescimoLabel})` : ""}:</span>
             <span>+{formatCurrency(data.acrescimo)}</span>
           </div>
         )}
       </div>
 
-      <div style={{ fontWeight: "bold", fontSize: "12px", display: "flex", justifyContent: "space-between", margin: "4px 0" }}>
-        <span>Total:</span>
+      {/* ── TOTAL DESTACADO ── */}
+      <div style={{ fontSize: "9px", color: mutedColor }}>{doubleLine}</div>
+      <div style={{ fontWeight: "bold", fontSize: "13px", display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+        <span>TOTAL:</span>
         <span>{formatCurrency(data.total)}</span>
       </div>
+      <div style={{ fontSize: "9px", color: mutedColor }}>{doubleLine}</div>
 
       {data.troco > 0 && (
-        <div style={{ fontSize: "10px", display: "flex", justifyContent: "space-between" }}>
-          <span>Troco:</span>
+        <div style={{ fontSize: "10px", display: "flex", justifyContent: "space-between", marginTop: "4px" }}>
+          <span>TROCO:</span>
           <span>{formatCurrency(data.troco)}</span>
         </div>
       )}
 
       {data.observacao && (
         <>
-          <div style={{ color: mutedColor, fontSize: "9px" }}>{sep}</div>
+          <div style={{ color: mutedColor, fontSize: "9px", marginTop: "4px" }}>{dash}</div>
           <div style={{ fontSize: "9px", margin: "4px 0" }}>Obs: {data.observacao}</div>
         </>
       )}
 
-      {/* ── FOOTER ── */}
-      <div style={{ color: mutedColor, fontSize: "9px" }}>{sep}</div>
+      {/* ── RODAPÉ ── */}
+      <div style={{ color: mutedColor, fontSize: "9px", marginTop: "4px" }}>{dash}</div>
       <div style={{ textAlign: "center", fontSize: "9px", marginTop: "8px", color: mutedColor }}>
         <div>Obrigada pela preferência!</div>
         <div style={{ marginTop: "4px", fontSize: "8px" }}>{data.data} {data.hora}</div>
