@@ -28,6 +28,8 @@ interface CartItem {
   marca: string;
   codigo: string;
   volume: number;
+  concentracao: string;
+  casaSigla: string;
   imageUrl: string;
   deposito: Deposito;
   quantidade: number;
