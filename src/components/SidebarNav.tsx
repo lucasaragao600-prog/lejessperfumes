@@ -14,6 +14,7 @@ const allTabs = [
   { id: "vendas", label: "Vendas", icon: ShoppingCart, masterOnly: false },
   { id: "movimentacoes", label: "Movimentações", icon: ArrowLeftRight, masterOnly: false },
   { id: "testers", label: "Testers", icon: FlaskConical, masterOnly: false },
+  { id: "caixa", label: "Caixa", icon: DollarSign, masterOnly: false },
   { id: "notas", label: "Notas Fiscais", icon: FileText, masterOnly: true },
   { id: "dashboards", label: "Dashboard", icon: BarChart3, masterOnly: true },
   { id: "importar", label: "Importar", icon: FileSpreadsheet, masterOnly: true },
