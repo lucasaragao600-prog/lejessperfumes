@@ -219,6 +219,7 @@ export function useNfce() {
             nome_fantasia: config.nomeFantasia,
             endereco: config.endereco,
             numero: config.numero,
+            complemento: config.complemento,
             bairro: config.bairro,
             cidade: config.cidade,
             uf: config.uf,
@@ -230,6 +231,7 @@ export function useNfce() {
             proximo_numero_nfce: config.proximoNumeroNfce,
             csc_id: config.cscId,
             csc_token: config.cscToken,
+            logo_url: config.logoUrl,
           });
         if (error) throw error;
       }
