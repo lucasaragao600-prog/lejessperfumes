@@ -14,6 +14,7 @@ import GerenciarUsuarios from "@/pages/GerenciarUsuarios";
 import ImportarPlanilha from "@/pages/ImportarPlanilha";
 import NotasFiscais from "@/pages/NotasFiscais";
 import Alertas from "@/pages/Alertas";
+import PDV from "@/pages/PDV";
 import { AppProvider } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useAlertas } from "@/hooks/useAlertas";
@@ -93,6 +94,14 @@ function IndexContent({
   const { pendentes } = useAlertas();
   const [showAlertas, setShowAlertas] = useState(false);
   const alertCount = pendentes.length;
+
+  if (activeTab === "pdv") {
+    return (
+      <AppProvider>
+        <PDV onBack={() => setActiveTab("estoque")} />
+      </AppProvider>
+    );
+  }
 
   const renderTab = () => {
     switch (activeTab) {

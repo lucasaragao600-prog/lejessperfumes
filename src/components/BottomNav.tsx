@@ -1,4 +1,4 @@
-import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon } from "lucide-react";
+import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon, Monitor } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
 interface BottomNavProps {
@@ -8,6 +8,7 @@ interface BottomNavProps {
 }
 
 const allTabs = [
+  { id: "pdv", label: "PDV", icon: Monitor, masterOnly: false },
   { id: "estoque", label: "Estoque", icon: Package, masterOnly: false },
   { id: "vendas", label: "Vendas", icon: ShoppingCart, masterOnly: false },
   { id: "movimentacoes", label: "Moviment.", icon: ArrowLeftRight, masterOnly: false },
