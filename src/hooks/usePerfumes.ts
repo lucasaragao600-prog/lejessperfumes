@@ -25,6 +25,10 @@ function rowToPerfume(row: any): Perfume {
     imageUrl: row.image_url || "",
     custoMedio: Number(row.custo_medio) || 0,
     ultimoCustoEm: row.ultimo_custo_em || "",
+    ncm: row.ncm || "",
+    cfop: row.cfop || "",
+    cstCsosn: row.cst_csosn || "",
+    unidadeFiscal: row.unidade_fiscal || "UN",
   };
 }
 
