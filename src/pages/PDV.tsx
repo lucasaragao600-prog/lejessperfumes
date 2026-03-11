@@ -476,8 +476,8 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
 </table>
 <div class="sep">${"─".repeat(52)}</div>
 <div class="sm flex"><span>Sub Total:</span><span>R$ ${comprovanteData.subtotal.toFixed(2)}</span></div>
-${comprovanteData.desconto > 0 ? `<div class="sm flex"><span>Desconto:</span><span>-R$ ${comprovanteData.desconto.toFixed(2)}</span></div>` : ""}
-${comprovanteData.acrescimo > 0 ? `<div class="sm flex"><span>Acréscimo:</span><span>+R$ ${comprovanteData.acrescimo.toFixed(2)}</span></div>` : ""}
+${comprovanteData.desconto > 0 ? `<div class="sm flex"><span>Desconto${comprovanteData.descontoLabel ? ` (${comprovanteData.descontoLabel})` : ""}:</span><span>-R$ ${comprovanteData.desconto.toFixed(2)}</span></div>` : ""}
+${comprovanteData.acrescimo > 0 ? `<div class="sm flex"><span>Acréscimo${comprovanteData.acrescimoLabel ? ` (${comprovanteData.acrescimoLabel})` : ""}:</span><span>+R$ ${comprovanteData.acrescimo.toFixed(2)}</span></div>` : ""}
 <div class="total-line flex"><span>Total:</span><span>R$ ${comprovanteData.total.toFixed(2)}</span></div>
 ${comprovanteData.troco > 0 ? `<div class="sm flex"><span>Troco:</span><span>R$ ${comprovanteData.troco.toFixed(2)}</span></div>` : ""}
 ${comprovanteData.observacao ? `<div class="xs">Obs: ${comprovanteData.observacao}</div>` : ""}
