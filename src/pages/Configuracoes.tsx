@@ -1,7 +1,11 @@
-import { useState } from "react";
-import { Settings, Plus, Trash2, RotateCcw, Users } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Settings, Plus, Trash2, RotateCcw, Loader2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { TipoPerfume, Concentracao } from "@/data/mockData";
+import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
+import { toast } from "sonner";
+
+const UFS_LIST = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
 export default function Configuracoes() {
   const {
@@ -11,6 +15,56 @@ export default function Configuracoes() {
     vendedoras,
     adicionarVendedoraDB, removerVendedoraDB,
   } = useApp();
+
+  const { configFiscal, salvarConfigFiscal } = useConfiguracoesFiscais();
+  const [isSaving, setIsSaving] = useState(false);
+  const [empresa, setEmpresa] = useState({
+    razaoSocial: "", nomeFantasia: "", cnpj: "", inscricaoEstadual: "",
+    endereco: "", numero: "", bairro: "", cidade: "", uf: "AM", cep: "", telefone: "",
+    regimeTributario: "simples_nacional" as string,
+    ambiente: "homologacao" as "homologacao" | "producao",
+    serieNfce: 1, proximoNumeroNfce: 1, cscId: "", cscToken: "",
+  });
+
+  useEffect(() => {
+    if (configFiscal) {
+      setEmpresa({
+        razaoSocial: configFiscal.razaoSocial,
+        nomeFantasia: configFiscal.nomeFantasia,
+        cnpj: configFiscal.cnpj,
+        inscricaoEstadual: configFiscal.inscricaoEstadual,
+        endereco: configFiscal.endereco,
+        numero: configFiscal.numero,
+        bairro: configFiscal.bairro,
+        cidade: configFiscal.cidade,
+        uf: configFiscal.uf,
+        cep: configFiscal.cep,
+        telefone: configFiscal.telefone,
+        regimeTributario: configFiscal.regimeTributario,
+        ambiente: configFiscal.ambiente,
+        serieNfce: configFiscal.serieNfce,
+        proximoNumeroNfce: configFiscal.proximoNumeroNfce,
+        cscId: configFiscal.cscId,
+        cscToken: configFiscal.cscToken,
+      });
+    }
+  }, [configFiscal]);
+
+  const handleSalvarEmpresa = async () => {
+    if (!empresa.razaoSocial.trim() || !empresa.cnpj.trim()) {
+      toast.error("Razão Social e CNPJ são obrigatórios");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await salvarConfigFiscal(empresa);
+      toast.success("Dados da empresa salvos com sucesso!");
+    } catch {
+      toast.error("Erro ao salvar dados da empresa");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const [novoTipoSigla, setNovoTipoSigla] = useState("");
   const [novoTipoLabel, setNovoTipoLabel] = useState("");
@@ -122,6 +176,158 @@ export default function Configuracoes() {
       </div>
 
       <div className="px-4 space-y-5">
+        {/* Dados da Empresa */}
+        <section className="card-premium p-5 space-y-4">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Dados da Empresa</h2>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Informações que aparecem no comprovante e NFC-e</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="md:col-span-2">
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Razão Social *</label>
+              <input type="text" value={empresa.razaoSocial}
+                onChange={e => setEmpresa(p => ({ ...p, razaoSocial: e.target.value }))}
+                placeholder="MAISON LE JESS COMERCIO DE PERFUMARIA LTDA"
+                className="input-premium w-full px-3 py-2 text-xs mt-1" />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Nome Fantasia</label>
+              <input type="text" value={empresa.nomeFantasia}
+                onChange={e => setEmpresa(p => ({ ...p, nomeFantasia: e.target.value }))}
+                placeholder="LE JESS PERFUMES"
+                className="input-premium w-full px-3 py-2 text-xs mt-1" />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider">CNPJ *</label>
+              <input type="text" value={empresa.cnpj}
+                onChange={e => setEmpresa(p => ({ ...p, cnpj: e.target.value }))}
+                placeholder="00.000.000/0001-00"
+                className="input-premium w-full px-3 py-2 text-xs mt-1" />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Inscrição Estadual</label>
+              <input type="text" value={empresa.inscricaoEstadual}
+                onChange={e => setEmpresa(p => ({ ...p, inscricaoEstadual: e.target.value }))}
+                className="input-premium w-full px-3 py-2 text-xs mt-1" />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground uppercase tracking-wider">Telefone</label>
+              <input type="text" value={empresa.telefone}
+                onChange={e => setEmpresa(p => ({ ...p, telefone: e.target.value }))}
+                placeholder="(92) 99999-9999"
+                className="input-premium w-full px-3 py-2 text-xs mt-1" />
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-border">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Endereço</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="md:col-span-2">
+                <label className="text-[10px] text-muted-foreground">Logradouro</label>
+                <input type="text" value={empresa.endereco}
+                  onChange={e => setEmpresa(p => ({ ...p, endereco: e.target.value }))}
+                  placeholder="Avenida Noel Nutels"
+                  className="input-premium w-full px-3 py-2 text-xs mt-1" />
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground">Número</label>
+                <input type="text" value={empresa.numero}
+                  onChange={e => setEmpresa(p => ({ ...p, numero: e.target.value }))}
+                  placeholder="1762"
+                  className="input-premium w-full px-3 py-2 text-xs mt-1" />
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground">Bairro</label>
+                <input type="text" value={empresa.bairro}
+                  onChange={e => setEmpresa(p => ({ ...p, bairro: e.target.value }))}
+                  className="input-premium w-full px-3 py-2 text-xs mt-1" />
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground">Cidade</label>
+                <input type="text" value={empresa.cidade}
+                  onChange={e => setEmpresa(p => ({ ...p, cidade: e.target.value }))}
+                  placeholder="Manaus"
+                  className="input-premium w-full px-3 py-2 text-xs mt-1" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-muted-foreground">UF</label>
+                  <select value={empresa.uf}
+                    onChange={e => setEmpresa(p => ({ ...p, uf: e.target.value }))}
+                    className="input-premium w-full px-2 py-2 text-xs mt-1">
+                    {UFS_LIST.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted-foreground">CEP</label>
+                  <input type="text" value={empresa.cep}
+                    onChange={e => setEmpresa(p => ({ ...p, cep: e.target.value }))}
+                    placeholder="69095-000"
+                    className="input-premium w-full px-3 py-2 text-xs mt-1" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2 border-t border-border">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Dados Fiscais (NFC-e)</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div>
+                <label className="text-[10px] text-muted-foreground">Regime Tributário</label>
+                <select value={empresa.regimeTributario}
+                  onChange={e => setEmpresa(p => ({ ...p, regimeTributario: e.target.value }))}
+                  className="input-premium w-full px-2 py-2 text-xs mt-1">
+                  <option value="simples_nacional">Simples Nacional</option>
+                  <option value="lucro_presumido">Lucro Presumido</option>
+                  <option value="lucro_real">Lucro Real</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground">Série NFC-e</label>
+                <input type="number" value={empresa.serieNfce} min={1}
+                  onChange={e => setEmpresa(p => ({ ...p, serieNfce: Number(e.target.value) }))}
+                  className="input-premium w-full px-3 py-2 text-xs mt-1" />
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground">Próx. Número NFC-e</label>
+                <input type="number" value={empresa.proximoNumeroNfce} min={1}
+                  onChange={e => setEmpresa(p => ({ ...p, proximoNumeroNfce: Number(e.target.value) }))}
+                  className="input-premium w-full px-3 py-2 text-xs mt-1" />
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground">CSC ID</label>
+                <input type="text" value={empresa.cscId}
+                  onChange={e => setEmpresa(p => ({ ...p, cscId: e.target.value }))}
+                  className="input-premium w-full px-3 py-2 text-xs mt-1" />
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground">CSC Token</label>
+                <input type="text" value={empresa.cscToken}
+                  onChange={e => setEmpresa(p => ({ ...p, cscToken: e.target.value }))}
+                  className="input-premium w-full px-3 py-2 text-xs mt-1" />
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground">Ambiente</label>
+                <select value={empresa.ambiente}
+                  onChange={e => setEmpresa(p => ({ ...p, ambiente: e.target.value as "homologacao" | "producao" }))}
+                  className="input-premium w-full px-2 py-2 text-xs mt-1">
+                  <option value="homologacao">Homologação</option>
+                  <option value="producao">Produção</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleSalvarEmpresa}
+            disabled={isSaving}
+            className="btn-primary w-full py-2.5 flex items-center justify-center gap-2 text-sm"
+          >
+            {isSaving ? <Loader2 size={14} className="animate-spin" /> : null}
+            {isSaving ? "Salvando..." : "Salvar Dados da Empresa"}
+          </button>
+        </section>
         {/* Tipos de Perfume */}
         <SectionCard title="Tipos de Perfume (TT)" subtitle="Usado no início do código e como categoria" onReset={handleResetTipos}>
           <div className="space-y-2">
