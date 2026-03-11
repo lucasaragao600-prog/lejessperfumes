@@ -92,6 +92,9 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   // Document type
   const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>("comprovante");
   const [showFinalizacao, setShowFinalizacao] = useState(false);
+  const [showComprovante, setShowComprovante] = useState(false);
+  const [comprovanteData, setComprovanteData] = useState<ComprovanteData | null>(null);
+  const [grupoVendaAtual, setGrupoVendaAtual] = useState("");
 
   const clienteSelecionado = clientes.find(c => c.id === clienteId) || null;
 
