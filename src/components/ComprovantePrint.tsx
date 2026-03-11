@@ -107,7 +107,7 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
     <>
       {/* ── HEADER: Logo left + Company info right ── */}
       <div style={{ display: "flex", gap: "8px", marginBottom: "8px", alignItems: "flex-start" }}>
-        {/* Logo placeholder */}
+        {/* Logo */}
         <div style={{
           width: "60px",
           minWidth: "60px",
@@ -120,11 +120,16 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
           fontSize: "8px",
           textAlign: "center",
           color: mutedColor,
+          overflow: "hidden",
         }}>
-          <div>
-            <div style={{ fontWeight: "bold", fontSize: "10px", color: accentColor }}>Le Jess</div>
-            <div style={{ fontSize: "7px" }}>PERFUMES</div>
-          </div>
+          {data.logoUrl ? (
+            <img src={data.logoUrl} alt="Logo" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+          ) : (
+            <div>
+              <div style={{ fontWeight: "bold", fontSize: "10px", color: accentColor }}>Le Jess</div>
+              <div style={{ fontSize: "7px" }}>PERFUMES</div>
+            </div>
+          )}
         </div>
 
         {/* Company info */}
