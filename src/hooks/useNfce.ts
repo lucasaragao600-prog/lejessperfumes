@@ -71,6 +71,7 @@ function rowToConfig(row: any): ConfiguracaoFiscal {
     nomeFantasia: row.nome_fantasia,
     endereco: row.endereco,
     numero: row.numero,
+    complemento: row.complemento || "",
     bairro: row.bairro,
     cidade: row.cidade,
     uf: row.uf,
@@ -82,6 +83,7 @@ function rowToConfig(row: any): ConfiguracaoFiscal {
     proximoNumeroNfce: row.proximo_numero_nfce,
     cscId: row.csc_id,
     cscToken: row.csc_token,
+    logoUrl: row.logo_url || "",
   };
 }
 
