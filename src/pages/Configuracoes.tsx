@@ -18,12 +18,16 @@ export default function Configuracoes() {
 
   const { configFiscal, salvarConfigFiscal } = useConfiguracoesFiscais();
   const [isSaving, setIsSaving] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [empresa, setEmpresa] = useState({
     razaoSocial: "", nomeFantasia: "", cnpj: "", inscricaoEstadual: "",
-    endereco: "", numero: "", bairro: "", cidade: "", uf: "AM", cep: "", telefone: "",
+    endereco: "", numero: "", complemento: "", bairro: "", cidade: "", uf: "AM", cep: "", telefone: "",
     regimeTributario: "simples_nacional" as string,
     ambiente: "homologacao" as "homologacao" | "producao",
     serieNfce: 1, proximoNumeroNfce: 1, cscId: "", cscToken: "",
+    logoUrl: "",
   });
 
   useEffect(() => {
