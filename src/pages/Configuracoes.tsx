@@ -1,7 +1,11 @@
-import { useState } from "react";
-import { Settings, Plus, Trash2, RotateCcw, Users } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Settings, Plus, Trash2, RotateCcw, Users, Building2, Save, Loader2 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { TipoPerfume, Concentracao } from "@/data/mockData";
+import { useConfiguracoesFiscais, type ConfiguracaoFiscal } from "@/hooks/useConfiguracoesFiscais";
+import { toast } from "sonner";
+
+const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
 export default function Configuracoes() {
   const {
@@ -11,6 +15,59 @@ export default function Configuracoes() {
     vendedoras,
     adicionarVendedoraDB, removerVendedoraDB,
   } = useApp();
+
+  const { configFiscal, salvarConfigFiscal } = useConfiguracoesFiscais();
+  const [isSaving, setIsSaving] = useState(false);
+  const [empresa, setEmpresa] = useState({
+    razaoSocial: "", nomeFantasia: "", cnpj: "", inscricaoEstadual: "",
+    endereco: "", numero: "", bairro: "", cidade: "", uf: "AM", cep: "", telefone: "",
+    regimeTributario: "simples_nacional" as string,
+    ambiente: "homologacao" as "homologacao" | "producao",
+    serieNfce: 1, proximoNumeroNfce: 1, cscId: "", cscToken: "",
+  });
+
+  useEffect(() => {
+    if (configFiscal) {
+      setEmpresa({
+        razaoSocial: configFiscal.razaoSocial,
+        nomeFantasia: configFiscal.nomeFantasia,
+        cnpj: configFiscal.cnpj,
+        inscricaoEstadual: configFiscal.inscricaoEstadual,
+        endereco: configFiscal.endereco,
+        numero: configFiscal.numero,
+        bairro: configFiscal.bairro,
+        cidade: configFiscal.cidade,
+        uf: configFiscal.uf,
+        cep: configFiscal.cep,
+        telefone: configFiscal.telefone,
+        regimeTributario: configFiscal.regimeTributario,
+        ambiente: configFiscal.ambiente,
+        serieNfce: configFiscal.serieNfce,
+        proximoNumeroNfce: configFiscal.proximoNumeroNfce,
+        cscId: configFiscal.cscId,
+        cscToken: configFiscal.cscToken,
+      });
+    }
+  }, [configFiscal]);
+
+  const handleSalvarEmpresa = async () => {
+    if (!empresa.razaoSocial.trim() || !empresa.cnpj.trim()) {
+      toast.error("Razão Social e CNPJ são obrigatórios");
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await salvarConfigFiscal.mutateAsync(empresa);
+      toast.success("Dados da empresa salvos com sucesso!");
+    } catch (err) {
+      toast.error("Erro ao salvar dados da empresa");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const novoTipoSigla_init = "";
+  const novoTipoLabel_init = "";
 
   const [novoTipoSigla, setNovoTipoSigla] = useState("");
   const [novoTipoLabel, setNovoTipoLabel] = useState("");
