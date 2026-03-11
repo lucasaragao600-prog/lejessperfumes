@@ -417,70 +417,70 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
 <style>
   @page { size: 80mm auto; margin: 0; }
   body { font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.4; color: #000; background: #fff; padding: 4mm; margin: 0; width: 80mm; }
-  .header { display: flex; gap: 8px; align-items: flex-start; margin-bottom: 8px; }
-  .logo { width: 60px; min-width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border: 1px solid #ccc; border-radius: 4px; text-align: center; overflow: hidden; }
-  .logo img { width: 100%; height: 100%; object-fit: contain; }
-  .logo-name { font-weight: bold; font-size: 10px; }
-  .company { flex: 1; text-align: right; font-size: 9px; }
+  .logo-center { text-align: center; margin-bottom: 8px; }
+  .logo-center img { width: 70%; max-height: 80px; object-fit: contain; }
+  .logo-text { text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 8px; }
+  .company-center { text-align: center; font-size: 9px; margin-bottom: 6px; }
   .company-name { font-weight: bold; font-size: 10px; }
   .sep { color: #999; font-size: 9px; }
+  .double { color: #999; font-size: 9px; }
   .flex { display: flex; justify-content: space-between; }
   .sm { font-size: 10px; }
   .xs { font-size: 9px; color: #666; }
-  table { width: 100%; border-collapse: collapse; font-size: 10px; margin: 4px 0; }
-  th { text-align: left; padding: 2px 0; font-weight: bold; border-bottom: 1px solid #ccc; }
-  th.r { text-align: right; }
-  th.c { text-align: center; }
-  td { padding: 2px 0; font-size: 9px; }
-  td.r { text-align: right; }
-  td.c { text-align: center; }
-  .total-line { font-size: 12px; font-weight: bold; margin: 4px 0; }
+  .item-row { font-size: 9px; display: flex; padding: 3px 0; }
+  .item-row .name { flex: 1; word-break: break-word; }
+  .item-row .qty { width: 30px; text-align: center; flex-shrink: 0; }
+  .item-row .val { width: 60px; text-align: right; flex-shrink: 0; }
+  .col-head { font-size: 9px; font-weight: bold; display: flex; padding: 3px 0; }
+  .col-head .name { flex: 1; }
+  .col-head .qty { width: 30px; text-align: center; }
+  .col-head .val { width: 60px; text-align: right; }
+  .pag-row { font-size: 9px; display: flex; padding: 2px 0; }
+  .pag-row .pname { flex: 1; }
+  .pag-row .pval { width: 70px; text-align: right; }
+  .total-line { font-size: 13px; font-weight: bold; display: flex; justify-content: space-between; padding: 4px 0; }
   .footer { text-align: center; font-size: 9px; color: #666; margin-top: 8px; }
 </style></head><body>
-<div class="header">
-  ${comprovanteData.logoUrl ? `<div class="logo"><img src="${comprovanteData.logoUrl}" alt="Logo" /></div>` : `<div class="logo"><div><div class="logo-name">Le Jess</div><div style="font-size:7px">PERFUMES</div></div></div>`}
-  <div class="company">
-    <div class="company-name">${comprovanteData.razaoSocial || comprovanteData.nomeFantasia}</div>
-    ${comprovanteData.cnpj ? `<div>${comprovanteData.cnpj}</div>` : ""}
-    ${comprovanteData.inscricaoEstadual ? `<div>${comprovanteData.inscricaoEstadual}</div>` : ""}
-    ${comprovanteData.telefone ? `<div>Tel.: ${comprovanteData.telefone}</div>` : ""}
-    ${comprovanteData.endereco ? `<div>${comprovanteData.endereco}</div>` : ""}
-    ${comprovanteData.cidade ? `<div>${comprovanteData.cidade.replace(/\\n/g, "<br/>")}</div>` : ""}
-  </div>
+${comprovanteData.logoUrl ? `<div class="logo-center"><img src="${comprovanteData.logoUrl}" alt="Logo" /></div>` : `<div class="logo-text">${comprovanteData.nomeFantasia || "LE JESS PERFUMES"}</div>`}
+<div class="company-center">
+  <div class="company-name">${comprovanteData.razaoSocial || comprovanteData.nomeFantasia}</div>
+  ${comprovanteData.cnpj ? `<div>CNPJ: ${comprovanteData.cnpj}</div>` : ""}
+  ${comprovanteData.inscricaoEstadual ? `<div>IE: ${comprovanteData.inscricaoEstadual}</div>` : ""}
+  ${comprovanteData.telefone ? `<div>Tel.: ${comprovanteData.telefone}</div>` : ""}
+  ${comprovanteData.endereco ? `<div>${comprovanteData.endereco}</div>` : ""}
+  ${comprovanteData.cidade ? `<div>${comprovanteData.cidade.replace(/\\n/g, "<br/>")}</div>` : ""}
 </div>
-<div class="sep">${"─".repeat(52)}</div>
+<div class="sep">${"─".repeat(48)}</div>
 <div class="sm">
-  <div>Pedido: ${comprovanteData.pedido}</div>
-  <div>Data: ${comprovanteData.data}</div>
+  <div class="flex"><span>Pedido: ${comprovanteData.pedido}</span><span>${comprovanteData.data}</span></div>
   <div>Vendedor: ${comprovanteData.vendedor}</div>
   ${comprovanteData.cliente ? `<div>Cliente: ${comprovanteData.cliente.nome}</div>` : ""}
 </div>
-<div class="sep">${"─".repeat(52)}</div>
-<table>
-  <thead><tr><th>Item da venda</th><th class="c" style="width:40px">Qtde</th><th class="r" style="width:60px">Valor</th><th class="r" style="width:60px">Total</th></tr></thead>
-  <tbody>${comprovanteData.itens.map(item => `
-    <tr><td>${item.descricao}</td><td class="c">${item.quantidade}</td><td class="r">R$ ${item.valorUnitario.toFixed(2)}</td><td class="r">R$ ${item.total.toFixed(2)}</td></tr>`).join("")}
-  </tbody>
-</table>
-<div class="sep">${"─".repeat(52)}</div>
-<table>
-  <thead><tr><th>Data</th><th>Forma pgto.</th><th class="c">Cód. fiscal</th><th class="r">Valor</th></tr></thead>
-  <tbody>${comprovanteData.pagamentos.map(pag => {
+<div class="sep">${"─".repeat(48)}</div>
+<div class="col-head"><span class="name">ITEM</span><span class="qty">QTD</span><span class="val">VALOR</span><span class="val">TOTAL</span></div>
+<div class="sep">${"─".repeat(48)}</div>
+${comprovanteData.itens.map(item => `
+<div class="item-row"><span class="name">${item.descricao}</span><span class="qty">${item.quantidade}</span><span class="val">R$ ${item.valorUnitario.toFixed(2)}</span><span class="val">R$ ${item.total.toFixed(2)}</span></div>
+<div class="sep">${"─".repeat(48)}</div>`).join("")}
+<div class="col-head" style="margin-top:2px"><span class="pname">FORMA PGTO.</span><span class="pval">VALOR</span></div>
+<div class="sep">${"─".repeat(48)}</div>
+${comprovanteData.pagamentos.map(pag => {
     if (pag.dataParcelas && pag.dataParcelas.length > 0) {
       return pag.dataParcelas.map((parcela: {data: string; valor: number}, pIdx: number) => `
-        <tr><td>${parcela.data}</td><td>${pag.forma} ${String(pIdx + 1).padStart(2, "0")}</td><td class="c">${pag.codigoFiscal}</td><td class="r">R$ ${parcela.valor.toFixed(2)}</td></tr>`).join("");
+<div class="pag-row"><span class="pname">${pag.forma}${pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""} (${parcela.data})</span><span class="pval">R$ ${parcela.valor.toFixed(2)}</span></div>`).join("");
     }
-    return `<tr><td>${comprovanteData.data}</td><td>${pag.forma}</td><td class="c">${pag.codigoFiscal}</td><td class="r">R$ ${pag.valor.toFixed(2)}</td></tr>`;
+    return `<div class="pag-row"><span class="pname">${pag.forma}</span><span class="pval">R$ ${pag.valor.toFixed(2)}</span></div>`;
   }).join("")}
-  </tbody>
-</table>
-<div class="sep">${"─".repeat(52)}</div>
-<div class="sm flex"><span>Sub Total:</span><span>R$ ${comprovanteData.subtotal.toFixed(2)}</span></div>
-${comprovanteData.desconto > 0 ? `<div class="sm flex"><span>Desconto${comprovanteData.descontoLabel ? ` (${comprovanteData.descontoLabel})` : ""}:</span><span>-R$ ${comprovanteData.desconto.toFixed(2)}</span></div>` : ""}
-${comprovanteData.acrescimo > 0 ? `<div class="sm flex"><span>Acréscimo${comprovanteData.acrescimoLabel ? ` (${comprovanteData.acrescimoLabel})` : ""}:</span><span>+R$ ${comprovanteData.acrescimo.toFixed(2)}</span></div>` : ""}
-<div class="total-line flex"><span>Total:</span><span>R$ ${comprovanteData.total.toFixed(2)}</span></div>
-${comprovanteData.troco > 0 ? `<div class="sm flex"><span>Troco:</span><span>R$ ${comprovanteData.troco.toFixed(2)}</span></div>` : ""}
-${comprovanteData.observacao ? `<div class="xs">Obs: ${comprovanteData.observacao}</div>` : ""}
+<div class="sep">${"─".repeat(48)}</div>
+<div class="sm flex"><span>SUBTOTAL:</span><span>R$ ${comprovanteData.subtotal.toFixed(2)}</span></div>
+${comprovanteData.desconto > 0 ? `<div class="sm flex"><span>DESCONTO${comprovanteData.descontoLabel ? ` (${comprovanteData.descontoLabel})` : ""}:</span><span>-R$ ${comprovanteData.desconto.toFixed(2)}</span></div>` : ""}
+${comprovanteData.acrescimo > 0 ? `<div class="sm flex"><span>ACRÉSCIMO${comprovanteData.acrescimoLabel ? ` (${comprovanteData.acrescimoLabel})` : ""}:</span><span>+R$ ${comprovanteData.acrescimo.toFixed(2)}</span></div>` : ""}
+<div class="double">${"═".repeat(48)}</div>
+<div class="total-line"><span>TOTAL:</span><span>R$ ${comprovanteData.total.toFixed(2)}</span></div>
+<div class="double">${"═".repeat(48)}</div>
+${comprovanteData.troco > 0 ? `<div class="sm flex"><span>TROCO:</span><span>R$ ${comprovanteData.troco.toFixed(2)}</span></div>` : ""}
+${comprovanteData.observacao ? `<div class="sep">${"─".repeat(48)}</div><div class="xs">Obs: ${comprovanteData.observacao}</div>` : ""}
+<div class="sep">${"─".repeat(48)}</div>
 <div class="footer">
   <div>Obrigada pela preferência!</div>
   <div style="margin-top:4px">${comprovanteData.data} ${comprovanteData.hora}</div>
