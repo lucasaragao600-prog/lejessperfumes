@@ -451,7 +451,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
 <div class="sep">${"─".repeat(52)}</div>
 <div class="sm">
   <div>Pedido: ${comprovanteData.pedido}</div>
-  <div class="flex"><span>Data: ${comprovanteData.data}</span><span>Data prevista: ${comprovanteData.dataPrevista || "00/00/0000"}</span></div>
+  <div>Data: ${comprovanteData.data}</div>
   <div>Vendedor: ${comprovanteData.vendedor}</div>
   ${comprovanteData.cliente ? `<div>Cliente: ${comprovanteData.cliente.nome}</div>` : ""}
 </div>
