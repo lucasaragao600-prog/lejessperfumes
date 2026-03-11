@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Settings, Plus, Trash2, RotateCcw, Loader2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Settings, Plus, Trash2, RotateCcw, Loader2, Upload, X } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { TipoPerfume, Concentracao } from "@/data/mockData";
 import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
