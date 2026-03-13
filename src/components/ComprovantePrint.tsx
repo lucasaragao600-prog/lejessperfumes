@@ -115,8 +115,8 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       )}
 
       {/* ── DADOS DA EMPRESA ── */}
-      <div style={{ textAlign: "center", fontSize: "9px", marginBottom: "6px" }}>
-        <div style={{ fontWeight: "bold", fontSize: "10px" }}>
+      <div style={{ textAlign: "center", fontSize: "12px", marginBottom: "6px" }}>
+        <div style={{ fontWeight: "bold", fontSize: "13px" }}>
           {data.razaoSocial || data.nomeFantasia || "LE JESS PERFUMES"}
         </div>
         {data.cnpj && <div>CNPJ: {data.cnpj}</div>}
