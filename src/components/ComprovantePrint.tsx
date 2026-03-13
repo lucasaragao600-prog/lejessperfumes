@@ -96,7 +96,7 @@ export function ComprovantePreview({ data }: { data: ComprovanteData }) {
 function ReceiptContent({ data, preview = false }: { data: ComprovanteData; preview?: boolean }) {
   const dash = "─".repeat(48);
   const doubleLine = "═".repeat(48);
-  const mutedColor = preview ? "hsl(var(--muted-foreground))" : "#999";
+  const mutedColor = preview ? "hsl(var(--muted-foreground))" : "#000";
 
   return (
     <>
