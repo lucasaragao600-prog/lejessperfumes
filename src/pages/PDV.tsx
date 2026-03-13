@@ -17,6 +17,7 @@ import { useClientes, type Cliente } from "@/hooks/useClientes";
 import { getHojeManaus } from "@/lib/dateUtils";
 import { ComprovantePreview, type ComprovanteData } from "@/components/ComprovantePrint";
 import { useNfce } from "@/hooks/useNfce";
+import { useComprovanteConfig } from "@/hooks/useComprovanteConfig";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada"];
@@ -60,6 +61,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   const vendedoras = [...vendedorasCtx, "Outra"];
   const { clientes, adicionarCliente } = useClientes();
   const { configFiscal, criarEmissao, gerarXmlNfce } = useNfce();
+  const { config: comprovanteConfig } = useComprovanteConfig();
 
   // Search
   const [busca, setBusca] = useState("");
@@ -412,82 +414,87 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   // Print comprovante
   const handlePrint = () => {
     if (!comprovanteData) return;
-    // Create print window with receipt content
-    const printWindow = window.open("", "_blank", "width=320,height=600");
+    const cfg = comprovanteConfig;
+    const printWindow = window.open("", "_blank", "width=400,height=600");
     if (!printWindow) return;
-    
+
+    const getBlocoStyle = (id: string) => {
+      const bloco = cfg.blocos.find((b) => b.id === id);
+      if (!bloco) return "";
+      const styles: string[] = [];
+      styles.push(`text-align: ${bloco.alinhamento}`);
+      styles.push(`font-size: ${bloco.fontSize}px`);
+      styles.push(`font-weight: ${bloco.fontWeight === "bold" ? 900 : 400}`);
+      if (bloco.italic) styles.push("font-style: italic");
+      if (bloco.underline) styles.push("text-decoration: underline");
+      if (bloco.uppercase) styles.push("text-transform: uppercase");
+      if (bloco.espacamento) styles.push(`margin-bottom: ${bloco.espacamento}px`);
+      return styles.join(";");
+    };
+    const isBlocoAtivo = (id: string) => cfg.blocos.find((b) => b.id === id)?.ativo ?? true;
+    const dashLen = cfg.formatoPapel === "58mm" ? 32 : 48;
+    const dash = "─".repeat(dashLen);
+    const doubleLine = "═".repeat(dashLen);
+
     const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Comprovante</title>
 <style>
-  @page { size: 80mm auto; margin: 0; }
-  body { font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.4; color: #000; background: #fff; padding: 4mm; margin: 0; width: 80mm; }
-  .logo-center { text-align: center; margin-bottom: 8px; }
-  .logo-center img { width: 70%; max-height: 80px; object-fit: contain; }
-  .logo-text { text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 8px; }
-  .company-center { text-align: center; font-size: 9px; margin-bottom: 6px; }
-  .company-name { font-weight: bold; font-size: 10px; }
-  .sep { color: #999; font-size: 9px; }
-  .double { color: #999; font-size: 9px; }
+  @page { size: ${cfg.formatoPapel === "A4" ? "A4" : cfg.formatoPapel + " auto"}; margin: ${cfg.margens.top}mm ${cfg.margens.right}mm ${cfg.margens.bottom}mm ${cfg.margens.left}mm; }
+  body { font-family: '${cfg.fontFamily}', monospace; font-size: ${cfg.fontProfiles.corpo.size}px; line-height: ${cfg.espacamentoLinhas}; color: #000; background: #fff; padding: 0; margin: 0; width: ${cfg.formatoPapel === "A4" ? "auto" : cfg.formatoPapel}; font-weight: 900; letter-spacing: ${cfg.fontProfiles.corpo.letterSpacing}px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sep { color: #999; font-size: 11px; }
+  .double { color: #999; font-size: 13px; }
   .flex { display: flex; justify-content: space-between; }
-  .sm { font-size: 10px; }
-  .xs { font-size: 9px; color: #666; }
-  .item-row { font-size: 9px; display: flex; padding: 3px 0; }
+  .item-row { display: flex; padding: 3px 0; align-items: flex-start; }
   .item-row .name { flex: 1; word-break: break-word; }
-  .item-row .qty { width: 30px; text-align: center; flex-shrink: 0; }
-  .item-row .val { width: 60px; text-align: right; flex-shrink: 0; }
-  .col-head { font-size: 9px; font-weight: bold; display: flex; padding: 3px 0; }
+  .item-row .qty { width: 36px; text-align: center; flex-shrink: 0; }
+  .item-row .val { width: 72px; text-align: right; flex-shrink: 0; }
+  .col-head { font-weight: 900; display: flex; padding: 3px 0; }
   .col-head .name { flex: 1; }
-  .col-head .qty { width: 30px; text-align: center; }
-  .col-head .val { width: 60px; text-align: right; }
-  .pag-row { font-size: 9px; display: flex; padding: 2px 0; }
+  .col-head .qty { width: 36px; text-align: center; }
+  .col-head .val { width: 72px; text-align: right; }
+  .pag-row { display: flex; padding: 2px 0; }
   .pag-row .pname { flex: 1; }
-  .pag-row .pval { width: 70px; text-align: right; }
-  .total-line { font-size: 13px; font-weight: bold; display: flex; justify-content: space-between; padding: 4px 0; }
-  .footer { text-align: center; font-size: 9px; color: #666; margin-top: 8px; }
+  .pag-row .pval { width: 80px; text-align: right; }
 </style></head><body>
-${comprovanteData.logoUrl ? `<div class="logo-center"><img src="${comprovanteData.logoUrl}" alt="Logo" /></div>` : `<div class="logo-text">${comprovanteData.nomeFantasia || "LE JESS PERFUMES"}</div>`}
-<div class="company-center">
-  <div class="company-name">${comprovanteData.razaoSocial || comprovanteData.nomeFantasia}</div>
-  ${comprovanteData.cnpj ? `<div>CNPJ: ${comprovanteData.cnpj}</div>` : ""}
-  ${comprovanteData.inscricaoEstadual ? `<div>IE: ${comprovanteData.inscricaoEstadual}</div>` : ""}
-  ${comprovanteData.telefone ? `<div>Tel.: ${comprovanteData.telefone}</div>` : ""}
-  ${comprovanteData.endereco ? `<div>${comprovanteData.endereco}</div>` : ""}
-  ${comprovanteData.cidade ? `<div>${comprovanteData.cidade.replace(/\\n/g, "<br/>")}</div>` : ""}
-</div>
-<div class="sep">${"─".repeat(48)}</div>
-<div class="sm">
-  <div class="flex"><span>Pedido: ${comprovanteData.pedido}</span><span>${comprovanteData.data}</span></div>
-  <div>Vendedor: ${comprovanteData.vendedor}</div>
-  ${comprovanteData.cliente ? `<div>Cliente: ${comprovanteData.cliente.nome}</div>` : ""}
-</div>
-<div class="sep">${"─".repeat(48)}</div>
-<div class="col-head"><span class="name">ITEM</span><span class="qty">QTD</span><span class="val">VALOR</span><span class="val">TOTAL</span></div>
-<div class="sep">${"─".repeat(48)}</div>
-${comprovanteData.itens.map(item => `
-<div class="item-row"><span class="name">${item.descricao}</span><span class="qty">${item.quantidade}</span><span class="val">R$ ${item.valorUnitario.toFixed(2)}</span><span class="val">R$ ${item.total.toFixed(2)}</span></div>`).join("")}
-<div class="col-head" style="margin-top:2px"><span class="pname">FORMA PGTO.</span><span class="pval">VALOR</span></div>
-<div class="sep">${"─".repeat(48)}</div>
+${isBlocoAtivo("logo") && comprovanteData.logoUrl
+  ? `<div style="text-align:${cfg.logoAlinhamento};margin-bottom:8px"><img src="${comprovanteData.logoUrl}" style="width:${cfg.logoLargura}%;max-height:${cfg.logoAltura}px;object-fit:contain;display:inline-block;${cfg.logoMono ? "filter:grayscale(1) contrast(2);" : ""}" /></div>`
+  : isBlocoAtivo("nome_empresa") ? `<div style="${getBlocoStyle("nome_empresa")}">${comprovanteData.nomeFantasia || "LE JESS PERFUMES"}</div>` : ""}
+${isBlocoAtivo("nome_empresa") && comprovanteData.logoUrl ? `<div style="${getBlocoStyle("nome_empresa")}">${comprovanteData.razaoSocial || comprovanteData.nomeFantasia}</div>` : ""}
+${isBlocoAtivo("cnpj") && comprovanteData.cnpj ? `<div style="${getBlocoStyle("cnpj")}">CNPJ: ${comprovanteData.cnpj}</div>` : ""}
+${comprovanteData.inscricaoEstadual ? `<div style="${getBlocoStyle("cnpj")}">IE: ${comprovanteData.inscricaoEstadual}</div>` : ""}
+${isBlocoAtivo("telefone") && comprovanteData.telefone ? `<div style="${getBlocoStyle("telefone")}">Tel.: ${comprovanteData.telefone}</div>` : ""}
+${isBlocoAtivo("endereco") && comprovanteData.endereco ? `<div style="${getBlocoStyle("endereco")}">${comprovanteData.endereco}</div>` : ""}
+${comprovanteData.cidade ? `<div style="${getBlocoStyle("endereco")}">${comprovanteData.cidade.replace(/\\n/g, "<br/>")}</div>` : ""}
+<div class="sep">${dash}</div>
+${isBlocoAtivo("num_pedido") ? `<div style="${getBlocoStyle("num_pedido")};display:flex;justify-content:space-between"><span>Pedido: ${comprovanteData.pedido}</span>${isBlocoAtivo("data_hora") ? `<span>${comprovanteData.data}</span>` : ""}</div>` : ""}
+${isBlocoAtivo("vendedor") ? `<div style="${getBlocoStyle("vendedor")}">Vendedor: ${comprovanteData.vendedor}</div>` : ""}
+${comprovanteData.cliente ? `<div style="${getBlocoStyle("vendedor")}">Cliente: ${comprovanteData.cliente.nome}</div>` : ""}
+<div class="sep">${dash}</div>
+${isBlocoAtivo("lista_produtos") ? `
+<div class="col-head" style="${getBlocoStyle("lista_produtos")}"><span class="name">ITEM</span><span class="qty">QTD</span><span class="val">VALOR</span><span class="val">TOTAL</span></div>
+<div class="sep">${dash}</div>
+${comprovanteData.itens.map(item => `<div class="item-row" style="${getBlocoStyle("lista_produtos")}"><span class="name">${item.descricao}</span><span class="qty">${item.quantidade}</span><span class="val">R$ ${item.valorUnitario.toFixed(2)}</span><span class="val">R$ ${item.total.toFixed(2)}</span></div>`).join("")}` : ""}
+${isBlocoAtivo("forma_pagamento") ? `
+<div class="col-head" style="${getBlocoStyle("forma_pagamento")};margin-top:2px"><span class="pname">FORMA PGTO.</span><span class="pval">VALOR</span></div>
+<div class="sep">${dash}</div>
 ${comprovanteData.pagamentos.map(pag => {
     if (pag.dataParcelas && pag.dataParcelas.length > 0) {
-      return pag.dataParcelas.map((parcela: {data: string; valor: number}, pIdx: number) => `
-<div class="pag-row"><span class="pname">${pag.forma}${pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""} (${parcela.data})</span><span class="pval">R$ ${parcela.valor.toFixed(2)}</span></div>`).join("");
+      return pag.dataParcelas.map((parcela: {data: string; valor: number}, pIdx: number) => `<div class="pag-row" style="${getBlocoStyle("forma_pagamento")}"><span class="pname">${pag.forma}${pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""} (${parcela.data})</span><span class="pval">R$ ${parcela.valor.toFixed(2)}</span></div>`).join("");
     }
-    return `<div class="pag-row"><span class="pname">${pag.forma}</span><span class="pval">R$ ${pag.valor.toFixed(2)}</span></div>`;
-  }).join("")}
-<div class="sep">${"─".repeat(48)}</div>
-<div class="sm flex"><span>SUBTOTAL:</span><span>R$ ${comprovanteData.subtotal.toFixed(2)}</span></div>
-${comprovanteData.desconto > 0 ? `<div class="sm flex"><span>DESCONTO${comprovanteData.descontoLabel ? ` (${comprovanteData.descontoLabel})` : ""}:</span><span>-R$ ${comprovanteData.desconto.toFixed(2)}</span></div>` : ""}
-${comprovanteData.acrescimo > 0 ? `<div class="sm flex"><span>ACRÉSCIMO${comprovanteData.acrescimoLabel ? ` (${comprovanteData.acrescimoLabel})` : ""}:</span><span>+R$ ${comprovanteData.acrescimo.toFixed(2)}</span></div>` : ""}
-<div class="double">${"═".repeat(48)}</div>
-<div class="total-line"><span>TOTAL:</span><span>R$ ${comprovanteData.total.toFixed(2)}</span></div>
-<div class="double">${"═".repeat(48)}</div>
-${comprovanteData.troco > 0 ? `<div class="sm flex"><span>TROCO:</span><span>R$ ${comprovanteData.troco.toFixed(2)}</span></div>` : ""}
-${comprovanteData.observacao ? `<div class="sep">${"─".repeat(48)}</div><div class="xs">Obs: ${comprovanteData.observacao}</div>` : ""}
-<div class="sep">${"─".repeat(48)}</div>
-<div class="footer">
-  <div>Obrigada pela preferência!</div>
-  <div style="margin-top:4px">${comprovanteData.data} ${comprovanteData.hora}</div>
-</div>
+    return `<div class="pag-row" style="${getBlocoStyle("forma_pagamento")}"><span class="pname">${pag.forma}</span><span class="pval">R$ ${pag.valor.toFixed(2)}</span></div>`;
+  }).join("")}` : ""}
+<div class="sep">${dash}</div>
+${isBlocoAtivo("subtotal") ? `<div style="${getBlocoStyle("subtotal")};display:flex;justify-content:space-between"><span>SUBTOTAL:</span><span>R$ ${comprovanteData.subtotal.toFixed(2)}</span></div>` : ""}
+${comprovanteData.desconto > 0 && isBlocoAtivo("desconto") ? `<div style="${getBlocoStyle("desconto")};display:flex;justify-content:space-between"><span>DESCONTO${comprovanteData.descontoLabel ? ` (${comprovanteData.descontoLabel})` : ""}:</span><span>-R$ ${comprovanteData.desconto.toFixed(2)}</span></div>` : ""}
+${comprovanteData.acrescimo > 0 ? `<div style="font-size:${cfg.fontProfiles.corpo.size}px;font-weight:900;display:flex;justify-content:space-between"><span>ACRÉSCIMO${comprovanteData.acrescimoLabel ? ` (${comprovanteData.acrescimoLabel})` : ""}:</span><span>+R$ ${comprovanteData.acrescimo.toFixed(2)}</span></div>` : ""}
+<div class="double">${doubleLine}</div>
+${isBlocoAtivo("total") ? `<div style="${getBlocoStyle("total")};display:flex;justify-content:space-between;padding:6px 0"><span>TOTAL:</span><span>R$ ${comprovanteData.total.toFixed(2)}</span></div>` : ""}
+<div class="double">${doubleLine}</div>
+${comprovanteData.troco > 0 ? `<div style="font-size:${cfg.fontProfiles.corpo.size}px;font-weight:900;display:flex;justify-content:space-between;margin-top:4px"><span>TROCO:</span><span>R$ ${comprovanteData.troco.toFixed(2)}</span></div>` : ""}
+${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-size:${cfg.fontProfiles.corpo.size}px;font-weight:900;margin:4px 0">Obs: ${comprovanteData.observacao}</div>` : ""}
+${isBlocoAtivo("msg_agradecimento") && cfg.msgAgradecimento ? `<div class="sep">${dash}</div><div style="${getBlocoStyle("msg_agradecimento")};margin-top:8px">${cfg.msgAgradecimento}</div>` : ""}
+${cfg.msgPromocional ? `<div style="text-align:center;font-size:${cfg.fontProfiles.rodape.size}px;font-weight:900;margin-top:4px">${cfg.msgPromocional}</div>` : ""}
+${isBlocoAtivo("rodape") ? `<div style="${getBlocoStyle("rodape")};margin-top:4px">${comprovanteData.data} ${comprovanteData.hora}</div>` : ""}
 </body></html>`;
     printWindow.document.write(html);
     printWindow.document.close();
