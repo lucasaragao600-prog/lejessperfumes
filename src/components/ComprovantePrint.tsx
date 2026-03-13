@@ -144,11 +144,11 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       <div style={{ color: mutedColor, fontSize: "11px" }}>{dash}</div>
 
       {/* ── CABEÇALHO ITENS ── */}
-      <div style={{ fontSize: "12px", fontWeight: "bold", display: "flex", padding: "3px 0" }}>
+      <div style={{ fontSize: "14px", fontWeight: 900, display: "flex", padding: "3px 0" }}>
         <span style={{ flex: 1 }}>ITEM</span>
-        <span style={{ width: "34px", textAlign: "center" }}>QTD</span>
-        <span style={{ width: "68px", textAlign: "right" }}>VALOR</span>
-        <span style={{ width: "68px", textAlign: "right" }}>TOTAL</span>
+        <span style={{ width: "36px", textAlign: "center" }}>QTD</span>
+        <span style={{ width: "72px", textAlign: "right" }}>VALOR</span>
+        <span style={{ width: "72px", textAlign: "right" }}>TOTAL</span>
       </div>
       <div style={{ color: mutedColor, fontSize: "11px" }}>{dash}</div>
 
