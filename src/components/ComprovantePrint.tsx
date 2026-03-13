@@ -210,12 +210,12 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       </div>
 
       {/* ── TOTAL DESTACADO ── */}
-      <div style={{ fontSize: "11px", color: mutedColor }}>{doubleLine}</div>
-      <div style={{ fontWeight: "bold", fontSize: "16px", display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+      <div style={{ fontSize: "13px", color: mutedColor }}>{doubleLine}</div>
+      <div style={{ fontWeight: 900, fontSize: "18px", display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
         <span>TOTAL:</span>
         <span>{formatCurrency(data.total)}</span>
       </div>
-      <div style={{ fontSize: "11px", color: mutedColor }}>{doubleLine}</div>
+      <div style={{ fontSize: "13px", color: mutedColor }}>{doubleLine}</div>
 
       {data.troco > 0 && (
         <div style={{ fontSize: "13px", display: "flex", justifyContent: "space-between", marginTop: "4px" }}>
