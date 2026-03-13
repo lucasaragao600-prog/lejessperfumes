@@ -218,7 +218,7 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       <div style={{ fontSize: "13px", color: mutedColor }}>{doubleLine}</div>
 
       {data.troco > 0 && (
-        <div style={{ fontSize: "13px", display: "flex", justifyContent: "space-between", marginTop: "4px" }}>
+        <div style={{ fontSize: "15px", display: "flex", justifyContent: "space-between", marginTop: "4px", fontWeight: 900 }}>
           <span>TROCO:</span>
           <span>{formatCurrency(data.troco)}</span>
         </div>
