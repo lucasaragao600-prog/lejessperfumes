@@ -17,6 +17,7 @@ import { useClientes, type Cliente } from "@/hooks/useClientes";
 import { getHojeManaus } from "@/lib/dateUtils";
 import { ComprovantePreview, type ComprovanteData } from "@/components/ComprovantePrint";
 import { useNfce } from "@/hooks/useNfce";
+import { useComprovanteConfig } from "@/hooks/useComprovanteConfig";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada"];
