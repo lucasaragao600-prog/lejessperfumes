@@ -76,7 +76,7 @@ export function ComprovantePreview({ data }: { data: ComprovanteData }) {
     <div style={{
       width: "100%",
       maxWidth: "360px",
-      fontFamily: "'Courier New', monospace",
+      fontFamily: "Arial, Helvetica, sans-serif",
       fontSize: "10px",
       lineHeight: "1.4",
       color: "hsl(var(--foreground))",
