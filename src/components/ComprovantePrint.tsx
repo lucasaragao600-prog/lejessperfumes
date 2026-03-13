@@ -226,8 +226,8 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
 
       {data.observacao && (
         <>
-          <div style={{ color: mutedColor, fontSize: "11px", marginTop: "4px" }}>{dash}</div>
-          <div style={{ fontSize: "12px", margin: "4px 0" }}>Obs: {data.observacao}</div>
+          <div style={{ color: mutedColor, fontSize: "13px", marginTop: "4px" }}>{dash}</div>
+          <div style={{ fontSize: "14px", margin: "4px 0", fontWeight: 900 }}>Obs: {data.observacao}</div>
         </>
       )}
 
