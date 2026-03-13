@@ -81,7 +81,7 @@ export const DEFAULT_CONFIG: ComprovanteConfig = {
   espacamentoLinhas: 1.6,
   alinhamentoPadrao: "left",
   blocos: DEFAULT_BLOCOS,
-  fontFamily: "Courier New",
+  fontFamily: "Arial",
   fontProfiles: {
     cabecalho: { size: 15, weight: "bold", letterSpacing: 0.3, lineHeight: 1.4 },
     corpo: { size: 14, weight: "bold", letterSpacing: 0.3, lineHeight: 1.4 },
