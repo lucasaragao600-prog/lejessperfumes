@@ -17,7 +17,6 @@ import { useClientes, type Cliente } from "@/hooks/useClientes";
 import { getHojeManaus } from "@/lib/dateUtils";
 import { ComprovantePreview, type ComprovanteData } from "@/components/ComprovantePrint";
 import { useNfce } from "@/hooks/useNfce";
-import { useComprovanteConfig } from "@/hooks/useComprovanteConfig";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada"];
@@ -61,7 +60,6 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   const vendedoras = [...vendedorasCtx, "Outra"];
   const { clientes, adicionarCliente } = useClientes();
   const { configFiscal, criarEmissao, gerarXmlNfce } = useNfce();
-  const { config: comprovanteConfig } = useComprovanteConfig();
 
   // Search
   const [busca, setBusca] = useState("");
@@ -414,72 +412,82 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   // Print comprovante
   const handlePrint = () => {
     if (!comprovanteData) return;
-    const cfg = comprovanteConfig;
-    const printWindow = window.open("", "_blank", "width=400,height=600");
+    // Create print window with receipt content
+    const printWindow = window.open("", "_blank", "width=320,height=600");
     if (!printWindow) return;
-
-    const dash = "─".repeat(48);
-    const doubleLine = "═".repeat(48);
-
+    
     const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Comprovante</title>
 <style>
-  @page { size: 80mm auto; margin: 2mm; }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.4; color: #000; background: #fff; padding: 0; margin: 0; width: 100%; font-weight: bold; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .sep { color: #999; font-size: 10px; overflow: hidden; }
-  .double { color: #999; font-size: 12px; overflow: hidden; }
+  @page { size: 80mm auto; margin: 0; }
+  body { font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.4; color: #000; background: #fff; padding: 4mm; margin: 0; width: 80mm; }
+  .logo-center { text-align: center; margin-bottom: 8px; }
+  .logo-center img { width: 70%; max-height: 80px; object-fit: contain; }
+  .logo-text { text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 8px; }
+  .company-center { text-align: center; font-size: 9px; margin-bottom: 6px; }
+  .company-name { font-weight: bold; font-size: 10px; }
+  .sep { color: #999; font-size: 9px; }
+  .double { color: #999; font-size: 9px; }
   .flex { display: flex; justify-content: space-between; }
-  .center { text-align: center; }
-  .item-row { display: flex; padding: 2px 0; align-items: flex-start; }
+  .sm { font-size: 10px; }
+  .xs { font-size: 9px; color: #666; }
+  .item-row { font-size: 9px; display: flex; padding: 3px 0; }
   .item-row .name { flex: 1; word-break: break-word; }
   .item-row .qty { width: 30px; text-align: center; flex-shrink: 0; }
-  .item-row .val { width: 65px; text-align: right; flex-shrink: 0; }
-  .col-head { font-weight: bold; display: flex; padding: 2px 0; font-size: 12px; }
+  .item-row .val { width: 60px; text-align: right; flex-shrink: 0; }
+  .col-head { font-size: 9px; font-weight: bold; display: flex; padding: 3px 0; }
   .col-head .name { flex: 1; }
   .col-head .qty { width: 30px; text-align: center; }
-  .col-head .val { width: 65px; text-align: right; }
-  .pag-row { display: flex; padding: 2px 0; }
+  .col-head .val { width: 60px; text-align: right; }
+  .pag-row { font-size: 9px; display: flex; padding: 2px 0; }
   .pag-row .pname { flex: 1; }
-  .pag-row .pval { width: 75px; text-align: right; }
-  .total-line { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; padding: 4px 0; }
+  .pag-row .pval { width: 70px; text-align: right; }
+  .total-line { font-size: 13px; font-weight: bold; display: flex; justify-content: space-between; padding: 4px 0; }
+  .footer { text-align: center; font-size: 9px; color: #666; margin-top: 8px; }
 </style></head><body>
-${comprovanteData.logoUrl ? `<div class="center" style="margin-bottom:6px"><img src="${comprovanteData.logoUrl}" style="width:70%;max-height:80px;object-fit:contain;display:inline-block" /></div>` : ""}
-<div class="center" style="font-size:14px;font-weight:bold">${comprovanteData.razaoSocial || comprovanteData.nomeFantasia || "LE JESS PERFUMES"}</div>
-${comprovanteData.cnpj ? `<div class="center" style="font-size:12px">CNPJ: ${comprovanteData.cnpj}</div>` : ""}
-${comprovanteData.inscricaoEstadual ? `<div class="center" style="font-size:12px">IE: ${comprovanteData.inscricaoEstadual}</div>` : ""}
-${comprovanteData.telefone ? `<div class="center" style="font-size:12px">Tel.: ${comprovanteData.telefone}</div>` : ""}
-${comprovanteData.endereco ? `<div class="center" style="font-size:12px">${comprovanteData.endereco}</div>` : ""}
-${comprovanteData.cidade ? `<div class="center" style="font-size:12px">${comprovanteData.cidade.replace(/\\n/g, "<br/>")}</div>` : ""}
-<div class="sep">${dash}</div>
-<div class="flex" style="font-size:13px"><span>Pedido: ${comprovanteData.pedido}</span><span>${comprovanteData.data}</span></div>
-<div style="font-size:13px">Vendedor: ${comprovanteData.vendedor}</div>
-${comprovanteData.cliente ? `<div style="font-size:13px">Cliente: ${comprovanteData.cliente.nome}</div>` : ""}
-<div class="sep">${dash}</div>
+${comprovanteData.logoUrl ? `<div class="logo-center"><img src="${comprovanteData.logoUrl}" alt="Logo" /></div>` : `<div class="logo-text">${comprovanteData.nomeFantasia || "LE JESS PERFUMES"}</div>`}
+<div class="company-center">
+  <div class="company-name">${comprovanteData.razaoSocial || comprovanteData.nomeFantasia}</div>
+  ${comprovanteData.cnpj ? `<div>CNPJ: ${comprovanteData.cnpj}</div>` : ""}
+  ${comprovanteData.inscricaoEstadual ? `<div>IE: ${comprovanteData.inscricaoEstadual}</div>` : ""}
+  ${comprovanteData.telefone ? `<div>Tel.: ${comprovanteData.telefone}</div>` : ""}
+  ${comprovanteData.endereco ? `<div>${comprovanteData.endereco}</div>` : ""}
+  ${comprovanteData.cidade ? `<div>${comprovanteData.cidade.replace(/\\n/g, "<br/>")}</div>` : ""}
+</div>
+<div class="sep">${"─".repeat(48)}</div>
+<div class="sm">
+  <div class="flex"><span>Pedido: ${comprovanteData.pedido}</span><span>${comprovanteData.data}</span></div>
+  <div>Vendedor: ${comprovanteData.vendedor}</div>
+  ${comprovanteData.cliente ? `<div>Cliente: ${comprovanteData.cliente.nome}</div>` : ""}
+</div>
+<div class="sep">${"─".repeat(48)}</div>
 <div class="col-head"><span class="name">ITEM</span><span class="qty">QTD</span><span class="val">VALOR</span><span class="val">TOTAL</span></div>
-<div class="sep">${dash}</div>
-${comprovanteData.itens.map(item => `<div class="item-row"><span class="name">${item.descricao}</span><span class="qty">${item.quantidade}</span><span class="val">R$ ${item.valorUnitario.toFixed(2)}</span><span class="val">R$ ${item.total.toFixed(2)}</span></div>`).join("")}
-<div class="sep">${dash}</div>
+<div class="sep">${"─".repeat(48)}</div>
+${comprovanteData.itens.map(item => `
+<div class="item-row"><span class="name">${item.descricao}</span><span class="qty">${item.quantidade}</span><span class="val">R$ ${item.valorUnitario.toFixed(2)}</span><span class="val">R$ ${item.total.toFixed(2)}</span></div>`).join("")}
 <div class="col-head" style="margin-top:2px"><span class="pname">FORMA PGTO.</span><span class="pval">VALOR</span></div>
-<div class="sep">${dash}</div>
+<div class="sep">${"─".repeat(48)}</div>
 ${comprovanteData.pagamentos.map(pag => {
     if (pag.dataParcelas && pag.dataParcelas.length > 0) {
-      return pag.dataParcelas.map((parcela: {data: string; valor: number}, pIdx: number) => `<div class="pag-row"><span class="pname">${pag.forma}${pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""} (${parcela.data})</span><span class="pval">R$ ${parcela.valor.toFixed(2)}</span></div>`).join("");
+      return pag.dataParcelas.map((parcela: {data: string; valor: number}, pIdx: number) => `
+<div class="pag-row"><span class="pname">${pag.forma}${pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""} (${parcela.data})</span><span class="pval">R$ ${parcela.valor.toFixed(2)}</span></div>`).join("");
     }
     return `<div class="pag-row"><span class="pname">${pag.forma}</span><span class="pval">R$ ${pag.valor.toFixed(2)}</span></div>`;
   }).join("")}
-<div class="sep">${dash}</div>
-<div class="flex" style="font-size:13px"><span>SUBTOTAL:</span><span>R$ ${comprovanteData.subtotal.toFixed(2)}</span></div>
-${comprovanteData.desconto > 0 ? `<div class="flex" style="font-size:13px"><span>DESCONTO${comprovanteData.descontoLabel ? ` (${comprovanteData.descontoLabel})` : ""}:</span><span>-R$ ${comprovanteData.desconto.toFixed(2)}</span></div>` : ""}
-${comprovanteData.acrescimo > 0 ? `<div class="flex" style="font-size:13px"><span>ACRÉSCIMO${comprovanteData.acrescimoLabel ? ` (${comprovanteData.acrescimoLabel})` : ""}:</span><span>+R$ ${comprovanteData.acrescimo.toFixed(2)}</span></div>` : ""}
-<div class="double">${doubleLine}</div>
+<div class="sep">${"─".repeat(48)}</div>
+<div class="sm flex"><span>SUBTOTAL:</span><span>R$ ${comprovanteData.subtotal.toFixed(2)}</span></div>
+${comprovanteData.desconto > 0 ? `<div class="sm flex"><span>DESCONTO${comprovanteData.descontoLabel ? ` (${comprovanteData.descontoLabel})` : ""}:</span><span>-R$ ${comprovanteData.desconto.toFixed(2)}</span></div>` : ""}
+${comprovanteData.acrescimo > 0 ? `<div class="sm flex"><span>ACRÉSCIMO${comprovanteData.acrescimoLabel ? ` (${comprovanteData.acrescimoLabel})` : ""}:</span><span>+R$ ${comprovanteData.acrescimo.toFixed(2)}</span></div>` : ""}
+<div class="double">${"═".repeat(48)}</div>
 <div class="total-line"><span>TOTAL:</span><span>R$ ${comprovanteData.total.toFixed(2)}</span></div>
-<div class="double">${doubleLine}</div>
-${comprovanteData.troco > 0 ? `<div class="flex" style="font-size:13px;margin-top:4px"><span>TROCO:</span><span>R$ ${comprovanteData.troco.toFixed(2)}</span></div>` : ""}
-${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-size:12px;margin:4px 0">Obs: ${comprovanteData.observacao}</div>` : ""}
-<div class="sep">${dash}</div>
-<div class="center" style="font-size:12px;margin-top:6px">Obrigada pela preferência!</div>
-<div class="center" style="font-size:11px;margin-top:4px;color:#666">${comprovanteData.data} ${comprovanteData.hora}</div>
+<div class="double">${"═".repeat(48)}</div>
+${comprovanteData.troco > 0 ? `<div class="sm flex"><span>TROCO:</span><span>R$ ${comprovanteData.troco.toFixed(2)}</span></div>` : ""}
+${comprovanteData.observacao ? `<div class="sep">${"─".repeat(48)}</div><div class="xs">Obs: ${comprovanteData.observacao}</div>` : ""}
+<div class="sep">${"─".repeat(48)}</div>
+<div class="footer">
+  <div>Obrigada pela preferência!</div>
+  <div style="margin-top:4px">${comprovanteData.data} ${comprovanteData.hora}</div>
+</div>
 </body></html>`;
     printWindow.document.write(html);
     printWindow.document.close();

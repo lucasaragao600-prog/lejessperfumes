@@ -1,11 +1,9 @@
 import { useState, useEffect, useRef } from "react";
-import { Settings, Plus, Trash2, RotateCcw, Loader2, Upload, X, Receipt } from "lucide-react";
+import { Settings, Plus, Trash2, RotateCcw, Loader2, Upload, X } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { TipoPerfume, Concentracao } from "@/data/mockData";
 import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ConfigComprovantesPage from "@/components/comprovante-config/ConfigComprovantesPage";
 
 const UFS_LIST = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
@@ -220,18 +218,10 @@ export default function Configuracoes() {
           <Settings size={20} className="text-gold" />
           <h1 className="page-title text-2xl">Configurações</h1>
         </div>
-        <p className="page-subtitle">Personalize tipos, concentrações, volumes e comprovantes</p>
+        <p className="page-subtitle">Personalize tipos, concentrações e volumes</p>
       </div>
 
-      <div className="px-4 pt-2">
-        <Tabs defaultValue="sistema" className="w-full">
-          <TabsList className="w-full grid grid-cols-2 h-10 mb-4">
-            <TabsTrigger value="sistema" className="text-xs gap-1.5"><Settings size={14} /> Sistema</TabsTrigger>
-            <TabsTrigger value="comprovantes" className="text-xs gap-1.5"><Receipt size={14} /> Comprovantes</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="sistema">
-      <div className="space-y-5">
+      <div className="px-4 space-y-5">
         {/* Dados da Empresa */}
         <section className="card-premium p-5 space-y-4">
           <div>
@@ -535,13 +525,6 @@ export default function Configuracoes() {
             ))}
           </div>
         </section>
-      </div>
-          </TabsContent>
-
-          <TabsContent value="comprovantes">
-            <ConfigComprovantesPage />
-          </TabsContent>
-        </Tabs>
       </div>
     </div>
   );
