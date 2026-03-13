@@ -163,26 +163,26 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       ))}
 
       {/* ── PAGAMENTOS ── */}
-      <div style={{ fontSize: "12px", fontWeight: "bold", display: "flex", padding: "3px 0", marginTop: "2px" }}>
+      <div style={{ fontSize: "14px", fontWeight: 900, display: "flex", padding: "3px 0", marginTop: "2px" }}>
         <span style={{ flex: 1 }}>FORMA PGTO.</span>
-        <span style={{ width: "76px", textAlign: "right" }}>VALOR</span>
+        <span style={{ width: "80px", textAlign: "right" }}>VALOR</span>
       </div>
-      <div style={{ color: mutedColor, fontSize: "11px" }}>{dash}</div>
+      <div style={{ color: mutedColor, fontSize: "13px" }}>{dash}</div>
       {data.pagamentos.map((pag, idx) => {
         if (pag.dataParcelas && pag.dataParcelas.length > 0) {
           return pag.dataParcelas.map((parcela, pIdx) => (
-            <div key={`${idx}-${pIdx}`} style={{ fontSize: "12px", display: "flex", padding: "2px 0" }}>
+            <div key={`${idx}-${pIdx}`} style={{ fontSize: "14px", display: "flex", padding: "2px 0", fontWeight: 900 }}>
               <span style={{ flex: 1 }}>
                 {pag.forma}{pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""} ({parcela.data})
               </span>
-              <span style={{ width: "76px", textAlign: "right" }}>{formatCurrency(parcela.valor)}</span>
+              <span style={{ width: "80px", textAlign: "right" }}>{formatCurrency(parcela.valor)}</span>
             </div>
           ));
         }
         return (
-          <div key={idx} style={{ fontSize: "12px", display: "flex", padding: "2px 0" }}>
+          <div key={idx} style={{ fontSize: "14px", display: "flex", padding: "2px 0", fontWeight: 900 }}>
             <span style={{ flex: 1 }}>{pag.forma}</span>
-            <span style={{ width: "76px", textAlign: "right" }}>{formatCurrency(pag.valor)}</span>
+            <span style={{ width: "80px", textAlign: "right" }}>{formatCurrency(pag.valor)}</span>
           </div>
         );
       })}
