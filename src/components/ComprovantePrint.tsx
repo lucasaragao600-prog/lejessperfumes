@@ -52,13 +52,16 @@ const ComprovantePrint = forwardRef<HTMLDivElement, { data: ComprovanteData }>((
   return (
     <div ref={ref} className="hidden print:block" style={{
       width: "80mm",
-      fontFamily: "'Courier New', monospace",
-      fontSize: "14px",
-      lineHeight: "1.5",
+      fontFamily: "'Courier New', Courier, monospace",
+      fontSize: "16px",
+      lineHeight: "1.6",
       color: "#000",
       background: "#fff",
-      padding: "3mm",
-      fontWeight: 600,
+      padding: "2mm",
+      fontWeight: 900,
+      WebkitPrintColorAdjust: "exact",
+      printColorAdjust: "exact" as any,
+      letterSpacing: "0.3px",
     }}>
       <ReceiptContent data={data} />
     </div>
@@ -93,7 +96,7 @@ export function ComprovantePreview({ data }: { data: ComprovanteData }) {
 function ReceiptContent({ data, preview = false }: { data: ComprovanteData; preview?: boolean }) {
   const dash = "─".repeat(48);
   const doubleLine = "═".repeat(48);
-  const mutedColor = preview ? "hsl(var(--muted-foreground))" : "#999";
+  const mutedColor = preview ? "hsl(var(--muted-foreground))" : "#000";
 
   return (
     <>
@@ -115,8 +118,8 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       )}
 
       {/* ── DADOS DA EMPRESA ── */}
-      <div style={{ textAlign: "center", fontSize: "12px", marginBottom: "6px" }}>
-        <div style={{ fontWeight: "bold", fontSize: "13px" }}>
+      <div style={{ textAlign: "center", fontSize: "14px", marginBottom: "6px", fontWeight: 900 }}>
+        <div style={{ fontWeight: 900, fontSize: "15px" }}>
           {data.razaoSocial || data.nomeFantasia || "LE JESS PERFUMES"}
         </div>
         {data.cnpj && <div>CNPJ: {data.cnpj}</div>}
@@ -129,7 +132,7 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       <div style={{ color: mutedColor, fontSize: "11px" }}>{dash}</div>
 
       {/* ── INFO DA VENDA ── */}
-      <div style={{ fontSize: "13px", margin: "4px 0" }}>
+      <div style={{ fontSize: "15px", margin: "4px 0", fontWeight: 900 }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>Pedido: {data.pedido}</span>
           <span>{data.data}</span>
@@ -141,45 +144,45 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       <div style={{ color: mutedColor, fontSize: "11px" }}>{dash}</div>
 
       {/* ── CABEÇALHO ITENS ── */}
-      <div style={{ fontSize: "12px", fontWeight: "bold", display: "flex", padding: "3px 0" }}>
+      <div style={{ fontSize: "14px", fontWeight: 900, display: "flex", padding: "3px 0" }}>
         <span style={{ flex: 1 }}>ITEM</span>
-        <span style={{ width: "34px", textAlign: "center" }}>QTD</span>
-        <span style={{ width: "68px", textAlign: "right" }}>VALOR</span>
-        <span style={{ width: "68px", textAlign: "right" }}>TOTAL</span>
+        <span style={{ width: "36px", textAlign: "center" }}>QTD</span>
+        <span style={{ width: "72px", textAlign: "right" }}>VALOR</span>
+        <span style={{ width: "72px", textAlign: "right" }}>TOTAL</span>
       </div>
       <div style={{ color: mutedColor, fontSize: "11px" }}>{dash}</div>
 
       {/* ── ITENS ── */}
       {data.itens.map((item, idx) => (
-        <div key={idx} style={{ fontSize: "12px", display: "flex", padding: "3px 0", alignItems: "flex-start" }}>
+        <div key={idx} style={{ fontSize: "14px", display: "flex", padding: "3px 0", alignItems: "flex-start", fontWeight: 900 }}>
           <span style={{ flex: 1, wordBreak: "break-word" }}>{item.descricao}</span>
-          <span style={{ width: "34px", textAlign: "center", flexShrink: 0 }}>{item.quantidade}</span>
-          <span style={{ width: "68px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.valorUnitario)}</span>
-          <span style={{ width: "68px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.total)}</span>
+          <span style={{ width: "36px", textAlign: "center", flexShrink: 0 }}>{item.quantidade}</span>
+          <span style={{ width: "72px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.valorUnitario)}</span>
+          <span style={{ width: "72px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.total)}</span>
         </div>
       ))}
 
       {/* ── PAGAMENTOS ── */}
-      <div style={{ fontSize: "12px", fontWeight: "bold", display: "flex", padding: "3px 0", marginTop: "2px" }}>
+      <div style={{ fontSize: "14px", fontWeight: 900, display: "flex", padding: "3px 0", marginTop: "2px" }}>
         <span style={{ flex: 1 }}>FORMA PGTO.</span>
-        <span style={{ width: "76px", textAlign: "right" }}>VALOR</span>
+        <span style={{ width: "80px", textAlign: "right" }}>VALOR</span>
       </div>
-      <div style={{ color: mutedColor, fontSize: "11px" }}>{dash}</div>
+      <div style={{ color: mutedColor, fontSize: "13px" }}>{dash}</div>
       {data.pagamentos.map((pag, idx) => {
         if (pag.dataParcelas && pag.dataParcelas.length > 0) {
           return pag.dataParcelas.map((parcela, pIdx) => (
-            <div key={`${idx}-${pIdx}`} style={{ fontSize: "12px", display: "flex", padding: "2px 0" }}>
+            <div key={`${idx}-${pIdx}`} style={{ fontSize: "14px", display: "flex", padding: "2px 0", fontWeight: 900 }}>
               <span style={{ flex: 1 }}>
                 {pag.forma}{pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""} ({parcela.data})
               </span>
-              <span style={{ width: "76px", textAlign: "right" }}>{formatCurrency(parcela.valor)}</span>
+              <span style={{ width: "80px", textAlign: "right" }}>{formatCurrency(parcela.valor)}</span>
             </div>
           ));
         }
         return (
-          <div key={idx} style={{ fontSize: "12px", display: "flex", padding: "2px 0" }}>
+          <div key={idx} style={{ fontSize: "14px", display: "flex", padding: "2px 0", fontWeight: 900 }}>
             <span style={{ flex: 1 }}>{pag.forma}</span>
-            <span style={{ width: "76px", textAlign: "right" }}>{formatCurrency(pag.valor)}</span>
+            <span style={{ width: "80px", textAlign: "right" }}>{formatCurrency(pag.valor)}</span>
           </div>
         );
       })}
@@ -187,7 +190,7 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       <div style={{ color: mutedColor, fontSize: "11px" }}>{dash}</div>
 
       {/* ── SUBTOTAL / DESCONTO ── */}
-      <div style={{ fontSize: "13px", margin: "4px 0" }}>
+      <div style={{ fontSize: "15px", margin: "4px 0", fontWeight: 900 }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>SUBTOTAL:</span>
           <span>{formatCurrency(data.subtotal)}</span>
@@ -207,15 +210,15 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       </div>
 
       {/* ── TOTAL DESTACADO ── */}
-      <div style={{ fontSize: "11px", color: mutedColor }}>{doubleLine}</div>
-      <div style={{ fontWeight: "bold", fontSize: "16px", display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+      <div style={{ fontSize: "13px", color: mutedColor }}>{doubleLine}</div>
+      <div style={{ fontWeight: 900, fontSize: "18px", display: "flex", justifyContent: "space-between", padding: "6px 0" }}>
         <span>TOTAL:</span>
         <span>{formatCurrency(data.total)}</span>
       </div>
-      <div style={{ fontSize: "11px", color: mutedColor }}>{doubleLine}</div>
+      <div style={{ fontSize: "13px", color: mutedColor }}>{doubleLine}</div>
 
       {data.troco > 0 && (
-        <div style={{ fontSize: "13px", display: "flex", justifyContent: "space-between", marginTop: "4px" }}>
+        <div style={{ fontSize: "15px", display: "flex", justifyContent: "space-between", marginTop: "4px", fontWeight: 900 }}>
           <span>TROCO:</span>
           <span>{formatCurrency(data.troco)}</span>
         </div>
@@ -223,16 +226,16 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
 
       {data.observacao && (
         <>
-          <div style={{ color: mutedColor, fontSize: "11px", marginTop: "4px" }}>{dash}</div>
-          <div style={{ fontSize: "12px", margin: "4px 0" }}>Obs: {data.observacao}</div>
+          <div style={{ color: mutedColor, fontSize: "13px", marginTop: "4px" }}>{dash}</div>
+          <div style={{ fontSize: "14px", margin: "4px 0", fontWeight: 900 }}>Obs: {data.observacao}</div>
         </>
       )}
 
       {/* ── RODAPÉ ── */}
-      <div style={{ color: mutedColor, fontSize: "11px", marginTop: "4px" }}>{dash}</div>
-      <div style={{ textAlign: "center", fontSize: "12px", marginTop: "8px", color: mutedColor }}>
+      <div style={{ color: mutedColor, fontSize: "13px", marginTop: "4px" }}>{dash}</div>
+      <div style={{ textAlign: "center", fontSize: "14px", marginTop: "8px", fontWeight: 900 }}>
         <div>Obrigada pela preferência!</div>
-        <div style={{ marginTop: "4px", fontSize: "11px" }}>{data.data} {data.hora}</div>
+        <div style={{ marginTop: "4px", fontSize: "13px" }}>{data.data} {data.hora}</div>
       </div>
     </>
   );
