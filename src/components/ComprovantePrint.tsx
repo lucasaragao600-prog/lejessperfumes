@@ -126,10 +126,10 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
         {data.cidade && <div>{data.cidade}</div>}
       </div>
 
-      <div style={{ color: mutedColor, fontSize: "9px" }}>{dash}</div>
+      <div style={{ color: mutedColor, fontSize: "11px" }}>{dash}</div>
 
       {/* ── INFO DA VENDA ── */}
-      <div style={{ fontSize: "10px", margin: "4px 0" }}>
+      <div style={{ fontSize: "13px", margin: "4px 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>Pedido: {data.pedido}</span>
           <span>{data.data}</span>
@@ -138,33 +138,33 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
         {data.cliente && <div>Cliente: {data.cliente.nome}</div>}
       </div>
 
-      <div style={{ color: mutedColor, fontSize: "9px" }}>{dash}</div>
+      <div style={{ color: mutedColor, fontSize: "11px" }}>{dash}</div>
 
       {/* ── CABEÇALHO ITENS ── */}
-      <div style={{ fontSize: "9px", fontWeight: "bold", display: "flex", padding: "3px 0" }}>
+      <div style={{ fontSize: "12px", fontWeight: "bold", display: "flex", padding: "3px 0" }}>
         <span style={{ flex: 1 }}>ITEM</span>
-        <span style={{ width: "30px", textAlign: "center" }}>QTD</span>
-        <span style={{ width: "60px", textAlign: "right" }}>VALOR</span>
-        <span style={{ width: "60px", textAlign: "right" }}>TOTAL</span>
+        <span style={{ width: "34px", textAlign: "center" }}>QTD</span>
+        <span style={{ width: "68px", textAlign: "right" }}>VALOR</span>
+        <span style={{ width: "68px", textAlign: "right" }}>TOTAL</span>
       </div>
-      <div style={{ color: mutedColor, fontSize: "9px" }}>{dash}</div>
+      <div style={{ color: mutedColor, fontSize: "11px" }}>{dash}</div>
 
       {/* ── ITENS ── */}
       {data.itens.map((item, idx) => (
-        <div key={idx} style={{ fontSize: "9px", display: "flex", padding: "3px 0", alignItems: "flex-start" }}>
+        <div key={idx} style={{ fontSize: "12px", display: "flex", padding: "3px 0", alignItems: "flex-start" }}>
           <span style={{ flex: 1, wordBreak: "break-word" }}>{item.descricao}</span>
-          <span style={{ width: "30px", textAlign: "center", flexShrink: 0 }}>{item.quantidade}</span>
-          <span style={{ width: "60px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.valorUnitario)}</span>
-          <span style={{ width: "60px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.total)}</span>
+          <span style={{ width: "34px", textAlign: "center", flexShrink: 0 }}>{item.quantidade}</span>
+          <span style={{ width: "68px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.valorUnitario)}</span>
+          <span style={{ width: "68px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.total)}</span>
         </div>
       ))}
 
       {/* ── PAGAMENTOS ── */}
-      <div style={{ fontSize: "9px", fontWeight: "bold", display: "flex", padding: "3px 0", marginTop: "2px" }}>
+      <div style={{ fontSize: "12px", fontWeight: "bold", display: "flex", padding: "3px 0", marginTop: "2px" }}>
         <span style={{ flex: 1 }}>FORMA PGTO.</span>
-        <span style={{ width: "70px", textAlign: "right" }}>VALOR</span>
+        <span style={{ width: "76px", textAlign: "right" }}>VALOR</span>
       </div>
-      <div style={{ color: mutedColor, fontSize: "9px" }}>{dash}</div>
+      <div style={{ color: mutedColor, fontSize: "11px" }}>{dash}</div>
       {data.pagamentos.map((pag, idx) => {
         if (pag.dataParcelas && pag.dataParcelas.length > 0) {
           return pag.dataParcelas.map((parcela, pIdx) => (
