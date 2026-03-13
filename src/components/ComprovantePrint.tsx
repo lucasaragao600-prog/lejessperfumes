@@ -109,7 +109,7 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
           }} />
         </div>
       ) : (
-        <div style={{ textAlign: "center", marginBottom: "8px", fontWeight: "bold", fontSize: "14px" }}>
+        <div style={{ textAlign: "center", marginBottom: "8px", fontWeight: "bold", fontSize: "16px" }}>
           {data.nomeFantasia || "LE JESS PERFUMES"}
         </div>
       )}
