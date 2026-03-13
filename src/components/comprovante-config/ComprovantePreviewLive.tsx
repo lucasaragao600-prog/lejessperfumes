@@ -30,7 +30,7 @@ const MOCK_DATA = {
 export default function ComprovantePreviewLive({ config, logoUrl, empresaNome, empresaCnpj, empresaEndereco, empresaTelefone }: Props) {
   const printRef = useRef<HTMLDivElement>(null);
 
-  const widthMap = { "58mm": "220px", "80mm": "302px", A4: "100%" };
+  const widthMap = { "58mm": "182px", "80mm": "272px", A4: "100%" };
   const paperWidth = widthMap[config.formatoPapel];
   const dash = "─".repeat(config.formatoPapel === "58mm" ? 32 : 48);
   const doubleLine = "═".repeat(config.formatoPapel === "58mm" ? 32 : 48);
