@@ -61,6 +61,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   const vendedoras = [...vendedorasCtx, "Outra"];
   const { clientes, adicionarCliente } = useClientes();
   const { configFiscal, criarEmissao, gerarXmlNfce } = useNfce();
+  const { config: comprovanteConfig } = useComprovanteConfig();
 
   // Search
   const [busca, setBusca] = useState("");
