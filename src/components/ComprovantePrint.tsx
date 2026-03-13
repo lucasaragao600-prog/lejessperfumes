@@ -168,26 +168,26 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       {data.pagamentos.map((pag, idx) => {
         if (pag.dataParcelas && pag.dataParcelas.length > 0) {
           return pag.dataParcelas.map((parcela, pIdx) => (
-            <div key={`${idx}-${pIdx}`} style={{ fontSize: "9px", display: "flex", padding: "2px 0" }}>
+            <div key={`${idx}-${pIdx}`} style={{ fontSize: "12px", display: "flex", padding: "2px 0" }}>
               <span style={{ flex: 1 }}>
                 {pag.forma}{pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""} ({parcela.data})
               </span>
-              <span style={{ width: "70px", textAlign: "right" }}>{formatCurrency(parcela.valor)}</span>
+              <span style={{ width: "76px", textAlign: "right" }}>{formatCurrency(parcela.valor)}</span>
             </div>
           ));
         }
         return (
-          <div key={idx} style={{ fontSize: "9px", display: "flex", padding: "2px 0" }}>
+          <div key={idx} style={{ fontSize: "12px", display: "flex", padding: "2px 0" }}>
             <span style={{ flex: 1 }}>{pag.forma}</span>
-            <span style={{ width: "70px", textAlign: "right" }}>{formatCurrency(pag.valor)}</span>
+            <span style={{ width: "76px", textAlign: "right" }}>{formatCurrency(pag.valor)}</span>
           </div>
         );
       })}
 
-      <div style={{ color: mutedColor, fontSize: "9px" }}>{dash}</div>
+      <div style={{ color: mutedColor, fontSize: "11px" }}>{dash}</div>
 
       {/* ── SUBTOTAL / DESCONTO ── */}
-      <div style={{ fontSize: "10px", margin: "4px 0" }}>
+      <div style={{ fontSize: "13px", margin: "4px 0" }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>SUBTOTAL:</span>
           <span>{formatCurrency(data.subtotal)}</span>
@@ -207,15 +207,15 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       </div>
 
       {/* ── TOTAL DESTACADO ── */}
-      <div style={{ fontSize: "9px", color: mutedColor }}>{doubleLine}</div>
-      <div style={{ fontWeight: "bold", fontSize: "13px", display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+      <div style={{ fontSize: "11px", color: mutedColor }}>{doubleLine}</div>
+      <div style={{ fontWeight: "bold", fontSize: "16px", display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
         <span>TOTAL:</span>
         <span>{formatCurrency(data.total)}</span>
       </div>
-      <div style={{ fontSize: "9px", color: mutedColor }}>{doubleLine}</div>
+      <div style={{ fontSize: "11px", color: mutedColor }}>{doubleLine}</div>
 
       {data.troco > 0 && (
-        <div style={{ fontSize: "10px", display: "flex", justifyContent: "space-between", marginTop: "4px" }}>
+        <div style={{ fontSize: "13px", display: "flex", justifyContent: "space-between", marginTop: "4px" }}>
           <span>TROCO:</span>
           <span>{formatCurrency(data.troco)}</span>
         </div>
@@ -223,16 +223,16 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
 
       {data.observacao && (
         <>
-          <div style={{ color: mutedColor, fontSize: "9px", marginTop: "4px" }}>{dash}</div>
-          <div style={{ fontSize: "9px", margin: "4px 0" }}>Obs: {data.observacao}</div>
+          <div style={{ color: mutedColor, fontSize: "11px", marginTop: "4px" }}>{dash}</div>
+          <div style={{ fontSize: "12px", margin: "4px 0" }}>Obs: {data.observacao}</div>
         </>
       )}
 
       {/* ── RODAPÉ ── */}
-      <div style={{ color: mutedColor, fontSize: "9px", marginTop: "4px" }}>{dash}</div>
-      <div style={{ textAlign: "center", fontSize: "9px", marginTop: "8px", color: mutedColor }}>
+      <div style={{ color: mutedColor, fontSize: "11px", marginTop: "4px" }}>{dash}</div>
+      <div style={{ textAlign: "center", fontSize: "12px", marginTop: "8px", color: mutedColor }}>
         <div>Obrigada pela preferência!</div>
-        <div style={{ marginTop: "4px", fontSize: "8px" }}>{data.data} {data.hora}</div>
+        <div style={{ marginTop: "4px", fontSize: "11px" }}>{data.data} {data.hora}</div>
       </div>
     </>
   );
