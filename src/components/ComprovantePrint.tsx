@@ -232,10 +232,10 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       )}
 
       {/* ── RODAPÉ ── */}
-      <div style={{ color: mutedColor, fontSize: "11px", marginTop: "4px" }}>{dash}</div>
-      <div style={{ textAlign: "center", fontSize: "12px", marginTop: "8px", color: mutedColor }}>
+      <div style={{ color: mutedColor, fontSize: "13px", marginTop: "4px" }}>{dash}</div>
+      <div style={{ textAlign: "center", fontSize: "14px", marginTop: "8px", fontWeight: 900 }}>
         <div>Obrigada pela preferência!</div>
-        <div style={{ marginTop: "4px", fontSize: "11px" }}>{data.data} {data.hora}</div>
+        <div style={{ marginTop: "4px", fontSize: "13px" }}>{data.data} {data.hora}</div>
       </div>
     </>
   );
