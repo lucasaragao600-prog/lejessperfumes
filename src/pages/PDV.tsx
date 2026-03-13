@@ -440,12 +440,13 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
 <html><head><meta charset="utf-8"><title>Comprovante</title>
 <style>
   @page { size: ${cfg.formatoPapel === "A4" ? "A4" : cfg.formatoPapel + " auto"}; margin: ${cfg.margens.top}mm ${cfg.margens.right}mm ${cfg.margens.bottom}mm ${cfg.margens.left}mm; }
-  body { font-family: '${cfg.fontFamily}', monospace; font-size: ${cfg.fontProfiles.corpo.size}px; line-height: ${cfg.espacamentoLinhas}; color: #000; background: #fff; padding: 0; margin: 0; width: ${cfg.formatoPapel === "A4" ? "auto" : cfg.formatoPapel}; font-weight: 900; letter-spacing: ${cfg.fontProfiles.corpo.letterSpacing}px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .sep { color: #999; font-size: 11px; }
-  .double { color: #999; font-size: 13px; }
-  .flex { display: flex; justify-content: space-between; }
-  .item-row { display: flex; padding: 3px 0; align-items: flex-start; }
-  .item-row .name { flex: 1; word-break: break-word; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: '${cfg.fontFamily}', monospace; font-size: ${cfg.fontProfiles.corpo.size}px; line-height: ${cfg.espacamentoLinhas}; color: #000; background: #fff; padding: 0; margin: 0; width: 100%; max-width: 100%; font-weight: 900; letter-spacing: ${cfg.fontProfiles.corpo.letterSpacing}px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+   .sep { color: #999; font-size: 11px; overflow: hidden; }
+   .double { color: #999; font-size: 13px; overflow: hidden; }
+   .flex { display: flex; justify-content: space-between; }
+   .item-row { display: flex; padding: 3px 0; align-items: flex-start; }
+   .item-row .name { flex: 1; word-break: break-word; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-clamp: 2; }
   .item-row .qty { width: 36px; text-align: center; flex-shrink: 0; }
   .item-row .val { width: 72px; text-align: right; flex-shrink: 0; }
   .col-head { font-weight: 900; display: flex; padding: 3px 0; }
