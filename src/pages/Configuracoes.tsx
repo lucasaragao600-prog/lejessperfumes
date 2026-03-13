@@ -220,10 +220,18 @@ export default function Configuracoes() {
           <Settings size={20} className="text-gold" />
           <h1 className="page-title text-2xl">Configurações</h1>
         </div>
-        <p className="page-subtitle">Personalize tipos, concentrações e volumes</p>
+        <p className="page-subtitle">Personalize tipos, concentrações, volumes e comprovantes</p>
       </div>
 
-      <div className="px-4 space-y-5">
+      <div className="px-4 pt-2">
+        <Tabs defaultValue="sistema" className="w-full">
+          <TabsList className="w-full grid grid-cols-2 h-10 mb-4">
+            <TabsTrigger value="sistema" className="text-xs gap-1.5"><Settings size={14} /> Sistema</TabsTrigger>
+            <TabsTrigger value="comprovantes" className="text-xs gap-1.5"><Receipt size={14} /> Comprovantes</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="sistema">
+      <div className="space-y-5">
         {/* Dados da Empresa */}
         <section className="card-premium p-5 space-y-4">
           <div>
