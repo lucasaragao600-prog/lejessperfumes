@@ -418,24 +418,6 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
     const printWindow = window.open("", "_blank", "width=400,height=600");
     if (!printWindow) return;
 
-    const getBlocoStyle = (id: string) => {
-      const bloco = cfg.blocos.find((b) => b.id === id);
-      if (!bloco) return "";
-      const styles: string[] = [];
-      styles.push(`text-align: ${bloco.alinhamento}`);
-      styles.push(`font-size: ${bloco.fontSize}px`);
-      styles.push(`font-weight: ${bloco.fontWeight === "bold" ? 900 : 400}`);
-      if (bloco.italic) styles.push("font-style: italic");
-      if (bloco.underline) styles.push("text-decoration: underline");
-      if (bloco.uppercase) styles.push("text-transform: uppercase");
-      if (bloco.espacamento) styles.push(`margin-bottom: ${bloco.espacamento}px`);
-      return styles.join(";");
-    };
-    const isBlocoAtivo = (id: string) => cfg.blocos.find((b) => b.id === id)?.ativo ?? true;
-    const dashLen = cfg.formatoPapel === "58mm" ? 32 : 48;
-    const dash = "─".repeat(dashLen);
-    const doubleLine = "═".repeat(dashLen);
-
     const dash = "─".repeat(48);
     const doubleLine = "═".repeat(48);
 
