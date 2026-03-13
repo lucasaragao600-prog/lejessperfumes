@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { Settings, Plus, Trash2, RotateCcw, Loader2, Upload, X } from "lucide-react";
+import { Settings, Plus, Trash2, RotateCcw, Loader2, Upload, X, Receipt } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { TipoPerfume, Concentracao } from "@/data/mockData";
 import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ConfigComprovantesPage from "@/components/comprovante-config/ConfigComprovantesPage";
 
 const UFS_LIST = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
