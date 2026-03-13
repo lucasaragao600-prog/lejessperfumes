@@ -536,6 +536,13 @@ export default function Configuracoes() {
           </div>
         </section>
       </div>
+          </TabsContent>
+
+          <TabsContent value="comprovantes">
+            <ConfigComprovantesPage />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }
