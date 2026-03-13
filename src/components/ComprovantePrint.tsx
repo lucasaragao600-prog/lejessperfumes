@@ -154,11 +154,11 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
 
       {/* ── ITENS ── */}
       {data.itens.map((item, idx) => (
-        <div key={idx} style={{ fontSize: "12px", display: "flex", padding: "3px 0", alignItems: "flex-start" }}>
+        <div key={idx} style={{ fontSize: "14px", display: "flex", padding: "3px 0", alignItems: "flex-start", fontWeight: 900 }}>
           <span style={{ flex: 1, wordBreak: "break-word" }}>{item.descricao}</span>
-          <span style={{ width: "34px", textAlign: "center", flexShrink: 0 }}>{item.quantidade}</span>
-          <span style={{ width: "68px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.valorUnitario)}</span>
-          <span style={{ width: "68px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.total)}</span>
+          <span style={{ width: "36px", textAlign: "center", flexShrink: 0 }}>{item.quantidade}</span>
+          <span style={{ width: "72px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.valorUnitario)}</span>
+          <span style={{ width: "72px", textAlign: "right", flexShrink: 0 }}>{formatCurrency(item.total)}</span>
         </div>
       ))}
 
