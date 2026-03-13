@@ -439,9 +439,9 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
     const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Comprovante</title>
 <style>
-  @page { size: ${cfg.formatoPapel === "A4" ? "A4" : cfg.formatoPapel + " auto"}; margin: ${cfg.margens.top}mm ${cfg.margens.right}mm ${cfg.margens.bottom}mm ${cfg.margens.left}mm; }
+  @page { size: ${cfg.formatoPapel === "A4" ? "A4" : cfg.formatoPapel === "80mm" ? "72.1mm 210mm" : "48mm auto"}; margin: ${cfg.margens.top}mm ${cfg.margens.right}mm ${cfg.margens.bottom}mm ${cfg.margens.left}mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: '${cfg.fontFamily}', monospace; font-size: ${cfg.fontProfiles.corpo.size}px; line-height: ${cfg.espacamentoLinhas}; color: #000; background: #fff; padding: 0; margin: 0; width: 100%; max-width: 100%; font-weight: 900; letter-spacing: ${cfg.fontProfiles.corpo.letterSpacing}px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: '${cfg.fontFamily}', monospace; font-size: ${cfg.fontProfiles.corpo.size}px; line-height: ${cfg.espacamentoLinhas}; color: #000; background: #fff; padding: 0; margin: 0; width: ${cfg.formatoPapel === "80mm" ? "72.1mm" : cfg.formatoPapel === "58mm" ? "48mm" : "100%"}; max-width: 100%; font-weight: 900; letter-spacing: ${cfg.fontProfiles.corpo.letterSpacing}px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
    .sep { color: #999; font-size: 11px; overflow: hidden; }
    .double { color: #999; font-size: 13px; overflow: hidden; }
    .flex { display: flex; justify-content: space-between; }
