@@ -52,13 +52,16 @@ const ComprovantePrint = forwardRef<HTMLDivElement, { data: ComprovanteData }>((
   return (
     <div ref={ref} className="hidden print:block" style={{
       width: "80mm",
-      fontFamily: "'Courier New', monospace",
-      fontSize: "14px",
-      lineHeight: "1.5",
+      fontFamily: "'Courier New', Courier, monospace",
+      fontSize: "16px",
+      lineHeight: "1.6",
       color: "#000",
       background: "#fff",
-      padding: "3mm",
-      fontWeight: 600,
+      padding: "2mm",
+      fontWeight: 900,
+      WebkitPrintColorAdjust: "exact",
+      printColorAdjust: "exact" as any,
+      letterSpacing: "0.3px",
     }}>
       <ReceiptContent data={data} />
     </div>
