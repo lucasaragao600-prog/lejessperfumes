@@ -132,7 +132,7 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
       <div style={{ color: mutedColor, fontSize: "11px" }}>{dash}</div>
 
       {/* ── INFO DA VENDA ── */}
-      <div style={{ fontSize: "13px", margin: "4px 0" }}>
+      <div style={{ fontSize: "15px", margin: "4px 0", fontWeight: 900 }}>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
           <span>Pedido: {data.pedido}</span>
           <span>{data.data}</span>
