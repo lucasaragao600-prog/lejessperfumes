@@ -14,6 +14,7 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
   const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ perfumeId: "", deposito: "" as Deposito | "", quantidade: 1 });
+  const [inventariar, setInventariar] = useState(false);
   const [ajusteId, setAjusteId] = useState<string | null>(null);
   const [ajusteQtd, setAjusteQtd] = useState(0);
 
@@ -47,12 +48,14 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
     if (!form.perfumeId || !form.deposito || form.quantidade < 1) return;
     const deposito = form.deposito as Deposito;
     const p = perfumes.find((x) => x.id === form.perfumeId)!;
-    const estoqueAtual = p.estoques[deposito];
-    if (estoqueAtual < form.quantidade) {
-      alert(`Estoque insuficiente em ${deposito}. Disponível: ${estoqueAtual}`);
-      return;
+    if (!inventariar) {
+      const estoqueAtual = p.estoques[deposito];
+      if (estoqueAtual < form.quantidade) {
+        alert(`Estoque insuficiente em ${deposito}. Disponível: ${estoqueAtual}`);
+        return;
+      }
+      baixarEstoque(form.perfumeId, deposito, form.quantidade);
     }
-    baixarEstoque(form.perfumeId, deposito, form.quantidade);
     await adicionarTesterDB({
       perfumeId: p.id,
       perfumeNome: p.nome,
@@ -63,6 +66,7 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
       registradoPor: profile?.nome || "Desconhecido",
     });
     setForm({ perfumeId: "", deposito: "", quantidade: 1 });
+    setInventariar(false);
     setShowForm(false);
   };
 
@@ -162,8 +166,25 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
                 onChange={(e) => setForm({ ...form, quantidade: e.target.value === "" ? 0 : parseInt(e.target.value) || 0 })}
                 className="input-premium px-3 py-2.5 text-sm" />
             </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setInventariar(!inventariar)}
+                className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+                  inventariar ? "bg-primary" : "bg-muted"
+                }`}
+              >
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
+                  inventariar ? "translate-x-5" : ""
+                }`} />
+              </button>
+              <div>
+                <p className="text-xs font-medium text-foreground">Inventariar (sem descontar estoque)</p>
+                <p className="text-[10px] text-muted-foreground">Apenas registra o tester sem baixar do estoque</p>
+              </div>
+            </div>
             <div className="flex gap-3 pt-1">
-              <button onClick={() => setShowForm(false)} className="btn-secondary flex-1 py-2.5">Cancelar</button>
+              <button onClick={() => { setShowForm(false); setInventariar(false); }} className="btn-secondary flex-1 py-2.5">Cancelar</button>
               <button onClick={handleAdicionar} disabled={!form.perfumeId || !form.deposito} className="btn-primary flex-1 py-2.5">
                 Salvar
               </button>
