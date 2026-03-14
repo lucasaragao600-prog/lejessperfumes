@@ -48,12 +48,14 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
     if (!form.perfumeId || !form.deposito || form.quantidade < 1) return;
     const deposito = form.deposito as Deposito;
     const p = perfumes.find((x) => x.id === form.perfumeId)!;
-    const estoqueAtual = p.estoques[deposito];
-    if (estoqueAtual < form.quantidade) {
-      alert(`Estoque insuficiente em ${deposito}. Disponível: ${estoqueAtual}`);
-      return;
+    if (!inventariar) {
+      const estoqueAtual = p.estoques[deposito];
+      if (estoqueAtual < form.quantidade) {
+        alert(`Estoque insuficiente em ${deposito}. Disponível: ${estoqueAtual}`);
+        return;
+      }
+      baixarEstoque(form.perfumeId, deposito, form.quantidade);
     }
-    baixarEstoque(form.perfumeId, deposito, form.quantidade);
     await adicionarTesterDB({
       perfumeId: p.id,
       perfumeNome: p.nome,
@@ -64,6 +66,7 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
       registradoPor: profile?.nome || "Desconhecido",
     });
     setForm({ perfumeId: "", deposito: "", quantidade: 1 });
+    setInventariar(false);
     setShowForm(false);
   };
 
