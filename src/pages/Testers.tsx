@@ -14,6 +14,7 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
   const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ perfumeId: "", deposito: "" as Deposito | "", quantidade: 1 });
+  const [inventariar, setInventariar] = useState(false);
   const [ajusteId, setAjusteId] = useState<string | null>(null);
   const [ajusteQtd, setAjusteQtd] = useState(0);
 
