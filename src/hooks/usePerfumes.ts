@@ -202,7 +202,21 @@ export function usePerfumes() {
   };
 
   const proximaLinhaPorCasa = (casaSigla: string): number => {
-    return perfumes.filter((p) => p.casaSigla === casaSigla).length + 1;
+    const sigla = casaSigla.replace(/[^A-Z0-9]/gi, "").toUpperCase().padEnd(3, "X").slice(0, 3);
+    let maxLinha = 0;
+    for (const p of perfumes) {
+      if (p.casaSigla !== casaSigla) continue;
+      // Extract LLLL (positions 7-10) from code format TTMMMCCLLLLVVV
+      const codigo = p.codigo || "";
+      if (codigo.length >= 11) {
+        const linhaStr = codigo.slice(7, 11);
+        const linha = parseInt(linhaStr, 10);
+        if (!isNaN(linha) && linha > maxLinha) {
+          maxLinha = linha;
+        }
+      }
+    }
+    return maxLinha + 1;
   };
 
   return {
