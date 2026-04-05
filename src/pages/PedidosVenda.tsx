@@ -242,7 +242,7 @@ ${pedido.nfceStatus === "autorizada" && pedido.nfceChave ? `<div style="font-siz
               </span>
             </div>
             <div className="flex gap-2">
-              {selectedPedido.nfceStatus === "pendente" && (
+              {(selectedPedido.nfceStatus === "pendente" || selectedPedido.nfceStatus === "sem_certificado") && (
                 <button
                   onClick={() => handleGerarNfce(selectedPedido)}
                   disabled={gerandoId === selectedPedido.grupoVenda}
@@ -253,7 +253,7 @@ ${pedido.nfceStatus === "autorizada" && pedido.nfceChave ? `<div style="font-siz
                 </button>
               )}
               <button onClick={() => handleReprint(selectedPedido)} className="btn-secondary px-4 py-2 text-sm flex items-center gap-2">
-                <Printer size={14} /> Reimprimir
+                <Printer size={14} /> Reimprimir Comprovante
               </button>
             </div>
           </div>
@@ -394,7 +394,7 @@ ${pedido.nfceStatus === "autorizada" && pedido.nfceChave ? `<div style="font-siz
                     <button onClick={() => handleReprint(pedido)} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all" title="Reimprimir">
                       <Printer size={16} />
                     </button>
-                    {pedido.nfceStatus === "pendente" && (
+                    {(pedido.nfceStatus === "pendente" || pedido.nfceStatus === "sem_certificado") && (
                       <button
                         onClick={() => handleGerarNfce(pedido)}
                         disabled={gerandoId === pedido.grupoVenda}
