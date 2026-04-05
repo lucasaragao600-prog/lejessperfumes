@@ -40,6 +40,12 @@ export interface ConfiguracaoFiscal {
   cscId: string;
   cscToken: string;
   logoUrl: string;
+  certificadoDigitalUrl: string;
+  certificadoSenha: string;
+}
+
+export function hasCertificadoConfigurado(config: ConfiguracaoFiscal | null | undefined): boolean {
+  return !!(config && config.certificadoDigitalUrl && config.certificadoDigitalUrl.trim() !== "");
 }
 
 function rowToNfce(row: any): NfceEmissao {
