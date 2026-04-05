@@ -70,6 +70,7 @@ export interface Venda {
   observacao: string;
   registradoPor?: string;
   grupoVenda?: string;
+  clienteId?: string | null;
 }
 
 export interface Movimentacao {

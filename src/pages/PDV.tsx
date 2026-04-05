@@ -292,7 +292,9 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
       cliente: clienteSelecionado,
       itens: cart.map((item, idx) => ({
         item: idx + 1,
-        descricao: `${item.codigo} - ${item.marca} - ${item.perfumeNome} - ${concentracoesConfig[item.concentracao] || item.concentracao} - ${item.volume}ml`,
+        descricao: `${item.marca} - ${item.perfumeNome}`,
+        casa: item.marca || item.casaSigla,
+        perfumeNome: item.perfumeNome,
         codigo: item.codigo,
         quantidade: item.quantidade,
         valorUnitario: item.precoUnitario,
@@ -419,82 +421,61 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
     const printWindow = window.open("", "_blank", "width=320,height=600");
     if (!printWindow) return;
     
+    const dash = "─".repeat(40);
+    const doubleLine = "═".repeat(40);
     const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Comprovante</title>
 <style>
-  @page { size: 80mm auto; margin: 0; }
-  body { font-family: 'Arial', sans-serif; font-size: 14px; line-height: 1.5; color: #000; background: #fff; padding: 4mm; margin: 0; width: 80mm; font-weight: 900; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .logo-center { text-align: center; margin-bottom: 8px; }
-  .logo-center img { width: 70%; max-height: 80px; object-fit: contain; }
-  .logo-text { text-align: center; font-weight: 900; font-size: 16px; margin-bottom: 8px; }
-  .company-center { text-align: center; font-size: 14px; margin-bottom: 6px; font-weight: 900; }
-  .company-name { font-weight: 900; font-size: 15px; }
-  .sep { color: #000; font-size: 11px; }
-  .double { color: #000; font-size: 13px; }
+  @page { size: 72mm auto; margin: 0; }
+  body { font-family: Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #000; background: #fff; padding: 2mm; margin: 0; width: 72mm; font-weight: 900; }
+  .center { text-align: center; }
   .flex { display: flex; justify-content: space-between; }
-  .sm { font-size: 15px; font-weight: 900; }
-  .xs { font-size: 14px; font-weight: 900; }
-  .item-row { font-size: 14px; display: flex; padding: 3px 0; font-weight: 900; }
-  .item-row .name { flex: 1; word-break: break-word; }
-  .item-row .qty { width: 36px; text-align: center; flex-shrink: 0; }
-  .item-row .val { width: 72px; text-align: right; flex-shrink: 0; }
-  .col-head { font-size: 14px; font-weight: 900; display: flex; padding: 3px 0; }
-  .col-head .name { flex: 1; }
-  .col-head .qty { width: 36px; text-align: center; }
-  .col-head .val { width: 72px; text-align: right; }
-  .pag-row { font-size: 14px; display: flex; padding: 2px 0; font-weight: 900; }
-  .pag-row .pname { flex: 1; }
-  .pag-row .pval { width: 80px; text-align: right; }
-  .total-line { font-size: 18px; font-weight: 900; display: flex; justify-content: space-between; padding: 6px 0; }
-  .footer { text-align: center; font-size: 14px; font-weight: 900; margin-top: 8px; }
-  .section-title { font-size: 15px; font-weight: 900; margin: 4px 0; }
+  .sep { font-size: 10px; }
+  .dbl { font-size: 11px; }
 </style></head><body>
-</style></head><body>
-${comprovanteData.logoUrl ? `<div class="logo-center"><img src="${comprovanteData.logoUrl}" alt="Logo" /></div>` : `<div class="logo-text">${comprovanteData.nomeFantasia || "LE JESS PERFUMES"}</div>`}
-<div class="company-center">
-  <div class="company-name">${comprovanteData.razaoSocial || comprovanteData.nomeFantasia}</div>
+${comprovanteData.logoUrl ? `<div class="center" style="margin-bottom:6px"><img src="${comprovanteData.logoUrl}" style="width:60%;max-height:60px;object-fit:contain" /></div>` : `<div class="center" style="font-size:15px;font-weight:900;margin-bottom:6px">${comprovanteData.nomeFantasia || "LE JESS PERFUMES"}</div>`}
+<div class="center" style="font-size:12px;font-weight:900;margin-bottom:4px">
+  <div style="font-size:13px;font-weight:900">${comprovanteData.razaoSocial || comprovanteData.nomeFantasia}</div>
   ${comprovanteData.cnpj ? `<div>CNPJ: ${comprovanteData.cnpj}</div>` : ""}
   ${comprovanteData.inscricaoEstadual ? `<div>IE: ${comprovanteData.inscricaoEstadual}</div>` : ""}
   ${comprovanteData.telefone ? `<div>Tel.: ${comprovanteData.telefone}</div>` : ""}
   ${comprovanteData.endereco ? `<div>${comprovanteData.endereco}</div>` : ""}
-  ${comprovanteData.cidade ? `<div>${comprovanteData.cidade.replace(/\\n/g, "<br/>")}</div>` : ""}
 </div>
-<div class="sep">${"─".repeat(48)}</div>
-<div class="sm">
+<div class="sep">${dash}</div>
+<div style="font-size:13px;font-weight:900;margin:3px 0">
   <div class="flex"><span>Pedido: ${comprovanteData.pedido}</span><span>${comprovanteData.data}</span></div>
   <div>Vendedor: ${comprovanteData.vendedor}</div>
-  <div>Operador: ${comprovanteData.operador || ""}</div>
-  ${comprovanteData.cliente ? `<div>Cliente: ${comprovanteData.cliente.nome}</div>` : ""}
+  ${comprovanteData.operador ? `<div>Operador: ${comprovanteData.operador}</div>` : ""}
   ${comprovanteData.cliente ? `<div>Cliente: ${comprovanteData.cliente.nome}</div>` : ""}
 </div>
-<div class="sep">${"─".repeat(48)}</div>
-<div class="col-head"><span class="name">ITEM</span><span class="qty">QTD</span><span class="val">VALOR</span><span class="val">TOTAL</span></div>
-<div class="sep">${"─".repeat(48)}</div>
+<div class="sep">${dash}</div>
 ${comprovanteData.itens.map(item => `
-<div class="item-row"><span class="name">${item.descricao}</span><span class="qty">${item.quantidade}</span><span class="val">${formatCurrency(item.valorUnitario)}</span><span class="val">${formatCurrency(item.total)}</span></div>`).join("")}
-<div class="section-title">FORMA DE PAGAMENTO</div>
-<div class="col-head" style="margin-top:2px"><span class="pname">FORMA PGTO.</span><span class="pval">VALOR</span></div>
-<div class="sep">${"─".repeat(48)}</div>
+<div style="font-size:13px;font-weight:900;padding:2px 0">
+  <div>${item.casa} - ${item.perfumeNome}</div>
+  <div class="flex"><span>x${item.quantidade}  ${formatCurrency(item.valorUnitario)}</span><span>${formatCurrency(item.total)}</span></div>
+</div>`).join("")}
+<div class="sep">${dash}</div>
+<div style="font-size:14px;font-weight:900;margin:3px 0">FORMA DE PAGAMENTO</div>
 ${comprovanteData.pagamentos.map(pag => {
     if (pag.dataParcelas && pag.dataParcelas.length > 0) {
       return pag.dataParcelas.map((parcela: {data: string; valor: number}, pIdx: number) => `
-<div class="pag-row"><span class="pname">${pag.forma}${pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""} (${parcela.data})</span><span class="pval">${formatCurrency(parcela.valor)}</span></div>`).join("");
+<div class="flex" style="font-size:13px;font-weight:900;padding:1px 0"><span>${pag.forma}${pag.parcelas > 1 ? ` ${pIdx + 1}/${pag.parcelas}` : ""}</span><span>${formatCurrency(parcela.valor)}</span></div>`).join("");
     }
-    return `<div class="pag-row"><span class="pname">${pag.forma}</span><span class="pval">${formatCurrency(pag.valor)}</span></div>`;
+    return `<div class="flex" style="font-size:13px;font-weight:900;padding:1px 0"><span>${pag.forma}</span><span>${formatCurrency(pag.valor)}</span></div>`;
   }).join("")}
-<div class="sep">${"─".repeat(48)}</div>
-<div class="sm flex"><span><strong>SUBTOTAL:</strong></span><span><strong>${formatCurrency(comprovanteData.subtotal)}</strong></span></div>
-${comprovanteData.desconto > 0 ? `<div class="sm flex"><span>DESCONTO${comprovanteData.descontoLabel ? ` (${comprovanteData.descontoLabel})` : ""}:</span><span>-${formatCurrency(comprovanteData.desconto)}</span></div>` : ""}
-${comprovanteData.acrescimo > 0 ? `<div class="sm flex"><span>ACRÉSCIMO${comprovanteData.acrescimoLabel ? ` (${comprovanteData.acrescimoLabel})` : ""}:</span><span>+${formatCurrency(comprovanteData.acrescimo)}</span></div>` : ""}
-<div class="double">${"═".repeat(48)}</div>
-<div class="total-line"><span><strong>TOTAL:</strong></span><span><strong>${formatCurrency(comprovanteData.total)}</strong></span></div>
-<div class="double">${"═".repeat(48)}</div>
-${comprovanteData.troco > 0 ? `<div class="sm flex"><span><strong>TROCO:</strong></span><span><strong>${formatCurrency(comprovanteData.troco)}</strong></span></div>` : ""}
-${comprovanteData.observacao ? `<div class="sep">${"─".repeat(48)}</div><div class="xs">Obs: ${comprovanteData.observacao}</div>` : ""}
-<div class="sep">${"─".repeat(48)}</div>
-<div class="footer">
+<div class="sep">${dash}</div>
+<div class="flex" style="font-size:14px;font-weight:900"><span>SUBTOTAL:</span><span>${formatCurrency(comprovanteData.subtotal)}</span></div>
+${comprovanteData.desconto > 0 ? `<div class="flex" style="font-size:14px;font-weight:900"><span>DESCONTO${comprovanteData.descontoLabel ? ` (${comprovanteData.descontoLabel})` : ""}:</span><span>-${formatCurrency(comprovanteData.desconto)}</span></div>` : ""}
+${comprovanteData.acrescimo > 0 ? `<div class="flex" style="font-size:14px;font-weight:900"><span>ACRÉSCIMO${comprovanteData.acrescimoLabel ? ` (${comprovanteData.acrescimoLabel})` : ""}:</span><span>+${formatCurrency(comprovanteData.acrescimo)}</span></div>` : ""}
+<div class="dbl">${doubleLine}</div>
+<div class="flex" style="font-size:16px;font-weight:900;padding:4px 0"><span>TOTAL:</span><span>${formatCurrency(comprovanteData.total)}</span></div>
+<div class="dbl">${doubleLine}</div>
+${comprovanteData.troco > 0 ? `<div class="flex" style="font-size:14px;font-weight:900;margin:3px 0"><span>TROCO:</span><span>${formatCurrency(comprovanteData.troco)}</span></div>` : ""}
+${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-size:12px;font-weight:900;margin:3px 0">Obs: ${comprovanteData.observacao}</div>` : ""}
+<div class="sep" style="margin-top:4px">${dash}</div>
+<div class="center" style="font-size:12px;font-weight:900;margin-top:6px">
   <div>Obrigada pela preferência!</div>
-  <div style="margin-top:4px">${comprovanteData.data} ${comprovanteData.hora}</div>
+  <div style="font-size:11px;margin-top:3px">${comprovanteData.data} ${comprovanteData.hora}</div>
 </div>
 </body></html>`;
     printWindow.document.write(html);
