@@ -17,6 +17,7 @@ import Alertas from "@/pages/Alertas";
 import PDV from "@/pages/PDV";
 import FechamentoCaixa from "@/pages/FechamentoCaixa";
 import PedidosVenda from "@/pages/PedidosVenda";
+import NfcePendentes from "@/pages/NfcePendentes";
 import { AppProvider } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useAlertas } from "@/hooks/useAlertas";
@@ -116,6 +117,7 @@ function IndexContent({
       case "importar": return isMaster ? <ImportarPlanilha /> : <Estoque isMaster={false} />;
       case "caixa": return <FechamentoCaixa />;
       case "pedidos": return <PedidosVenda />;
+      case "nfce-pendentes": return <NfcePendentes />;
       case "configuracoes": return isMaster ? <Configuracoes /> : <Estoque isMaster={false} />;
       case "usuarios": return isMaster ? <GerenciarUsuarios /> : <Estoque isMaster={false} />;
       default: return <Estoque isMaster={isMaster} />;
