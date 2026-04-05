@@ -471,7 +471,7 @@ ${comprovanteData.logoUrl ? `<div class="logo-center"><img src="${comprovanteDat
 <div class="col-head"><span class="name">ITEM</span><span class="qty">QTD</span><span class="val">VALOR</span><span class="val">TOTAL</span></div>
 <div class="sep">${"─".repeat(48)}</div>
 ${comprovanteData.itens.map(item => `
-<div class="item-row"><span class="name">${item.descricao}</span><span class="qty">${item.quantidade}</span><span class="val">R$ ${item.valorUnitario.toFixed(2)}</span><span class="val">R$ ${item.total.toFixed(2)}</span></div>`).join("")}
+<div class="item-row"><span class="name">${item.descricao}</span><span class="qty">${item.quantidade}</span><span class="val">${formatCurrency(item.valorUnitario)}</span><span class="val">${formatCurrency(item.total)}</span></div>`).join("")}
 <div class="section-title">FORMA DE PAGAMENTO</div>
 <div class="col-head" style="margin-top:2px"><span class="pname">FORMA PGTO.</span><span class="pval">VALOR</span></div>
 <div class="sep">${"─".repeat(48)}</div>
