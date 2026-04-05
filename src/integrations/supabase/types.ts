@@ -529,6 +529,7 @@ export type Database = {
           casa_sigla: string
           cfop: string
           codigo: string
+          codigo_barras: string
           concentracao: string
           created_at: string
           cst_csosn: string
@@ -555,6 +556,7 @@ export type Database = {
           casa_sigla: string
           cfop?: string
           codigo: string
+          codigo_barras?: string
           concentracao: string
           created_at?: string
           cst_csosn?: string
@@ -581,6 +583,7 @@ export type Database = {
           casa_sigla?: string
           cfop?: string
           codigo?: string
+          codigo_barras?: string
           concentracao?: string
           created_at?: string
           cst_csosn?: string
