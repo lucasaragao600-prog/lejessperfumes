@@ -130,7 +130,19 @@ export default function Configuracoes() {
         logoUrl = urlData.publicUrl;
       }
 
-      await salvarConfigFiscal({ ...empresa, logoUrl });
+      let certificadoDigitalUrl = empresa.certificadoDigitalUrl;
+      // Upload certificate if new file selected
+      if (certFile) {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const certPath = `certificado-digital.${certFile.name.split('.').pop()}`;
+        const { error: certUploadError } = await supabase.storage
+          .from("fiscal-xml")
+          .upload(certPath, certFile, { upsert: true });
+        if (certUploadError) throw certUploadError;
+        certificadoDigitalUrl = certPath;
+      }
+
+      await salvarConfigFiscal({ ...empresa, logoUrl, certificadoDigitalUrl });
       toast.success("Dados da empresa salvos com sucesso!");
     } catch {
       toast.error("Erro ao salvar dados da empresa");
