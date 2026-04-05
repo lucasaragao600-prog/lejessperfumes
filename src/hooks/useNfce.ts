@@ -90,6 +90,8 @@ function rowToConfig(row: any): ConfiguracaoFiscal {
     cscId: row.csc_id,
     cscToken: row.csc_token,
     logoUrl: row.logo_url || "",
+    certificadoDigitalUrl: row.certificado_digital_url || "",
+    certificadoSenha: row.certificado_senha || "",
   };
 }
 
