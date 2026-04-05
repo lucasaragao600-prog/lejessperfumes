@@ -1,4 +1,4 @@
-import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon, Monitor, DollarSign, ClipboardList, AlertCircle } from "lucide-react";
+import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon, Monitor, DollarSign, ClipboardList } from "lucide-react";
 import logoLeJess from "@/assets/logo-le-jess.png";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -13,7 +13,7 @@ const allTabs = [
   { id: "estoque", label: "Estoque", icon: Package, masterOnly: false },
   { id: "vendas", label: "Vendas", icon: ShoppingCart, masterOnly: false },
   { id: "pedidos", label: "Pedidos", icon: ClipboardList, masterOnly: false },
-  { id: "nfce-pendentes", label: "NFC-e Pendentes", icon: AlertCircle, masterOnly: false },
+  { id: "nfce-pendentes", label: "NFC-e", icon: FileText, masterOnly: false },
   { id: "movimentacoes", label: "Movimentações", icon: ArrowLeftRight, masterOnly: false },
   { id: "testers", label: "Testers", icon: FlaskConical, masterOnly: false },
   { id: "caixa", label: "Caixa", icon: DollarSign, masterOnly: false },
