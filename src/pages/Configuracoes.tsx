@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Settings, Plus, Trash2, RotateCcw, Loader2, Upload, X } from "lucide-react";
+import { Settings, Plus, Trash2, RotateCcw, Loader2, Upload, X, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { TipoPerfume, Concentracao } from "@/data/mockData";
 import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
@@ -21,6 +21,9 @@ export default function Configuracoes() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const certInputRef = useRef<HTMLInputElement>(null);
+  const [certFile, setCertFile] = useState<File | null>(null);
+  const [certNome, setCertNome] = useState<string>("");
   const [empresa, setEmpresa] = useState({
     razaoSocial: "", nomeFantasia: "", cnpj: "", inscricaoEstadual: "",
     endereco: "", numero: "", complemento: "", bairro: "", cidade: "", uf: "AM", cep: "", telefone: "",
