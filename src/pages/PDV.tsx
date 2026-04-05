@@ -785,6 +785,34 @@ ${comprovanteData.observacao ? `<div class="sep">${"─".repeat(48)}</div><div c
   // ═══════════════════════════════════════════
   // MAIN RENDER
   // ═══════════════════════════════════════════
+  // Gate: require open cash register
+  if (!sessaoAberta) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: "hsl(var(--background))" }}>
+        <div className="text-center space-y-6 max-w-md mx-auto px-6 animate-fade-in">
+          {onBack && (
+            <button onClick={onBack} className="absolute top-6 left-6 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all">
+              <ArrowLeft size={20} />
+            </button>
+          )}
+          <div className="w-20 h-20 rounded-full mx-auto flex items-center justify-center" style={{ background: "hsl(var(--warning) / 0.15)" }}>
+            <Lock size={40} style={{ color: "hsl(var(--warning))" }} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Caixa fechado</h1>
+            <p className="text-muted-foreground mt-2">É necessário abrir o caixa antes de realizar vendas.</p>
+            <p className="text-sm text-muted-foreground mt-1">Vá em <strong>Caixa</strong> para abrir uma sessão.</p>
+          </div>
+          {onBack && (
+            <button onClick={onBack} className="btn-primary px-8 py-3 text-sm font-semibold">
+              Voltar ao ERP
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: "hsl(var(--background))" }}>
       <FinalizacaoModal />
