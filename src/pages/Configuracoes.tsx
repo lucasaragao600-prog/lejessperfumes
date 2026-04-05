@@ -438,6 +438,54 @@ export default function Configuracoes() {
             </div>
           </div>
 
+          {/* Certificado Digital */}
+          <div className="pt-2 border-t border-border">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Certificado Digital (A1)</p>
+            <div className="rounded-xl p-4 mb-3" style={{ background: certNome ? "hsl(var(--success) / 0.08)" : "hsl(var(--destructive) / 0.08)", border: `1px solid ${certNome ? "hsl(var(--success) / 0.2)" : "hsl(var(--destructive) / 0.2)"}` }}>
+              <div className="flex items-center gap-3">
+                {certNome ? (
+                  <ShieldCheck size={20} style={{ color: "hsl(var(--success))" }} />
+                ) : (
+                  <ShieldAlert size={20} style={{ color: "hsl(var(--destructive))" }} />
+                )}
+                <div className="flex-1">
+                  {certNome ? (
+                    <>
+                      <p className="text-xs font-bold" style={{ color: "hsl(var(--success))" }}>Certificado configurado</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{certNome}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xs font-bold" style={{ color: "hsl(var(--destructive))" }}>Sem certificado digital</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Necessário para emissão de NFC-e</p>
+                    </>
+                  )}
+                </div>
+                {certNome && (
+                  <button onClick={handleRemoveCert} className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1">
+                    <Trash2 size={12} /> Remover
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] text-muted-foreground">Arquivo do certificado (.pfx / .p12)</label>
+                <input ref={certInputRef} type="file" accept=".pfx,.p12" onChange={handleCertChange} className="hidden" />
+                <button onClick={() => certInputRef.current?.click()} className="w-full mt-1 px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition-all" style={{ background: "hsl(var(--surface-raised))", border: "1px solid hsl(var(--border))" }}>
+                  <Upload size={12} /> {certNome ? "Trocar certificado" : "Enviar certificado"}
+                </button>
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground">Senha do certificado</label>
+                <input type="password" value={empresa.certificadoSenha}
+                  onChange={e => setEmpresa(p => ({ ...p, certificadoSenha: e.target.value }))}
+                  placeholder="Senha do .pfx"
+                  className="input-premium w-full px-3 py-2 text-xs mt-1" />
+              </div>
+            </div>
+          </div>
+
           <button
             onClick={handleSalvarEmpresa}
             disabled={isSaving}
