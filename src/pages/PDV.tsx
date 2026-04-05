@@ -16,7 +16,7 @@ import type { VendaPagamento } from "@/hooks/useVendas";
 import { useClientes, type Cliente } from "@/hooks/useClientes";
 import { getHojeManaus } from "@/lib/dateUtils";
 import { ComprovantePreview, type ComprovanteData } from "@/components/ComprovantePrint";
-import { useNfce } from "@/hooks/useNfce";
+import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
 import { useCaixa } from "@/hooks/useCaixa";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
@@ -359,7 +359,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
           vendedora, tipoPagamento: pagamentos[0]?.tipoPagamento || "Pix",
           bandeira: pagamentos[0]?.bandeira || ("N/A" as Bandeira),
           observacao, registradoPor, grupoVenda,
-          nfceStatus: "pendente",
+          nfceStatus: hasCertificadoConfigurado(configFiscal) ? "pendente" : "sem_certificado",
         };
       });
 
@@ -378,14 +378,21 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
       setComprovanteData(compData);
       setGrupoVendaAtual(grupoVenda);
 
-      // If NFC-e requested, create emission record
+      // If NFC-e requested, check certificate first
       if (fiscalAction === "nfce") {
-        try {
-          await criarEmissao({ vendaGrupoVenda: grupoVenda });
-          setTipoDocumento("nfce");
-        } catch (err) {
-          console.error("Erro ao criar emissão NFC-e:", err);
-          setTipoDocumento("nfce");
+        if (!hasCertificadoConfigurado(configFiscal)) {
+          // No certificate - cannot generate NFC-e
+          setTipoDocumento("comprovante");
+          // Mark as sem_certificado (already set above)
+        } else {
+          try {
+            await criarEmissao({ vendaGrupoVenda: grupoVenda });
+            // NFC-e stays pendente until real SEFAZ authorization
+            setTipoDocumento("nfce");
+          } catch (err) {
+            console.error("Erro ao criar emissão NFC-e:", err);
+            setTipoDocumento("comprovante");
+          }
         }
       } else {
         setTipoDocumento("comprovante");
@@ -508,7 +515,15 @@ ${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-s
                 <div className="mt-3 px-4 py-2 rounded-xl inline-flex items-center gap-2" style={{ background: "hsl(var(--warning) / 0.15)" }}>
                   <AlertTriangle size={14} style={{ color: "hsl(var(--warning))" }} />
                   <span className="text-xs" style={{ color: "hsl(var(--warning))" }}>
-                    NFC-e pendente — será emitida quando a API fiscal estiver configurada
+                    NFC-e pendente — aguardando envio à SEFAZ
+                  </span>
+                </div>
+              )}
+              {!hasCertificadoConfigurado(configFiscal) && (
+                <div className="mt-3 px-4 py-2 rounded-xl inline-flex items-center gap-2" style={{ background: "hsl(var(--destructive) / 0.15)" }}>
+                  <AlertTriangle size={14} style={{ color: "hsl(var(--destructive))" }} />
+                  <span className="text-xs" style={{ color: "hsl(var(--destructive))" }}>
+                    Sem certificado digital configurado — NFC-e não pode ser emitida
                   </span>
                 </div>
               )}
