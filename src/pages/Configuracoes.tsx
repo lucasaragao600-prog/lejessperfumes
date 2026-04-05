@@ -88,6 +88,24 @@ export default function Configuracoes() {
     if (logoInputRef.current) logoInputRef.current.value = "";
   };
 
+  const handleCertChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith('.pfx') && !file.name.endsWith('.p12')) {
+      toast.error("O certificado deve ser um arquivo .pfx ou .p12");
+      return;
+    }
+    setCertFile(file);
+    setCertNome(file.name);
+  };
+
+  const handleRemoveCert = () => {
+    setCertFile(null);
+    setCertNome("");
+    setEmpresa(p => ({ ...p, certificadoDigitalUrl: "", certificadoSenha: "" }));
+    if (certInputRef.current) certInputRef.current.value = "";
+  };
+
   const handleSalvarEmpresa = async () => {
     if (!empresa.razaoSocial.trim() || !empresa.cnpj.trim()) {
       toast.error("Razão Social e CNPJ são obrigatórios");
