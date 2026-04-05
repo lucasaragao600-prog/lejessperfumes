@@ -62,6 +62,9 @@ export default function Configuracoes() {
       if (configFiscal.logoUrl) {
         setLogoPreview(configFiscal.logoUrl);
       }
+      if (configFiscal.certificadoDigitalUrl) {
+        setCertNome(configFiscal.certificadoDigitalUrl.split('/').pop() || "Certificado configurado");
+      }
     }
   }, [configFiscal]);
 
