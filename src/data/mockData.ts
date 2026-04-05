@@ -27,6 +27,7 @@ export interface Casa {
 export interface Perfume {
   id: string;
   codigo: string; // TTMMMCCLLLLVVV gerado automaticamente
+  codigoBarras?: string;
   nome: string;
   marca: string;
   casaSigla: string;

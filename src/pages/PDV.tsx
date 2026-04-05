@@ -4,7 +4,7 @@ import {
   Package, CheckCircle2, ArrowLeft, Receipt, DollarSign,
   Percent, Store, User, Loader2, UserPlus, FileText,
   CreditCard, Banknote, QrCode, BookOpen, ChevronDown,
-  Printer, Eye, AlertTriangle
+  Printer, Eye, AlertTriangle, Lock
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
@@ -17,6 +17,7 @@ import { useClientes, type Cliente } from "@/hooks/useClientes";
 import { getHojeManaus } from "@/lib/dateUtils";
 import { ComprovantePreview, type ComprovanteData } from "@/components/ComprovantePrint";
 import { useNfce } from "@/hooks/useNfce";
+import { useCaixa } from "@/hooks/useCaixa";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada"];
@@ -60,6 +61,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   const vendedoras = [...vendedorasCtx, "Outra"];
   const { clientes, adicionarCliente } = useClientes();
   const { configFiscal, criarEmissao, gerarXmlNfce } = useNfce();
+  const { sessaoAberta } = useCaixa();
 
   // Search
   const [busca, setBusca] = useState("");
@@ -117,7 +119,8 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
     return perfumes
       .filter(p => {
         const estoque = p.estoques[deposito] || 0;
-        const text = `${p.nome} ${p.codigo} ${p.marca} ${concentracoesConfig[p.concentracao] || p.concentracao} ${p.volume}ml`.toLowerCase();
+        // Search by name, code, brand, concentration, volume, and barcode
+        const text = `${p.nome} ${p.codigo} ${p.marca} ${concentracoesConfig[p.concentracao] || p.concentracao} ${p.volume}ml ${p.codigoBarras || ""}`.toLowerCase();
         return text.includes(q) && estoque > 0;
       })
       .slice(0, 10);
@@ -420,30 +423,32 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
 <html><head><meta charset="utf-8"><title>Comprovante</title>
 <style>
   @page { size: 80mm auto; margin: 0; }
-  body { font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.4; color: #000; background: #fff; padding: 4mm; margin: 0; width: 80mm; }
+  body { font-family: 'Arial', sans-serif; font-size: 14px; line-height: 1.5; color: #000; background: #fff; padding: 4mm; margin: 0; width: 80mm; font-weight: 900; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .logo-center { text-align: center; margin-bottom: 8px; }
   .logo-center img { width: 70%; max-height: 80px; object-fit: contain; }
-  .logo-text { text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 8px; }
-  .company-center { text-align: center; font-size: 9px; margin-bottom: 6px; }
-  .company-name { font-weight: bold; font-size: 10px; }
-  .sep { color: #999; font-size: 9px; }
-  .double { color: #999; font-size: 9px; }
+  .logo-text { text-align: center; font-weight: 900; font-size: 16px; margin-bottom: 8px; }
+  .company-center { text-align: center; font-size: 14px; margin-bottom: 6px; font-weight: 900; }
+  .company-name { font-weight: 900; font-size: 15px; }
+  .sep { color: #000; font-size: 11px; }
+  .double { color: #000; font-size: 13px; }
   .flex { display: flex; justify-content: space-between; }
-  .sm { font-size: 10px; }
-  .xs { font-size: 9px; color: #666; }
-  .item-row { font-size: 9px; display: flex; padding: 3px 0; }
+  .sm { font-size: 15px; font-weight: 900; }
+  .xs { font-size: 14px; font-weight: 900; }
+  .item-row { font-size: 14px; display: flex; padding: 3px 0; font-weight: 900; }
   .item-row .name { flex: 1; word-break: break-word; }
-  .item-row .qty { width: 30px; text-align: center; flex-shrink: 0; }
-  .item-row .val { width: 60px; text-align: right; flex-shrink: 0; }
-  .col-head { font-size: 9px; font-weight: bold; display: flex; padding: 3px 0; }
+  .item-row .qty { width: 36px; text-align: center; flex-shrink: 0; }
+  .item-row .val { width: 72px; text-align: right; flex-shrink: 0; }
+  .col-head { font-size: 14px; font-weight: 900; display: flex; padding: 3px 0; }
   .col-head .name { flex: 1; }
-  .col-head .qty { width: 30px; text-align: center; }
-  .col-head .val { width: 60px; text-align: right; }
-  .pag-row { font-size: 9px; display: flex; padding: 2px 0; }
+  .col-head .qty { width: 36px; text-align: center; }
+  .col-head .val { width: 72px; text-align: right; }
+  .pag-row { font-size: 14px; display: flex; padding: 2px 0; font-weight: 900; }
   .pag-row .pname { flex: 1; }
-  .pag-row .pval { width: 70px; text-align: right; }
-  .total-line { font-size: 13px; font-weight: bold; display: flex; justify-content: space-between; padding: 4px 0; }
-  .footer { text-align: center; font-size: 9px; color: #666; margin-top: 8px; }
+  .pag-row .pval { width: 80px; text-align: right; }
+  .total-line { font-size: 18px; font-weight: 900; display: flex; justify-content: space-between; padding: 6px 0; }
+  .footer { text-align: center; font-size: 14px; font-weight: 900; margin-top: 8px; }
+  .section-title { font-size: 15px; font-weight: 900; margin: 4px 0; }
+</style></head><body>
 </style></head><body>
 ${comprovanteData.logoUrl ? `<div class="logo-center"><img src="${comprovanteData.logoUrl}" alt="Logo" /></div>` : `<div class="logo-text">${comprovanteData.nomeFantasia || "LE JESS PERFUMES"}</div>`}
 <div class="company-center">
@@ -458,30 +463,33 @@ ${comprovanteData.logoUrl ? `<div class="logo-center"><img src="${comprovanteDat
 <div class="sm">
   <div class="flex"><span>Pedido: ${comprovanteData.pedido}</span><span>${comprovanteData.data}</span></div>
   <div>Vendedor: ${comprovanteData.vendedor}</div>
+  <div>Operador: ${comprovanteData.operador || ""}</div>
+  ${comprovanteData.cliente ? `<div>Cliente: ${comprovanteData.cliente.nome}</div>` : ""}
   ${comprovanteData.cliente ? `<div>Cliente: ${comprovanteData.cliente.nome}</div>` : ""}
 </div>
 <div class="sep">${"─".repeat(48)}</div>
 <div class="col-head"><span class="name">ITEM</span><span class="qty">QTD</span><span class="val">VALOR</span><span class="val">TOTAL</span></div>
 <div class="sep">${"─".repeat(48)}</div>
 ${comprovanteData.itens.map(item => `
-<div class="item-row"><span class="name">${item.descricao}</span><span class="qty">${item.quantidade}</span><span class="val">R$ ${item.valorUnitario.toFixed(2)}</span><span class="val">R$ ${item.total.toFixed(2)}</span></div>`).join("")}
+<div class="item-row"><span class="name">${item.descricao}</span><span class="qty">${item.quantidade}</span><span class="val">${formatCurrency(item.valorUnitario)}</span><span class="val">${formatCurrency(item.total)}</span></div>`).join("")}
+<div class="section-title">FORMA DE PAGAMENTO</div>
 <div class="col-head" style="margin-top:2px"><span class="pname">FORMA PGTO.</span><span class="pval">VALOR</span></div>
 <div class="sep">${"─".repeat(48)}</div>
 ${comprovanteData.pagamentos.map(pag => {
     if (pag.dataParcelas && pag.dataParcelas.length > 0) {
       return pag.dataParcelas.map((parcela: {data: string; valor: number}, pIdx: number) => `
-<div class="pag-row"><span class="pname">${pag.forma}${pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""} (${parcela.data})</span><span class="pval">R$ ${parcela.valor.toFixed(2)}</span></div>`).join("");
+<div class="pag-row"><span class="pname">${pag.forma}${pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""} (${parcela.data})</span><span class="pval">${formatCurrency(parcela.valor)}</span></div>`).join("");
     }
-    return `<div class="pag-row"><span class="pname">${pag.forma}</span><span class="pval">R$ ${pag.valor.toFixed(2)}</span></div>`;
+    return `<div class="pag-row"><span class="pname">${pag.forma}</span><span class="pval">${formatCurrency(pag.valor)}</span></div>`;
   }).join("")}
 <div class="sep">${"─".repeat(48)}</div>
-<div class="sm flex"><span>SUBTOTAL:</span><span>R$ ${comprovanteData.subtotal.toFixed(2)}</span></div>
-${comprovanteData.desconto > 0 ? `<div class="sm flex"><span>DESCONTO${comprovanteData.descontoLabel ? ` (${comprovanteData.descontoLabel})` : ""}:</span><span>-R$ ${comprovanteData.desconto.toFixed(2)}</span></div>` : ""}
-${comprovanteData.acrescimo > 0 ? `<div class="sm flex"><span>ACRÉSCIMO${comprovanteData.acrescimoLabel ? ` (${comprovanteData.acrescimoLabel})` : ""}:</span><span>+R$ ${comprovanteData.acrescimo.toFixed(2)}</span></div>` : ""}
+<div class="sm flex"><span><strong>SUBTOTAL:</strong></span><span><strong>${formatCurrency(comprovanteData.subtotal)}</strong></span></div>
+${comprovanteData.desconto > 0 ? `<div class="sm flex"><span>DESCONTO${comprovanteData.descontoLabel ? ` (${comprovanteData.descontoLabel})` : ""}:</span><span>-${formatCurrency(comprovanteData.desconto)}</span></div>` : ""}
+${comprovanteData.acrescimo > 0 ? `<div class="sm flex"><span>ACRÉSCIMO${comprovanteData.acrescimoLabel ? ` (${comprovanteData.acrescimoLabel})` : ""}:</span><span>+${formatCurrency(comprovanteData.acrescimo)}</span></div>` : ""}
 <div class="double">${"═".repeat(48)}</div>
-<div class="total-line"><span>TOTAL:</span><span>R$ ${comprovanteData.total.toFixed(2)}</span></div>
+<div class="total-line"><span><strong>TOTAL:</strong></span><span><strong>${formatCurrency(comprovanteData.total)}</strong></span></div>
 <div class="double">${"═".repeat(48)}</div>
-${comprovanteData.troco > 0 ? `<div class="sm flex"><span>TROCO:</span><span>R$ ${comprovanteData.troco.toFixed(2)}</span></div>` : ""}
+${comprovanteData.troco > 0 ? `<div class="sm flex"><span><strong>TROCO:</strong></span><span><strong>${formatCurrency(comprovanteData.troco)}</strong></span></div>` : ""}
 ${comprovanteData.observacao ? `<div class="sep">${"─".repeat(48)}</div><div class="xs">Obs: ${comprovanteData.observacao}</div>` : ""}
 <div class="sep">${"─".repeat(48)}</div>
 <div class="footer">
@@ -777,6 +785,34 @@ ${comprovanteData.observacao ? `<div class="sep">${"─".repeat(48)}</div><div c
   // ═══════════════════════════════════════════
   // MAIN RENDER
   // ═══════════════════════════════════════════
+  // Gate: require open cash register
+  if (!sessaoAberta) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: "hsl(var(--background))" }}>
+        <div className="text-center space-y-6 max-w-md mx-auto px-6 animate-fade-in">
+          {onBack && (
+            <button onClick={onBack} className="absolute top-6 left-6 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all">
+              <ArrowLeft size={20} />
+            </button>
+          )}
+          <div className="w-20 h-20 rounded-full mx-auto flex items-center justify-center" style={{ background: "hsl(var(--warning) / 0.15)" }}>
+            <Lock size={40} style={{ color: "hsl(var(--warning))" }} />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Caixa fechado</h1>
+            <p className="text-muted-foreground mt-2">É necessário abrir o caixa antes de realizar vendas.</p>
+            <p className="text-sm text-muted-foreground mt-1">Vá em <strong>Caixa</strong> para abrir uma sessão.</p>
+          </div>
+          {onBack && (
+            <button onClick={onBack} className="btn-primary px-8 py-3 text-sm font-semibold">
+              Voltar ao ERP
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-[100] flex flex-col" style={{ background: "hsl(var(--background))" }}>
       <FinalizacaoModal />

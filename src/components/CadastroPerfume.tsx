@@ -28,6 +28,7 @@ export default function CadastroPerfume({ onClose }: Props) {
   const [nome, setNome] = useState("");
   const [custo, setCusto] = useState("");
   const [precoVenda, setPrecoVenda] = useState("");
+  const [codigoBarras, setCodigoBarras] = useState("");
   const [estoqueMinimo, setEstoqueMinimo] = useState("2");
   const [estCasa, setEstCasa] = useState("0");
   const [estSumauma, setEstSumauma] = useState("0");
@@ -113,6 +114,7 @@ export default function CadastroPerfume({ onClose }: Props) {
     const novoPerfume: Perfume = {
       id: `p${Date.now()}`,
       codigo: gerarCodigo(tipo, casaSelecionada.sigla, concentracao, linhaCasa, volume),
+      codigoBarras: codigoBarras.trim(),
       nome,
       marca: casaSelecionada.nome,
       casaSigla: casaSelecionada.sigla,
@@ -308,6 +310,18 @@ export default function CadastroPerfume({ onClose }: Props) {
 
             {/* Linha separadora */}
             <div className="border-t border-border" />
+
+            {/* Código de Barras */}
+            <div>
+              <label className="text-xs text-muted-foreground mb-1.5 block">Código de Barras (opcional)</label>
+              <input
+                type="text"
+                placeholder="Ex: 7898123456789"
+                value={codigoBarras}
+                onChange={(e) => setCodigoBarras(e.target.value)}
+                className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
+              />
+            </div>
 
             {/* Nome */}
             <div>

@@ -1,0 +1,2 @@
+ALTER TABLE public.perfumes ADD COLUMN IF NOT EXISTS codigo_barras text NOT NULL DEFAULT '';
+CREATE UNIQUE INDEX IF NOT EXISTS perfumes_codigo_barras_unique ON public.perfumes (codigo_barras) WHERE codigo_barras != '';
