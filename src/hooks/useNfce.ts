@@ -216,6 +216,7 @@ export function useNfce() {
             logo_url: config.logoUrl,
             certificado_digital_url: config.certificadoDigitalUrl,
             certificado_senha: config.certificadoSenha,
+          })
           .eq("id", existing.id);
         if (error) throw error;
       } else {
@@ -243,6 +244,7 @@ export function useNfce() {
             logo_url: config.logoUrl,
             certificado_digital_url: config.certificadoDigitalUrl,
             certificado_senha: config.certificadoSenha,
+          });
         if (error) throw error;
       }
     },
