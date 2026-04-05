@@ -423,30 +423,32 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
 <html><head><meta charset="utf-8"><title>Comprovante</title>
 <style>
   @page { size: 80mm auto; margin: 0; }
-  body { font-family: 'Courier New', monospace; font-size: 11px; line-height: 1.4; color: #000; background: #fff; padding: 4mm; margin: 0; width: 80mm; }
+  body { font-family: 'Arial', sans-serif; font-size: 14px; line-height: 1.5; color: #000; background: #fff; padding: 4mm; margin: 0; width: 80mm; font-weight: 900; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .logo-center { text-align: center; margin-bottom: 8px; }
   .logo-center img { width: 70%; max-height: 80px; object-fit: contain; }
-  .logo-text { text-align: center; font-weight: bold; font-size: 14px; margin-bottom: 8px; }
-  .company-center { text-align: center; font-size: 9px; margin-bottom: 6px; }
-  .company-name { font-weight: bold; font-size: 10px; }
-  .sep { color: #999; font-size: 9px; }
-  .double { color: #999; font-size: 9px; }
+  .logo-text { text-align: center; font-weight: 900; font-size: 16px; margin-bottom: 8px; }
+  .company-center { text-align: center; font-size: 14px; margin-bottom: 6px; font-weight: 900; }
+  .company-name { font-weight: 900; font-size: 15px; }
+  .sep { color: #000; font-size: 11px; }
+  .double { color: #000; font-size: 13px; }
   .flex { display: flex; justify-content: space-between; }
-  .sm { font-size: 10px; }
-  .xs { font-size: 9px; color: #666; }
-  .item-row { font-size: 9px; display: flex; padding: 3px 0; }
+  .sm { font-size: 15px; font-weight: 900; }
+  .xs { font-size: 14px; font-weight: 900; }
+  .item-row { font-size: 14px; display: flex; padding: 3px 0; font-weight: 900; }
   .item-row .name { flex: 1; word-break: break-word; }
-  .item-row .qty { width: 30px; text-align: center; flex-shrink: 0; }
-  .item-row .val { width: 60px; text-align: right; flex-shrink: 0; }
-  .col-head { font-size: 9px; font-weight: bold; display: flex; padding: 3px 0; }
+  .item-row .qty { width: 36px; text-align: center; flex-shrink: 0; }
+  .item-row .val { width: 72px; text-align: right; flex-shrink: 0; }
+  .col-head { font-size: 14px; font-weight: 900; display: flex; padding: 3px 0; }
   .col-head .name { flex: 1; }
-  .col-head .qty { width: 30px; text-align: center; }
-  .col-head .val { width: 60px; text-align: right; }
-  .pag-row { font-size: 9px; display: flex; padding: 2px 0; }
+  .col-head .qty { width: 36px; text-align: center; }
+  .col-head .val { width: 72px; text-align: right; }
+  .pag-row { font-size: 14px; display: flex; padding: 2px 0; font-weight: 900; }
   .pag-row .pname { flex: 1; }
-  .pag-row .pval { width: 70px; text-align: right; }
-  .total-line { font-size: 13px; font-weight: bold; display: flex; justify-content: space-between; padding: 4px 0; }
-  .footer { text-align: center; font-size: 9px; color: #666; margin-top: 8px; }
+  .pag-row .pval { width: 80px; text-align: right; }
+  .total-line { font-size: 18px; font-weight: 900; display: flex; justify-content: space-between; padding: 6px 0; }
+  .footer { text-align: center; font-size: 14px; font-weight: 900; margin-top: 8px; }
+  .section-title { font-size: 15px; font-weight: 900; margin: 4px 0; }
+</style></head><body>
 </style></head><body>
 ${comprovanteData.logoUrl ? `<div class="logo-center"><img src="${comprovanteData.logoUrl}" alt="Logo" /></div>` : `<div class="logo-text">${comprovanteData.nomeFantasia || "LE JESS PERFUMES"}</div>`}
 <div class="company-center">
@@ -461,6 +463,8 @@ ${comprovanteData.logoUrl ? `<div class="logo-center"><img src="${comprovanteDat
 <div class="sm">
   <div class="flex"><span>Pedido: ${comprovanteData.pedido}</span><span>${comprovanteData.data}</span></div>
   <div>Vendedor: ${comprovanteData.vendedor}</div>
+  <div>Operador: ${comprovanteData.operador || ""}</div>
+  ${comprovanteData.cliente ? `<div>Cliente: ${comprovanteData.cliente.nome}</div>` : ""}
   ${comprovanteData.cliente ? `<div>Cliente: ${comprovanteData.cliente.nome}</div>` : ""}
 </div>
 <div class="sep">${"─".repeat(48)}</div>
