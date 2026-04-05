@@ -36,6 +36,7 @@ function rowToPerfume(row: any): Perfume {
 function perfumeToRow(p: Perfume) {
   return {
     codigo: p.codigo,
+    codigo_barras: p.codigoBarras || "",
     nome: p.nome,
     marca: p.marca,
     casa_sigla: p.casaSigla,

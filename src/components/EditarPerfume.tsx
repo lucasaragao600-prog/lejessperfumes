@@ -34,6 +34,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
   const [estoqueMinimo, setEstoqueMinimo] = useState(String(perfume.estoqueMinimo));
   const [salvando, setSalvando] = useState(false);
   const [imageUrl, setImageUrl] = useState(perfume.imageUrl || "");
+  const [codigoBarras, setCodigoBarras] = useState(perfume.codigoBarras || "");
   const [tab, setTab] = useState<"editar" | "custos" | "precos" | "fiscal">("editar");
   // Fiscal fields
   const [ncm, setNcm] = useState(perfume.ncm || "");
@@ -129,6 +130,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
         cfop,
         cstCsosn,
         unidadeFiscal,
+        codigoBarras: codigoBarras.trim(),
       });
       onClose();
     } finally {
@@ -285,6 +287,18 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
           <ProductImageUpload currentUrl={imageUrl} onUpload={setImageUrl} />
 
           <div className="border-t border-border" />
+
+          {/* Código de Barras */}
+          <div>
+            <label className="text-xs text-muted-foreground mb-1.5 block">Código de Barras</label>
+            <input
+              type="text"
+              placeholder="Ex: 7898123456789"
+              value={codigoBarras}
+              onChange={(e) => setCodigoBarras(e.target.value)}
+              className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
+            />
+          </div>
 
           {/* Nome */}
           <div>
