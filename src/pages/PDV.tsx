@@ -571,39 +571,10 @@ ${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-s
           </div>
 
           <div className="p-6 space-y-5">
-            {/* Document type */}
-            <div>
-              <label className="text-xs font-medium text-muted-foreground mb-2 block">Tipo de documento</label>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setTipoDocumento("comprovante")}
-                  className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                    tipoDocumento === "comprovante" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  style={tipoDocumento === "comprovante"
-                    ? { background: "hsl(var(--gold))" }
-                    : { background: "hsl(var(--surface-raised))", border: "1px solid hsl(var(--border))" }}
-                >
-                  <Receipt size={16} /> Comprovante
-                </button>
-                <button
-                  onClick={() => setTipoDocumento("nfce")}
-                  className={`flex-1 px-4 py-3 rounded-xl text-sm font-medium transition-all flex items-center justify-center gap-2 ${
-                    tipoDocumento === "nfce" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  style={tipoDocumento === "nfce"
-                    ? { background: "hsl(var(--gold))" }
-                    : { background: "hsl(var(--surface-raised))", border: "1px solid hsl(var(--border))" }}
-                >
-                  <FileText size={16} /> NFC-e
-                </button>
-              </div>
-            </div>
-
             {/* Client */}
             <div>
               <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                Cliente {tipoDocumento === "nfce" ? "(recomendado para NFC-e)" : "(opcional)"}
+                Cliente (opcional)
               </label>
               {clienteSelecionado ? (
                 <div className="flex items-center justify-between px-4 py-3 rounded-xl" style={{ background: "hsl(var(--surface-raised))" }}>
@@ -663,22 +634,30 @@ ${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-s
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="px-6 pb-6 flex gap-3">
-            <button onClick={() => setShowFinalizacao(false)} className="btn-secondary flex-1 py-3 text-sm">
-              Voltar
-            </button>
+          {/* Dual action buttons */}
+          <div className="px-6 pb-6 space-y-2">
             <button
-              onClick={finalizarVenda}
+              onClick={() => finalizarVenda("none")}
               disabled={!canFinalize || isFinalizando}
-              className="flex-1 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-40 flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-xl text-sm font-bold transition-all disabled:opacity-40 flex items-center justify-center gap-2"
               style={{
                 background: canFinalize ? "var(--gradient-gold)" : "hsl(var(--muted))",
                 color: canFinalize ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))",
                 boxShadow: canFinalize ? "var(--shadow-gold)" : "none",
               }}
             >
-              {isFinalizando ? <><Loader2 size={16} className="animate-spin" /> Finalizando...</> : <><CheckCircle2 size={16} /> Confirmar Venda</>}
+              {isFinalizando ? <><Loader2 size={16} className="animate-spin" /> Finalizando...</> : <><CheckCircle2 size={16} /> Finalizar Venda</>}
+            </button>
+            <button
+              onClick={() => finalizarVenda("nfce")}
+              disabled={!canFinalize || isFinalizando}
+              className="w-full py-3 rounded-xl text-xs font-medium transition-all disabled:opacity-40 flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground"
+              style={{ background: "hsl(var(--surface-raised))", border: "1px solid hsl(var(--border))" }}
+            >
+              <FileText size={14} /> Finalizar e gerar NFC-e
+            </button>
+            <button onClick={() => setShowFinalizacao(false)} className="w-full py-2.5 text-xs text-muted-foreground hover:text-foreground transition-colors">
+              Voltar
             </button>
           </div>
         </div>
