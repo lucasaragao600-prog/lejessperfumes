@@ -478,9 +478,9 @@ ${comprovanteData.itens.map(item => `
 ${comprovanteData.pagamentos.map(pag => {
     if (pag.dataParcelas && pag.dataParcelas.length > 0) {
       return pag.dataParcelas.map((parcela: {data: string; valor: number}, pIdx: number) => `
-<div class="pag-row"><span class="pname">${pag.forma}${pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""} (${parcela.data})</span><span class="pval">R$ ${parcela.valor.toFixed(2)}</span></div>`).join("");
+<div class="pag-row"><span class="pname">${pag.forma}${pag.parcelas > 1 ? ` ${String(pIdx + 1).padStart(2, "0")}` : ""} (${parcela.data})</span><span class="pval">${formatCurrency(parcela.valor)}</span></div>`).join("");
     }
-    return `<div class="pag-row"><span class="pname">${pag.forma}</span><span class="pval">R$ ${pag.valor.toFixed(2)}</span></div>`;
+    return `<div class="pag-row"><span class="pname">${pag.forma}</span><span class="pval">${formatCurrency(pag.valor)}</span></div>`;
   }).join("")}
 <div class="sep">${"─".repeat(48)}</div>
 <div class="sm flex"><span><strong>SUBTOTAL:</strong></span><span><strong>${formatCurrency(comprovanteData.subtotal)}</strong></span></div>
