@@ -48,6 +48,7 @@ interface PagamentoItem {
 }
 
 type TipoDocumento = "comprovante" | "nfce";
+type FiscalAction = "none" | "nfce";
 
 export default function PDV({ onBack }: { onBack?: () => void }) {
   const {
@@ -334,7 +335,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   };
 
   // Finalize sale
-  const finalizarVenda = async () => {
+  const finalizarVenda = async (fiscalAction: FiscalAction = "none") => {
     if (isFinalizando || cart.length === 0 || !vendedora) return;
     if (restante > 0.01) return;
     setIsFinalizando(true);
@@ -358,6 +359,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
           vendedora, tipoPagamento: pagamentos[0]?.tipoPagamento || "Pix",
           bandeira: pagamentos[0]?.bandeira || ("N/A" as Bandeira),
           observacao, registradoPor, grupoVenda,
+          nfceStatus: "pendente",
         };
       });
 
@@ -376,13 +378,17 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
       setComprovanteData(compData);
       setGrupoVendaAtual(grupoVenda);
 
-      // If NFC-e, create emission record
-      if (tipoDocumento === "nfce") {
+      // If NFC-e requested, create emission record
+      if (fiscalAction === "nfce") {
         try {
           await criarEmissao({ vendaGrupoVenda: grupoVenda });
+          setTipoDocumento("nfce");
         } catch (err) {
           console.error("Erro ao criar emissão NFC-e:", err);
+          setTipoDocumento("nfce");
         }
+      } else {
+        setTipoDocumento("comprovante");
       }
 
       setTroco(trocoCalculado);
