@@ -153,6 +153,19 @@ export function useVendas() {
     onSuccess: invalidate,
   });
 
+  const atualizarNfceStatus = useMutation({
+    mutationFn: async (params: { grupoVenda: string; nfceStatus: string; nfceChave?: string }) => {
+      const updates: any = { nfce_status: params.nfceStatus };
+      if (params.nfceChave) updates.nfce_chave = params.nfceChave;
+      const { error } = await supabase
+        .from("vendas")
+        .update(updates)
+        .eq("grupo_venda", params.grupoVenda);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   return {
     vendas,
     pagamentos,
@@ -160,6 +173,7 @@ export function useVendas() {
     adicionarVenda: adicionarVenda.mutateAsync,
     adicionarVendaMulti: adicionarVendaMulti.mutateAsync,
     excluirVenda: excluirVenda.mutateAsync,
+    atualizarNfceStatus: atualizarNfceStatus.mutateAsync,
     setVendas: () => {},
   };
 }
