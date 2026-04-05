@@ -4,7 +4,7 @@ import {
   Package, CheckCircle2, ArrowLeft, Receipt, DollarSign,
   Percent, Store, User, Loader2, UserPlus, FileText,
   CreditCard, Banknote, QrCode, BookOpen, ChevronDown,
-  Printer, Eye, AlertTriangle
+  Printer, Eye, AlertTriangle, Lock
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
@@ -17,6 +17,7 @@ import { useClientes, type Cliente } from "@/hooks/useClientes";
 import { getHojeManaus } from "@/lib/dateUtils";
 import { ComprovantePreview, type ComprovanteData } from "@/components/ComprovantePrint";
 import { useNfce } from "@/hooks/useNfce";
+import { useCaixa } from "@/hooks/useCaixa";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada"];
@@ -60,6 +61,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   const vendedoras = [...vendedorasCtx, "Outra"];
   const { clientes, adicionarCliente } = useClientes();
   const { configFiscal, criarEmissao, gerarXmlNfce } = useNfce();
+  const { sessaoAberta } = useCaixa();
 
   // Search
   const [busca, setBusca] = useState("");
