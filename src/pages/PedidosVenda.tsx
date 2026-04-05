@@ -2,10 +2,11 @@ import { useState, useMemo } from "react";
 import { Search, Eye, Printer, ShoppingCart, Calendar, User, CreditCard, ChevronLeft, FileText, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import { useVendas } from "@/hooks/useVendas";
 import { useAuth } from "@/context/AuthContext";
-import { useNfce } from "@/hooks/useNfce";
+import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
 import { useClientes } from "@/hooks/useClientes";
 import { formatCurrency } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
+import { toast } from "sonner";
 import type { NfceStatus } from "@/data/mockData";
 
 interface PedidoResumo {
@@ -37,6 +38,10 @@ const fiscalBadge = (status: NfceStatus) => {
       return { label: "NFC-e autorizada", bg: "hsl(var(--success) / 0.15)", color: "hsl(var(--success))" };
     case "rejeitada":
       return { label: "NFC-e rejeitada", bg: "hsl(var(--destructive) / 0.15)", color: "hsl(var(--destructive))" };
+    case "processando":
+      return { label: "NFC-e processando", bg: "hsl(var(--warning) / 0.15)", color: "hsl(var(--warning))" };
+    case "sem_certificado":
+      return { label: "Sem certificado", bg: "hsl(var(--muted) / 0.5)", color: "hsl(var(--muted-foreground))" };
     default:
       return { label: "NFC-e pendente", bg: "hsl(var(--warning) / 0.15)", color: "hsl(var(--warning))" };
   }
@@ -119,6 +124,10 @@ export default function PedidosVenda() {
   };
 
   const handleGerarNfce = async (pedido: PedidoResumo) => {
+    if (!hasCertificadoConfigurado(configFiscal)) {
+      toast.error("Certificado digital não configurado. Acesse Configurações para cadastrar.");
+      return;
+    }
     setGerandoId(pedido.grupoVenda);
     try {
       await criarEmissao({ vendaGrupoVenda: pedido.grupoVenda });
@@ -137,13 +146,16 @@ export default function PedidosVenda() {
           serie: configFiscal.serieNfce,
         });
       }
-      const chaveAcesso = `NFCe${Date.now()}${Math.random().toString(36).slice(2, 10)}`;
-      await atualizarNfceStatus({ grupoVenda: pedido.grupoVenda, nfceStatus: "autorizada", nfceChave: chaveAcesso });
+      // XML generated but NOT authorized - needs real SEFAZ integration
+      // Keep as pendente until real SEFAZ response
+      await atualizarNfceStatus({ grupoVenda: pedido.grupoVenda, nfceStatus: "pendente" });
+      toast.info("XML gerado. Aguardando integração com SEFAZ para autorização.");
       if (selectedPedido?.grupoVenda === pedido.grupoVenda) {
-        setSelectedPedido({ ...pedido, nfceStatus: "autorizada", nfceChave: chaveAcesso });
+        setSelectedPedido({ ...pedido, nfceStatus: "pendente" });
       }
     } catch (err) {
       console.error("Erro ao gerar NFC-e:", err);
+      toast.error("Erro ao gerar NFC-e");
     } finally {
       setGerandoId(null);
     }
@@ -230,7 +242,7 @@ ${pedido.nfceStatus === "autorizada" && pedido.nfceChave ? `<div style="font-siz
               </span>
             </div>
             <div className="flex gap-2">
-              {selectedPedido.nfceStatus === "pendente" && (
+              {(selectedPedido.nfceStatus === "pendente" || selectedPedido.nfceStatus === "sem_certificado") && (
                 <button
                   onClick={() => handleGerarNfce(selectedPedido)}
                   disabled={gerandoId === selectedPedido.grupoVenda}
@@ -241,7 +253,7 @@ ${pedido.nfceStatus === "autorizada" && pedido.nfceChave ? `<div style="font-siz
                 </button>
               )}
               <button onClick={() => handleReprint(selectedPedido)} className="btn-secondary px-4 py-2 text-sm flex items-center gap-2">
-                <Printer size={14} /> Reimprimir
+                <Printer size={14} /> Reimprimir Comprovante
               </button>
             </div>
           </div>
@@ -382,7 +394,7 @@ ${pedido.nfceStatus === "autorizada" && pedido.nfceChave ? `<div style="font-siz
                     <button onClick={() => handleReprint(pedido)} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all" title="Reimprimir">
                       <Printer size={16} />
                     </button>
-                    {pedido.nfceStatus === "pendente" && (
+                    {(pedido.nfceStatus === "pendente" || pedido.nfceStatus === "sem_certificado") && (
                       <button
                         onClick={() => handleGerarNfce(pedido)}
                         disabled={gerandoId === pedido.grupoVenda}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Settings, Plus, Trash2, RotateCcw, Loader2, Upload, X } from "lucide-react";
+import { Settings, Plus, Trash2, RotateCcw, Loader2, Upload, X, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { TipoPerfume, Concentracao } from "@/data/mockData";
 import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
@@ -21,6 +21,9 @@ export default function Configuracoes() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+  const certInputRef = useRef<HTMLInputElement>(null);
+  const [certFile, setCertFile] = useState<File | null>(null);
+  const [certNome, setCertNome] = useState<string>("");
   const [empresa, setEmpresa] = useState({
     razaoSocial: "", nomeFantasia: "", cnpj: "", inscricaoEstadual: "",
     endereco: "", numero: "", complemento: "", bairro: "", cidade: "", uf: "AM", cep: "", telefone: "",
@@ -28,6 +31,7 @@ export default function Configuracoes() {
     ambiente: "homologacao" as "homologacao" | "producao",
     serieNfce: 1, proximoNumeroNfce: 1, cscId: "", cscToken: "",
     logoUrl: "",
+    certificadoDigitalUrl: "", certificadoSenha: "",
   });
 
   useEffect(() => {
@@ -52,9 +56,14 @@ export default function Configuracoes() {
         cscId: configFiscal.cscId,
         cscToken: configFiscal.cscToken,
         logoUrl: configFiscal.logoUrl,
+        certificadoDigitalUrl: configFiscal.certificadoDigitalUrl,
+        certificadoSenha: configFiscal.certificadoSenha,
       });
       if (configFiscal.logoUrl) {
         setLogoPreview(configFiscal.logoUrl);
+      }
+      if (configFiscal.certificadoDigitalUrl) {
+        setCertNome(configFiscal.certificadoDigitalUrl.split('/').pop() || "Certificado configurado");
       }
     }
   }, [configFiscal]);
@@ -77,6 +86,24 @@ export default function Configuracoes() {
     setLogoPreview(null);
     setEmpresa(p => ({ ...p, logoUrl: "" }));
     if (logoInputRef.current) logoInputRef.current.value = "";
+  };
+
+  const handleCertChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith('.pfx') && !file.name.endsWith('.p12')) {
+      toast.error("O certificado deve ser um arquivo .pfx ou .p12");
+      return;
+    }
+    setCertFile(file);
+    setCertNome(file.name);
+  };
+
+  const handleRemoveCert = () => {
+    setCertFile(null);
+    setCertNome("");
+    setEmpresa(p => ({ ...p, certificadoDigitalUrl: "", certificadoSenha: "" }));
+    if (certInputRef.current) certInputRef.current.value = "";
   };
 
   const handleSalvarEmpresa = async () => {
@@ -103,7 +130,19 @@ export default function Configuracoes() {
         logoUrl = urlData.publicUrl;
       }
 
-      await salvarConfigFiscal({ ...empresa, logoUrl });
+      let certificadoDigitalUrl = empresa.certificadoDigitalUrl;
+      // Upload certificate if new file selected
+      if (certFile) {
+        const { supabase } = await import("@/integrations/supabase/client");
+        const certPath = `certificado-digital.${certFile.name.split('.').pop()}`;
+        const { error: certUploadError } = await supabase.storage
+          .from("fiscal-xml")
+          .upload(certPath, certFile, { upsert: true });
+        if (certUploadError) throw certUploadError;
+        certificadoDigitalUrl = certPath;
+      }
+
+      await salvarConfigFiscal({ ...empresa, logoUrl, certificadoDigitalUrl });
       toast.success("Dados da empresa salvos com sucesso!");
     } catch {
       toast.error("Erro ao salvar dados da empresa");
@@ -395,6 +434,54 @@ export default function Configuracoes() {
                   <option value="homologacao">Homologação</option>
                   <option value="producao">Produção</option>
                 </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Certificado Digital */}
+          <div className="pt-2 border-t border-border">
+            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-2">Certificado Digital (A1)</p>
+            <div className="rounded-xl p-4 mb-3" style={{ background: certNome ? "hsl(var(--success) / 0.08)" : "hsl(var(--destructive) / 0.08)", border: `1px solid ${certNome ? "hsl(var(--success) / 0.2)" : "hsl(var(--destructive) / 0.2)"}` }}>
+              <div className="flex items-center gap-3">
+                {certNome ? (
+                  <ShieldCheck size={20} style={{ color: "hsl(var(--success))" }} />
+                ) : (
+                  <ShieldAlert size={20} style={{ color: "hsl(var(--destructive))" }} />
+                )}
+                <div className="flex-1">
+                  {certNome ? (
+                    <>
+                      <p className="text-xs font-bold" style={{ color: "hsl(var(--success))" }}>Certificado configurado</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{certNome}</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xs font-bold" style={{ color: "hsl(var(--destructive))" }}>Sem certificado digital</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Necessário para emissão de NFC-e</p>
+                    </>
+                  )}
+                </div>
+                {certNome && (
+                  <button onClick={handleRemoveCert} className="text-xs text-muted-foreground hover:text-destructive flex items-center gap-1">
+                    <Trash2 size={12} /> Remover
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[10px] text-muted-foreground">Arquivo do certificado (.pfx / .p12)</label>
+                <input ref={certInputRef} type="file" accept=".pfx,.p12" onChange={handleCertChange} className="hidden" />
+                <button onClick={() => certInputRef.current?.click()} className="w-full mt-1 px-3 py-2 rounded-lg text-xs font-medium flex items-center justify-center gap-2 transition-all" style={{ background: "hsl(var(--surface-raised))", border: "1px solid hsl(var(--border))" }}>
+                  <Upload size={12} /> {certNome ? "Trocar certificado" : "Enviar certificado"}
+                </button>
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground">Senha do certificado</label>
+                <input type="password" value={empresa.certificadoSenha}
+                  onChange={e => setEmpresa(p => ({ ...p, certificadoSenha: e.target.value }))}
+                  placeholder="Senha do .pfx"
+                  className="input-premium w-full px-3 py-2 text-xs mt-1" />
               </div>
             </div>
           </div>

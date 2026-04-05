@@ -251,6 +251,8 @@ export type Database = {
           ambiente: string
           bairro: string
           cep: string
+          certificado_digital_url: string
+          certificado_senha: string
           cidade: string
           cnpj: string
           complemento: string
@@ -274,6 +276,8 @@ export type Database = {
           ambiente?: string
           bairro?: string
           cep?: string
+          certificado_digital_url?: string
+          certificado_senha?: string
           cidade?: string
           cnpj?: string
           complemento?: string
@@ -297,6 +301,8 @@ export type Database = {
           ambiente?: string
           bairro?: string
           cep?: string
+          certificado_digital_url?: string
+          certificado_senha?: string
           cidade?: string
           cnpj?: string
           complemento?: string

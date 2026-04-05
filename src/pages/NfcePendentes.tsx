@@ -1,10 +1,11 @@
 import { useState, useMemo } from "react";
-import { Search, FileText, AlertTriangle, CheckCircle2, Loader2, Calendar, User, CreditCard } from "lucide-react";
+import { Search, FileText, AlertTriangle, CheckCircle2, Loader2, Calendar, User, CreditCard, ShieldAlert } from "lucide-react";
 import { useVendas } from "@/hooks/useVendas";
-import { useNfce } from "@/hooks/useNfce";
+import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
 import { useClientes } from "@/hooks/useClientes";
 import { useApp } from "@/context/AppContext";
 import { formatCurrency } from "@/data/mockData";
+import { toast } from "sonner";
 
 interface PedidoPendente {
   grupoVenda: string;
@@ -26,11 +27,13 @@ export default function NfcePendentes() {
   const [busca, setBusca] = useState("");
   const [gerandoId, setGerandoId] = useState<string | null>(null);
 
-  // Group sales with nfce_status = pendente
+  const temCertificado = hasCertificadoConfigurado(configFiscal);
+
+  // Group sales with nfce_status = pendente or sem_certificado
   const pendentes = useMemo(() => {
     const map = new Map<string, PedidoPendente>();
     for (const v of vendas) {
-      if (v.nfceStatus !== "pendente") continue;
+      if (v.nfceStatus !== "pendente" && v.nfceStatus !== "sem_certificado") continue;
       const gv = v.grupoVenda || v.id;
       if (!map.has(gv)) {
         const cliente = v.clienteId ? clientes.find(c => c.id === v.clienteId) : null;
@@ -78,12 +81,14 @@ export default function NfcePendentes() {
   }, [pendentes, busca]);
 
   const handleGerarNfce = async (pedido: PedidoPendente) => {
+    if (!temCertificado) {
+      toast.error("Certificado digital não configurado. Acesse Configurações para cadastrar.");
+      return;
+    }
     setGerandoId(pedido.grupoVenda);
     try {
-      // Create emission record
       await criarEmissao({ vendaGrupoVenda: pedido.grupoVenda });
 
-      // Generate XML (template - real signing requires fiscal API)
       if (configFiscal) {
         const getCasa = (perfumeId: string) => {
           const perf = perfumes.find(p => p.id === perfumeId);
@@ -108,22 +113,15 @@ export default function NfcePendentes() {
         });
       }
 
-      // For now, mark as authorized (real SEFAZ integration would validate)
-      // In production, this would be replaced by actual SEFAZ response
-      const chaveAcesso = `NFCe${Date.now()}${Math.random().toString(36).slice(2, 10)}`;
+      // XML generated but NOT authorized - needs real SEFAZ integration
       await atualizarNfceStatus({
         grupoVenda: pedido.grupoVenda,
-        nfceStatus: "autorizada",
-        nfceChave: chaveAcesso,
+        nfceStatus: "pendente",
       });
+      toast.info("XML gerado. Aguardando integração com SEFAZ para autorização.");
     } catch (err) {
       console.error("Erro ao gerar NFC-e:", err);
-      try {
-        await atualizarNfceStatus({
-          grupoVenda: pedido.grupoVenda,
-          nfceStatus: "pendente",
-        });
-      } catch {}
+      toast.error("Erro ao gerar NFC-e");
     } finally {
       setGerandoId(null);
     }
@@ -135,6 +133,19 @@ export default function NfcePendentes() {
         <h1 className="page-title">NFC-e Pendentes</h1>
         <p className="page-subtitle mt-1">Vendas aguardando emissão de NFC-e</p>
       </div>
+
+      {!temCertificado && (
+        <div className="rounded-xl p-4 flex items-start gap-3" style={{ background: "hsl(var(--destructive) / 0.1)", border: "1px solid hsl(var(--destructive) / 0.2)" }}>
+          <ShieldAlert size={20} style={{ color: "hsl(var(--destructive))" }} className="flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-bold" style={{ color: "hsl(var(--destructive))" }}>Certificado digital não configurado</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Para emitir NFC-e é necessário configurar o certificado digital A1 nas Configurações da empresa.
+              As vendas abaixo permanecerão pendentes até a configuração.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="relative max-w-md">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -165,7 +176,7 @@ export default function NfcePendentes() {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold text-foreground">#{pedido.grupoVenda.slice(0, 8).toUpperCase()}</span>
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: "hsl(var(--warning) / 0.15)", color: "hsl(var(--warning))" }}>
-                    NFC-e pendente
+                    {temCertificado ? "NFC-e pendente" : "Sem certificado"}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
@@ -179,9 +190,9 @@ export default function NfcePendentes() {
                 <span className="text-sm font-bold text-gold">{formatCurrency(pedido.total)}</span>
                 <button
                   onClick={() => handleGerarNfce(pedido)}
-                  disabled={gerandoId === pedido.grupoVenda}
+                  disabled={gerandoId === pedido.grupoVenda || !temCertificado}
                   className="px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 disabled:opacity-50"
-                  style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}
+                  style={{ background: temCertificado ? "var(--gradient-gold)" : "hsl(var(--muted))", color: temCertificado ? "hsl(var(--primary-foreground))" : "hsl(var(--muted-foreground))" }}
                 >
                   {gerandoId === pedido.grupoVenda ? (
                     <><Loader2 size={14} className="animate-spin" /> Gerando...</>

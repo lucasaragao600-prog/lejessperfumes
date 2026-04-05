@@ -40,6 +40,12 @@ export interface ConfiguracaoFiscal {
   cscId: string;
   cscToken: string;
   logoUrl: string;
+  certificadoDigitalUrl: string;
+  certificadoSenha: string;
+}
+
+export function hasCertificadoConfigurado(config: ConfiguracaoFiscal | null | undefined): boolean {
+  return !!(config && config.certificadoDigitalUrl && config.certificadoDigitalUrl.trim() !== "");
 }
 
 function rowToNfce(row: any): NfceEmissao {
@@ -84,6 +90,8 @@ function rowToConfig(row: any): ConfiguracaoFiscal {
     cscId: row.csc_id,
     cscToken: row.csc_token,
     logoUrl: row.logo_url || "",
+    certificadoDigitalUrl: row.certificado_digital_url || "",
+    certificadoSenha: row.certificado_senha || "",
   };
 }
 
@@ -206,6 +214,8 @@ export function useNfce() {
             csc_id: config.cscId,
             csc_token: config.cscToken,
             logo_url: config.logoUrl,
+            certificado_digital_url: config.certificadoDigitalUrl,
+            certificado_senha: config.certificadoSenha,
           })
           .eq("id", existing.id);
         if (error) throw error;
@@ -232,6 +242,8 @@ export function useNfce() {
             csc_id: config.cscId,
             csc_token: config.cscToken,
             logo_url: config.logoUrl,
+            certificado_digital_url: config.certificadoDigitalUrl,
+            certificado_senha: config.certificadoSenha,
           });
         if (error) throw error;
       }
