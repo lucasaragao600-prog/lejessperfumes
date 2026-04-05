@@ -181,23 +181,16 @@ export default function FechamentoCaixa() {
     const html = `<!DOCTYPE html>
 <html><head><meta charset="utf-8"><title>Fechamento de Caixa</title>
 <style>
-  @page { size: 80mm auto; margin: 0; }
-  body { font-family: 'Arial', sans-serif; font-size: 14px; line-height: 1.5; color: #000; background: #fff; padding: 4mm; margin: 0; width: 80mm; font-weight: 900; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @page { size: 72mm auto; margin: 0; }
+  body { font-family: Arial, sans-serif; font-size: 13px; line-height: 1.5; color: #000; background: #fff; padding: 2mm; margin: 0; width: 72mm; font-weight: 900; }
   .center { text-align: center; }
-  .title { font-size: 16px; font-weight: 900; text-align: center; margin-bottom: 4px; }
-  .subtitle { font-size: 15px; font-weight: 900; text-align: center; margin-bottom: 8px; }
-  .sep { font-size: 11px; color: #000; }
-  .double { font-size: 13px; color: #000; }
-  .row { display: flex; justify-content: space-between; font-size: 14px; font-weight: 900; padding: 2px 0; }
-  .section { font-size: 15px; font-weight: 900; margin: 8px 0 4px 0; }
-  .prod-row { display: flex; font-size: 14px; font-weight: 900; padding: 2px 0; }
-  .prod-row .pname { flex: 1; word-break: break-word; }
-  .prod-row .pqty { width: 40px; text-align: center; flex-shrink: 0; }
-  .prod-row .ptotal { width: 80px; text-align: right; flex-shrink: 0; }
-  .footer { text-align: center; font-size: 14px; font-weight: 900; margin-top: 12px; }
+  .sep { font-size: 10px; }
+  .dbl { font-size: 11px; }
+  .row { display: flex; justify-content: space-between; font-size: 13px; font-weight: 900; padding: 1px 0; }
+  .section { font-size: 14px; font-weight: 900; margin: 6px 0 3px 0; }
 </style></head><body>
-<div class="title">${nomeEmpresa}</div>
-<div class="subtitle">FECHAMENTO DE CAIXA</div>
+<div class="center" style="font-size:15px;font-weight:900;margin-bottom:4px">${nomeEmpresa}</div>
+<div class="center" style="font-size:14px;font-weight:900;margin-bottom:6px">FECHAMENTO DE CAIXA</div>
 <div class="sep">${dash}</div>
 <div class="row"><span>Operador:</span><span>${sessao.operadorNome}</span></div>
 <div class="row"><span>Loja:</span><span>${sessao.loja}</span></div>
@@ -213,21 +206,21 @@ ${pagMap["Crédito"] ? `<div class="row"><span>Cartão Crédito:</span><span>${f
 ${pagMap["Débito"] ? `<div class="row"><span>Cartão Débito:</span><span>${formatCurrency(pagMap["Débito"])}</span></div>` : ""}
 ${pagMap["Pix"] ? `<div class="row"><span>PIX:</span><span>${formatCurrency(pagMap["Pix"])}</span></div>` : ""}
 ${pagMap["Conta Assinada"] ? `<div class="row"><span>Conta Assinada:</span><span>${formatCurrency(pagMap["Conta Assinada"])}</span></div>` : ""}
-<div class="row" style="font-size:15px;"><span><strong>Total vendido:</strong></span><span><strong>${formatCurrency(totalVendido)}</strong></span></div>
+<div class="row" style="font-size:14px"><span>Total vendido:</span><span>${formatCurrency(totalVendido)}</span></div>
 <div class="row"><span>Qtde vendas:</span><span>${qtdeVendas}</span></div>
 <div class="sep">${dash}</div>
 <div class="section">CAIXA</div>
 <div class="row"><span>Saldo esperado:</span><span>${formatCurrency(sessao.valorEsperado ?? 0)}</span></div>
 <div class="row"><span>Valor informado:</span><span>${formatCurrency(sessao.valorFechamento ?? 0)}</span></div>
-<div class="row" style="font-size:15px;"><span><strong>Diferença:</strong></span><span><strong>${formatCurrency(diff)}</strong></span></div>
+<div class="row" style="font-size:14px"><span>Diferença:</span><span>${formatCurrency(diff)}</span></div>
 ${prods.length > 0 ? `
 <div class="sep">${dash}</div>
 <div class="section">PRODUTOS VENDIDOS</div>
-${prods.map(p => `<div class="prod-row"><span class="pname">${p.nome}</span><span class="pqty">x${p.qtd}</span><span class="ptotal">${formatCurrency(p.total)}</span></div>`).join("")}
+${prods.map(p => `<div class="row"><span style="flex:1;word-break:break-word">${p.nome}</span><span style="width:35px;text-align:center">x${p.qtd}</span><span style="width:70px;text-align:right">${formatCurrency(p.total)}</span></div>`).join("")}
 ` : ""}
 <div class="sep">${dash}</div>
-${sessao.observacao ? `<div style="font-size:14px; margin:4px 0;">Obs: ${sessao.observacao}</div><div class="sep">${dash}</div>` : ""}
-<div class="footer">${nomeEmpresa}</div>
+${sessao.observacao ? `<div style="font-size:12px;margin:3px 0">Obs: ${sessao.observacao}</div><div class="sep">${dash}</div>` : ""}
+<div class="center" style="font-size:12px;margin-top:6px">${nomeEmpresa}</div>
 </body></html>`;
 
     printWindow.document.write(html);
