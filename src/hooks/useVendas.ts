@@ -29,6 +29,8 @@ function rowToVenda(row: any): Venda {
     registradoPor: row.registrado_por || "",
     grupoVenda: row.grupo_venda || "",
     clienteId: row.cliente_id || null,
+    nfceStatus: (row.nfce_status as NfceStatus) || "pendente",
+    nfceChave: row.nfce_chave || "",
   };
 }
 
