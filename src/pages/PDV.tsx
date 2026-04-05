@@ -472,6 +472,7 @@ ${comprovanteData.logoUrl ? `<div class="logo-center"><img src="${comprovanteDat
 <div class="sep">${"─".repeat(48)}</div>
 ${comprovanteData.itens.map(item => `
 <div class="item-row"><span class="name">${item.descricao}</span><span class="qty">${item.quantidade}</span><span class="val">R$ ${item.valorUnitario.toFixed(2)}</span><span class="val">R$ ${item.total.toFixed(2)}</span></div>`).join("")}
+<div class="section-title">FORMA DE PAGAMENTO</div>
 <div class="col-head" style="margin-top:2px"><span class="pname">FORMA PGTO.</span><span class="pval">VALOR</span></div>
 <div class="sep">${"─".repeat(48)}</div>
 ${comprovanteData.pagamentos.map(pag => {
@@ -482,13 +483,13 @@ ${comprovanteData.pagamentos.map(pag => {
     return `<div class="pag-row"><span class="pname">${pag.forma}</span><span class="pval">R$ ${pag.valor.toFixed(2)}</span></div>`;
   }).join("")}
 <div class="sep">${"─".repeat(48)}</div>
-<div class="sm flex"><span>SUBTOTAL:</span><span>R$ ${comprovanteData.subtotal.toFixed(2)}</span></div>
-${comprovanteData.desconto > 0 ? `<div class="sm flex"><span>DESCONTO${comprovanteData.descontoLabel ? ` (${comprovanteData.descontoLabel})` : ""}:</span><span>-R$ ${comprovanteData.desconto.toFixed(2)}</span></div>` : ""}
-${comprovanteData.acrescimo > 0 ? `<div class="sm flex"><span>ACRÉSCIMO${comprovanteData.acrescimoLabel ? ` (${comprovanteData.acrescimoLabel})` : ""}:</span><span>+R$ ${comprovanteData.acrescimo.toFixed(2)}</span></div>` : ""}
+<div class="sm flex"><span><strong>SUBTOTAL:</strong></span><span><strong>${formatCurrency(comprovanteData.subtotal)}</strong></span></div>
+${comprovanteData.desconto > 0 ? `<div class="sm flex"><span>DESCONTO${comprovanteData.descontoLabel ? ` (${comprovanteData.descontoLabel})` : ""}:</span><span>-${formatCurrency(comprovanteData.desconto)}</span></div>` : ""}
+${comprovanteData.acrescimo > 0 ? `<div class="sm flex"><span>ACRÉSCIMO${comprovanteData.acrescimoLabel ? ` (${comprovanteData.acrescimoLabel})` : ""}:</span><span>+${formatCurrency(comprovanteData.acrescimo)}</span></div>` : ""}
 <div class="double">${"═".repeat(48)}</div>
-<div class="total-line"><span>TOTAL:</span><span>R$ ${comprovanteData.total.toFixed(2)}</span></div>
+<div class="total-line"><span><strong>TOTAL:</strong></span><span><strong>${formatCurrency(comprovanteData.total)}</strong></span></div>
 <div class="double">${"═".repeat(48)}</div>
-${comprovanteData.troco > 0 ? `<div class="sm flex"><span>TROCO:</span><span>R$ ${comprovanteData.troco.toFixed(2)}</span></div>` : ""}
+${comprovanteData.troco > 0 ? `<div class="sm flex"><span><strong>TROCO:</strong></span><span><strong>${formatCurrency(comprovanteData.troco)}</strong></span></div>` : ""}
 ${comprovanteData.observacao ? `<div class="sep">${"─".repeat(48)}</div><div class="xs">Obs: ${comprovanteData.observacao}</div>` : ""}
 <div class="sep">${"─".repeat(48)}</div>
 <div class="footer">
