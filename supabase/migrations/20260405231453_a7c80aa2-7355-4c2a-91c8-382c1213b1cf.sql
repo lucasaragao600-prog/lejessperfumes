@@ -1,0 +1,2 @@
+ALTER TABLE public.configuracoes_fiscais ADD COLUMN IF NOT EXISTS certificado_digital_url text NOT NULL DEFAULT '';
+ALTER TABLE public.configuracoes_fiscais ADD COLUMN IF NOT EXISTS certificado_senha text NOT NULL DEFAULT '';
