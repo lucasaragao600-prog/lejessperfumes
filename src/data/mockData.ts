@@ -53,6 +53,8 @@ export type TipoAjusteValor = "desconto" | "acrescimo";
 export type TipoPagamento = "Dinheiro" | "Pix" | "Débito" | "Crédito" | "Conta Assinada";
 export type Bandeira = "Visa" | "Mastercard" | "Elo" | "Amex" | "Hipercard" | "N/A";
 
+export type NfceStatus = "pendente" | "autorizada" | "rejeitada";
+
 export interface Venda {
   id: string;
   data: string;
@@ -71,6 +73,8 @@ export interface Venda {
   registradoPor?: string;
   grupoVenda?: string;
   clienteId?: string | null;
+  nfceStatus?: NfceStatus;
+  nfceChave?: string;
 }
 
 export interface Movimentacao {

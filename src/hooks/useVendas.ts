@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { Venda, Deposito, TipoPagamento, Bandeira, TipoAjusteValor } from "@/data/mockData";
+import type { Venda, Deposito, TipoPagamento, Bandeira, TipoAjusteValor, NfceStatus } from "@/data/mockData";
 
 export interface VendaPagamento {
   id?: string;
@@ -29,6 +29,8 @@ function rowToVenda(row: any): Venda {
     registradoPor: row.registrado_por || "",
     grupoVenda: row.grupo_venda || "",
     clienteId: row.cliente_id || null,
+    nfceStatus: (row.nfce_status as NfceStatus) || "pendente",
+    nfceChave: row.nfce_chave || "",
   };
 }
 
@@ -151,6 +153,19 @@ export function useVendas() {
     onSuccess: invalidate,
   });
 
+  const atualizarNfceStatus = useMutation({
+    mutationFn: async (params: { grupoVenda: string; nfceStatus: string; nfceChave?: string }) => {
+      const updates: any = { nfce_status: params.nfceStatus };
+      if (params.nfceChave) updates.nfce_chave = params.nfceChave;
+      const { error } = await supabase
+        .from("vendas")
+        .update(updates)
+        .eq("grupo_venda", params.grupoVenda);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   return {
     vendas,
     pagamentos,
@@ -158,6 +173,7 @@ export function useVendas() {
     adicionarVenda: adicionarVenda.mutateAsync,
     adicionarVendaMulti: adicionarVendaMulti.mutateAsync,
     excluirVenda: excluirVenda.mutateAsync,
+    atualizarNfceStatus: atualizarNfceStatus.mutateAsync,
     setVendas: () => {},
   };
 }

@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
-import { Search, Eye, Printer, ShoppingCart, Calendar, User, CreditCard, ChevronLeft } from "lucide-react";
+import { Search, Eye, Printer, ShoppingCart, Calendar, User, CreditCard, ChevronLeft, FileText, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import { useVendas } from "@/hooks/useVendas";
 import { useAuth } from "@/context/AuthContext";
 import { useNfce } from "@/hooks/useNfce";
 import { useClientes } from "@/hooks/useClientes";
 import { formatCurrency } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
+import type { NfceStatus } from "@/data/mockData";
 
 interface PedidoResumo {
   grupoVenda: string;
@@ -17,6 +18,8 @@ interface PedidoResumo {
   clienteNome: string;
   total: number;
   tipoPagamento: string;
+  nfceStatus: NfceStatus;
+  nfceChave: string;
   itens: {
     perfumeNome: string;
     perfumeId: string;
@@ -28,14 +31,26 @@ interface PedidoResumo {
   pagamentos: { tipoPagamento: string; bandeira: string; valor: number; parcelas: number }[];
 }
 
+const fiscalBadge = (status: NfceStatus) => {
+  switch (status) {
+    case "autorizada":
+      return { label: "NFC-e autorizada", bg: "hsl(var(--success) / 0.15)", color: "hsl(var(--success))" };
+    case "rejeitada":
+      return { label: "NFC-e rejeitada", bg: "hsl(var(--destructive) / 0.15)", color: "hsl(var(--destructive))" };
+    default:
+      return { label: "NFC-e pendente", bg: "hsl(var(--warning) / 0.15)", color: "hsl(var(--warning))" };
+  }
+};
+
 export default function PedidosVenda() {
-  const { vendas, pagamentos: vendaPagamentos } = useVendas();
+  const { vendas, pagamentos: vendaPagamentos, atualizarNfceStatus } = useVendas();
   useAuth();
-  const { configFiscal } = useNfce();
+  const { configFiscal, criarEmissao, gerarXmlNfce } = useNfce();
   const { clientes } = useClientes();
   const { perfumes } = useApp();
   const [busca, setBusca] = useState("");
   const [selectedPedido, setSelectedPedido] = useState<PedidoResumo | null>(null);
+  const [gerandoId, setGerandoId] = useState<string | null>(null);
 
   // Group sales by grupo_venda
   const pedidos = useMemo(() => {
@@ -47,13 +62,15 @@ export default function PedidosVenda() {
         map.set(gv, {
           grupoVenda: gv,
           data: v.data,
-          operador: v.registradoPor,
+          operador: v.registradoPor || "",
           vendedora: v.vendedora,
           deposito: v.deposito,
           clienteId: v.clienteId || null,
           clienteNome: cliente?.nome || "",
           total: 0,
           tipoPagamento: v.tipoPagamento,
+          nfceStatus: v.nfceStatus || "pendente",
+          nfceChave: v.nfceChave || "",
           itens: [],
           pagamentos: [],
         });
@@ -69,7 +86,6 @@ export default function PedidosVenda() {
         deposito: v.deposito,
       });
     }
-    // Attach payment details
     for (const [gv, p] of map) {
       const pags = vendaPagamentos.filter(pg => pg.grupoVenda === gv);
       if (pags.length > 0) {
@@ -97,10 +113,40 @@ export default function PedidosVenda() {
     );
   }, [pedidos, busca]);
 
-  // Get casa (brand) for a perfume
   const getCasa = (perfumeId: string) => {
     const perf = perfumes.find(p => p.id === perfumeId);
     return perf?.marca || perf?.casaSigla || "";
+  };
+
+  const handleGerarNfce = async (pedido: PedidoResumo) => {
+    setGerandoId(pedido.grupoVenda);
+    try {
+      await criarEmissao({ vendaGrupoVenda: pedido.grupoVenda });
+      if (configFiscal) {
+        gerarXmlNfce({
+          emitente: configFiscal,
+          itens: pedido.itens.map(item => ({
+            codigo: item.perfumeId.slice(0, 8),
+            descricao: `${getCasa(item.perfumeId)} - ${item.perfumeNome}`,
+            ncm: "33030010", cfop: "5102", cstCsosn: "102", unidade: "UN",
+            quantidade: item.quantidade, valor: item.precoUnitario,
+          })),
+          pagamentos: pedido.pagamentos.map(p => ({ forma: p.tipoPagamento, valor: p.valor })),
+          total: pedido.total,
+          numero: configFiscal.proximoNumeroNfce,
+          serie: configFiscal.serieNfce,
+        });
+      }
+      const chaveAcesso = `NFCe${Date.now()}${Math.random().toString(36).slice(2, 10)}`;
+      await atualizarNfceStatus({ grupoVenda: pedido.grupoVenda, nfceStatus: "autorizada", nfceChave: chaveAcesso });
+      if (selectedPedido?.grupoVenda === pedido.grupoVenda) {
+        setSelectedPedido({ ...pedido, nfceStatus: "autorizada", nfceChave: chaveAcesso });
+      }
+    } catch (err) {
+      console.error("Erro ao gerar NFC-e:", err);
+    } finally {
+      setGerandoId(null);
+    }
   };
 
   // Reprint receipt
@@ -152,6 +198,7 @@ ${pagsHtml}
 <div style="font-size:11px">${doubleLine}</div>
 <div style="font-size:16px;font-weight:900;display:flex;justify-content:space-between;padding:4px 0"><span>TOTAL:</span><span>${formatCurrency(pedido.total)}</span></div>
 <div style="font-size:11px">${doubleLine}</div>
+${pedido.nfceStatus === "autorizada" && pedido.nfceChave ? `<div style="font-size:10px;margin-top:4px">Chave NFC-e: ${pedido.nfceChave}</div>` : ""}
 <div style="font-size:10px;margin-top:4px">${dash}</div>
 <div style="text-align:center;font-size:12px;margin-top:6px;font-weight:900">
   <div>Obrigada pela preferência!</div>
@@ -166,19 +213,37 @@ ${pagsHtml}
 
   // Detail view
   if (selectedPedido) {
+    const badge = fiscalBadge(selectedPedido.nfceStatus);
     return (
       <div className="space-y-6 animate-page-enter">
         <button onClick={() => setSelectedPedido(null)} className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ChevronLeft size={16} /> Voltar aos pedidos
         </button>
         <div className="card-premium p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-foreground">
-              Pedido #{selectedPedido.grupoVenda.slice(0, 8).toUpperCase()}
-            </h2>
-            <button onClick={() => handleReprint(selectedPedido)} className="btn-secondary px-4 py-2 text-sm flex items-center gap-2">
-              <Printer size={14} /> Reimprimir
-            </button>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-bold text-foreground">
+                Pedido #{selectedPedido.grupoVenda.slice(0, 8).toUpperCase()}
+              </h2>
+              <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: badge.bg, color: badge.color }}>
+                {badge.label}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              {selectedPedido.nfceStatus === "pendente" && (
+                <button
+                  onClick={() => handleGerarNfce(selectedPedido)}
+                  disabled={gerandoId === selectedPedido.grupoVenda}
+                  className="px-4 py-2 text-xs font-bold rounded-xl flex items-center gap-2 disabled:opacity-50"
+                  style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}
+                >
+                  {gerandoId === selectedPedido.grupoVenda ? <><Loader2 size={14} className="animate-spin" /> Gerando...</> : <><FileText size={14} /> Gerar NFC-e</>}
+                </button>
+              )}
+              <button onClick={() => handleReprint(selectedPedido)} className="btn-secondary px-4 py-2 text-sm flex items-center gap-2">
+                <Printer size={14} /> Reimprimir
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -199,6 +264,14 @@ ${pagsHtml}
               <p className="text-sm font-medium text-foreground">{selectedPedido.clienteNome || "—"}</p>
             </div>
           </div>
+
+          {/* NFC-e info */}
+          {selectedPedido.nfceStatus === "autorizada" && selectedPedido.nfceChave && (
+            <div className="rounded-xl p-3" style={{ background: "hsl(var(--success) / 0.08)", border: "1px solid hsl(var(--success) / 0.2)" }}>
+              <p className="text-xs font-medium" style={{ color: "hsl(var(--success))" }}>Chave de acesso NFC-e</p>
+              <p className="text-xs text-muted-foreground mt-1 break-all font-mono">{selectedPedido.nfceChave}</p>
+            </div>
+          )}
 
           <div style={{ borderTop: "1px solid hsl(var(--border))", paddingTop: "12px" }}>
             <h3 className="text-sm font-bold text-foreground mb-2">Itens</h3>
@@ -247,7 +320,6 @@ ${pagsHtml}
         <p className="page-subtitle mt-1">Histórico completo de vendas realizadas</p>
       </div>
 
-      {/* Search */}
       <div className="relative max-w-md">
         <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <input
@@ -259,7 +331,6 @@ ${pagsHtml}
         />
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div className="kpi-card">
           <p className="text-xs text-muted-foreground mb-1">Total de pedidos</p>
@@ -275,7 +346,6 @@ ${pagsHtml}
         </div>
       </div>
 
-      {/* List */}
       <div className="space-y-2">
         {pedidosFiltrados.length === 0 ? (
           <div className="text-center py-12">
@@ -283,37 +353,50 @@ ${pagsHtml}
             <p className="text-sm text-muted-foreground">Nenhum pedido encontrado</p>
           </div>
         ) : (
-          pedidosFiltrados.map(pedido => (
-            <div key={pedido.grupoVenda} className="card-premium p-4 flex items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-foreground">#{pedido.grupoVenda.slice(0, 8).toUpperCase()}</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: "hsl(var(--success) / 0.15)", color: "hsl(var(--success))" }}>
-                    Concluído
-                  </span>
+          pedidosFiltrados.map(pedido => {
+            const badge = fiscalBadge(pedido.nfceStatus);
+            return (
+              <div key={pedido.grupoVenda} className="card-premium p-4 flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-bold text-foreground">#{pedido.grupoVenda.slice(0, 8).toUpperCase()}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: badge.bg, color: badge.color }}>
+                      {badge.label}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
+                    <span className="text-[10px] text-muted-foreground flex items-center gap-1"><Calendar size={10} /> {pedido.data}</span>
+                    <span className="text-[10px] text-muted-foreground flex items-center gap-1"><User size={10} /> {pedido.operador || pedido.vendedora}</span>
+                    {pedido.clienteNome && (
+                      <span className="text-[10px] text-muted-foreground">{pedido.clienteNome}</span>
+                    )}
+                    <span className="text-[10px] text-muted-foreground flex items-center gap-1"><CreditCard size={10} /> {pedido.tipoPagamento}</span>
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-1">
-                  <span className="text-[10px] text-muted-foreground flex items-center gap-1"><Calendar size={10} /> {pedido.data}</span>
-                  <span className="text-[10px] text-muted-foreground flex items-center gap-1"><User size={10} /> {pedido.operador || pedido.vendedora}</span>
-                  {pedido.clienteNome && (
-                    <span className="text-[10px] text-muted-foreground">{pedido.clienteNome}</span>
-                  )}
-                  <span className="text-[10px] text-muted-foreground flex items-center gap-1"><CreditCard size={10} /> {pedido.tipoPagamento}</span>
+                <div className="flex items-center gap-3 ml-3">
+                  <span className="text-sm font-bold text-gold">{formatCurrency(pedido.total)}</span>
+                  <div className="flex gap-1">
+                    <button onClick={() => setSelectedPedido(pedido)} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all" title="Ver detalhes">
+                      <Eye size={16} />
+                    </button>
+                    <button onClick={() => handleReprint(pedido)} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all" title="Reimprimir">
+                      <Printer size={16} />
+                    </button>
+                    {pedido.nfceStatus === "pendente" && (
+                      <button
+                        onClick={() => handleGerarNfce(pedido)}
+                        disabled={gerandoId === pedido.grupoVenda}
+                        className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all disabled:opacity-50"
+                        title="Gerar NFC-e"
+                      >
+                        {gerandoId === pedido.grupoVenda ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3 ml-3">
-                <span className="text-sm font-bold text-gold">{formatCurrency(pedido.total)}</span>
-                <div className="flex gap-1">
-                  <button onClick={() => setSelectedPedido(pedido)} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all" title="Ver detalhes">
-                    <Eye size={16} />
-                  </button>
-                  <button onClick={() => handleReprint(pedido)} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all" title="Reimprimir">
-                    <Printer size={16} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
