@@ -28,6 +28,7 @@ export default function Configuracoes() {
     ambiente: "homologacao" as "homologacao" | "producao",
     serieNfce: 1, proximoNumeroNfce: 1, cscId: "", cscToken: "",
     logoUrl: "",
+    certificadoDigitalUrl: "", certificadoSenha: "",
   });
 
   useEffect(() => {
@@ -52,6 +53,8 @@ export default function Configuracoes() {
         cscId: configFiscal.cscId,
         cscToken: configFiscal.cscToken,
         logoUrl: configFiscal.logoUrl,
+        certificadoDigitalUrl: configFiscal.certificadoDigitalUrl,
+        certificadoSenha: configFiscal.certificadoSenha,
       });
       if (configFiscal.logoUrl) {
         setLogoPreview(configFiscal.logoUrl);
