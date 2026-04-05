@@ -6,6 +6,7 @@ import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
 import { useClientes } from "@/hooks/useClientes";
 import { formatCurrency } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
+import { toast } from "sonner";
 import type { NfceStatus } from "@/data/mockData";
 
 interface PedidoResumo {
