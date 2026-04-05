@@ -7,6 +7,7 @@ function rowToPerfume(row: any): Perfume {
   return {
     id: row.id,
     codigo: row.codigo,
+    codigoBarras: row.codigo_barras || "",
     nome: row.nome,
     marca: row.marca,
     casaSigla: row.casa_sigla,
@@ -112,6 +113,7 @@ export function usePerfumes() {
       if (p.cfop !== undefined) updateData.cfop = p.cfop;
       if (p.cstCsosn !== undefined) updateData.cst_csosn = p.cstCsosn;
       if (p.unidadeFiscal !== undefined) updateData.unidade_fiscal = p.unidadeFiscal;
+      if (p.codigoBarras !== undefined) updateData.codigo_barras = p.codigoBarras;
       const { error } = await supabase
         .from("perfumes")
         .update(updateData)
