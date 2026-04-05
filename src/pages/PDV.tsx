@@ -292,7 +292,9 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
       cliente: clienteSelecionado,
       itens: cart.map((item, idx) => ({
         item: idx + 1,
-        descricao: `${item.codigo} - ${item.marca} - ${item.perfumeNome} - ${concentracoesConfig[item.concentracao] || item.concentracao} - ${item.volume}ml`,
+        descricao: `${item.marca} - ${item.perfumeNome}`,
+        casa: item.marca || item.casaSigla,
+        perfumeNome: item.perfumeNome,
         codigo: item.codigo,
         quantidade: item.quantidade,
         valorUnitario: item.precoUnitario,

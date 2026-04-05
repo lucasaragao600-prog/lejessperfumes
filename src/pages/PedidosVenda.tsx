@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, Eye, Printer, X, ShoppingCart, Calendar, User, CreditCard, ChevronLeft } from "lucide-react";
+import { Search, Eye, Printer, ShoppingCart, Calendar, User, CreditCard, ChevronLeft } from "lucide-react";
 import { useVendas } from "@/hooks/useVendas";
 import { useAuth } from "@/context/AuthContext";
 import { useNfce } from "@/hooks/useNfce";
@@ -30,10 +30,10 @@ interface PedidoResumo {
 
 export default function PedidosVenda() {
   const { vendas, pagamentos: vendaPagamentos } = useVendas();
-  const { profile } = useAuth();
+  useAuth();
   const { configFiscal } = useNfce();
   const { clientes } = useClientes();
-  const { perfumes, concentracoesConfig } = useApp();
+  const { perfumes } = useApp();
   const [busca, setBusca] = useState("");
   const [selectedPedido, setSelectedPedido] = useState<PedidoResumo | null>(null);
 
