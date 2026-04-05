@@ -28,6 +28,7 @@ function rowToVenda(row: any): Venda {
     observacao: row.observacao,
     registradoPor: row.registrado_por || "",
     grupoVenda: row.grupo_venda || "",
+    clienteId: row.cliente_id || null,
   };
 }
 
