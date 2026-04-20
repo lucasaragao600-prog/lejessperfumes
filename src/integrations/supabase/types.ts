@@ -85,6 +85,206 @@ export type Database = {
         }
         Relationships: []
       }
+      balanco_auditoria: {
+        Row: {
+          acao: string
+          balanco_id: string
+          created_at: string
+          detalhes: Json
+          id: string
+          usuario: string
+          usuario_id: string | null
+        }
+        Insert: {
+          acao: string
+          balanco_id: string
+          created_at?: string
+          detalhes?: Json
+          id?: string
+          usuario?: string
+          usuario_id?: string | null
+        }
+        Update: {
+          acao?: string
+          balanco_id?: string
+          created_at?: string
+          detalhes?: Json
+          id?: string
+          usuario?: string
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "balanco_auditoria_balanco_id_fkey"
+            columns: ["balanco_id"]
+            isOneToOne: false
+            referencedRelation: "balancos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      balanco_itens: {
+        Row: {
+          ajuste_aplicado: boolean
+          balanco_id: string
+          conferido_em: string | null
+          conferido_por: string | null
+          created_at: string
+          custo_unitario: number
+          deposito: string
+          diferenca: number
+          estoque_sistema: number
+          id: string
+          impacto_financeiro: number
+          justificativa: string
+          marca: string
+          movimentacao_id: string | null
+          perfume_codigo: string
+          perfume_id: string
+          perfume_nome: string
+          quantidade_contada: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          ajuste_aplicado?: boolean
+          balanco_id: string
+          conferido_em?: string | null
+          conferido_por?: string | null
+          created_at?: string
+          custo_unitario?: number
+          deposito: string
+          diferenca?: number
+          estoque_sistema?: number
+          id?: string
+          impacto_financeiro?: number
+          justificativa?: string
+          marca?: string
+          movimentacao_id?: string | null
+          perfume_codigo?: string
+          perfume_id: string
+          perfume_nome?: string
+          quantidade_contada?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          ajuste_aplicado?: boolean
+          balanco_id?: string
+          conferido_em?: string | null
+          conferido_por?: string | null
+          created_at?: string
+          custo_unitario?: number
+          deposito?: string
+          diferenca?: number
+          estoque_sistema?: number
+          id?: string
+          impacto_financeiro?: number
+          justificativa?: string
+          marca?: string
+          movimentacao_id?: string | null
+          perfume_codigo?: string
+          perfume_id?: string
+          perfume_nome?: string
+          quantidade_contada?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "balanco_itens_balanco_id_fkey"
+            columns: ["balanco_id"]
+            isOneToOne: false
+            referencedRelation: "balancos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "balanco_itens_perfume_id_fkey"
+            columns: ["perfume_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      balancos: {
+        Row: {
+          ajustado_em: string | null
+          ajustado_por: string | null
+          cancelado_em: string | null
+          cancelado_por: string | null
+          concluido_em: string | null
+          created_at: string
+          depositos: string[]
+          filtros: Json
+          id: string
+          iniciado_em: string
+          motivo_cancelamento: string | null
+          nome: string
+          observacoes: string
+          responsavel: string
+          responsavel_id: string | null
+          status: string
+          total_conferidos: number
+          total_divergencias: number
+          total_faltas: number
+          total_itens: number
+          total_sobras: number
+          updated_at: string
+          valor_divergencia: number
+        }
+        Insert: {
+          ajustado_em?: string | null
+          ajustado_por?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          concluido_em?: string | null
+          created_at?: string
+          depositos?: string[]
+          filtros?: Json
+          id?: string
+          iniciado_em?: string
+          motivo_cancelamento?: string | null
+          nome: string
+          observacoes?: string
+          responsavel?: string
+          responsavel_id?: string | null
+          status?: string
+          total_conferidos?: number
+          total_divergencias?: number
+          total_faltas?: number
+          total_itens?: number
+          total_sobras?: number
+          updated_at?: string
+          valor_divergencia?: number
+        }
+        Update: {
+          ajustado_em?: string | null
+          ajustado_por?: string | null
+          cancelado_em?: string | null
+          cancelado_por?: string | null
+          concluido_em?: string | null
+          created_at?: string
+          depositos?: string[]
+          filtros?: Json
+          id?: string
+          iniciado_em?: string
+          motivo_cancelamento?: string | null
+          nome?: string
+          observacoes?: string
+          responsavel?: string
+          responsavel_id?: string | null
+          status?: string
+          total_conferidos?: number
+          total_divergencias?: number
+          total_faltas?: number
+          total_itens?: number
+          total_sobras?: number
+          updated_at?: string
+          valor_divergencia?: number
+        }
+        Relationships: []
+      }
       caixa_movimentacoes: {
         Row: {
           created_at: string
