@@ -65,12 +65,23 @@ export function usePerfumes() {
   const { data: perfumes = [], isLoading } = useQuery({
     queryKey: ["perfumes"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("perfumes")
-        .select("*")
-        .order("nome");
-      if (error) throw error;
-      return (data || []).map(rowToPerfume);
+      const PAGE_SIZE = 1000;
+      let from = 0;
+      const all: any[] = [];
+      // Recursive pagination to bypass Supabase's 1000 row default limit
+      while (true) {
+        const { data, error } = await supabase
+          .from("perfumes")
+          .select("*")
+          .order("nome")
+          .range(from, from + PAGE_SIZE - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+      return all.map(rowToPerfume);
     },
   });
 
