@@ -18,6 +18,7 @@ import PDV from "@/pages/PDV";
 import FechamentoCaixa from "@/pages/FechamentoCaixa";
 import PedidosVenda from "@/pages/PedidosVenda";
 import NfcePendentes from "@/pages/NfcePendentes";
+import BalancoEstoque from "@/pages/BalancoEstoque";
 import { AppProvider } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useAlertas } from "@/hooks/useAlertas";
@@ -111,6 +112,7 @@ function IndexContent({
       case "estoque": return <Estoque isMaster={isMaster} />;
       case "vendas": return <Vendas />;
       case "movimentacoes": return <Movimentacoes />;
+      case "balanco": return <BalancoEstoque />;
       case "testers": return <Testers isMaster={isMaster} />;
       case "notas": return isMaster ? <NotasFiscais /> : <Estoque isMaster={false} />;
       case "dashboards": return isMaster ? <Dashboards /> : <Estoque isMaster={false} />;
