@@ -1,10 +1,11 @@
 import { useState, useMemo, useCallback } from "react";
-import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download } from "lucide-react";
+import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download, Trash2 } from "lucide-react";
 import { formatCurrency, type Deposito, type Perfume, type TipoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import CadastroPerfume from "@/components/CadastroPerfume";
 import EditarPerfume from "@/components/EditarPerfume";
+import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
