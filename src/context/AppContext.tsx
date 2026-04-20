@@ -166,6 +166,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         adicionarTester,
         adicionarPerfume,
         editarPerfume: editarPerfumeDB,
+        excluirPerfume: excluirPerfumeDB,
         atualizarPrecos,
       }}
     >
