@@ -132,6 +132,14 @@ export function usePerfumes() {
     onSuccess: invalidate,
   });
 
+  const excluirPerfume = useMutation({
+    mutationFn: async (perfumeId: string) => {
+      const { error } = await supabase.from("perfumes").delete().eq("id", perfumeId);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   const atualizarEstoque = useMutation({
     mutationFn: async ({
       perfumeId,
