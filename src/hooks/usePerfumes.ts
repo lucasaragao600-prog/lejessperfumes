@@ -235,6 +235,7 @@ export function usePerfumes() {
     isLoading,
     adicionarPerfume: adicionarPerfume.mutateAsync,
     editarPerfume: editarPerfume.mutateAsync,
+    excluirPerfume: excluirPerfume.mutateAsync,
     atualizarPrecos: atualizarPrecos.mutateAsync,
     baixarEstoque,
     adicionarEstoque,
