@@ -56,6 +56,7 @@ interface AppContextType {
   adicionarTester: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
   adicionarPerfume: (perfume: Perfume) => void;
   editarPerfume: (perfume: Partial<Perfume> & { id: string }) => Promise<void>;
+  excluirPerfume: (perfumeId: string) => Promise<void>;
   atualizarPrecos: (perfumeId: string, custo: number, precoVenda: number) => Promise<void>;
 }
 
