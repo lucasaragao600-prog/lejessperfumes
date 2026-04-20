@@ -68,6 +68,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     isLoading: perfumesLoading,
     adicionarPerfume: adicionarPerfumeDB,
     editarPerfume: editarPerfumeDB,
+    excluirPerfume: excluirPerfumeDB,
     atualizarPrecos: atualizarPrecosDB,
     baixarEstoque: baixarEstoqueDB,
     adicionarEstoque: adicionarEstoqueDB,
