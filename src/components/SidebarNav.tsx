@@ -15,6 +15,7 @@ const allTabs = [
   { id: "pedidos", label: "Pedidos", icon: ClipboardList, masterOnly: false },
   { id: "nfce-pendentes", label: "NFC-e", icon: FileText, masterOnly: false },
   { id: "movimentacoes", label: "Movimentações", icon: ArrowLeftRight, masterOnly: false },
+  { id: "balanco", label: "Balanço", icon: ClipboardCheck, masterOnly: false },
   { id: "testers", label: "Testers", icon: FlaskConical, masterOnly: false },
   { id: "caixa", label: "Caixa", icon: DollarSign, masterOnly: false },
   { id: "notas", label: "Notas Fiscais", icon: FileText, masterOnly: true },
