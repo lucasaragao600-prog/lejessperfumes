@@ -1,16 +1,17 @@
 import { useState, useMemo, useCallback } from "react";
-import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download } from "lucide-react";
+import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download, Trash2 } from "lucide-react";
 import { formatCurrency, type Deposito, type Perfume, type TipoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import CadastroPerfume from "@/components/CadastroPerfume";
 import EditarPerfume from "@/components/EditarPerfume";
+import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
-  const { perfumes, testers, tiposPerfumeConfig, concentracoesConfig } = useApp();
+  const { perfumes, testers, tiposPerfumeConfig, concentracoesConfig, excluirPerfume } = useApp();
   const { profile } = useAuth();
   const userLoja = (!isMaster && profile?.loja) ? profile.loja as Deposito : null;
 
@@ -423,12 +424,33 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                       <p className="text-[9px] text-muted-foreground">Venda unit.</p>
                       <p className="text-xs text-gold font-medium">{formatCurrency(p.precoVenda)}</p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right flex items-center justify-end gap-3">
                       <button
                         onClick={() => setEditandoPerfume(p)}
-                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-gold transition-colors duration-150 ml-auto"
+                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-gold transition-colors duration-150"
                       >
                         <Pencil size={11} /> Editar
+                      </button>
+                      <button
+                        onClick={async () => {
+                          const ok = window.confirm(
+                            `Excluir o perfume "${p.nome}"?\n\nEsta ação é permanente e não pode ser desfeita.`
+                          );
+                          if (!ok) return;
+                          try {
+                            await excluirPerfume(p.id);
+                            toast.success("Perfume excluído com sucesso");
+                          } catch (e: any) {
+                            toast.error(
+                              e?.message?.includes("violates foreign key")
+                                ? "Não é possível excluir: existem registros vinculados (vendas, movimentações ou notas)."
+                                : "Erro ao excluir perfume"
+                            );
+                          }
+                        }}
+                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors duration-150"
+                      >
+                        <Trash2 size={11} /> Excluir
                       </button>
                     </div>
                   </div>
