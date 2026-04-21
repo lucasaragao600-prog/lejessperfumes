@@ -313,7 +313,7 @@ function GiroTab({ analise }: { analise: any[] }) {
 
 function RankingList({ items, metric }: { items: any[]; metric: "giro" | "margem" | "receita" }) {
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-3">
       {items.map((x, i) => {
         const val = metric === "giro" ? (isFinite(x.giro) ? x.giro.toFixed(2) : "∞")
           : metric === "margem" ? `${x.margemPct.toFixed(1)}%`
@@ -323,9 +323,9 @@ function RankingList({ items, metric }: { items: any[]; metric: "giro" | "margem
             <div className="flex items-start gap-2 min-w-0 flex-1">
               <span className="text-muted-foreground w-5 shrink-0">{i + 1}.</span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-foreground">{x.perfume.nome}</p>
-                <p className="truncate text-[10px] text-muted-foreground">
-                  {x.perfume.marca} · Casa: {x.perfume.casaSigla}
+                <p className="truncate text-foreground font-medium">{x.perfume.nome}</p>
+                <p className="truncate text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5">
+                  {x.perfume.marca} · {x.perfume.concentracao} · {x.perfume.volume}ml
                 </p>
               </div>
             </div>
