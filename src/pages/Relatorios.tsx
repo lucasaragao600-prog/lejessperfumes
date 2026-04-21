@@ -319,12 +319,17 @@ function RankingList({ items, metric }: { items: any[]; metric: "giro" | "margem
           : metric === "margem" ? `${x.margemPct.toFixed(1)}%`
           : fmtBRL(x.receita);
         return (
-          <li key={x.perfume.id} className="flex items-center justify-between gap-2 text-xs">
-            <div className="flex items-center gap-2 min-w-0">
-              <span className="text-muted-foreground w-5">{i + 1}.</span>
-              <span className="truncate">{x.perfume.nome}</span>
+          <li key={x.perfume.id} className="flex items-start justify-between gap-3 text-xs">
+            <div className="flex items-start gap-2 min-w-0 flex-1">
+              <span className="text-muted-foreground w-5 shrink-0">{i + 1}.</span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-foreground">{x.perfume.nome}</p>
+                <p className="truncate text-[10px] text-muted-foreground">
+                  {x.perfume.marca} · Casa: {x.perfume.casaSigla}
+                </p>
+              </div>
             </div>
-            <span className="font-medium text-gold">{val}</span>
+            <span className="font-medium text-gold shrink-0">{val}</span>
           </li>
         );
       })}
@@ -391,10 +396,20 @@ function MargemTab({ analise }: { analise: any[] }) {
         <h3 className="text-sm font-semibold mb-4">Margem por categoria</h3>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={porCategoria}>
-              <XAxis dataKey="categoria" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+          <BarChart data={porCategoria} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+              <XAxis
+                dataKey="categoria"
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={11}
+                interval={0}
+                tick={{ fill: "hsl(var(--foreground))" }}
+              />
               <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
-              <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} formatter={(v: any, name) => name === "margemPct" ? `${Number(v).toFixed(1)}%` : fmtBRL(Number(v))} />
+              <Tooltip
+                contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
+                labelFormatter={(label) => `Categoria: ${label}`}
+                formatter={(v: any, name) => name === "Margem %" ? `${Number(v).toFixed(1)}%` : fmtBRL(Number(v))}
+              />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Bar dataKey="receita" fill="hsl(var(--gold))" name="Receita" radius={[6, 6, 0, 0]} />
               <Bar dataKey="lucro" fill="hsl(var(--success))" name="Lucro" radius={[6, 6, 0, 0]} />
