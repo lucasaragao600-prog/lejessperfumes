@@ -34,7 +34,7 @@ import * as XLSX from "xlsx";
 import type { Deposito, Perfume } from "@/data/mockData";
 
 const DEPOSITOS: ("todos" | Deposito)[] = ["todos", "Casa", "Sumaúma", "Amazonas"];
-const TIPOS = ["todos", "Árabe", "Importado", "Nicho", "Nacional", "Kit"] as const;
+const TIPOS = ["todos", "Árabe", "Importado", "Nicho", "Nacional", "Kit"];
 
 const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 2 });
@@ -60,12 +60,12 @@ function exportXlsx(rows: any[], filename: string) {
 }
 
 export default function Relatorios() {
-  const { perfumes, vendas, movimentacoes } = useApp();
+  const { perfumes, vendas } = useApp();
   const hoje = todayStr();
   const [dataInicio, setDataInicio] = useState(daysAgoStr(30));
   const [dataFim, setDataFim] = useState(hoje);
   const [deposito, setDeposito] = useState<"todos" | Deposito>("todos");
-  const [tipo, setTipo] = useState<(typeof TIPOS)[number]>("todos");
+  const [tipo, setTipo] = useState<string>("todos");
 
   const periodoDias = Math.max(1, diffDays(dataFim, dataInicio) + 1);
 
@@ -204,7 +204,7 @@ export default function Relatorios() {
         <TabsContent value="margem"><MargemTab analise={analise} /></TabsContent>
         <TabsContent value="problemas"><ProblematicosTab analise={analise} /></TabsContent>
         <TabsContent value="abc"><CurvaAbcTab analise={analise} /></TabsContent>
-        <TabsContent value="alertas"><AlertasTab analise={analise} vendas={vendasFiltradas} periodoDias={periodoDias} /></TabsContent>
+        <TabsContent value="alertas"><AlertasTab analise={analise} /></TabsContent>
       </Tabs>
     </div>
   );
@@ -609,7 +609,7 @@ function CurvaAbcTab({ analise }: { analise: any[] }) {
 }
 
 /* ============= ALERTAS ============= */
-function AlertasTab({ analise, vendas, periodoDias }: { analise: any[]; vendas: any[]; periodoDias: number }) {
+function AlertasTab({ analise }: { analise: any[] }) {
   const alertas = useMemo(() => {
     const list: { nivel: "critico" | "atencao" | "ok"; titulo: string; produto: string; descricao: string }[] = [];
     for (const x of analise) {
