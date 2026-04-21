@@ -240,7 +240,7 @@ function ClasseBadge({ classe }: { classe: string }) {
 }
 
 /* ============= GIRO ============= */
-function GiroTab({ analise }: { analise: any[] }) {
+function GiroTab({ analise, concNome }: { analise: any[]; concNome: (s: string) => string }) {
   const ordenado = [...analise].filter((x) => x.estoqueAtual > 0 || x.qtdVendida > 0).sort((a, b) => b.giro - a.giro);
   const top = ordenado.slice(0, 10);
   const bottom = [...ordenado].reverse().slice(0, 10);
@@ -314,7 +314,7 @@ function GiroTab({ analise }: { analise: any[] }) {
   );
 }
 
-function RankingList({ items, metric }: { items: any[]; metric: "giro" | "margem" | "receita" }) {
+function RankingList({ items, metric, concNome }: { items: any[]; metric: "giro" | "margem" | "receita"; concNome?: (s: string) => string }) {
   return (
     <ul className="space-y-3">
       {items.map((x, i) => {
@@ -342,7 +342,7 @@ function RankingList({ items, metric }: { items: any[]; metric: "giro" | "margem
 }
 
 /* ============= MARGEM ============= */
-function MargemTab({ analise }: { analise: any[] }) {
+function MargemTab({ analise, concNome, tipoNome }: { analise: any[]; concNome: (s: string) => string; tipoNome: (s: string) => string }) {
   const comVenda = analise.filter((x) => x.qtdVendida > 0);
   const topMargem = [...comVenda].sort((a, b) => b.margemPct - a.margemPct).slice(0, 10);
   const baixaMargem = [...comVenda].sort((a, b) => a.margemPct - b.margemPct).slice(0, 10);
@@ -425,7 +425,7 @@ function MargemTab({ analise }: { analise: any[] }) {
 }
 
 /* ============= PROBLEMÁTICOS ============= */
-function ProblematicosTab({ analise }: { analise: any[] }) {
+function ProblematicosTab({ analise, concNome }: { analise: any[]; concNome: (s: string) => string }) {
   const problemas = useMemo(() => {
     return analise.map((x) => {
       const flags: string[] = [];
@@ -511,7 +511,7 @@ function ProblematicosTab({ analise }: { analise: any[] }) {
 }
 
 /* ============= CURVA ABC ============= */
-function CurvaAbcTab({ analise }: { analise: any[] }) {
+function CurvaAbcTab({ analise, concNome }: { analise: any[]; concNome: (s: string) => string }) {
   const { ranked, distribuicao } = useMemo(() => {
     const ranked = analise.filter((x) => x.receita > 0).sort((a, b) => b.receita - a.receita);
     const total = ranked.reduce((s, x) => s + x.receita, 0);
@@ -627,7 +627,7 @@ function CurvaAbcTab({ analise }: { analise: any[] }) {
 }
 
 /* ============= ALERTAS ============= */
-function AlertasTab({ analise }: { analise: any[] }) {
+function AlertasTab({ analise, concNome }: { analise: any[]; concNome: (s: string) => string }) {
   const alertas = useMemo(() => {
     const list: { nivel: "critico" | "atencao" | "ok"; titulo: string; produto: string; descricao: string }[] = [];
     for (const x of analise) {
