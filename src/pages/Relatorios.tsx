@@ -271,11 +271,11 @@ function GiroTab({ analise, concNome }: { analise: any[]; concNome: (s: string) 
       <div className="grid md:grid-cols-2 gap-4">
         <Card className="p-4 bg-card border-border">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><ArrowUpRight size={16} className="text-success" />Maior giro</h3>
-          <RankingList items={top} metric="giro" />
+          <RankingList items={top} metric="giro" concNome={concNome} />
         </Card>
         <Card className="p-4 bg-card border-border">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><ArrowDownRight size={16} className="text-destructive" />Menor giro</h3>
-          <RankingList items={bottom} metric="giro" />
+          <RankingList items={bottom} metric="giro" concNome={concNome} />
         </Card>
       </div>
 
