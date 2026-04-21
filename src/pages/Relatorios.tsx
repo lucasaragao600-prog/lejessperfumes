@@ -60,12 +60,15 @@ function exportXlsx(rows: any[], filename: string) {
 }
 
 export default function Relatorios() {
-  const { perfumes, vendas } = useApp();
+  const { perfumes, vendas, concentracoesConfig, tiposPerfumeConfig } = useApp();
   const hoje = todayStr();
   const [dataInicio, setDataInicio] = useState(daysAgoStr(30));
   const [dataFim, setDataFim] = useState(hoje);
   const [deposito, setDeposito] = useState<"todos" | Deposito>("todos");
   const [tipo, setTipo] = useState<string>("todos");
+
+  const concNome = (sigla: string) => concentracoesConfig?.[sigla] || sigla;
+  const tipoNome = (sigla: string) => tiposPerfumeConfig?.[sigla] || sigla;
 
   const periodoDias = Math.max(1, diffDays(dataFim, dataInicio) + 1);
 
@@ -200,11 +203,11 @@ export default function Relatorios() {
           <TabsTrigger value="alertas" className="text-xs py-2"><Zap size={14} className="mr-1.5 hidden md:inline" />Alertas</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="giro"><GiroTab analise={analise} /></TabsContent>
-        <TabsContent value="margem"><MargemTab analise={analise} /></TabsContent>
-        <TabsContent value="problemas"><ProblematicosTab analise={analise} /></TabsContent>
-        <TabsContent value="abc"><CurvaAbcTab analise={analise} /></TabsContent>
-        <TabsContent value="alertas"><AlertasTab analise={analise} /></TabsContent>
+        <TabsContent value="giro"><GiroTab analise={analise} concNome={concNome} /></TabsContent>
+        <TabsContent value="margem"><MargemTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
+        <TabsContent value="problemas"><ProblematicosTab analise={analise} concNome={concNome} /></TabsContent>
+        <TabsContent value="abc"><CurvaAbcTab analise={analise} concNome={concNome} /></TabsContent>
+        <TabsContent value="alertas"><AlertasTab analise={analise} concNome={concNome} /></TabsContent>
       </Tabs>
     </div>
   );
@@ -237,7 +240,7 @@ function ClasseBadge({ classe }: { classe: string }) {
 }
 
 /* ============= GIRO ============= */
-function GiroTab({ analise }: { analise: any[] }) {
+function GiroTab({ analise, concNome }: { analise: any[]; concNome: (s: string) => string }) {
   const ordenado = [...analise].filter((x) => x.estoqueAtual > 0 || x.qtdVendida > 0).sort((a, b) => b.giro - a.giro);
   const top = ordenado.slice(0, 10);
   const bottom = [...ordenado].reverse().slice(0, 10);
@@ -268,11 +271,11 @@ function GiroTab({ analise }: { analise: any[] }) {
       <div className="grid md:grid-cols-2 gap-4">
         <Card className="p-4 bg-card border-border">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><ArrowUpRight size={16} className="text-success" />Maior giro</h3>
-          <RankingList items={top} metric="giro" />
+          <RankingList items={top} metric="giro" concNome={concNome} />
         </Card>
         <Card className="p-4 bg-card border-border">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><ArrowDownRight size={16} className="text-destructive" />Menor giro</h3>
-          <RankingList items={bottom} metric="giro" />
+          <RankingList items={bottom} metric="giro" concNome={concNome} />
         </Card>
       </div>
 
@@ -311,7 +314,7 @@ function GiroTab({ analise }: { analise: any[] }) {
   );
 }
 
-function RankingList({ items, metric }: { items: any[]; metric: "giro" | "margem" | "receita" }) {
+function RankingList({ items, metric, concNome }: { items: any[]; metric: "giro" | "margem" | "receita"; concNome?: (s: string) => string }) {
   return (
     <ul className="space-y-3">
       {items.map((x, i) => {
@@ -325,7 +328,7 @@ function RankingList({ items, metric }: { items: any[]; metric: "giro" | "margem
               <div className="min-w-0 flex-1">
                 <p className="truncate text-foreground font-medium">{x.perfume.nome}</p>
                 <p className="truncate text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5">
-                  {x.perfume.marca} · {x.perfume.concentracao} · {x.perfume.volume}ml
+                  {x.perfume.marca} · {concNome ? concNome(x.perfume.concentracao) : x.perfume.concentracao} · {x.perfume.volume}ml
                 </p>
               </div>
             </div>
@@ -339,15 +342,17 @@ function RankingList({ items, metric }: { items: any[]; metric: "giro" | "margem
 }
 
 /* ============= MARGEM ============= */
-function MargemTab({ analise }: { analise: any[] }) {
-  const comVenda = analise.filter((x) => x.qtdVendida > 0);
+function MargemTab({ analise, concNome, tipoNome }: { analise: any[]; concNome: (s: string) => string; tipoNome: (s: string) => string }) {
+  // Apenas produtos com vendas E custo cadastrado (>0) entram no ranking de margem
+  // — caso contrário a margem aparece como 100% e distorce a análise.
+  const comVenda = analise.filter((x) => x.qtdVendida > 0 && x.custoTotal > 0);
   const topMargem = [...comVenda].sort((a, b) => b.margemPct - a.margemPct).slice(0, 10);
   const baixaMargem = [...comVenda].sort((a, b) => a.margemPct - b.margemPct).slice(0, 10);
 
   const porCategoria = useMemo(() => {
     const map = new Map<string, { receita: number; lucro: number }>();
     for (const x of comVenda) {
-      const k = x.perfume.tipo;
+      const k = tipoNome(x.perfume.tipo);
       const cur = map.get(k) || { receita: 0, lucro: 0 };
       cur.receita += x.receita;
       cur.lucro += x.lucro;
@@ -359,7 +364,7 @@ function MargemTab({ analise }: { analise: any[] }) {
       lucro: v.lucro,
       margemPct: v.receita > 0 ? (v.lucro / v.receita) * 100 : 0,
     }));
-  }, [comVenda]);
+  }, [comVenda, tipoNome]);
 
   const exportar = () => exportXlsx(
     comVenda.map((x) => ({
@@ -384,11 +389,11 @@ function MargemTab({ analise }: { analise: any[] }) {
       <div className="grid md:grid-cols-2 gap-4">
         <Card className="p-4 bg-card border-border">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><TrendingUp size={16} className="text-success" />Mais lucrativos</h3>
-          <RankingList items={topMargem} metric="margem" />
+          <RankingList items={topMargem} metric="margem" concNome={concNome} />
         </Card>
         <Card className="p-4 bg-card border-border">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><TrendingDown size={16} className="text-destructive" />Menor margem</h3>
-          <RankingList items={baixaMargem} metric="margem" />
+          <RankingList items={baixaMargem} metric="margem" concNome={concNome} />
         </Card>
       </div>
 
@@ -422,7 +427,7 @@ function MargemTab({ analise }: { analise: any[] }) {
 }
 
 /* ============= PROBLEMÁTICOS ============= */
-function ProblematicosTab({ analise }: { analise: any[] }) {
+function ProblematicosTab({ analise, concNome }: { analise: any[]; concNome: (s: string) => string }) {
   const problemas = useMemo(() => {
     return analise.map((x) => {
       const flags: string[] = [];
@@ -508,7 +513,7 @@ function ProblematicosTab({ analise }: { analise: any[] }) {
 }
 
 /* ============= CURVA ABC ============= */
-function CurvaAbcTab({ analise }: { analise: any[] }) {
+function CurvaAbcTab({ analise, concNome }: { analise: any[]; concNome: (s: string) => string }) {
   const { ranked, distribuicao } = useMemo(() => {
     const ranked = analise.filter((x) => x.receita > 0).sort((a, b) => b.receita - a.receita);
     const total = ranked.reduce((s, x) => s + x.receita, 0);
@@ -624,7 +629,7 @@ function CurvaAbcTab({ analise }: { analise: any[] }) {
 }
 
 /* ============= ALERTAS ============= */
-function AlertasTab({ analise }: { analise: any[] }) {
+function AlertasTab({ analise, concNome }: { analise: any[]; concNome: (s: string) => string }) {
   const alertas = useMemo(() => {
     const list: { nivel: "critico" | "atencao" | "ok"; titulo: string; produto: string; descricao: string }[] = [];
     for (const x of analise) {
