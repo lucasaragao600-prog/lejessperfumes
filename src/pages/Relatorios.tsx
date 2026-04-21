@@ -328,7 +328,7 @@ function RankingList({ items, metric, concNome }: { items: any[]; metric: "giro"
               <div className="min-w-0 flex-1">
                 <p className="truncate text-foreground font-medium">{x.perfume.nome}</p>
                 <p className="truncate text-[10px] text-muted-foreground uppercase tracking-wide mt-0.5">
-                  {x.perfume.marca} · {x.perfume.concentracao} · {x.perfume.volume}ml
+                  {x.perfume.marca} · {concNome ? concNome(x.perfume.concentracao) : x.perfume.concentracao} · {x.perfume.volume}ml
                 </p>
               </div>
             </div>
