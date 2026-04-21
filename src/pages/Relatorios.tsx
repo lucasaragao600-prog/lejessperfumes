@@ -343,14 +343,16 @@ function RankingList({ items, metric, concNome }: { items: any[]; metric: "giro"
 
 /* ============= MARGEM ============= */
 function MargemTab({ analise, concNome, tipoNome }: { analise: any[]; concNome: (s: string) => string; tipoNome: (s: string) => string }) {
-  const comVenda = analise.filter((x) => x.qtdVendida > 0);
+  // Apenas produtos com vendas E custo cadastrado (>0) entram no ranking de margem
+  // — caso contrário a margem aparece como 100% e distorce a análise.
+  const comVenda = analise.filter((x) => x.qtdVendida > 0 && x.custoTotal > 0);
   const topMargem = [...comVenda].sort((a, b) => b.margemPct - a.margemPct).slice(0, 10);
   const baixaMargem = [...comVenda].sort((a, b) => a.margemPct - b.margemPct).slice(0, 10);
 
   const porCategoria = useMemo(() => {
     const map = new Map<string, { receita: number; lucro: number }>();
     for (const x of comVenda) {
-      const k = x.perfume.tipo;
+      const k = tipoNome(x.perfume.tipo);
       const cur = map.get(k) || { receita: 0, lucro: 0 };
       cur.receita += x.receita;
       cur.lucro += x.lucro;
@@ -362,7 +364,7 @@ function MargemTab({ analise, concNome, tipoNome }: { analise: any[]; concNome: 
       lucro: v.lucro,
       margemPct: v.receita > 0 ? (v.lucro / v.receita) * 100 : 0,
     }));
-  }, [comVenda]);
+  }, [comVenda, tipoNome]);
 
   const exportar = () => exportXlsx(
     comVenda.map((x) => ({
@@ -387,11 +389,11 @@ function MargemTab({ analise, concNome, tipoNome }: { analise: any[]; concNome: 
       <div className="grid md:grid-cols-2 gap-4">
         <Card className="p-4 bg-card border-border">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><TrendingUp size={16} className="text-success" />Mais lucrativos</h3>
-          <RankingList items={topMargem} metric="margem" />
+          <RankingList items={topMargem} metric="margem" concNome={concNome} />
         </Card>
         <Card className="p-4 bg-card border-border">
           <h3 className="text-sm font-semibold mb-3 flex items-center gap-2"><TrendingDown size={16} className="text-destructive" />Menor margem</h3>
-          <RankingList items={baixaMargem} metric="margem" />
+          <RankingList items={baixaMargem} metric="margem" concNome={concNome} />
         </Card>
       </div>
 
