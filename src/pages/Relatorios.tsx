@@ -60,12 +60,15 @@ function exportXlsx(rows: any[], filename: string) {
 }
 
 export default function Relatorios() {
-  const { perfumes, vendas } = useApp();
+  const { perfumes, vendas, concentracoesConfig, tiposPerfumeConfig } = useApp();
   const hoje = todayStr();
   const [dataInicio, setDataInicio] = useState(daysAgoStr(30));
   const [dataFim, setDataFim] = useState(hoje);
   const [deposito, setDeposito] = useState<"todos" | Deposito>("todos");
   const [tipo, setTipo] = useState<string>("todos");
+
+  const concNome = (sigla: string) => concentracoesConfig?.[sigla] || sigla;
+  const tipoNome = (sigla: string) => tiposPerfumeConfig?.[sigla] || sigla;
 
   const periodoDias = Math.max(1, diffDays(dataFim, dataInicio) + 1);
 
