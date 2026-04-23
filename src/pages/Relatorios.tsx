@@ -70,19 +70,24 @@ export default function Relatorios() {
   const [deposito, setDeposito] = useState<"todos" | Deposito>("todos");
   const [tipo, setTipo] = useState<string>("todos");
 
+  // Datas efetivas (evita crash quando o usuário limpa o input)
+  const isValidDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && Number.isFinite(new Date(s).getTime());
+  const dInicio = isValidDate(dataInicio) ? dataInicio : daysAgoStr(30);
+  const dFim = isValidDate(dataFim) ? dataFim : hoje;
+
   const concNome = (sigla: string) => concentracoesConfig?.[sigla] || sigla;
   const tipoNome = (sigla: string) => tiposPerfumeConfig?.[sigla] || sigla;
 
-  const periodoDias = Math.max(1, diffDays(dataFim, dataInicio) + 1);
+  const periodoDias = Math.max(1, diffDays(dFim, dInicio) + 1);
 
   // Vendas filtradas
   const vendasFiltradas = useMemo(() => {
     return vendas.filter((v) => {
-      if (v.data < dataInicio || v.data > dataFim) return false;
+      if (v.data < dInicio || v.data > dFim) return false;
       if (deposito !== "todos" && v.deposito !== deposito) return false;
       return true;
     });
-  }, [vendas, dataInicio, dataFim, deposito]);
+  }, [vendas, dInicio, dFim, deposito]);
 
   // Helpers de estoque
   const estoqueAtualPerfume = (p: Perfume) => {
