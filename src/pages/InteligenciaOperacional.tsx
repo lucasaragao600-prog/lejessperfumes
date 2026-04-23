@@ -62,7 +62,10 @@ function daysAgoStr(days: number) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Manaus" }).format(d);
 }
 function diffDays(a: string, b: string) {
-  return Math.round((new Date(a).getTime() - new Date(b).getTime()) / 86400000);
+  const ta = new Date(a).getTime();
+  const tb = new Date(b).getTime();
+  if (!Number.isFinite(ta) || !Number.isFinite(tb)) return 0;
+  return Math.round((ta - tb) / 86400000);
 }
 function exportXlsx(rows: any[], filename: string) {
   if (!rows.length) {
@@ -107,7 +110,12 @@ export default function InteligenciaOperacional() {
     return Array.from(s).length > 1 ? Array.from(s) : TIPOS_BASE;
   }, [perfumes]);
 
-  const periodoDias = Math.max(1, diffDays(dataFim, dataInicio) + 1);
+  // Datas efetivas (evita crash quando o usuário limpa o input)
+  const isValidDate = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s) && Number.isFinite(new Date(s).getTime());
+  const dInicio = isValidDate(dataInicio) ? dataInicio : daysAgoStr(30);
+  const dFim = isValidDate(dataFim) ? dataFim : hoje;
+
+  const periodoDias = Math.max(1, diffDays(dFim, dInicio) + 1);
   // Para sugestão de compra usamos histórico maior — últimos 60 dias se possível
   const periodoCompraDias = 60;
   const dataInicioCompra = daysAgoStr(periodoCompraDias);
@@ -115,11 +123,11 @@ export default function InteligenciaOperacional() {
   const vendasFiltradas = useMemo(
     () =>
       vendas.filter((v) => {
-        if (v.data < dataInicio || v.data > dataFim) return false;
+        if (v.data < dInicio || v.data > dFim) return false;
         if (deposito !== "todos" && v.deposito !== deposito) return false;
         return true;
       }),
-    [vendas, dataInicio, dataFim, deposito],
+    [vendas, dInicio, dFim, deposito],
   );
 
   const vendasCompra = useMemo(
