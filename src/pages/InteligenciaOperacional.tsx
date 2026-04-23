@@ -62,7 +62,10 @@ function daysAgoStr(days: number) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Manaus" }).format(d);
 }
 function diffDays(a: string, b: string) {
-  return Math.round((new Date(a).getTime() - new Date(b).getTime()) / 86400000);
+  const ta = new Date(a).getTime();
+  const tb = new Date(b).getTime();
+  if (!Number.isFinite(ta) || !Number.isFinite(tb)) return 0;
+  return Math.round((ta - tb) / 86400000);
 }
 function exportXlsx(rows: any[], filename: string) {
   if (!rows.length) {
