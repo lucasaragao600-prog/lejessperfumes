@@ -1,4 +1,4 @@
-import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon, Monitor, DollarSign, ClipboardList, ClipboardCheck, LineChart } from "lucide-react";
+import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon, Monitor, DollarSign, ClipboardList, ClipboardCheck, LineChart, Sparkles } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
 interface BottomNavProps {
@@ -20,6 +20,7 @@ const allTabs = [
   { id: "notas", label: "Notas", icon: FileText, masterOnly: true },
   { id: "dashboards", label: "Dashboard", icon: BarChart3, masterOnly: true },
   { id: "relatorios", label: "Relatórios", icon: LineChart, masterOnly: true },
+  { id: "inteligencia", label: "Inteligência", icon: Sparkles, masterOnly: true },
   { id: "importar", label: "Importar", icon: FileSpreadsheet, masterOnly: true },
   { id: "configuracoes", label: "Config.", icon: Settings, masterOnly: true },
   { id: "usuarios", label: "Usuários", icon: Users, masterOnly: true },
