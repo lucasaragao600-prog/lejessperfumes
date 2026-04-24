@@ -428,6 +428,16 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
               </div>
             )}
           </div>
+
+          {/* Painel ao vivo dos contadores (dupla conferência) */}
+          {balanco.dupla_conferencia && (
+            <LivePainel
+              leituras={leituras}
+              itens={itens}
+              meuUsuario={profile?.nome || "—"}
+              minhaContagem={contagemAtiva}
+            />
+          )}
         </div>
       )}
 
