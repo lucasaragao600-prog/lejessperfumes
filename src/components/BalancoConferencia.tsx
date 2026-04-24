@@ -7,6 +7,7 @@ import { useBalancos, useBalancoItens, type BalancoItem } from "@/hooks/useBalan
 import { useAuth } from "@/context/AuthContext";
 import { usePerfumes } from "@/hooks/usePerfumes";
 import { useProdutoGtins } from "@/hooks/useProdutoGtins";
+import { useBalancoLeituras } from "@/hooks/useBalancoLeituras";
 import { toast } from "sonner";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -50,6 +51,7 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
   const isMaster = role === "master";
   const { balancos, atualizarItem, bipar, concluirBalanco, aplicarAjustes, recalcularTotais } = useBalancos();
   const { data: itens = [], isLoading } = useBalancoItens(balancoId);
+  const { data: leituras = [] } = useBalancoLeituras(balancoId);
   const balanco = balancos.find((b) => b.id === balancoId);
 
   const isCega = balanco?.tipo_contagem === "cega";
@@ -426,6 +428,16 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
               </div>
             )}
           </div>
+
+          {/* Painel ao vivo dos contadores (dupla conferência) */}
+          {balanco.dupla_conferencia && (
+            <LivePainel
+              leituras={leituras}
+              itens={itens}
+              meuUsuario={profile?.nome || "—"}
+              minhaContagem={contagemAtiva}
+            />
+          )}
         </div>
       )}
 

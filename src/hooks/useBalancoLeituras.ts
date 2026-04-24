@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export interface BalancoLeitura {
@@ -19,6 +20,25 @@ export async function registrarLeitura(input: Omit<BalancoLeitura, "id" | "criad
 }
 
 export function useBalancoLeituras(balancoId: string | null) {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (!balancoId) return;
+    const channel = supabase
+      .channel(`balanco-leituras-${balancoId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "balanco_leituras", filter: `balanco_id=eq.${balancoId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["balanco-leituras", balancoId] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [balancoId, qc]);
+
   return useQuery({
     queryKey: ["balanco-leituras", balancoId],
     enabled: !!balancoId,
