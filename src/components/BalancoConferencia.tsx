@@ -379,8 +379,26 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
               </div>
               <input
                 value={scanQtd}
-                onChange={(e) => setScanQtd(e.target.value.replace(/[^0-9]/g, ""))}
-                onKeyDown={(e) => { if (e.key === "Enter") handleScan(); }}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/[^0-9]/g, "");
+                  // Se digitou/bipou um código (>= 5 dígitos), provavelmente é código de barras no campo errado
+                  if (v.length >= 5) {
+                    setScanCodigo(v);
+                    setScanQtd("1");
+                    setTimeout(() => scanRef.current?.focus(), 10);
+                    return;
+                  }
+                  setScanQtd(v);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleScan();
+                  }
+                }}
+                onBlur={() => {
+                  if (!scanQtd) setScanQtd("1");
+                }}
                 className="input-premium px-3 py-3.5 w-20 text-center"
                 placeholder="1"
                 inputMode="numeric"
