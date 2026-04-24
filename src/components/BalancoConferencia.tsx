@@ -30,10 +30,30 @@ interface Props {
   onOpenHistorico: (id: string) => void;
 }
 
+let beepCtx: AudioContext | null = null;
+
+function getBeepContext() {
+  const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+  if (!AudioCtx) return null;
+  if (!beepCtx || beepCtx.state === "closed") {
+    beepCtx = new AudioCtx();
+  }
+  return beepCtx;
+}
+
+function primeBeep() {
+  try {
+    const ctx = getBeepContext();
+    if (ctx?.state === "suspended") void ctx.resume();
+  } catch {}
+}
+
 // bip simples via WebAudio (sem assets)
 function playBeep(ok: boolean) {
   try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = getBeepContext();
+    if (!ctx) return;
+    if (ctx.state === "suspended") void ctx.resume();
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     o.frequency.value = ok ? 1200 : 320;
@@ -42,7 +62,6 @@ function playBeep(ok: boolean) {
     g.connect(ctx.destination);
     o.start();
     o.stop(ctx.currentTime + (ok ? 0.08 : 0.18));
-    setTimeout(() => ctx.close(), 300);
   } catch {}
 }
 
@@ -76,6 +95,9 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
   const [naoEncontrado, setNaoEncontrado] = useState<{ codigo: string } | null>(null);
   const scanRef = useRef<HTMLInputElement>(null);
   const buscaRef = useRef<HTMLInputElement>(null);
+  const scanIdleTimeoutRef = useRef<number | null>(null);
+  const scanCaptureRef = useRef({ startedAt: 0, lastAt: 0, count: 0 });
+  const autoSubmittingRef = useRef(false);
   const [tab, setTab] = useState<"scan" | "lista">(isBarras ? "scan" : "lista");
 
   // Auto-focus contínuo no campo de scan
@@ -83,6 +105,14 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
     if (tab === "scan") scanRef.current?.focus();
     else buscaRef.current?.focus();
   }, [tab]);
+
+  const resetScanCapture = useCallback(() => {
+    scanCaptureRef.current = { startedAt: 0, lastAt: 0, count: 0 };
+    if (scanIdleTimeoutRef.current) {
+      window.clearTimeout(scanIdleTimeoutRef.current);
+      scanIdleTimeoutRef.current = null;
+    }
+  }, []);
 
   // Re-focus se perder foco no modo scan (e não tiver modal aberto)
   useEffect(() => {
@@ -98,6 +128,8 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
     }, 1500);
     return () => clearInterval(h);
   }, [tab, naoEncontrado]);
+
+  useEffect(() => () => resetScanCapture(), [resetScanCapture]);
 
   const depositos = useMemo(() => {
     const set = new Set(itens.map((i) => i.deposito));
@@ -171,9 +203,32 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
       if (somAtivo) playBeep(false);
       toast.error(e?.message || "Erro ao processar leitura");
     } finally {
+      resetScanCapture();
       setTimeout(() => scanRef.current?.focus(), 50);
     }
-  }, [balancoId, scanCodigo, scanQtd, filtroDeposito, somAtivo, profile, contagemAtiva, balanco?.dupla_conferencia, bipar]);
+  }, [balancoId, scanCodigo, scanQtd, filtroDeposito, somAtivo, profile, contagemAtiva, balanco?.dupla_conferencia, bipar, resetScanCapture]);
+
+  const scheduleAutoScan = useCallback((codigo: string) => {
+    if (tab !== "scan" || !editavel) return;
+    if (scanIdleTimeoutRef.current) window.clearTimeout(scanIdleTimeoutRef.current);
+
+    const valor = codigo.trim();
+    if (!valor) return;
+
+    scanIdleTimeoutRef.current = window.setTimeout(() => {
+      const meta = scanCaptureRef.current;
+      const elapsed = meta.lastAt - meta.startedAt;
+      const avgInterval = meta.count > 1 ? elapsed / (meta.count - 1) : 999;
+      const scannerProvavel = meta.count >= 2 && avgInterval <= 60;
+
+      if (!scannerProvavel || autoSubmittingRef.current) return;
+
+      autoSubmittingRef.current = true;
+      void handleScan(valor, parseInt(scanQtd, 10) || 1).finally(() => {
+        autoSubmittingRef.current = false;
+      });
+    }, 90);
+  }, [tab, editavel, handleScan, scanQtd]);
 
   const handleSalvarItem = async (item: BalancoItem) => {
     const e = edits[item.id];
@@ -350,7 +405,10 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                   </div>
                 )}
                 <button
-                  onClick={() => setSomAtivo((s) => !s)}
+                  onClick={() => {
+                    primeBeep();
+                    setSomAtivo((s) => !s);
+                  }}
                   className="p-2 rounded-lg bg-surface hover:bg-surface-raised"
                   title={somAtivo ? "Desativar som" : "Ativar som"}
                 >
@@ -365,10 +423,37 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                 <input
                   ref={scanRef}
                   value={scanCodigo}
-                  onChange={(e) => setScanCodigo(e.target.value)}
+                  onFocus={primeBeep}
+                  onClick={primeBeep}
+                  onChange={(e) => {
+                    const valor = e.target.value;
+                    const agora = performance.now();
+                    const anterior = scanCodigo;
+
+                    if (!valor) {
+                      resetScanCapture();
+                      setScanCodigo("");
+                      return;
+                    }
+
+                    const acrescentou = valor.startsWith(anterior) && valor.length > anterior.length;
+                    if (!acrescentou || agora - scanCaptureRef.current.lastAt > 120) {
+                      scanCaptureRef.current = { startedAt: agora, lastAt: agora, count: valor.length };
+                    } else {
+                      scanCaptureRef.current = {
+                        startedAt: scanCaptureRef.current.startedAt || agora,
+                        lastAt: agora,
+                        count: scanCaptureRef.current.count + (valor.length - anterior.length),
+                      };
+                    }
+
+                    setScanCodigo(valor);
+                    scheduleAutoScan(valor);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
+                      primeBeep();
                       handleScan();
                     }
                   }}
@@ -397,7 +482,10 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                 inputMode="numeric"
                 title="Quantidade por leitura"
               />
-              <button onClick={() => handleScan()} className="btn-primary px-4 text-sm">
+              <button onClick={() => {
+                primeBeep();
+                handleScan();
+              }} className="btn-primary px-4 text-sm">
                 Bipar
               </button>
             </div>
