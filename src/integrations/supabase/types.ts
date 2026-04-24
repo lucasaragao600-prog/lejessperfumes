@@ -128,11 +128,14 @@ export type Database = {
           ajuste_aplicado: boolean
           balanco_id: string
           conferido_em: string | null
+          conferido_em_2: string | null
           conferido_por: string | null
+          conferido_por_2: string | null
           created_at: string
           custo_unitario: number
           deposito: string
           diferenca: number
+          divergencia_contadores: boolean
           estoque_sistema: number
           id: string
           impacto_financeiro: number
@@ -143,6 +146,7 @@ export type Database = {
           perfume_id: string
           perfume_nome: string
           quantidade_contada: number | null
+          quantidade_contada_2: number | null
           status: string
           updated_at: string
         }
@@ -150,11 +154,14 @@ export type Database = {
           ajuste_aplicado?: boolean
           balanco_id: string
           conferido_em?: string | null
+          conferido_em_2?: string | null
           conferido_por?: string | null
+          conferido_por_2?: string | null
           created_at?: string
           custo_unitario?: number
           deposito: string
           diferenca?: number
+          divergencia_contadores?: boolean
           estoque_sistema?: number
           id?: string
           impacto_financeiro?: number
@@ -165,6 +172,7 @@ export type Database = {
           perfume_id: string
           perfume_nome?: string
           quantidade_contada?: number | null
+          quantidade_contada_2?: number | null
           status?: string
           updated_at?: string
         }
@@ -172,11 +180,14 @@ export type Database = {
           ajuste_aplicado?: boolean
           balanco_id?: string
           conferido_em?: string | null
+          conferido_em_2?: string | null
           conferido_por?: string | null
+          conferido_por_2?: string | null
           created_at?: string
           custo_unitario?: number
           deposito?: string
           diferenca?: number
+          divergencia_contadores?: boolean
           estoque_sistema?: number
           id?: string
           impacto_financeiro?: number
@@ -187,6 +198,7 @@ export type Database = {
           perfume_id?: string
           perfume_nome?: string
           quantidade_contada?: number | null
+          quantidade_contada_2?: number | null
           status?: string
           updated_at?: string
         }
@@ -207,6 +219,45 @@ export type Database = {
           },
         ]
       }
+      balanco_leituras: {
+        Row: {
+          balanco_id: string
+          codigo_lido: string
+          contagem: number
+          criado_em: string
+          encontrado: boolean
+          id: string
+          origem: string
+          perfume_id: string | null
+          quantidade: number
+          usuario: string
+        }
+        Insert: {
+          balanco_id: string
+          codigo_lido: string
+          contagem?: number
+          criado_em?: string
+          encontrado?: boolean
+          id?: string
+          origem?: string
+          perfume_id?: string | null
+          quantidade?: number
+          usuario?: string
+        }
+        Update: {
+          balanco_id?: string
+          codigo_lido?: string
+          contagem?: number
+          criado_em?: string
+          encontrado?: boolean
+          id?: string
+          origem?: string
+          perfume_id?: string | null
+          quantidade?: number
+          usuario?: string
+        }
+        Relationships: []
+      }
       balancos: {
         Row: {
           ajustado_em: string | null
@@ -216,15 +267,18 @@ export type Database = {
           concluido_em: string | null
           created_at: string
           depositos: string[]
+          dupla_conferencia: boolean
           filtros: Json
           id: string
           iniciado_em: string
+          modo_contagem: string
           motivo_cancelamento: string | null
           nome: string
           observacoes: string
           responsavel: string
           responsavel_id: string | null
           status: string
+          tipo_contagem: string
           total_conferidos: number
           total_divergencias: number
           total_faltas: number
@@ -241,15 +295,18 @@ export type Database = {
           concluido_em?: string | null
           created_at?: string
           depositos?: string[]
+          dupla_conferencia?: boolean
           filtros?: Json
           id?: string
           iniciado_em?: string
+          modo_contagem?: string
           motivo_cancelamento?: string | null
           nome: string
           observacoes?: string
           responsavel?: string
           responsavel_id?: string | null
           status?: string
+          tipo_contagem?: string
           total_conferidos?: number
           total_divergencias?: number
           total_faltas?: number
@@ -266,15 +323,18 @@ export type Database = {
           concluido_em?: string | null
           created_at?: string
           depositos?: string[]
+          dupla_conferencia?: boolean
           filtros?: Json
           id?: string
           iniciado_em?: string
+          modo_contagem?: string
           motivo_cancelamento?: string | null
           nome?: string
           observacoes?: string
           responsavel?: string
           responsavel_id?: string | null
           status?: string
+          tipo_contagem?: string
           total_conferidos?: number
           total_divergencias?: number
           total_faltas?: number
@@ -894,6 +954,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      produto_gtins: {
+        Row: {
+          criado_em: string
+          criado_por: string
+          gtin: string
+          id: string
+          principal: boolean
+          produto_id: string
+        }
+        Insert: {
+          criado_em?: string
+          criado_por?: string
+          gtin: string
+          id?: string
+          principal?: boolean
+          produto_id: string
+        }
+        Update: {
+          criado_em?: string
+          criado_por?: string
+          gtin?: string
+          id?: string
+          principal?: boolean
+          produto_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
