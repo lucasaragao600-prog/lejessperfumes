@@ -134,7 +134,7 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
 
   const handleScan = useCallback(async (codigoOpt?: string, qtdOpt?: number) => {
     const codigo = (codigoOpt ?? scanCodigo).trim();
-    const qtd = qtdOpt ?? parseInt(scanQtd, 10) || 1;
+    const qtd = qtdOpt ?? (parseInt(scanQtd, 10) || 1);
     if (!codigo) return;
     setScanCodigo("");
     try {
