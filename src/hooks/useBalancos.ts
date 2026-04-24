@@ -476,6 +476,32 @@ export function useBalancos() {
 }
 
 export function useBalancoItens(balancoId: string | null) {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    if (!balancoId) return;
+    const channel = supabase
+      .channel(`balanco-itens-${balancoId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "balanco_itens", filter: `balanco_id=eq.${balancoId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["balanco-itens", balancoId] });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "balancos", filter: `id=eq.${balancoId}` },
+        () => {
+          qc.invalidateQueries({ queryKey: ["balancos"] });
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [balancoId, qc]);
+
   return useQuery({
     queryKey: ["balanco-itens", balancoId],
     enabled: !!balancoId,
