@@ -10,14 +10,14 @@ export interface ProdutoGtin {
   criado_em: string;
 }
 
-/** Resolve um código (GTIN ou SKU) → produto_id. Retorna { perfumeId, origem } */
+/** Resolve um código (GTIN, SKU ou código de barras legado) → produto_id. */
 export async function resolverCodigoProduto(codigo: string): Promise<
   { perfumeId: string; origem: "gtin" | "sku" } | null
 > {
   const c = codigo.trim();
   if (!c) return null;
 
-  // 1) GTIN
+  // 1) Tabela nova de GTINs
   const { data: g } = await supabase
     .from("produto_gtins")
     .select("produto_id")
@@ -25,7 +25,15 @@ export async function resolverCodigoProduto(codigo: string): Promise<
     .maybeSingle();
   if (g?.produto_id) return { perfumeId: g.produto_id, origem: "gtin" };
 
-  // 2) SKU (campo "codigo" do perfume)
+  // 2) Campo legado codigo_barras na tabela perfumes
+  const { data: pb } = await supabase
+    .from("perfumes")
+    .select("id")
+    .eq("codigo_barras", c)
+    .maybeSingle();
+  if (pb?.id) return { perfumeId: pb.id, origem: "gtin" };
+
+  // 3) SKU interno (campo "codigo" do perfume)
   const { data: p } = await supabase
     .from("perfumes")
     .select("id")
