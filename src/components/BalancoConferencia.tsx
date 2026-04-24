@@ -7,6 +7,7 @@ import { useBalancos, useBalancoItens, type BalancoItem } from "@/hooks/useBalan
 import { useAuth } from "@/context/AuthContext";
 import { usePerfumes } from "@/hooks/usePerfumes";
 import { useProdutoGtins } from "@/hooks/useProdutoGtins";
+import { useBalancoLeituras } from "@/hooks/useBalancoLeituras";
 import { toast } from "sonner";
 
 const STATUS_LABEL: Record<string, string> = {
