@@ -405,7 +405,10 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                   </div>
                 )}
                 <button
-                  onClick={() => setSomAtivo((s) => !s)}
+                  onClick={() => {
+                    primeBeep();
+                    setSomAtivo((s) => !s);
+                  }}
                   className="p-2 rounded-lg bg-surface hover:bg-surface-raised"
                   title={somAtivo ? "Desativar som" : "Ativar som"}
                 >
@@ -420,10 +423,37 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                 <input
                   ref={scanRef}
                   value={scanCodigo}
-                  onChange={(e) => setScanCodigo(e.target.value)}
+                  onFocus={primeBeep}
+                  onClick={primeBeep}
+                  onChange={(e) => {
+                    const valor = e.target.value;
+                    const agora = performance.now();
+                    const anterior = scanCodigo;
+
+                    if (!valor) {
+                      resetScanCapture();
+                      setScanCodigo("");
+                      return;
+                    }
+
+                    const acrescentou = valor.startsWith(anterior) && valor.length > anterior.length;
+                    if (!acrescentou || agora - scanCaptureRef.current.lastAt > 120) {
+                      scanCaptureRef.current = { startedAt: agora, lastAt: agora, count: valor.length };
+                    } else {
+                      scanCaptureRef.current = {
+                        startedAt: scanCaptureRef.current.startedAt || agora,
+                        lastAt: agora,
+                        count: scanCaptureRef.current.count + (valor.length - anterior.length),
+                      };
+                    }
+
+                    setScanCodigo(valor);
+                    scheduleAutoScan(valor);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
+                      primeBeep();
                       handleScan();
                     }
                   }}
@@ -452,7 +482,10 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                 inputMode="numeric"
                 title="Quantidade por leitura"
               />
-              <button onClick={() => handleScan()} className="btn-primary px-4 text-sm">
+              <button onClick={() => {
+                primeBeep();
+                handleScan();
+              }} className="btn-primary px-4 text-sm">
                 Bipar
               </button>
             </div>
