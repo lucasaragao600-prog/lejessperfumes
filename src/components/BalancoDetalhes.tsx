@@ -196,6 +196,31 @@ export default function BalancoDetalhes({ balancoId, onBack }: Props) {
           {log.length === 0 && <p className="text-xs text-muted-foreground">Sem registros</p>}
         </div>
       </div>
+
+      {leituras.length > 0 && (
+        <div className="card-premium p-5">
+          <h3 className="font-display text-lg mb-3 flex items-center gap-2">
+            <ScanBarcode size={18} /> Leituras de código de barras ({leituras.length})
+          </h3>
+          <div className="space-y-1.5 max-h-96 overflow-y-auto text-xs">
+            {leituras.map((l) => (
+              <div key={l.id} className="flex items-center justify-between gap-2 bg-surface rounded-lg px-3 py-1.5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${l.encontrado ? "bg-success" : "bg-destructive"}`} />
+                  <span className="font-mono truncate">{l.codigo_lido}</span>
+                  <span className="text-[10px] uppercase text-muted-foreground bg-background px-1.5 py-0.5 rounded">{l.origem}</span>
+                  {l.contagem === 2 && (
+                    <span className="text-[10px] text-gold bg-gold/10 px-1.5 py-0.5 rounded">2ª</span>
+                  )}
+                </div>
+                <span className="text-muted-foreground flex-shrink-0">
+                  +{l.quantidade} · {l.usuario} · {new Date(l.criado_em).toLocaleTimeString("pt-BR")}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
