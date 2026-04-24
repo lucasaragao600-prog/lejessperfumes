@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
-import { ArrowLeft, Plus } from "lucide-react";
-import { useBalancos } from "@/hooks/useBalancos";
+import { ArrowLeft, Plus, ScanBarcode, Eye, EyeOff, Users } from "lucide-react";
+import { useBalancos, type TipoContagem, type ModoContagem } from "@/hooks/useBalancos";
 import { usePerfumes } from "@/hooks/usePerfumes";
 import { useAuth } from "@/context/AuthContext";
 import type { Deposito } from "@/data/mockData";
@@ -24,15 +24,13 @@ export default function BalancoNovo({ onBack, onCreated }: Props) {
   const [marca, setMarca] = useState("");
   const [tipo, setTipo] = useState("");
   const [comEstoque, setComEstoque] = useState(false);
+  const [tipoContagem, setTipoContagem] = useState<TipoContagem>("normal");
+  const [modoContagem, setModoContagem] = useState<ModoContagem>("codigo_barras");
+  const [duplaConferencia, setDuplaConferencia] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const marcas = useMemo(() => {
-    return Array.from(new Set(perfumes.map((p) => p.marca))).sort();
-  }, [perfumes]);
-
-  const tipos = useMemo(() => {
-    return Array.from(new Set(perfumes.map((p) => p.tipo))).sort();
-  }, [perfumes]);
+  const marcas = useMemo(() => Array.from(new Set(perfumes.map((p) => p.marca))).sort(), [perfumes]);
+  const tipos = useMemo(() => Array.from(new Set(perfumes.map((p) => p.tipo))).sort(), [perfumes]);
 
   const previewCount = useMemo(() => {
     let lista = perfumes;
@@ -49,21 +47,12 @@ export default function BalancoNovo({ onBack, onCreated }: Props) {
     return count;
   }, [perfumes, marca, tipo, depositos, comEstoque]);
 
-  const toggleDeposito = (d: Deposito) => {
-    setDepositos((prev) =>
-      prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]
-    );
-  };
+  const toggleDeposito = (d: Deposito) =>
+    setDepositos((prev) => (prev.includes(d) ? prev.filter((x) => x !== d) : [...prev, d]));
 
   const handleCriar = async () => {
-    if (!nome.trim()) {
-      toast.error("Nome obrigatório");
-      return;
-    }
-    if (depositos.length === 0) {
-      toast.error("Selecione pelo menos um depósito");
-      return;
-    }
+    if (!nome.trim()) return toast.error("Nome obrigatório");
+    if (depositos.length === 0) return toast.error("Selecione pelo menos um depósito");
     setLoading(true);
     try {
       const bal = await criarBalanco({
@@ -71,6 +60,9 @@ export default function BalancoNovo({ onBack, onCreated }: Props) {
         depositos,
         responsavel: profile?.nome || "—",
         observacoes,
+        tipo_contagem: tipoContagem,
+        modo_contagem: modoContagem,
+        dupla_conferencia: duplaConferencia,
         filtros: {
           marca: marca || undefined,
           tipo: tipo || undefined,
@@ -123,6 +115,95 @@ export default function BalancoNovo({ onBack, onCreated }: Props) {
             ))}
           </div>
         </div>
+
+        {/* Modo de contagem */}
+        <div>
+          <label className="text-xs text-muted-foreground mb-1.5 block">Modo de contagem</label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setModoContagem("codigo_barras")}
+              className={`p-3 rounded-xl border text-left transition-colors ${
+                modoContagem === "codigo_barras"
+                  ? "border-gold bg-gold/10"
+                  : "border-border bg-surface hover:bg-surface-raised"
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <ScanBarcode size={16} className="text-gold" />
+                <span className="text-sm font-semibold">Código de barras</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">Bipa e soma +1 automaticamente</p>
+            </button>
+            <button
+              onClick={() => setModoContagem("manual")}
+              className={`p-3 rounded-xl border text-left transition-colors ${
+                modoContagem === "manual"
+                  ? "border-gold bg-gold/10"
+                  : "border-border bg-surface hover:bg-surface-raised"
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Plus size={16} className="text-gold" />
+                <span className="text-sm font-semibold">Manual</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">Digita quantidade item a item</p>
+            </button>
+          </div>
+        </div>
+
+        {/* Tipo de contagem */}
+        <div>
+          <label className="text-xs text-muted-foreground mb-1.5 block">Tipo de contagem</label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => setTipoContagem("normal")}
+              className={`p-3 rounded-xl border text-left transition-colors ${
+                tipoContagem === "normal"
+                  ? "border-gold bg-gold/10"
+                  : "border-border bg-surface hover:bg-surface-raised"
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Eye size={16} className="text-gold" />
+                <span className="text-sm font-semibold">Normal</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">Mostra o estoque do sistema</p>
+            </button>
+            <button
+              onClick={() => setTipoContagem("cega")}
+              className={`p-3 rounded-xl border text-left transition-colors ${
+                tipoContagem === "cega"
+                  ? "border-gold bg-gold/10"
+                  : "border-border bg-surface hover:bg-surface-raised"
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <EyeOff size={16} className="text-gold" />
+                <span className="text-sm font-semibold">Cega</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground">Esconde o estoque atual</p>
+            </button>
+          </div>
+        </div>
+
+        {/* Dupla conferência */}
+        <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border border-border bg-surface hover:bg-surface-raised transition-colors">
+          <input
+            type="checkbox"
+            checked={duplaConferencia}
+            onChange={(e) => setDuplaConferencia(e.target.checked)}
+            className="w-4 h-4 accent-gold mt-0.5"
+          />
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <Users size={14} className="text-gold" />
+              <span className="text-sm font-semibold">Dupla conferência</span>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Um segundo usuário fará a recontagem para validar divergências
+            </p>
+          </div>
+        </label>
 
         <div className="grid grid-cols-2 gap-3">
           <div>

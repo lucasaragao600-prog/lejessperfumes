@@ -1,5 +1,6 @@
-import { ArrowLeft, FileSpreadsheet, FileText, Clock } from "lucide-react";
+import { ArrowLeft, FileSpreadsheet, FileText, Clock, ScanBarcode } from "lucide-react";
 import { useBalancos, useBalancoItens, useBalancoAuditoria } from "@/hooks/useBalancos";
+import { useBalancoLeituras } from "@/hooks/useBalancoLeituras";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
@@ -23,6 +24,7 @@ export default function BalancoDetalhes({ balancoId, onBack }: Props) {
   const { balancos } = useBalancos();
   const { data: itens = [] } = useBalancoItens(balancoId);
   const { data: log = [] } = useBalancoAuditoria(balancoId);
+  const { data: leituras = [] } = useBalancoLeituras(balancoId);
   const balanco = balancos.find((b) => b.id === balancoId);
 
   if (!balanco) return null;
@@ -34,7 +36,9 @@ export default function BalancoDetalhes({ balancoId, onBack }: Props) {
       Marca: i.marca,
       Depósito: i.deposito,
       Sistema: i.estoque_sistema,
-      Contado: i.quantidade_contada ?? "",
+      "Contagem 1": i.quantidade_contada ?? "",
+      "Contagem 2": i.quantidade_contada_2 ?? "",
+      "Diverg. Contadores": i.divergencia_contadores ? "Sim" : "Não",
       Diferença: i.diferenca,
       Status: i.status,
       "Custo Un.": Number(i.custo_unitario).toFixed(2),
@@ -45,6 +49,20 @@ export default function BalancoDetalhes({ balancoId, onBack }: Props) {
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Balanço");
+    if (leituras.length) {
+      const wsL = XLSX.utils.json_to_sheet(
+        leituras.map((l) => ({
+          Data: new Date(l.criado_em).toLocaleString("pt-BR"),
+          Código: l.codigo_lido,
+          Origem: l.origem,
+          Encontrado: l.encontrado ? "Sim" : "Não",
+          Quantidade: l.quantidade,
+          Contagem: l.contagem,
+          Usuário: l.usuario,
+        })),
+      );
+      XLSX.utils.book_append_sheet(wb, wsL, "Leituras");
+    }
     XLSX.writeFile(wb, `${balanco.nome.replace(/[^a-z0-9]/gi, "_")}.xlsx`);
   };
 
@@ -178,6 +196,31 @@ export default function BalancoDetalhes({ balancoId, onBack }: Props) {
           {log.length === 0 && <p className="text-xs text-muted-foreground">Sem registros</p>}
         </div>
       </div>
+
+      {leituras.length > 0 && (
+        <div className="card-premium p-5">
+          <h3 className="font-display text-lg mb-3 flex items-center gap-2">
+            <ScanBarcode size={18} /> Leituras de código de barras ({leituras.length})
+          </h3>
+          <div className="space-y-1.5 max-h-96 overflow-y-auto text-xs">
+            {leituras.map((l) => (
+              <div key={l.id} className="flex items-center justify-between gap-2 bg-surface rounded-lg px-3 py-1.5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${l.encontrado ? "bg-success" : "bg-destructive"}`} />
+                  <span className="font-mono truncate">{l.codigo_lido}</span>
+                  <span className="text-[10px] uppercase text-muted-foreground bg-background px-1.5 py-0.5 rounded">{l.origem}</span>
+                  {l.contagem === 2 && (
+                    <span className="text-[10px] text-gold bg-gold/10 px-1.5 py-0.5 rounded">2ª</span>
+                  )}
+                </div>
+                <span className="text-muted-foreground flex-shrink-0">
+                  +{l.quantidade} · {l.usuario} · {new Date(l.criado_em).toLocaleTimeString("pt-BR")}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
