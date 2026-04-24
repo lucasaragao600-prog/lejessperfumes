@@ -95,6 +95,7 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
   const [naoEncontrado, setNaoEncontrado] = useState<{ codigo: string } | null>(null);
   const scanRef = useRef<HTMLInputElement>(null);
   const buscaRef = useRef<HTMLInputElement>(null);
+  const scanCodigoRef = useRef("");
   const scanIdleTimeoutRef = useRef<number | null>(null);
   const scanCaptureRef = useRef({ startedAt: 0, lastAt: 0, count: 0 });
   const autoSubmittingRef = useRef(false);
@@ -167,11 +168,14 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
   const progresso = itens.length ? Math.round((totalConferidos / itens.length) * 100) : 0;
 
   const handleScan = useCallback(async (codigoOpt?: string, qtdOpt?: number) => {
-    const codigo = (codigoOpt ?? scanCodigo).trim();
+    const codigoAtual = codigoOpt ?? scanCodigoRef.current ?? scanRef.current?.value ?? scanCodigo;
+    const codigo = codigoAtual.trim();
     const qtd = qtdOpt ?? (parseInt(scanQtd, 10) || 1);
     if (!codigo) return;
+    scanCodigoRef.current = "";
     setScanCodigo("");
     try {
+      console.log("[balanco-scan] processando", { codigo, qtd, via: codigoOpt ? "direto" : "estado" });
       const dep = filtroDeposito !== "Todos" ? filtroDeposito : undefined;
       const r = await bipar({
         balancoId,
@@ -432,6 +436,7 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
 
                     if (!valor) {
                       resetScanCapture();
+                      scanCodigoRef.current = "";
                       setScanCodigo("");
                       return;
                     }
@@ -447,6 +452,7 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                       };
                     }
 
+                    scanCodigoRef.current = valor;
                     setScanCodigo(valor);
                     scheduleAutoScan(valor);
                   }}
@@ -454,7 +460,9 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                     if (e.key === "Enter") {
                       e.preventDefault();
                       primeBeep();
-                      handleScan();
+                      const valorAtual = e.currentTarget.value;
+                      scanCodigoRef.current = valorAtual;
+                      handleScan(valorAtual);
                     }
                   }}
                   placeholder="Bipe ou digite o código (GTIN/SKU)"
@@ -484,7 +492,9 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
               />
               <button onClick={() => {
                 primeBeep();
-                handleScan();
+                const valorAtual = scanRef.current?.value ?? scanCodigoRef.current ?? scanCodigo;
+                scanCodigoRef.current = valorAtual;
+                handleScan(valorAtual);
               }} className="btn-primary px-4 text-sm">
                 Bipar
               </button>
