@@ -926,3 +926,60 @@ function Field({ label, value, color }: { label: string; value: any; color?: str
     </div>
   );
 }
+
+function LivePainel({
+  leituras,
+  itens,
+  meuUsuario,
+  minhaContagem,
+}: {
+  leituras: Array<{ contagem: number; usuario: string; perfume_id: string | null; criado_em: string; codigo_lido: string; encontrado: boolean }>;
+  itens: BalancoItem[];
+  meuUsuario: string;
+  minhaContagem: 1 | 2;
+}) {
+  const c1 = leituras.filter((l) => l.contagem === 1);
+  const c2 = leituras.filter((l) => l.contagem === 2);
+  const usuariosC1 = Array.from(new Set(c1.map((l) => l.usuario).filter(Boolean)));
+  const usuariosC2 = Array.from(new Set(c2.map((l) => l.usuario).filter(Boolean)));
+  const itensC1 = itens.filter((i) => i.quantidade_contada !== null).length;
+  const itensC2 = itens.filter((i) => i.quantidade_contada_2 !== null).length;
+
+  const Coluna = ({
+    titulo, leituras, usuarios, itensCount, ativo,
+  }: { titulo: string; leituras: typeof c1; usuarios: string[]; itensCount: number; ativo: boolean }) => (
+    <div className={`rounded-xl p-3 border ${ativo ? "border-gold/50 bg-gold/5" : "border-border bg-surface"}`}>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-xs font-semibold">{titulo} {ativo && <span className="text-[9px] text-gold">(você)</span>}</p>
+        <span className="text-[10px] text-muted-foreground">{leituras.length} bipes</span>
+      </div>
+      <p className="text-[10px] text-muted-foreground mb-1.5">
+        {usuarios.length ? usuarios.join(", ") : "—"}
+      </p>
+      <div className="flex items-baseline gap-1">
+        <span className="text-2xl font-display font-bold text-gold">{itensCount}</span>
+        <span className="text-[10px] text-muted-foreground">itens contados</span>
+      </div>
+      <div className="mt-2 space-y-0.5 max-h-24 overflow-y-auto">
+        {leituras.slice(0, 5).map((l, idx) => (
+          <div key={idx} className="text-[10px] flex items-center justify-between gap-2 text-muted-foreground">
+            <span className="truncate">{l.usuario || "—"}</span>
+            <span className="font-mono flex-shrink-0">{l.codigo_lido.slice(-6)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="card-premium p-3">
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">
+        Atividade ao vivo dos contadores
+      </p>
+      <div className="grid grid-cols-2 gap-2">
+        <Coluna titulo="1ª contagem" leituras={c1} usuarios={usuariosC1} itensCount={itensC1} ativo={minhaContagem === 1} />
+        <Coluna titulo="2ª contagem" leituras={c2} usuarios={usuariosC2} itensCount={itensC2} ativo={minhaContagem === 2} />
+      </div>
+    </div>
+  );
+}
