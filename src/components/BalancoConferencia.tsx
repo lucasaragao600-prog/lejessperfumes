@@ -246,6 +246,50 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
     }, 90);
   }, [tab, editavel, handleScan, scanQtd]);
 
+  // Captura bip do leitor mesmo quando a aba Lista/busca estiver focada.
+  useEffect(() => {
+    if (!isBarras || !editavel || naoEncontrado) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (document.activeElement === scanRef.current) return;
+
+      const agora = performance.now();
+      const meta = scanCaptureRef.current;
+      if (!meta.lastAt || agora - meta.lastAt > 120) {
+        scanCaptureRef.current = { startedAt: agora, lastAt: agora, count: 0 };
+        globalScanBufferRef.current = "";
+      }
+
+      if (e.key === "Enter") {
+        const codigo = globalScanBufferRef.current.trim();
+        const atual = scanCaptureRef.current;
+        const elapsed = atual.lastAt - atual.startedAt;
+        const avgInterval = atual.count > 1 ? elapsed / (atual.count - 1) : 999;
+        if (codigo.length >= 4 && atual.count >= 4 && avgInterval <= 70) {
+          e.preventDefault();
+          primeBeep();
+          void handleScan(codigo, parseInt(scanQtd, 10) || 1);
+        }
+        globalScanBufferRef.current = "";
+        return;
+      }
+
+      if (e.key.length !== 1) return;
+      globalScanBufferRef.current += e.key;
+      scanCaptureRef.current = {
+        startedAt: scanCaptureRef.current.startedAt || agora,
+        lastAt: agora,
+        count: scanCaptureRef.current.count + 1,
+      };
+      if (globalScanTimeoutRef.current) window.clearTimeout(globalScanTimeoutRef.current);
+      globalScanTimeoutRef.current = window.setTimeout(() => {
+        globalScanBufferRef.current = "";
+      }, 180);
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [editavel, handleScan, isBarras, naoEncontrado, scanQtd]);
+
   const handleSalvarItem = async (item: BalancoItem) => {
     const e = edits[item.id];
     if (!e || e.qtd === "") return;
