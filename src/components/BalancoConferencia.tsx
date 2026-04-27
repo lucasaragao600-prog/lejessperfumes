@@ -800,6 +800,7 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
 /* ----------- Linha de item ----------- */
 function ItemRow({
   item, isCega, editavel, edits, setEdits, onSalvar, onConferir, contagemAtiva, duplaConferencia,
+  concentracoesConfig, casaLabelMap,
 }: {
   item: BalancoItem;
   isCega: boolean;
@@ -810,6 +811,8 @@ function ItemRow({
   onConferir: (qtd: number) => void;
   contagemAtiva: 1 | 2;
   duplaConferencia: boolean;
+  concentracoesConfig: Record<string, string>;
+  casaLabelMap: Record<string, string>;
 }) {
   const atualQtd =
     duplaConferencia && contagemAtiva === 2 ? item.quantidade_contada_2 : item.quantidade_contada;
@@ -817,6 +820,10 @@ function ItemRow({
   const qtdNum = e.qtd === "" ? null : parseInt(e.qtd, 10);
   const diffPreview =
     !isCega && qtdNum !== null && !isNaN(qtdNum) ? qtdNum - item.estoque_sistema : null;
+  const casa = item.casa_sigla ? casaLabelMap[item.casa_sigla] || item.casa_sigla : "—";
+  const concentracao = item.concentracao ? concentracoesConfig[item.concentracao] || item.concentracao : "—";
+  const volume = item.volume ? `${item.volume}ml` : item.tamanho || "—";
+  const codigoBarras = item.codigo_barras?.trim();
 
   const adjust = (delta: number) => {
     const cur = parseInt(e.qtd || "0", 10) || 0;
@@ -826,16 +833,38 @@ function ItemRow({
 
   return (
     <div className="card-premium p-3">
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-foreground truncate">{item.perfume_nome}</p>
+      <div className="flex items-start gap-3 mb-3">
+        <div className="h-16 w-16 rounded-lg border border-border bg-surface overflow-hidden flex-shrink-0 flex items-center justify-center">
+          {item.image_url ? (
+            <img
+              src={item.image_url}
+              alt={`Foto ${item.perfume_nome}`}
+              loading="lazy"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <ImageOff size={18} className="text-muted-foreground" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <p className="text-sm font-semibold text-foreground truncate">{item.perfume_nome}</p>
+            <span className={`text-[10px] px-2 py-1 rounded-full font-semibold flex-shrink-0 ${STATUS_STYLE[item.status]}`}>
+              {STATUS_LABEL[item.status]}
+            </span>
+          </div>
           <p className="text-[11px] text-muted-foreground truncate">
             {item.perfume_codigo} · {item.marca} · {item.deposito}
           </p>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            <span className="rounded-full bg-surface px-2 py-1 text-[10px] text-muted-foreground">Concentração: {concentracao}</span>
+            <span className="rounded-full bg-surface px-2 py-1 text-[10px] text-muted-foreground">Casa: {casa}</span>
+            <span className="rounded-full bg-surface px-2 py-1 text-[10px] text-muted-foreground">Volume: {volume}</span>
+          </div>
+          {codigoBarras && (
+            <p className="mt-1.5 text-[10px] text-muted-foreground font-mono truncate">Barras: {codigoBarras}</p>
+          )}
         </div>
-        <span className={`text-[10px] px-2 py-1 rounded-full font-semibold flex-shrink-0 ${STATUS_STYLE[item.status]}`}>
-          {STATUS_LABEL[item.status]}
-        </span>
       </div>
 
       <div className={`grid ${isCega ? "grid-cols-2" : "grid-cols-3"} gap-2 mb-2`}>
