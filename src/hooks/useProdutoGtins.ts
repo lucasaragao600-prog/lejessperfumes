@@ -10,36 +10,60 @@ export interface ProdutoGtin {
   criado_em: string;
 }
 
+function variantesCodigo(codigo: string) {
+  const limpo = codigo.trim().replace(/[\r\n\t\u0000-\u001F\u007F]/g, "");
+  const semEspacos = limpo.replace(/\s+/g, "");
+  const alfanumerico = semEspacos.replace(/[^a-zA-Z0-9]/g, "");
+  const somenteDigitos = alfanumerico.replace(/\D/g, "");
+  return Array.from(
+    new Set([
+      limpo,
+      semEspacos,
+      alfanumerico,
+      somenteDigitos,
+      somenteDigitos.replace(/^0+/, ""),
+      somenteDigitos ? somenteDigitos.padStart(13, "0") : "",
+      somenteDigitos ? somenteDigitos.padStart(14, "0") : "",
+    ].filter(Boolean)),
+  );
+}
+
 /** Resolve um código (GTIN, SKU ou código de barras legado) → produto_id. */
 export async function resolverCodigoProduto(codigo: string): Promise<
   { perfumeId: string; origem: "gtin" | "sku" } | null
 > {
-  const c = codigo.trim();
-  if (!c) return null;
+  const variantes = variantesCodigo(codigo);
+  if (variantes.length === 0) return null;
 
   // 1) Tabela nova de GTINs
-  const { data: g } = await supabase
-    .from("produto_gtins")
-    .select("produto_id")
-    .eq("gtin", c)
-    .maybeSingle();
-  if (g?.produto_id) return { perfumeId: g.produto_id, origem: "gtin" };
+  for (const c of variantes) {
+    const { data: g } = await supabase
+      .from("produto_gtins")
+      .select("produto_id")
+      .eq("gtin", c)
+      .maybeSingle();
+    if (g?.produto_id) return { perfumeId: g.produto_id, origem: "gtin" };
+  }
 
   // 2) Campo legado codigo_barras na tabela perfumes
-  const { data: pb } = await supabase
-    .from("perfumes")
-    .select("id")
-    .eq("codigo_barras", c)
-    .maybeSingle();
-  if (pb?.id) return { perfumeId: pb.id, origem: "gtin" };
+  for (const c of variantes) {
+    const { data: pb } = await supabase
+      .from("perfumes")
+      .select("id")
+      .eq("codigo_barras", c)
+      .maybeSingle();
+    if (pb?.id) return { perfumeId: pb.id, origem: "gtin" };
+  }
 
   // 3) SKU interno (campo "codigo" do perfume)
-  const { data: p } = await supabase
-    .from("perfumes")
-    .select("id")
-    .eq("codigo", c)
-    .maybeSingle();
-  if (p?.id) return { perfumeId: p.id, origem: "sku" };
+  for (const c of variantes) {
+    const { data: p } = await supabase
+      .from("perfumes")
+      .select("id")
+      .eq("codigo", c)
+      .maybeSingle();
+    if (p?.id) return { perfumeId: p.id, origem: "sku" };
+  }
 
   return null;
 }

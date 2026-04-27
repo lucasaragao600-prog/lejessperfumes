@@ -1,13 +1,15 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   ArrowLeft, Search, ScanBarcode, Save, CheckCircle2, AlertTriangle,
-  Volume2, VolumeX, Plus, Minus, Layers, X, Link as LinkIcon, EyeOff
+  Volume2, VolumeX, Plus, Minus, Layers, X, Link as LinkIcon, EyeOff, ImageOff
 } from "lucide-react";
 import { useBalancos, useBalancoItens, type BalancoItem } from "@/hooks/useBalancos";
 import { useAuth } from "@/context/AuthContext";
 import { usePerfumes } from "@/hooks/usePerfumes";
 import { useProdutoGtins } from "@/hooks/useProdutoGtins";
 import { useBalancoLeituras } from "@/hooks/useBalancoLeituras";
+import { useConfiguracoes } from "@/hooks/useConfiguracoes";
+import { useCasas } from "@/hooks/useCasas";
 import { toast } from "sonner";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -71,6 +73,8 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
   const { balancos, atualizarItem, bipar, concluirBalanco, aplicarAjustes, recalcularTotais } = useBalancos();
   const { data: itens = [], isLoading } = useBalancoItens(balancoId);
   const { data: leituras = [] } = useBalancoLeituras(balancoId);
+  const { concentracoesConfig } = useConfiguracoes();
+  const { casas } = useCasas();
   const balanco = balancos.find((b) => b.id === balancoId);
 
   const isCega = balanco?.tipo_contagem === "cega";
@@ -96,10 +100,13 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
   const scanRef = useRef<HTMLInputElement>(null);
   const buscaRef = useRef<HTMLInputElement>(null);
   const scanCodigoRef = useRef("");
+  const globalScanBufferRef = useRef("");
+  const globalScanTimeoutRef = useRef<number | null>(null);
   const scanIdleTimeoutRef = useRef<number | null>(null);
   const scanCaptureRef = useRef({ startedAt: 0, lastAt: 0, count: 0 });
   const autoSubmittingRef = useRef(false);
   const [tab, setTab] = useState<"scan" | "lista">(isBarras ? "scan" : "lista");
+  const casaLabelMap = useMemo(() => Object.fromEntries(casas.map((c) => [c.sigla, c.nome])), [casas]);
 
   // Auto-focus contínuo no campo de scan
   useEffect(() => {
@@ -109,9 +116,14 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
 
   const resetScanCapture = useCallback(() => {
     scanCaptureRef.current = { startedAt: 0, lastAt: 0, count: 0 };
+    globalScanBufferRef.current = "";
     if (scanIdleTimeoutRef.current) {
       window.clearTimeout(scanIdleTimeoutRef.current);
       scanIdleTimeoutRef.current = null;
+    }
+    if (globalScanTimeoutRef.current) {
+      window.clearTimeout(globalScanTimeoutRef.current);
+      globalScanTimeoutRef.current = null;
     }
   }, []);
 
@@ -233,6 +245,50 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
       });
     }, 90);
   }, [tab, editavel, handleScan, scanQtd]);
+
+  // Captura bip do leitor mesmo quando a aba Lista/busca estiver focada.
+  useEffect(() => {
+    if (!isBarras || !editavel || naoEncontrado) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (document.activeElement === scanRef.current) return;
+
+      const agora = performance.now();
+      const meta = scanCaptureRef.current;
+      if (!meta.lastAt || agora - meta.lastAt > 120) {
+        scanCaptureRef.current = { startedAt: agora, lastAt: agora, count: 0 };
+        globalScanBufferRef.current = "";
+      }
+
+      if (e.key === "Enter") {
+        const codigo = globalScanBufferRef.current.trim();
+        const atual = scanCaptureRef.current;
+        const elapsed = atual.lastAt - atual.startedAt;
+        const avgInterval = atual.count > 1 ? elapsed / (atual.count - 1) : 999;
+        if (codigo.length >= 4 && atual.count >= 4 && avgInterval <= 70) {
+          e.preventDefault();
+          primeBeep();
+          void handleScan(codigo, parseInt(scanQtd, 10) || 1);
+        }
+        globalScanBufferRef.current = "";
+        return;
+      }
+
+      if (e.key.length !== 1) return;
+      globalScanBufferRef.current += e.key;
+      scanCaptureRef.current = {
+        startedAt: scanCaptureRef.current.startedAt || agora,
+        lastAt: agora,
+        count: scanCaptureRef.current.count + 1,
+      };
+      if (globalScanTimeoutRef.current) window.clearTimeout(globalScanTimeoutRef.current);
+      globalScanTimeoutRef.current = window.setTimeout(() => {
+        globalScanBufferRef.current = "";
+      }, 180);
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [editavel, handleScan, isBarras, naoEncontrado, scanQtd]);
 
   const handleSalvarItem = async (item: BalancoItem) => {
     const e = edits[item.id];
@@ -627,6 +683,8 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                 }
                 contagemAtiva={contagemAtiva}
                 duplaConferencia={!!balanco.dupla_conferencia}
+                concentracoesConfig={concentracoesConfig}
+                casaLabelMap={casaLabelMap}
               />
             ))}
           </div>
@@ -742,6 +800,7 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
 /* ----------- Linha de item ----------- */
 function ItemRow({
   item, isCega, editavel, edits, setEdits, onSalvar, onConferir, contagemAtiva, duplaConferencia,
+  concentracoesConfig, casaLabelMap,
 }: {
   item: BalancoItem;
   isCega: boolean;
@@ -752,6 +811,8 @@ function ItemRow({
   onConferir: (qtd: number) => void;
   contagemAtiva: 1 | 2;
   duplaConferencia: boolean;
+  concentracoesConfig: Record<string, string>;
+  casaLabelMap: Record<string, string>;
 }) {
   const atualQtd =
     duplaConferencia && contagemAtiva === 2 ? item.quantidade_contada_2 : item.quantidade_contada;
@@ -759,6 +820,10 @@ function ItemRow({
   const qtdNum = e.qtd === "" ? null : parseInt(e.qtd, 10);
   const diffPreview =
     !isCega && qtdNum !== null && !isNaN(qtdNum) ? qtdNum - item.estoque_sistema : null;
+  const casa = item.casa_sigla ? casaLabelMap[item.casa_sigla] || item.casa_sigla : "—";
+  const concentracao = item.concentracao ? concentracoesConfig[item.concentracao] || item.concentracao : "—";
+  const volume = item.volume ? `${item.volume}ml` : item.tamanho || "—";
+  const codigoBarras = item.codigo_barras?.trim();
 
   const adjust = (delta: number) => {
     const cur = parseInt(e.qtd || "0", 10) || 0;
@@ -768,16 +833,38 @@ function ItemRow({
 
   return (
     <div className="card-premium p-3">
-      <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-foreground truncate">{item.perfume_nome}</p>
+      <div className="flex items-start gap-3 mb-3">
+        <div className="h-16 w-16 rounded-lg border border-border bg-surface overflow-hidden flex-shrink-0 flex items-center justify-center">
+          {item.image_url ? (
+            <img
+              src={item.image_url}
+              alt={`Foto ${item.perfume_nome}`}
+              loading="lazy"
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <ImageOff size={18} className="text-muted-foreground" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <p className="text-sm font-semibold text-foreground truncate">{item.perfume_nome}</p>
+            <span className={`text-[10px] px-2 py-1 rounded-full font-semibold flex-shrink-0 ${STATUS_STYLE[item.status]}`}>
+              {STATUS_LABEL[item.status]}
+            </span>
+          </div>
           <p className="text-[11px] text-muted-foreground truncate">
             {item.perfume_codigo} · {item.marca} · {item.deposito}
           </p>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            <span className="rounded-full bg-surface px-2 py-1 text-[10px] text-muted-foreground">Concentração: {concentracao}</span>
+            <span className="rounded-full bg-surface px-2 py-1 text-[10px] text-muted-foreground">Casa: {casa}</span>
+            <span className="rounded-full bg-surface px-2 py-1 text-[10px] text-muted-foreground">Volume: {volume}</span>
+          </div>
+          {codigoBarras && (
+            <p className="mt-1.5 text-[10px] text-muted-foreground font-mono truncate">Barras: {codigoBarras}</p>
+          )}
         </div>
-        <span className={`text-[10px] px-2 py-1 rounded-full font-semibold flex-shrink-0 ${STATUS_STYLE[item.status]}`}>
-          {STATUS_LABEL[item.status]}
-        </span>
       </div>
 
       <div className={`grid ${isCega ? "grid-cols-2" : "grid-cols-3"} gap-2 mb-2`}>
