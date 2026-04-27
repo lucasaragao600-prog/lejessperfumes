@@ -1,13 +1,15 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import {
   ArrowLeft, Search, ScanBarcode, Save, CheckCircle2, AlertTriangle,
-  Volume2, VolumeX, Plus, Minus, Layers, X, Link as LinkIcon, EyeOff
+  Volume2, VolumeX, Plus, Minus, Layers, X, Link as LinkIcon, EyeOff, ImageOff
 } from "lucide-react";
 import { useBalancos, useBalancoItens, type BalancoItem } from "@/hooks/useBalancos";
 import { useAuth } from "@/context/AuthContext";
 import { usePerfumes } from "@/hooks/usePerfumes";
 import { useProdutoGtins } from "@/hooks/useProdutoGtins";
 import { useBalancoLeituras } from "@/hooks/useBalancoLeituras";
+import { useConfiguracoes } from "@/hooks/useConfiguracoes";
+import { useCasas } from "@/hooks/useCasas";
 import { toast } from "sonner";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -71,6 +73,8 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
   const { balancos, atualizarItem, bipar, concluirBalanco, aplicarAjustes, recalcularTotais } = useBalancos();
   const { data: itens = [], isLoading } = useBalancoItens(balancoId);
   const { data: leituras = [] } = useBalancoLeituras(balancoId);
+  const { concentracoesConfig } = useConfiguracoes();
+  const { casas } = useCasas();
   const balanco = balancos.find((b) => b.id === balancoId);
 
   const isCega = balanco?.tipo_contagem === "cega";
@@ -100,6 +104,7 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
   const scanCaptureRef = useRef({ startedAt: 0, lastAt: 0, count: 0 });
   const autoSubmittingRef = useRef(false);
   const [tab, setTab] = useState<"scan" | "lista">(isBarras ? "scan" : "lista");
+  const casaLabelMap = useMemo(() => Object.fromEntries(casas.map((c) => [c.sigla, c.nome])), [casas]);
 
   // Auto-focus contínuo no campo de scan
   useEffect(() => {
