@@ -683,6 +683,8 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                 }
                 contagemAtiva={contagemAtiva}
                 duplaConferencia={!!balanco.dupla_conferencia}
+                concentracoesConfig={concentracoesConfig}
+                casaLabelMap={casaLabelMap}
               />
             ))}
           </div>
