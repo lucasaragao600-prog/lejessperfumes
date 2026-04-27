@@ -100,6 +100,8 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
   const scanRef = useRef<HTMLInputElement>(null);
   const buscaRef = useRef<HTMLInputElement>(null);
   const scanCodigoRef = useRef("");
+  const globalScanBufferRef = useRef("");
+  const globalScanTimeoutRef = useRef<number | null>(null);
   const scanIdleTimeoutRef = useRef<number | null>(null);
   const scanCaptureRef = useRef({ startedAt: 0, lastAt: 0, count: 0 });
   const autoSubmittingRef = useRef(false);
@@ -114,9 +116,14 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
 
   const resetScanCapture = useCallback(() => {
     scanCaptureRef.current = { startedAt: 0, lastAt: 0, count: 0 };
+    globalScanBufferRef.current = "";
     if (scanIdleTimeoutRef.current) {
       window.clearTimeout(scanIdleTimeoutRef.current);
       scanIdleTimeoutRef.current = null;
+    }
+    if (globalScanTimeoutRef.current) {
+      window.clearTimeout(globalScanTimeoutRef.current);
+      globalScanTimeoutRef.current = null;
     }
   }, []);
 
