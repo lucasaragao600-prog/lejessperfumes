@@ -46,6 +46,12 @@ export interface BalancoItem {
   perfume_codigo: string;
   perfume_nome: string;
   marca: string;
+  casa_sigla?: string | null;
+  concentracao?: string | null;
+  volume?: number | null;
+  tamanho?: string | null;
+  codigo_barras?: string | null;
+  image_url?: string | null;
   deposito: string;
   estoque_sistema: number;
   quantidade_contada: number | null;
@@ -508,11 +514,23 @@ export function useBalancoItens(balancoId: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("balanco_itens")
-        .select("*")
+        .select("*, perfumes(image_url, casa_sigla, concentracao, volume, tamanho, codigo_barras)")
         .eq("balanco_id", balancoId!)
         .order("perfume_nome");
       if (error) throw error;
-      return (data || []) as BalancoItem[];
+      return (data || []).map((row: any) => {
+        const perfume = row.perfumes || {};
+        const { perfumes, ...item } = row;
+        return {
+          ...item,
+          image_url: perfume.image_url || null,
+          casa_sigla: perfume.casa_sigla || null,
+          concentracao: perfume.concentracao || null,
+          volume: perfume.volume ?? null,
+          tamanho: perfume.tamanho || null,
+          codigo_barras: perfume.codigo_barras || null,
+        } as BalancoItem;
+      });
     },
   });
 }
