@@ -360,10 +360,10 @@ export default function NotasFiscais() {
             <div className="flex gap-3 pt-1">
               <button onClick={() => setShowManual(false)} className="btn-secondary flex-1 py-2.5">Cancelar</button>
               <button onClick={handleManualCreate}
-                disabled={!manualForm.fornecedor || !manualForm.perfumeId || manualForm.quantidade < 1}
+                disabled={salvandoManual || !manualForm.fornecedor || !manualForm.perfumeId || manualForm.quantidade < 1}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
                 style={{ background: "var(--gradient-gold)" }}>
-                <Check size={14} className="inline mr-1" /> Dar Entrada
+                <Check size={14} className="inline mr-1" /> {salvandoManual ? "Salvando..." : "Dar Entrada"}
               </button>
             </div>
           </div>
@@ -494,10 +494,10 @@ export default function NotasFiscais() {
                 Cancelar Nota
               </button>
               <button onClick={handleConciliar}
-                disabled={notaSelecionada.itens.filter((i) => i.perfumeId).length === 0}
+                disabled={conciliando || notaSelecionada.itens.filter((i) => i.perfumeId).length === 0}
                 className="flex-1 py-3 rounded-xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
                 style={{ background: "var(--gradient-gold)" }}>
-                <Check size={16} className="inline mr-1" /> Conciliar e dar entrada
+                <Check size={16} className="inline mr-1" /> {conciliando ? "Processando..." : "Conciliar e dar entrada"}
               </button>
             </div>
           </div>
