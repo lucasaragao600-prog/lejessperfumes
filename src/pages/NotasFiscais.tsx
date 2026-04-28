@@ -371,115 +371,168 @@ export default function NotasFiscais() {
       )}
 
       {/* Nota detail / conferência */}
-      {notaSelecionada && (
+      {notaSelecionada && (() => {
+        const readOnly = notaSelecionada.status !== "pendente";
+        return (
         <div className="fixed inset-0 z-[70] flex flex-col bg-background">
           <div className="flex items-center justify-between px-4 pt-12 pb-3 border-b border-border">
             <div>
-              <h2 className="font-display text-xl text-gold">Conferência NF #{notaSelecionada.numero}</h2>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{notaSelecionada.fornecedor} · {notaSelecionada.cnpj}</p>
+              <h2 className="font-display text-xl text-gold">
+                {readOnly ? "Visualizar" : "Conferência"} NF #{notaSelecionada.numero}
+              </h2>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {notaSelecionada.fornecedor} · {notaSelecionada.cnpj}
+                {readOnly && notaSelecionada.conciliadaEm && ` · Conciliada em ${formatDate(notaSelecionada.conciliadaEm.split("T")[0])} por ${notaSelecionada.conciliadaPor || "-"}`}
+              </p>
             </div>
             <button onClick={() => { setNotaSelecionada(null); setEditableQtds({}); }} className="p-2 rounded-full bg-surface border border-border text-muted-foreground">
               <X size={16} />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 pt-4 pb-32 space-y-4">
+          <div className={`flex-1 overflow-y-auto px-4 pt-4 ${readOnly ? "pb-12" : "pb-32"} space-y-4`}>
             {/* Depósito destino */}
-            <div>
-              <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Depósito de Destino</label>
-              <select value={depositoDestino} onChange={(e) => setDepositoDestino(e.target.value)}
-                className="input-premium px-3 py-2.5 text-sm">
-                <option value="Casa">Casa</option>
-                <option value="Sumaúma">Sumaúma</option>
-                <option value="Amazonas">Amazonas</option>
-              </select>
-            </div>
+            {!readOnly && (
+              <div>
+                <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Depósito de Destino</label>
+                <select value={depositoDestino} onChange={(e) => setDepositoDestino(e.target.value)}
+                  className="input-premium px-3 py-2.5 text-sm">
+                  <option value="Casa">Casa</option>
+                  <option value="Sumaúma">Sumaúma</option>
+                  <option value="Amazonas">Amazonas</option>
+                </select>
+              </div>
+            )}
 
-            {/* Itens */}
+            {/* Itens — duas colunas: NF | Correspondência */}
             <div className="space-y-3">
               {notaSelecionada.itens.map((item) => {
                 const perfCorr = item.perfumeId ? perfumes.find((p) => p.id === item.perfumeId) : null;
                 const editQty = getEditableQty(item.id, item.quantidade);
                 const isEdited = editableQtds[item.id] !== undefined && editableQtds[item.id] !== item.quantidade;
+                const estoqueTotal = perfCorr ? Object.values(perfCorr.estoques).reduce((a, b) => a + b, 0) : 0;
 
                 return (
                   <div key={item.id} className="card-premium p-4">
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-foreground">{item.descricaoXml}</p>
-                        {item.codigoXml && <p className="text-[10px] text-muted-foreground mt-0.5">Cód: {item.codigoXml}</p>}
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-[10px] text-muted-foreground">Custo real</p>
-                        <p className="text-xs font-semibold text-gold">{formatCurrency(item.valorUnitario)}/un</p>
-                      </div>
-                    </div>
+                    <div className="grid md:grid-cols-[1fr_auto_1fr] grid-cols-1 gap-4 items-stretch">
+                      {/* COLUNA ESQUERDA — Item da Nota */}
+                      <div className="rounded-lg bg-surface-overlay border border-border p-3 flex flex-col">
+                        <p className="text-[9px] uppercase tracking-wider text-muted-foreground mb-2">Produto da Nota</p>
+                        <div className="flex-1">
+                          <p className="text-xs font-semibold text-foreground leading-snug">{item.descricaoXml}</p>
+                          {item.codigoXml && <p className="text-[10px] text-muted-foreground mt-1">Cód XML: {item.codigoXml}</p>}
+                          <div className="mt-2 flex items-center justify-between">
+                            <span className="text-[10px] text-muted-foreground">Qtd. NF</span>
+                            <span className="text-xs font-semibold text-foreground">{item.quantidade} un.</span>
+                          </div>
+                          <div className="mt-1 flex items-center justify-between">
+                            <span className="text-[10px] text-muted-foreground">Custo real</span>
+                            <span className="text-xs font-semibold text-gold">{formatCurrency(item.valorUnitario)}/un</span>
+                          </div>
+                        </div>
 
-                    {/* Discriminação fiscal */}
-                    {(item.valorIcmsUnit > 0 || item.valorIpiUnit > 0 || item.valorFreteUnit > 0 || item.valorSeguroUnit > 0 || item.valorOutrosUnit > 0 || item.valorDescontoUnit > 0) && (
-                      <div className="mb-3 px-3 py-2 rounded-lg bg-surface-overlay border border-border">
-                        <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1.5">Composição do custo (un.)</p>
-                        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
-                          <div className="flex justify-between"><span className="text-muted-foreground">Produto</span><span className="text-foreground">{formatCurrency(item.valorProdutoUnit)}</span></div>
-                          {item.valorIcmsUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">ICMS</span><span className="text-foreground">{formatCurrency(item.valorIcmsUnit)}</span></div>}
-                          {item.valorIpiUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">IPI</span><span className="text-foreground">{formatCurrency(item.valorIpiUnit)}</span></div>}
-                          {item.valorFreteUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Frete</span><span className="text-foreground">{formatCurrency(item.valorFreteUnit)}</span></div>}
-                          {item.valorSeguroUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Seguro</span><span className="text-foreground">{formatCurrency(item.valorSeguroUnit)}</span></div>}
-                          {item.valorOutrosUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Outros</span><span className="text-foreground">{formatCurrency(item.valorOutrosUnit)}</span></div>}
-                          {item.valorDescontoUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Desconto</span><span className="text-destructive">−{formatCurrency(item.valorDescontoUnit)}</span></div>}
+                        {/* Discriminação fiscal */}
+                        {(item.valorIcmsUnit > 0 || item.valorIpiUnit > 0 || item.valorFreteUnit > 0 || item.valorSeguroUnit > 0 || item.valorOutrosUnit > 0 || item.valorDescontoUnit > 0) && (
+                          <div className="mt-3 pt-2 border-t border-border">
+                            <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1.5">Composição (un.)</p>
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
+                              <div className="flex justify-between"><span className="text-muted-foreground">Produto</span><span className="text-foreground">{formatCurrency(item.valorProdutoUnit)}</span></div>
+                              {item.valorIcmsUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">ICMS</span><span className="text-foreground">{formatCurrency(item.valorIcmsUnit)}</span></div>}
+                              {item.valorIpiUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">IPI</span><span className="text-foreground">{formatCurrency(item.valorIpiUnit)}</span></div>}
+                              {item.valorFreteUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Frete</span><span className="text-foreground">{formatCurrency(item.valorFreteUnit)}</span></div>}
+                              {item.valorSeguroUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Seguro</span><span className="text-foreground">{formatCurrency(item.valorSeguroUnit)}</span></div>}
+                              {item.valorOutrosUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Outros</span><span className="text-foreground">{formatCurrency(item.valorOutrosUnit)}</span></div>}
+                              {item.valorDescontoUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Desconto</span><span className="text-destructive">−{formatCurrency(item.valorDescontoUnit)}</span></div>}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* SETA */}
+                      <div className="hidden md:flex flex-col items-center justify-center">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border ${perfCorr ? "bg-gold/15 border-gold-muted text-gold" : "bg-surface border-border text-muted-foreground"}`}>
+                          <ArrowRight size={18} />
                         </div>
                       </div>
-                    )}
-
-                    {/* Editable quantity */}
-                    <div className="mb-3 grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[10px] text-muted-foreground mb-1 block">Qtd. NF</label>
-                        <div className="input-premium px-3 py-2 text-xs text-muted-foreground bg-surface-overlay">
-                          {item.quantidade} un.
-                        </div>
+                      <div className="md:hidden flex justify-center text-muted-foreground">
+                        <ArrowRight size={16} className="rotate-90" />
                       </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground mb-1 block flex items-center gap-1">
-                          Qtd. Recebida <Pencil size={9} />
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          value={editQty}
-                          onChange={(e) => setEditableQtds({
-                            ...editableQtds,
-                            [item.id]: parseInt(e.target.value) || 0,
-                          })}
-                          className={`input-premium px-3 py-2 text-xs ${isEdited ? "border-gold-muted text-gold" : ""}`}
-                        />
-                      </div>
-                    </div>
 
-                    {isEdited && (
-                      <div className="mb-2 px-2.5 py-1.5 rounded-lg bg-gold/10 border border-gold-muted">
-                        <p className="text-[10px] text-gold">
-                          ⚠️ Quantidade ajustada: {item.quantidade} → {editQty}
+                      {/* COLUNA DIREITA — Card do Produto Correspondente */}
+                      <div className={`rounded-lg border p-3 flex flex-col ${perfCorr ? "bg-success/5 border-success/30" : "bg-surface-overlay border-border"}`}>
+                        <p className="text-[9px] uppercase tracking-wider text-muted-foreground mb-2">
+                          {perfCorr ? "Produto Correspondente" : "Selecione o produto"}
                         </p>
-                      </div>
-                    )}
 
-                    <div>
-                      <label className="text-[10px] text-muted-foreground mb-1 block">Produto correspondente</label>
-                      <PerfumeSearchSelect
-                        perfumes={perfumes}
-                        value={item.perfumeId || ""}
-                        onChange={(id) => handleCorrespondencia(item.id, id || null)}
-                        concentracoesConfig={concentracoesConfig}
-                      />
+                        {perfCorr ? (
+                          <div className="flex-1">
+                            <div className="flex gap-3">
+                              <div className="w-16 h-16 rounded-lg bg-surface border border-border overflow-hidden flex items-center justify-center flex-shrink-0">
+                                {perfCorr.imageUrl ? (
+                                  <img src={perfCorr.imageUrl} alt={perfCorr.nome} className="w-full h-full object-cover" />
+                                ) : (
+                                  <ImageIcon size={20} className="text-muted-foreground opacity-40" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-foreground leading-snug">{perfCorr.nome}</p>
+                                <p className="text-[10px] text-muted-foreground mt-0.5">Cód: {perfCorr.codigo}</p>
+                                {perfCorr.casa && <p className="text-[10px] text-muted-foreground">{perfCorr.casa}</p>}
+                              </div>
+                            </div>
+
+                            <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
+                              {perfCorr.concentracao && <div className="flex justify-between"><span className="text-muted-foreground">Concentração</span><span className="text-foreground">{perfCorr.concentracao}</span></div>}
+                              {perfCorr.volume && <div className="flex justify-between"><span className="text-muted-foreground">Volume</span><span className="text-foreground">{perfCorr.volume}ml</span></div>}
+                              <div className="flex justify-between"><span className="text-muted-foreground">Custo atual</span><span className="text-foreground">{formatCurrency(perfCorr.custo)}</span></div>
+                              <div className="flex justify-between"><span className="text-muted-foreground">Estoque</span><span className="text-foreground">{estoqueTotal} un.</span></div>
+                            </div>
+
+                            <div className="mt-2 flex items-center gap-1.5 px-2 py-1 rounded-md bg-success/10 border border-success/20">
+                              <Check size={11} className="text-success" />
+                              <span className="text-[10px] text-success font-medium">Vinculado</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex-1 flex items-center justify-center text-[11px] text-muted-foreground py-4">
+                            Nenhum produto vinculado
+                          </div>
+                        )}
+
+                        {/* Seleção / quantidades — só em modo edição */}
+                        {!readOnly && (
+                          <div className="mt-3 pt-3 border-t border-border space-y-2">
+                            <div>
+                              <label className="text-[10px] text-muted-foreground mb-1 block">Vincular produto</label>
+                              <PerfumeSearchSelect
+                                perfumes={perfumes}
+                                value={item.perfumeId || ""}
+                                onChange={(id) => handleCorrespondencia(item.id, id || null)}
+                                concentracoesConfig={concentracoesConfig}
+                              />
+                            </div>
+                            <div>
+                              <label className="text-[10px] text-muted-foreground mb-1 flex items-center gap-1">
+                                Qtd. Recebida <Pencil size={9} />
+                              </label>
+                              <input
+                                type="number"
+                                min={0}
+                                value={editQty}
+                                onChange={(e) => setEditableQtds({
+                                  ...editableQtds,
+                                  [item.id]: parseInt(e.target.value) || 0,
+                                })}
+                                className={`input-premium px-3 py-2 text-xs ${isEdited ? "border-gold-muted text-gold" : ""}`}
+                              />
+                              {isEdited && (
+                                <p className="text-[10px] text-gold mt-1">⚠️ Ajustada: {item.quantidade} → {editQty}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-
-                    {perfCorr && (
-                      <div className="mt-2 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-success/10 border border-success/20">
-                        <Check size={12} className="text-success" />
-                        <span className="text-[10px] text-success font-medium">{perfCorr.nome} · {formatCurrency(perfCorr.custo)} atual</span>
-                      </div>
-                    )}
                   </div>
                 );
               })}
@@ -487,22 +540,25 @@ export default function NotasFiscais() {
           </div>
 
           {/* Footer */}
-          <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-border bg-background">
-            <div className="flex gap-3">
-              <button onClick={() => { cancelarNota(notaSelecionada.id); setNotaSelecionada(null); setEditableQtds({}); }}
-                className="btn-secondary flex-1 py-3 text-destructive">
-                Cancelar Nota
-              </button>
-              <button onClick={handleConciliar}
-                disabled={conciliando || notaSelecionada.itens.filter((i) => i.perfumeId).length === 0}
-                className="flex-1 py-3 rounded-xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
-                style={{ background: "var(--gradient-gold)" }}>
-                <Check size={16} className="inline mr-1" /> {conciliando ? "Processando..." : "Conciliar e dar entrada"}
-              </button>
+          {!readOnly && (
+            <div className="fixed bottom-0 left-0 right-0 p-4 border-t border-border bg-background">
+              <div className="flex gap-3">
+                <button onClick={() => { cancelarNota(notaSelecionada.id); setNotaSelecionada(null); setEditableQtds({}); }}
+                  className="btn-secondary flex-1 py-3 text-destructive">
+                  Cancelar Nota
+                </button>
+                <button onClick={handleConciliar}
+                  disabled={conciliando || notaSelecionada.itens.filter((i) => i.perfumeId).length === 0}
+                  className="flex-1 py-3 rounded-xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
+                  style={{ background: "var(--gradient-gold)" }}>
+                  <Check size={16} className="inline mr-1" /> {conciliando ? "Processando..." : "Conciliar e dar entrada"}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
-      )}
+        );
+      })()}
 
       {/* Lista de notas */}
       <div className="px-4 pt-3 space-y-2.5">
