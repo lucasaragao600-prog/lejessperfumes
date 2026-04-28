@@ -16,6 +16,8 @@ export interface ProdutoCusto {
   valorSeguro: number;
   valorOutros: number;
   valorDesconto: number;
+  aliquotaIcms: number;
+  aliquotaIpi: number;
   observacao: string;
 }
 
@@ -47,6 +49,8 @@ export function useProdutoCustos(produtoId?: string) {
         valorSeguro: Number(r.valor_seguro ?? 0),
         valorOutros: Number(r.valor_outros ?? 0),
         valorDesconto: Number(r.valor_desconto ?? 0),
+        aliquotaIcms: Number(r.aliquota_icms ?? 0),
+        aliquotaIpi: Number(r.aliquota_ipi ?? 0),
         observacao: String(r.observacao ?? ""),
       }));
     },
@@ -66,6 +70,8 @@ export function useProdutoCustos(produtoId?: string) {
       valorSeguro?: number;
       valorOutros?: number;
       valorDesconto?: number;
+      aliquotaIcms?: number;
+      aliquotaIpi?: number;
       observacao?: string;
     }) => {
       const { error } = await supabase.from("produto_custos").insert({
@@ -81,6 +87,8 @@ export function useProdutoCustos(produtoId?: string) {
         valor_seguro: params.valorSeguro ?? 0,
         valor_outros: params.valorOutros ?? 0,
         valor_desconto: params.valorDesconto ?? 0,
+        aliquota_icms: params.aliquotaIcms ?? 0,
+        aliquota_ipi: params.aliquotaIpi ?? 0,
         observacao: params.observacao ?? "",
       });
       if (error) throw error;
@@ -106,6 +114,8 @@ export function useProdutoCustos(produtoId?: string) {
       valorSeguro?: number;
       valorOutros?: number;
       valorDesconto?: number;
+      aliquotaIcms?: number;
+      aliquotaIpi?: number;
       observacao?: string;
     }
   ) => {
@@ -138,6 +148,8 @@ export function useProdutoCustos(produtoId?: string) {
       valorSeguro: detalhes?.valorSeguro,
       valorOutros: detalhes?.valorOutros,
       valorDesconto: detalhes?.valorDesconto,
+      aliquotaIcms: detalhes?.aliquotaIcms,
+      aliquotaIpi: detalhes?.aliquotaIpi,
       observacao: detalhes?.observacao,
     });
 

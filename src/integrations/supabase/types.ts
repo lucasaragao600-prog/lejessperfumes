@@ -940,6 +940,8 @@ export type Database = {
       }
       produto_custos: {
         Row: {
+          aliquota_icms: number
+          aliquota_ipi: number
           created_at: string
           custo_unitario: number
           data: string
@@ -958,6 +960,8 @@ export type Database = {
           valor_seguro: number
         }
         Insert: {
+          aliquota_icms?: number
+          aliquota_ipi?: number
           created_at?: string
           custo_unitario?: number
           data?: string
@@ -976,6 +980,8 @@ export type Database = {
           valor_seguro?: number
         }
         Update: {
+          aliquota_icms?: number
+          aliquota_ipi?: number
           created_at?: string
           custo_unitario?: number
           data?: string

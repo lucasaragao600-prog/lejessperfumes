@@ -106,6 +106,8 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
             valorFrete: fiscalBreakdown ? fiscalBreakdown.freteUnit * qtd : 0,
             valorOutros: fiscalBreakdown ? fiscalBreakdown.outrosUnit * qtd : 0,
             valorDesconto: fiscalBreakdown ? fiscalBreakdown.descontoUnit * qtd : 0,
+            aliquotaIcms: fiscalBreakdown ? fiscalBreakdown.aliquotaIcms : 0,
+            aliquotaIpi: fiscalBreakdown ? fiscalBreakdown.aliquotaIpi : 0,
             observacao: fiscalBreakdown
               ? `Ajuste manual · ICMS ${fiscalBreakdown.aliquotaIcms}% · IPI ${fiscalBreakdown.aliquotaIpi}% · Frete ${formatCurrency(fiscalBreakdown.freteUnit)}/un`
               : "Ajuste manual de custo",
@@ -477,7 +479,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
                     const temDiscriminacao =
                       h.valorIcms > 0 || h.valorIpi > 0 || h.valorFrete > 0 ||
                       h.valorSeguro > 0 || h.valorOutros > 0 || h.valorDesconto > 0 ||
-                      h.valorProduto > 0 || !!h.observacao;
+                      h.valorProduto > 0 || h.aliquotaIcms > 0 || h.aliquotaIpi > 0 || !!h.observacao;
                     const expanded = expandedCustoId === h.id;
                     return (
                       <div key={h.id} className="card-premium p-3">
@@ -515,8 +517,8 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
                             )}
                             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
                               {h.valorProduto > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Produto</span><span className="text-foreground font-medium">{formatCurrency(h.valorProduto)}</span></div>}
-                              {h.valorIcms > 0 && <div className="flex justify-between"><span className="text-muted-foreground">ICMS</span><span className="text-foreground font-medium">{formatCurrency(h.valorIcms)}</span></div>}
-                              {h.valorIpi > 0 && <div className="flex justify-between"><span className="text-muted-foreground">IPI</span><span className="text-foreground font-medium">{formatCurrency(h.valorIpi)}</span></div>}
+                              {(h.valorIcms > 0 || h.aliquotaIcms > 0) && <div className="flex justify-between"><span className="text-muted-foreground">ICMS{h.aliquotaIcms > 0 ? ` (${h.aliquotaIcms}%)` : ""}</span><span className="text-foreground font-medium">{formatCurrency(h.valorIcms)}</span></div>}
+                              {(h.valorIpi > 0 || h.aliquotaIpi > 0) && <div className="flex justify-between"><span className="text-muted-foreground">IPI{h.aliquotaIpi > 0 ? ` (${h.aliquotaIpi}%)` : ""}</span><span className="text-foreground font-medium">{formatCurrency(h.valorIpi)}</span></div>}
                               {h.valorFrete > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Frete</span><span className="text-foreground font-medium">{formatCurrency(h.valorFrete)}</span></div>}
                               {h.valorSeguro > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Seguro</span><span className="text-foreground font-medium">{formatCurrency(h.valorSeguro)}</span></div>}
                               {h.valorOutros > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Outros</span><span className="text-foreground font-medium">{formatCurrency(h.valorOutros)}</span></div>}
