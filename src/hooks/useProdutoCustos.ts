@@ -70,6 +70,8 @@ export function useProdutoCustos(produtoId?: string) {
       valorSeguro?: number;
       valorOutros?: number;
       valorDesconto?: number;
+      aliquotaIcms?: number;
+      aliquotaIpi?: number;
       observacao?: string;
     }) => {
       const { error } = await supabase.from("produto_custos").insert({
@@ -85,6 +87,8 @@ export function useProdutoCustos(produtoId?: string) {
         valor_seguro: params.valorSeguro ?? 0,
         valor_outros: params.valorOutros ?? 0,
         valor_desconto: params.valorDesconto ?? 0,
+        aliquota_icms: params.aliquotaIcms ?? 0,
+        aliquota_ipi: params.aliquotaIpi ?? 0,
         observacao: params.observacao ?? "",
       });
       if (error) throw error;
