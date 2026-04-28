@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { FileText, Upload, Check, X, Plus, Pencil } from "lucide-react";
 import { useNotasFiscais, type NotaFiscal } from "@/hooks/useNotasFiscais";
 import { useProdutoCustos } from "@/hooks/useProdutoCustos";
@@ -36,6 +36,15 @@ export default function NotasFiscais() {
     observacao: "",
     deposito: "Casa" as Deposito,
   });
+
+  // Mantém notaSelecionada sincronizada com refetch após atualizar correspondência
+  useEffect(() => {
+    if (!notaSelecionada) return;
+    const atualizada = notas.find((n) => n.id === notaSelecionada.id);
+    if (atualizada && atualizada !== notaSelecionada) {
+      setNotaSelecionada(atualizada);
+    }
+  }, [notas]);
 
   const filtradas = notas.filter((n) => {
     if (subTab === "pendentes") return n.status === "pendente";
