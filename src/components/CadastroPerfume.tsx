@@ -156,6 +156,8 @@ export default function CadastroPerfume({ onClose }: Props) {
           valorFrete: fiscalBreakdown.freteUnit * Math.max(qtdInicial, 1),
           valorOutros: fiscalBreakdown.outrosUnit * Math.max(qtdInicial, 1),
           valorDesconto: fiscalBreakdown.descontoUnit * Math.max(qtdInicial, 1),
+          aliquotaIcms: fiscalBreakdown.aliquotaIcms,
+          aliquotaIpi: fiscalBreakdown.aliquotaIpi,
           observacao: `Cadastro inicial · ICMS ${fiscalBreakdown.aliquotaIcms}% · IPI ${fiscalBreakdown.aliquotaIpi}%`,
         });
       } catch (e) {
