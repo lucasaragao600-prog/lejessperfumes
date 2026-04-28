@@ -339,7 +339,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
               key={p.id}
               className={baixo ? "card-alert p-4" : "card-premium p-4"}
             >
-              <div className="flex items-start gap-3 mb-2.5">
+              <div className="flex items-start gap-3 mb-3">
                 <div
                   onClick={() => p.imageUrl ? setImagemExpandida({ url: p.imageUrl, nome: p.nome }) : null}
                   className={`w-14 h-14 rounded-xl border border-border bg-surface-overlay flex items-center justify-center flex-shrink-0 overflow-hidden ${p.imageUrl ? "cursor-pointer hover:border-gold-muted" : ""} transition-colors`}
@@ -361,11 +361,19 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                   <h3 className="font-display text-base text-foreground mt-1.5 truncate">{p.nome}</h3>
                   <p className="text-xs text-muted-foreground mt-0.5">{p.marca} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}</p>
                 </div>
-                <div className="text-right ml-2">
-                  <p className={`text-2xl font-bold tracking-tight ${baixo ? "text-destructive" : "text-foreground"}`}>{qtd}</p>
-                  <p className="text-[10px] text-muted-foreground">unid.</p>
+
+                {/* Botão de ações rápidas no canto */}
+                <div className="ml-2 flex-shrink-0">
+                  <QuickActionMenu perfume={p} />
                 </div>
               </div>
+
+              {/* Total de unidades centralizado */}
+              <div className="flex items-baseline justify-center gap-2 mb-3 py-2 rounded-lg bg-surface-overlay/60">
+                <span className={`text-3xl font-bold tracking-tight ${baixo ? "text-destructive" : "text-foreground"}`}>{qtd}</span>
+                <span className="text-[11px] text-muted-foreground uppercase tracking-wider">unid.</span>
+              </div>
+
 
               {/* Per-deposit breakdown - only for master/all deposits */}
               {!userLoja && effectiveDeposito === "Todos" && (
