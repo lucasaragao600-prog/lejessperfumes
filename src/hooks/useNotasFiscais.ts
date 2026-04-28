@@ -24,6 +24,13 @@ export interface NotaFiscalItem {
   valorUnitario: number;
   perfumeId?: string;
   statusCorrespondencia: "pendente" | "correspondido" | "ignorado";
+  valorProdutoUnit: number;
+  valorIcmsUnit: number;
+  valorIpiUnit: number;
+  valorFreteUnit: number;
+  valorSeguroUnit: number;
+  valorOutrosUnit: number;
+  valorDescontoUnit: number;
 }
 
 function rowToNota(row: any): NotaFiscal {
@@ -47,6 +54,13 @@ function rowToNota(row: any): NotaFiscal {
       valorUnitario: Number(i.valor_unitario),
       perfumeId: i.perfume_id,
       statusCorrespondencia: i.status_correspondencia,
+      valorProdutoUnit: Number(i.valor_produto_unit ?? 0),
+      valorIcmsUnit: Number(i.valor_icms_unit ?? 0),
+      valorIpiUnit: Number(i.valor_ipi_unit ?? 0),
+      valorFreteUnit: Number(i.valor_frete_unit ?? 0),
+      valorSeguroUnit: Number(i.valor_seguro_unit ?? 0),
+      valorOutrosUnit: Number(i.valor_outros_unit ?? 0),
+      valorDescontoUnit: Number(i.valor_desconto_unit ?? 0),
     })),
   };
 }
@@ -73,7 +87,19 @@ export function useNotasFiscais() {
       fornecedor: string;
       cnpj: string;
       dataEmissao?: string;
-      itens: { descricaoXml: string; codigoXml?: string; quantidade: number; valorUnitario: number }[];
+      itens: {
+        descricaoXml: string;
+        codigoXml?: string;
+        quantidade: number;
+        valorUnitario: number;
+        valorProdutoUnit?: number;
+        valorIcmsUnit?: number;
+        valorIpiUnit?: number;
+        valorFreteUnit?: number;
+        valorSeguroUnit?: number;
+        valorOutrosUnit?: number;
+        valorDescontoUnit?: number;
+      }[];
     }) => {
       const { data: notaData, error: notaErr } = await supabase
         .from("notas_fiscais")
@@ -95,6 +121,13 @@ export function useNotasFiscais() {
             codigo_xml: i.codigoXml || null,
             quantidade: i.quantidade,
             valor_unitario: i.valorUnitario,
+            valor_produto_unit: i.valorProdutoUnit ?? 0,
+            valor_icms_unit: i.valorIcmsUnit ?? 0,
+            valor_ipi_unit: i.valorIpiUnit ?? 0,
+            valor_frete_unit: i.valorFreteUnit ?? 0,
+            valor_seguro_unit: i.valorSeguroUnit ?? 0,
+            valor_outros_unit: i.valorOutrosUnit ?? 0,
+            valor_desconto_unit: i.valorDescontoUnit ?? 0,
           }))
         );
         if (itensErr) throw itensErr;

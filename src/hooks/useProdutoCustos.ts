@@ -40,12 +40,30 @@ export function useProdutoCustos(produtoId?: string) {
       custoUnitario: number;
       origem: "nota" | "manual" | "ajuste";
       notaId?: string;
+      quantidade?: number;
+      valorProduto?: number;
+      valorIcms?: number;
+      valorIpi?: number;
+      valorFrete?: number;
+      valorSeguro?: number;
+      valorOutros?: number;
+      valorDesconto?: number;
+      observacao?: string;
     }) => {
       const { error } = await supabase.from("produto_custos").insert({
         produto_id: params.produtoId,
         custo_unitario: params.custoUnitario,
         origem: params.origem,
         nota_id: params.notaId || null,
+        quantidade: params.quantidade ?? 0,
+        valor_produto: params.valorProduto ?? 0,
+        valor_icms: params.valorIcms ?? 0,
+        valor_ipi: params.valorIpi ?? 0,
+        valor_frete: params.valorFrete ?? 0,
+        valor_seguro: params.valorSeguro ?? 0,
+        valor_outros: params.valorOutros ?? 0,
+        valor_desconto: params.valorDesconto ?? 0,
+        observacao: params.observacao ?? "",
       });
       if (error) throw error;
     },
@@ -54,22 +72,35 @@ export function useProdutoCustos(produtoId?: string) {
     },
   });
 
-  // Calculate and update custo_medio on perfumes table
+  // Atualiza custo médio + custo padrão do produto e registra histórico discriminado
   const atualizarCustoMedio = async (
     produtoId: string,
     estoqueAtual: number,
     custoMedioAtual: number,
     qtdEntrada: number,
-    novoCusto: number
+    novoCusto: number,
+    detalhes?: {
+      notaId?: string;
+      valorProduto?: number;
+      valorIcms?: number;
+      valorIpi?: number;
+      valorFrete?: number;
+      valorSeguro?: number;
+      valorOutros?: number;
+      valorDesconto?: number;
+      observacao?: string;
+    }
   ) => {
     const estoqueTotal = estoqueAtual + qtdEntrada;
     const custoMedio = estoqueTotal > 0
       ? (estoqueAtual * custoMedioAtual + qtdEntrada * novoCusto) / estoqueTotal
       : novoCusto;
 
+    // Atualiza custo padrão (custo) com o último custo real e o custo médio ponderado
     const { error } = await supabase
       .from("perfumes")
       .update({
+        custo: novoCusto,
         custo_medio: custoMedio,
         ultimo_custo_em: new Date().toISOString(),
       })
@@ -80,6 +111,16 @@ export function useProdutoCustos(produtoId?: string) {
       produtoId,
       custoUnitario: novoCusto,
       origem: "nota",
+      notaId: detalhes?.notaId,
+      quantidade: qtdEntrada,
+      valorProduto: detalhes?.valorProduto,
+      valorIcms: detalhes?.valorIcms,
+      valorIpi: detalhes?.valorIpi,
+      valorFrete: detalhes?.valorFrete,
+      valorSeguro: detalhes?.valorSeguro,
+      valorOutros: detalhes?.valorOutros,
+      valorDesconto: detalhes?.valorDesconto,
+      observacao: detalhes?.observacao,
     });
 
     queryClient.invalidateQueries({ queryKey: ["perfumes"] });
