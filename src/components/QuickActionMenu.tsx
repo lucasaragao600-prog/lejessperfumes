@@ -35,7 +35,7 @@ export default function QuickActionMenu({ perfume }: Props) {
   const [deposito, setDeposito] = useState<Deposito>(userLoja || "Casa");
   const [origem, setOrigem] = useState<Deposito>(userLoja || "Casa");
   const [destino, setDestino] = useState<Deposito>("Sumaúma");
-  const [quantidade, setQuantidade] = useState<number>(1);
+  const [quantidade, setQuantidade] = useState<string>("");
   const [obs, setObs] = useState("");
   const [saving, setSaving] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -57,7 +57,7 @@ export default function QuickActionMenu({ perfume }: Props) {
 
   const reset = () => {
     setAcao(null);
-    setQuantidade(1);
+    setQuantidade("");
     setObs("");
     setDeposito(userLoja || "Casa");
     setOrigem(userLoja || "Casa");
@@ -82,7 +82,8 @@ export default function QuickActionMenu({ perfume }: Props) {
 
   const handleSalvar = async () => {
     if (!acao) return;
-    if (quantidade < 0 || (acao !== "Ajuste" && quantidade < 1)) {
+    const qtdNum = quantidade === "" ? NaN : Number(quantidade);
+    if (isNaN(qtdNum) || qtdNum < 0 || (acao !== "Ajuste" && qtdNum < 1)) {
       toast.error("Quantidade inválida");
       return;
     }
