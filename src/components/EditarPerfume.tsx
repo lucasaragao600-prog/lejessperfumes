@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { X, Check, History, DollarSign, ChevronDown } from "lucide-react";
 import MarkupCalculator from "@/components/MarkupCalculator";
 import ProductImageUpload from "@/components/ProductImageUpload";
+import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalCostCalculator";
 import {
   gerarCodigo,
   formatCurrency,
@@ -37,6 +38,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
   const [codigoBarras, setCodigoBarras] = useState(perfume.codigoBarras || "");
   const [tab, setTab] = useState<"editar" | "custos" | "precos" | "fiscal">("editar");
   const [expandedCustoId, setExpandedCustoId] = useState<string | null>(null);
+  const [fiscalBreakdown, setFiscalBreakdown] = useState<FiscalBreakdown | null>(null);
   // Fiscal fields
   const [ncm, setNcm] = useState(perfume.ncm || "");
   const [cfop, setCfop] = useState(perfume.cfop || "");
