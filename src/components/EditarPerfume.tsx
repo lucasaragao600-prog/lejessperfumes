@@ -346,6 +346,22 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
             </div>
           </div>
 
+          {/* Calculadora Fiscal: ICMS/IPI/Frete -> Custo Real */}
+          {(parseFloat(custo) || 0) > 0 && (
+            <FiscalCostCalculator
+              precoUnitario={parseFloat(custo) || 0}
+              onApply={(b) => {
+                setFiscalBreakdown(b);
+                setCusto(b.custoReal.toFixed(2));
+              }}
+            />
+          )}
+          {fiscalBreakdown && (
+            <div className="text-[10px] text-gold/80">
+              ✓ Custo real aplicado: {formatCurrency(fiscalBreakdown.custoReal)} (Produto + ICMS + IPI + Frete + Outros − Desconto)
+            </div>
+          )}
+
           {/* Markup Calculator */}
           <MarkupCalculator
             custo={parseFloat(custo) || 0}
