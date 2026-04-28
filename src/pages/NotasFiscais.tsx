@@ -57,6 +57,8 @@ export default function NotasFiscais() {
     const dhEmi = getTag(doc, "dhEmi");
     const dataEmissao = dhEmi ? dhEmi.split("T")[0] : undefined;
 
+    // Motor fiscal: ratea frete/seguro/outros/desconto e calcula custo real
+    const fiscal = processarXmlNFe(xmlString);
     const dets = doc.getElementsByTagName("det");
     const itens: { descricaoXml: string; codigoXml?: string; quantidade: number; valorUnitario: number }[] = [];
 
@@ -66,7 +68,15 @@ export default function NotasFiscais() {
       const cProd = getTag(det, "cProd");
       const qCom = parseFloat(getTag(det, "qCom")) || 0;
       const vUnCom = parseFloat(getTag(det, "vUnCom")) || 0;
-      itens.push({ descricaoXml: xProd, codigoXml: cProd || undefined, quantidade: qCom, valorUnitario: vUnCom });
+      // Custo real unitário (produto + ICMS + IPI + frete + seguro + outros - desconto)
+      const real = fiscal.resultado[i]?.custo_final_unitario;
+      const custoUnit = real && real > 0 ? real : vUnCom;
+      itens.push({
+        descricaoXml: xProd,
+        codigoXml: cProd || undefined,
+        quantidade: qCom,
+        valorUnitario: custoUnit,
+      });
     }
 
     return { numero: nNF, fornecedor: xNome, cnpj: CNPJ, dataEmissao, itens };
