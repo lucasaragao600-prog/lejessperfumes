@@ -5,6 +5,7 @@ import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import CadastroPerfume from "@/components/CadastroPerfume";
 import EditarPerfume from "@/components/EditarPerfume";
+import QuickActionMenu from "@/components/QuickActionMenu";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
