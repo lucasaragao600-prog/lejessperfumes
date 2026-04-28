@@ -185,7 +185,10 @@ export default function NotasFiscais() {
     const p = perfumes.find((x) => x.id === manualForm.perfumeId);
     if (!p) return;
 
-    // Create a manual invoice entry
+    // Custo final: usa fiscal aplicado se houver, senão custo digitado
+    const custoFinal = manualFiscal ? manualFiscal.custoReal : manualForm.custoUnitario;
+
+    // Create a manual invoice entry com discriminação fiscal
     await criarNota({
       numero: `MAN-${Date.now()}`,
       fornecedor: manualForm.fornecedor,
@@ -195,22 +198,41 @@ export default function NotasFiscais() {
         descricaoXml: p.nome,
         codigoXml: p.codigo,
         quantidade: manualForm.quantidade,
-        valorUnitario: manualForm.custoUnitario,
+        valorUnitario: custoFinal,
+        valorProdutoUnit: manualFiscal?.precoUnitario ?? manualForm.custoUnitario,
+        valorIcmsUnit: manualFiscal?.valorIcmsUnit ?? 0,
+        valorIpiUnit: manualFiscal?.valorIpiUnit ?? 0,
+        valorFreteUnit: manualFiscal?.freteUnit ?? 0,
+        valorOutrosUnit: manualFiscal?.outrosUnit ?? 0,
+        valorDescontoUnit: manualFiscal?.descontoUnit ?? 0,
       }],
     });
 
-    // Directly add stock and update cost
+    // Directly add stock and update cost com discriminação
     await adicionarEstoque(manualForm.perfumeId, manualForm.deposito, manualForm.quantidade);
     const estoqueTotal = Object.values(p.estoques).reduce((a, b) => a + b, 0);
-    await atualizarCustoMedio(manualForm.perfumeId, estoqueTotal, p.custo, manualForm.quantidade, manualForm.custoUnitario);
-
-    // Auto-conciliate
-    const latestNotas = await new Promise<NotaFiscal[]>((resolve) => {
-      // We'll just close the form - the nota was created
-      resolve([]);
-    });
+    const qtd = manualForm.quantidade;
+    await atualizarCustoMedio(
+      manualForm.perfumeId,
+      estoqueTotal,
+      p.custo,
+      qtd,
+      custoFinal,
+      manualFiscal
+        ? {
+            valorProduto: manualFiscal.precoUnitario * qtd,
+            valorIcms: manualFiscal.valorIcmsUnit * qtd,
+            valorIpi: manualFiscal.valorIpiUnit * qtd,
+            valorFrete: manualFiscal.freteUnit * qtd,
+            valorOutros: manualFiscal.outrosUnit * qtd,
+            valorDesconto: manualFiscal.descontoUnit * qtd,
+            observacao: `Entrada manual · ${manualForm.fornecedor} · ICMS ${manualFiscal.aliquotaIcms}% · IPI ${manualFiscal.aliquotaIpi}%`,
+          }
+        : { observacao: `Entrada manual · ${manualForm.fornecedor}` }
+    );
 
     setManualForm({ fornecedor: "", perfumeId: "", quantidade: 1, custoUnitario: 0, data: new Date().toISOString().split("T")[0], observacao: "", deposito: "Casa" });
+    setManualFiscal(null);
     setShowManual(false);
   };
 
