@@ -137,6 +137,20 @@ export function useNotasFiscais() {
     onSuccess: invalidate,
   });
 
+  const atualizarCorrespondencia = useMutation({
+    mutationFn: async ({ itemId, perfumeId }: { itemId: string; perfumeId: string | null }) => {
+      const { error } = await supabase
+        .from("notas_fiscais_itens")
+        .update({
+          perfume_id: perfumeId,
+          status_correspondencia: perfumeId ? "correspondido" : "pendente",
+        })
+        .eq("id", itemId);
+      if (error) throw error;
+    },
+    onSuccess: invalidate,
+  });
+
   const conciliarNota = useMutation({
     mutationFn: async ({ notaId, conciliadaPor }: { notaId: string; conciliadaPor: string }) => {
       const { error } = await supabase
