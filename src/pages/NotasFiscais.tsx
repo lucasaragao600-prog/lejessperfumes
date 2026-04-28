@@ -327,6 +327,23 @@ export default function NotasFiscais() {
                   className="input-premium px-3 py-2.5 text-sm" />
               </div>
             </div>
+
+            {/* Calculadora Fiscal: ICMS/IPI/Frete -> Custo Real */}
+            {manualForm.custoUnitario > 0 && (
+              <FiscalCostCalculator
+                precoUnitario={manualForm.custoUnitario}
+                onApply={(b) => {
+                  setManualFiscal(b);
+                  setManualForm({ ...manualForm, custoUnitario: b.custoReal });
+                }}
+              />
+            )}
+            {manualFiscal && (
+              <div className="text-[10px] text-gold/80">
+                ✓ Custo real aplicado: {formatCurrency(manualFiscal.custoReal)} — discriminação ficará no histórico do produto.
+              </div>
+            )}
+
             <div className="flex gap-3 pt-1">
               <button onClick={() => setShowManual(false)} className="btn-secondary flex-1 py-2.5">Cancelar</button>
               <button onClick={handleManualCreate}
