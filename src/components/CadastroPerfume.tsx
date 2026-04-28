@@ -165,6 +165,27 @@ export default function CadastroPerfume({ onClose }: Props) {
     onClose();
   };
 
+  const handleSubmit = async () => {
+    if (!casaSelecionada || !nome || !custo || !precoVenda) return;
+    // Validação de similaridade (>= 80%)
+    const candidatos = findSimilarProducts(
+      {
+        nome,
+        marca: casaSelecionada.nome,
+        casaSigla: casaSelecionada.sigla,
+        concentracao,
+        volume,
+      },
+      perfumes,
+      0.8,
+    );
+    if (candidatos.length > 0) {
+      setSimilares(candidatos);
+      return;
+    }
+    await executarCadastro();
+  };
+
   const handleAdicionarCasa = async () => {
     if (!novaCasaNome || novaCasaSigla.length < 2 || novaCasaSigla.length > 3) return;
     const nova: Casa = {
