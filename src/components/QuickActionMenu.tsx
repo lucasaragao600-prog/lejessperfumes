@@ -35,7 +35,7 @@ export default function QuickActionMenu({ perfume }: Props) {
   const [deposito, setDeposito] = useState<Deposito>(userLoja || "Casa");
   const [origem, setOrigem] = useState<Deposito>(userLoja || "Casa");
   const [destino, setDestino] = useState<Deposito>("Sumaúma");
-  const [quantidade, setQuantidade] = useState<number>(1);
+  const [quantidade, setQuantidade] = useState<string>("");
   const [obs, setObs] = useState("");
   const [saving, setSaving] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -57,7 +57,7 @@ export default function QuickActionMenu({ perfume }: Props) {
 
   const reset = () => {
     setAcao(null);
-    setQuantidade(1);
+    setQuantidade("");
     setObs("");
     setDeposito(userLoja || "Casa");
     setOrigem(userLoja || "Casa");
@@ -82,7 +82,8 @@ export default function QuickActionMenu({ perfume }: Props) {
 
   const handleSalvar = async () => {
     if (!acao) return;
-    if (quantidade < 0 || (acao !== "Ajuste" && quantidade < 1)) {
+    const qtdNum = quantidade === "" ? NaN : Number(quantidade);
+    if (isNaN(qtdNum) || qtdNum < 0 || (acao !== "Ajuste" && qtdNum < 1)) {
       toast.error("Quantidade inválida");
       return;
     }
@@ -97,79 +98,79 @@ export default function QuickActionMenu({ perfume }: Props) {
       const registradoPor = profile?.nome || "Desconhecido";
 
       if (acao === "Entrada") {
-        await adicionarEstoque(perfume.id, deposito, quantidade);
+        await adicionarEstoque(perfume.id, deposito, qtdNum);
         await adicionarMovimentacao({
           id: `m${Date.now()}`, data: hoje, tipo: "Entrada",
           perfumeId: perfume.id, perfumeNome: perfume.nome,
-          quantidade, deposito, observacao: obs || undefined, registradoPor,
+          quantidade: qtdNum, deposito, observacao: obs || undefined, registradoPor,
         } as Movimentacao);
-        toast.success(`+${quantidade} un. em ${deposito}`);
+        toast.success(`+${qtdNum} un. em ${deposito}`);
       } else if (acao === "Saída") {
         const est = perfume.estoques[deposito];
-        if (est < quantidade) {
+        if (est < qtdNum) {
           toast.error(`Estoque insuficiente em ${deposito} (${est} un.)`);
           setSaving(false);
           return;
         }
-        await baixarEstoque(perfume.id, deposito, quantidade);
+        await baixarEstoque(perfume.id, deposito, qtdNum);
         await adicionarMovimentacao({
           id: `m${Date.now()}`, data: hoje, tipo: "Saída",
           perfumeId: perfume.id, perfumeNome: perfume.nome,
-          quantidade, deposito, observacao: obs || undefined, registradoPor,
+          quantidade: qtdNum, deposito, observacao: obs || undefined, registradoPor,
         } as any);
-        toast.success(`-${quantidade} un. em ${deposito}`);
+        toast.success(`-${qtdNum} un. em ${deposito}`);
       } else if (acao === "Ajuste") {
         const estAtual = perfume.estoques[deposito];
-        const dif = quantidade - estAtual;
-        await ajustarEstoque(perfume.id, deposito, quantidade);
+        const dif = qtdNum - estAtual;
+        await ajustarEstoque(perfume.id, deposito, qtdNum);
         await adicionarMovimentacao({
           id: `m${Date.now()}`, data: hoje, tipo: "Ajuste",
           perfumeId: perfume.id, perfumeNome: perfume.nome,
           quantidade: dif, deposito,
-          observacao: `Ajuste: ${estAtual} → ${quantidade}${obs ? ` | ${obs}` : ""}`,
+          observacao: `Ajuste: ${estAtual} → ${qtdNum}${obs ? ` | ${obs}` : ""}`,
           registradoPor,
         } as Movimentacao);
-        toast.success(`Estoque ajustado: ${estAtual} → ${quantidade}`);
+        toast.success(`Estoque ajustado: ${estAtual} → ${qtdNum}`);
       } else if (acao === "Transferência") {
         const est = perfume.estoques[origem];
-        if (est < quantidade) {
+        if (est < qtdNum) {
           toast.error(`Estoque insuficiente em ${origem} (${est} un.)`);
           setSaving(false);
           return;
         }
-        await transferirEstoque(perfume.id, origem, destino, quantidade);
+        await transferirEstoque(perfume.id, origem, destino, qtdNum);
         await adicionarMovimentacao({
           id: `m${Date.now()}`, data: hoje, tipo: "Transferência",
           perfumeId: perfume.id, perfumeNome: perfume.nome,
-          quantidade, depositoOrigem: origem, depositoDestino: destino,
+          quantidade: qtdNum, depositoOrigem: origem, depositoDestino: destino,
           observacao: obs || undefined, registradoPor,
         } as Movimentacao);
-        toast.success(`${quantidade} un. ${origem} → ${destino}`);
+        toast.success(`${qtdNum} un. ${origem} → ${destino}`);
       } else if (acao === "Saída Tester") {
         const est = perfume.estoques[origem];
-        if (est < quantidade) {
+        if (est < qtdNum) {
           toast.error(`Estoque insuficiente em ${origem} (${est} un.)`);
           setSaving(false);
           return;
         }
-        await baixarEstoque(perfume.id, origem, quantidade);
-        adicionarTester(perfume.id, origem, quantidade);
+        await baixarEstoque(perfume.id, origem, qtdNum);
+        adicionarTester(perfume.id, origem, qtdNum);
         await adicionarMovimentacao({
           id: `m${Date.now()}`, data: hoje, tipo: "Saída Tester",
           perfumeId: perfume.id, perfumeNome: perfume.nome,
-          quantidade, deposito: origem, depositoOrigem: origem,
+          quantidade: qtdNum, deposito: origem, depositoOrigem: origem,
           observacao: obs || undefined, registradoPor,
         } as any);
-        toast.success(`${quantidade} un. movidas p/ Tester (${origem})`);
+        toast.success(`${qtdNum} un. movidas p/ Tester (${origem})`);
       } else if (acao === "Transferência Tester") {
         const qtdOrigem = getTesterQtd(origem);
-        if (qtdOrigem < quantidade) {
+        if (qtdOrigem < qtdNum) {
           toast.error(`Tester insuficiente em ${origem} (${qtdOrigem} un.)`);
           setSaving(false);
           return;
         }
         // Baixa testers da origem (ajusta cada registro até cobrir a quantidade)
-        let restante = quantidade;
+        let restante = qtdNum;
         const registros = testers.filter(t => t.perfumeId === perfume.id && t.deposito === origem);
         for (const r of registros) {
           if (restante <= 0) break;
@@ -184,11 +185,11 @@ export default function QuickActionMenu({ perfume }: Props) {
           perfumeNome: perfume.nome,
           marca: perfume.marca,
           deposito: destino,
-          quantidade,
+          quantidade: qtdNum,
           custo: perfume.custoMedio || perfume.custo,
           registradoPor,
         });
-        toast.success(`${quantidade} tester ${origem} → ${destino}`);
+        toast.success(`${qtdNum} tester ${origem} → ${destino}`);
       }
 
       closeAll();
@@ -319,8 +320,9 @@ export default function QuickActionMenu({ perfume }: Props) {
                   type="number"
                   min={acao === "Ajuste" ? 0 : 1}
                   value={quantidade}
-                  onChange={(e) => setQuantidade(e.target.value === "" ? 0 : Number(e.target.value))}
+                  onChange={(e) => setQuantidade(e.target.value)}
                   onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                  placeholder="0"
                   className="input-premium px-3 py-2 text-sm w-full"
                 />
               </div>

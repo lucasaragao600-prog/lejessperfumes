@@ -26,6 +26,8 @@ export default function NotasFiscais() {
   const [editableQtds, setEditableQtds] = useState<EditableQty>({});
   const [showManual, setShowManual] = useState(false);
   const [manualFiscal, setManualFiscal] = useState<FiscalBreakdown | null>(null);
+  const [conciliando, setConciliando] = useState(false);
+  const [salvandoManual, setSalvandoManual] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Manual invoice form
@@ -139,7 +141,9 @@ export default function NotasFiscais() {
   };
 
   const handleConciliar = async () => {
-    if (!notaSelecionada) return;
+    if (!notaSelecionada || conciliando) return;
+    setConciliando(true);
+    try {
     const itensCorrespondidos = notaSelecionada.itens.filter((i) => i.perfumeId);
 
     for (const item of itensCorrespondidos) {
@@ -177,10 +181,16 @@ export default function NotasFiscais() {
     await conciliarNota({ notaId: notaSelecionada.id, conciliadaPor: profile?.nome || "Sistema" });
     setNotaSelecionada(null);
     setEditableQtds({});
+    } finally {
+      setConciliando(false);
+    }
   };
 
   const handleManualCreate = async () => {
     if (!manualForm.fornecedor || !manualForm.perfumeId || manualForm.quantidade < 1) return;
+    if (salvandoManual) return;
+    setSalvandoManual(true);
+    try {
 
     const p = perfumes.find((x) => x.id === manualForm.perfumeId);
     if (!p) return;
@@ -234,6 +244,9 @@ export default function NotasFiscais() {
     setManualForm({ fornecedor: "", perfumeId: "", quantidade: 1, custoUnitario: 0, data: new Date().toISOString().split("T")[0], observacao: "", deposito: "Casa" });
     setManualFiscal(null);
     setShowManual(false);
+    } finally {
+      setSalvandoManual(false);
+    }
   };
 
   return (
@@ -347,10 +360,10 @@ export default function NotasFiscais() {
             <div className="flex gap-3 pt-1">
               <button onClick={() => setShowManual(false)} className="btn-secondary flex-1 py-2.5">Cancelar</button>
               <button onClick={handleManualCreate}
-                disabled={!manualForm.fornecedor || !manualForm.perfumeId || manualForm.quantidade < 1}
+                disabled={salvandoManual || !manualForm.fornecedor || !manualForm.perfumeId || manualForm.quantidade < 1}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
                 style={{ background: "var(--gradient-gold)" }}>
-                <Check size={14} className="inline mr-1" /> Dar Entrada
+                <Check size={14} className="inline mr-1" /> {salvandoManual ? "Salvando..." : "Dar Entrada"}
               </button>
             </div>
           </div>
@@ -481,10 +494,10 @@ export default function NotasFiscais() {
                 Cancelar Nota
               </button>
               <button onClick={handleConciliar}
-                disabled={notaSelecionada.itens.filter((i) => i.perfumeId).length === 0}
+                disabled={conciliando || notaSelecionada.itens.filter((i) => i.perfumeId).length === 0}
                 className="flex-1 py-3 rounded-xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
                 style={{ background: "var(--gradient-gold)" }}>
-                <Check size={16} className="inline mr-1" /> Conciliar e dar entrada
+                <Check size={16} className="inline mr-1" /> {conciliando ? "Processando..." : "Conciliar e dar entrada"}
               </button>
             </div>
           </div>
