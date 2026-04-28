@@ -113,10 +113,12 @@ export default function CadastroPerfume({ onClose }: Props) {
 
   const casasFiltradas = casas.filter((c) => c.tipo === tipo);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!casaSelecionada || !nome || !custo || !precoVenda) return;
+    const custoFinal = fiscalBreakdown ? fiscalBreakdown.custoReal : parseFloat(custo);
+    const novoId = `p${Date.now()}`;
     const novoPerfume: Perfume = {
-      id: `p${Date.now()}`,
+      id: novoId,
       codigo: gerarCodigo(tipo, casaSelecionada.sigla, concentracao, linhaCasa, volume),
       codigoBarras: codigoBarras.trim(),
       nome,
@@ -126,7 +128,7 @@ export default function CadastroPerfume({ onClose }: Props) {
       concentracao,
       tamanho: `${volume}ml`,
       volume,
-      custo: parseFloat(custo),
+      custo: custoFinal,
       precoVenda: parseFloat(precoVenda),
       estoques: {
         Casa: parseInt(estCasa) || 0,
@@ -135,7 +137,28 @@ export default function CadastroPerfume({ onClose }: Props) {
       },
       estoqueMinimo: parseInt(estoqueMinimo) || 2,
     };
-    adicionarPerfume(novoPerfume);
+    await adicionarPerfume(novoPerfume);
+    // Registra histórico de custo discriminado se houve cálculo fiscal
+    if (fiscalBreakdown) {
+      const qtdInicial = (parseInt(estCasa) || 0) + (parseInt(estSumauma) || 0) + (parseInt(estAmazonas) || 0);
+      try {
+        await registrarCusto({
+          produtoId: novoId,
+          custoUnitario: fiscalBreakdown.custoReal,
+          origem: "manual",
+          quantidade: qtdInicial,
+          valorProduto: fiscalBreakdown.precoUnitario * Math.max(qtdInicial, 1),
+          valorIcms: fiscalBreakdown.valorIcmsUnit * Math.max(qtdInicial, 1),
+          valorIpi: fiscalBreakdown.valorIpiUnit * Math.max(qtdInicial, 1),
+          valorFrete: fiscalBreakdown.freteUnit * Math.max(qtdInicial, 1),
+          valorOutros: fiscalBreakdown.outrosUnit * Math.max(qtdInicial, 1),
+          valorDesconto: fiscalBreakdown.descontoUnit * Math.max(qtdInicial, 1),
+          observacao: `Cadastro inicial · ICMS ${fiscalBreakdown.aliquotaIcms}% · IPI ${fiscalBreakdown.aliquotaIpi}%`,
+        });
+      } catch (e) {
+        console.error("Erro ao registrar histórico de custo no cadastro:", e);
+      }
+    }
     onClose();
   };
 
