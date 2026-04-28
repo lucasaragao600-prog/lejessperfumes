@@ -70,7 +70,19 @@ export default function NotasFiscais() {
     // Motor fiscal: ratea frete/seguro/outros/desconto e calcula custo real
     const fiscal = processarXmlNFe(xmlString);
     const dets = doc.getElementsByTagName("det");
-    const itens: { descricaoXml: string; codigoXml?: string; quantidade: number; valorUnitario: number }[] = [];
+    const itens: {
+      descricaoXml: string;
+      codigoXml?: string;
+      quantidade: number;
+      valorUnitario: number;
+      valorProdutoUnit: number;
+      valorIcmsUnit: number;
+      valorIpiUnit: number;
+      valorFreteUnit: number;
+      valorSeguroUnit: number;
+      valorOutrosUnit: number;
+      valorDescontoUnit: number;
+    }[] = [];
 
     for (let i = 0; i < dets.length; i++) {
       const det = dets[i];
@@ -78,14 +90,21 @@ export default function NotasFiscais() {
       const cProd = getTag(det, "cProd");
       const qCom = parseFloat(getTag(det, "qCom")) || 0;
       const vUnCom = parseFloat(getTag(det, "vUnCom")) || 0;
-      // Custo real unitário (produto + ICMS + IPI + frete + seguro + outros - desconto)
-      const real = fiscal.resultado[i]?.custo_final_unitario;
+      const r = fiscal.resultado[i];
+      const real = r?.custo_final_unitario;
       const custoUnit = real && real > 0 ? real : vUnCom;
       itens.push({
         descricaoXml: xProd,
         codigoXml: cProd || undefined,
         quantidade: qCom,
         valorUnitario: custoUnit,
+        valorProdutoUnit: r?.valor_unitario ?? vUnCom,
+        valorIcmsUnit: r?.icms_unitario ?? 0,
+        valorIpiUnit: r?.ipi_unitario ?? 0,
+        valorFreteUnit: r?.frete_unitario ?? 0,
+        valorSeguroUnit: r?.seguro_unitario ?? 0,
+        valorOutrosUnit: r?.outros_unitario ?? 0,
+        valorDescontoUnit: r?.desconto_unitario ?? 0,
       });
     }
 
@@ -131,9 +150,26 @@ export default function NotasFiscais() {
       // Add stock with final confirmed quantity
       await adicionarEstoque(item.perfumeId, depositoDestino as any, qtdFinal);
 
-      // Update cost
+      // Update cost (custo real da nota = valorUnitario que já contém ICMS+IPI+frete+...)
       const estoqueTotal = Object.values(p.estoques).reduce((a, b) => a + b, 0);
-      await atualizarCustoMedio(item.perfumeId, estoqueTotal, p.custo, qtdFinal, item.valorUnitario);
+      await atualizarCustoMedio(
+        item.perfumeId,
+        estoqueTotal,
+        p.custo,
+        qtdFinal,
+        item.valorUnitario,
+        {
+          notaId: notaSelecionada.id,
+          valorProduto: (item.valorProdutoUnit || 0) * qtdFinal,
+          valorIcms: (item.valorIcmsUnit || 0) * qtdFinal,
+          valorIpi: (item.valorIpiUnit || 0) * qtdFinal,
+          valorFrete: (item.valorFreteUnit || 0) * qtdFinal,
+          valorSeguro: (item.valorSeguroUnit || 0) * qtdFinal,
+          valorOutros: (item.valorOutrosUnit || 0) * qtdFinal,
+          valorDesconto: (item.valorDescontoUnit || 0) * qtdFinal,
+          observacao: `NF ${notaSelecionada.numero} · ${notaSelecionada.fornecedor}`,
+        }
+      );
     }
 
     await conciliarNota({ notaId: notaSelecionada.id, conciliadaPor: profile?.nome || "Sistema" });
