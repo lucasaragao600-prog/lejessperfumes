@@ -479,7 +479,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
                     const temDiscriminacao =
                       h.valorIcms > 0 || h.valorIpi > 0 || h.valorFrete > 0 ||
                       h.valorSeguro > 0 || h.valorOutros > 0 || h.valorDesconto > 0 ||
-                      h.valorProduto > 0 || !!h.observacao;
+                      h.valorProduto > 0 || h.aliquotaIcms > 0 || h.aliquotaIpi > 0 || !!h.observacao;
                     const expanded = expandedCustoId === h.id;
                     return (
                       <div key={h.id} className="card-premium p-3">
