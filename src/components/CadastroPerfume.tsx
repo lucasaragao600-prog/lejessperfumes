@@ -8,6 +8,8 @@ import {
   type Casa,
 } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
+import { useProdutoCustos } from "@/hooks/useProdutoCustos";
+import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalCostCalculator";
 
 interface Props {
   onClose: () => void;
@@ -17,7 +19,9 @@ type Tab = "cadastrar" | "casas";
 
 export default function CadastroPerfume({ onClose }: Props) {
   const { casas, adicionarCasaDB, removerCasaDB, adicionarPerfume, proximaLinhaPorCasa, tiposPerfumeConfig, concentracoesConfig, volumesPadrao } = useApp();
+  const { registrarCusto } = useProdutoCustos();
   const [tab, setTab] = useState<Tab>("cadastrar");
+  const [fiscalBreakdown, setFiscalBreakdown] = useState<FiscalBreakdown | null>(null);
 
   // --- Estado do formulário ---
   const [tipo, setTipo] = useState<TipoPerfume>("NI");
