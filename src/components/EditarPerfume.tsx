@@ -86,7 +86,8 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
       }
 
       // Track cost change and recalculate average cost
-      if (novoCusto !== perfume.custo) {
+      // Registra histórico se mudou o custo OU se o usuário aplicou cálculo fiscal
+      if (novoCusto !== perfume.custo || fiscalBreakdown) {
         try {
           const estoqueTotal = Object.values(perfume.estoques || {}).reduce((sum, v) => sum + v, 0);
           const custoMedioAtual = perfume.custoMedio || perfume.custo;
