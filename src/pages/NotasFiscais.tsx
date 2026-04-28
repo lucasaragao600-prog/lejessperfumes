@@ -376,7 +376,6 @@ export default function NotasFiscais() {
                         </div>
                       </div>
                     )}
-                    </div>
 
                     {/* Editable quantity */}
                     <div className="mb-3 grid grid-cols-2 gap-2">
