@@ -16,6 +16,8 @@ export interface ProdutoCusto {
   valorSeguro: number;
   valorOutros: number;
   valorDesconto: number;
+  aliquotaIcms: number;
+  aliquotaIpi: number;
   observacao: string;
 }
 
