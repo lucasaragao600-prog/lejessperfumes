@@ -482,7 +482,7 @@ export default function NotasFiscais() {
                             </div>
 
                             <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
-                              {perfCorr.concentracao && <div className="flex justify-between"><span className="text-muted-foreground">Concentração</span><span className="text-foreground">{perfCorr.concentracao}</span></div>}
+                              {perfCorr.concentracao && <div className="flex justify-between"><span className="text-muted-foreground">Concentração</span><span className="text-foreground">{concentracoesConfig[perfCorr.concentracao] || perfCorr.concentracao}</span></div>}
                               {perfCorr.volume && <div className="flex justify-between"><span className="text-muted-foreground">Volume</span><span className="text-foreground">{perfCorr.volume}ml</span></div>}
                               <div className="flex justify-between"><span className="text-muted-foreground">Custo atual</span><span className="text-foreground">{formatCurrency(perfCorr.custo)}</span></div>
                               <div className="flex justify-between"><span className="text-muted-foreground">Estoque</span><span className="text-foreground">{estoqueTotal} un.</span></div>
