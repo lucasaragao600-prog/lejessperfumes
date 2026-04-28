@@ -244,6 +244,9 @@ export default function NotasFiscais() {
     setManualForm({ fornecedor: "", perfumeId: "", quantidade: 1, custoUnitario: 0, data: new Date().toISOString().split("T")[0], observacao: "", deposito: "Casa" });
     setManualFiscal(null);
     setShowManual(false);
+    } finally {
+      setSalvandoManual(false);
+    }
   };
 
   return (
