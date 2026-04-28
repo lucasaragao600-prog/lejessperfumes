@@ -10,6 +10,8 @@ import {
 import { useApp } from "@/context/AppContext";
 import { useProdutoCustos } from "@/hooks/useProdutoCustos";
 import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalCostCalculator";
+import SimilarProductsDialog from "@/components/SimilarProductsDialog";
+import { findSimilarProducts, type SimilarityCandidate } from "@/lib/productSimilarity";
 
 interface Props {
   onClose: () => void;
@@ -18,10 +20,11 @@ interface Props {
 type Tab = "cadastrar" | "casas";
 
 export default function CadastroPerfume({ onClose }: Props) {
-  const { casas, adicionarCasaDB, removerCasaDB, adicionarPerfume, proximaLinhaPorCasa, tiposPerfumeConfig, concentracoesConfig, volumesPadrao } = useApp();
+  const { perfumes, casas, adicionarCasaDB, removerCasaDB, adicionarPerfume, proximaLinhaPorCasa, tiposPerfumeConfig, concentracoesConfig, volumesPadrao } = useApp();
   const { registrarCusto } = useProdutoCustos();
   const [tab, setTab] = useState<Tab>("cadastrar");
   const [fiscalBreakdown, setFiscalBreakdown] = useState<FiscalBreakdown | null>(null);
+  const [similares, setSimilares] = useState<SimilarityCandidate[] | null>(null);
 
   // --- Estado do formulário ---
   const [tipo, setTipo] = useState<TipoPerfume>("NI");
@@ -113,8 +116,8 @@ export default function CadastroPerfume({ onClose }: Props) {
 
   const casasFiltradas = casas.filter((c) => c.tipo === tipo);
 
-  const handleSubmit = async () => {
-    if (!casaSelecionada || !nome || !custo || !precoVenda) return;
+  const executarCadastro = async () => {
+    if (!casaSelecionada) return;
     const custoFinal = fiscalBreakdown ? fiscalBreakdown.custoReal : parseFloat(custo);
     const novoId = `p${Date.now()}`;
     const novoPerfume: Perfume = {
