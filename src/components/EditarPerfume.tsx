@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { X, Check, History, DollarSign } from "lucide-react";
+import { X, Check, History, DollarSign, ChevronDown } from "lucide-react";
 import MarkupCalculator from "@/components/MarkupCalculator";
 import ProductImageUpload from "@/components/ProductImageUpload";
 import {
@@ -444,23 +444,66 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {historico.map((h) => (
-                    <div key={h.id} className="card-premium p-3 flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-medium text-foreground">{formatCurrency(h.custoUnitario)}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          {new Date(h.data).toLocaleDateString("pt-BR")} · {h.origem === "nota" ? "Nota Fiscal" : h.origem === "manual" ? "Manual" : "Ajuste"}
-                        </p>
+                  {historico.map((h) => {
+                    const temDiscriminacao =
+                      h.valorIcms > 0 || h.valorIpi > 0 || h.valorFrete > 0 ||
+                      h.valorSeguro > 0 || h.valorOutros > 0 || h.valorDesconto > 0 ||
+                      h.valorProduto > 0 || !!h.observacao;
+                    const expanded = expandedCustoId === h.id;
+                    return (
+                      <div key={h.id} className="card-premium p-3">
+                        <button
+                          type="button"
+                          onClick={() => temDiscriminacao && setExpandedCustoId(expanded ? null : h.id)}
+                          className="w-full flex items-center justify-between text-left"
+                          disabled={!temDiscriminacao}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-foreground">{formatCurrency(h.custoUnitario)}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                              {new Date(h.data).toLocaleDateString("pt-BR")} · {h.origem === "nota" ? "Nota Fiscal" : h.origem === "manual" ? "Manual" : "Ajuste"}
+                              {h.observacao ? ` · ${h.observacao}` : ""}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ${
+                              h.origem === "nota" ? "bg-success/15 text-success" :
+                              h.origem === "manual" ? "bg-primary/10 text-gold" :
+                              "bg-blue-400/15 text-blue-400"
+                            }`}>
+                              {h.origem}
+                            </span>
+                            {temDiscriminacao && (
+                              <ChevronDown size={14} className={`text-muted-foreground transition-transform ${expanded ? "rotate-180" : ""}`} />
+                            )}
+                          </div>
+                        </button>
+
+                        {expanded && temDiscriminacao && (
+                          <div className="mt-3 pt-3 border-t border-border space-y-2">
+                            {h.quantidade > 0 && (
+                              <p className="text-[10px] text-muted-foreground">Quantidade: <span className="text-foreground font-medium">{h.quantidade}</span></p>
+                            )}
+                            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
+                              {h.valorProduto > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Produto</span><span className="text-foreground font-medium">{formatCurrency(h.valorProduto)}</span></div>}
+                              {h.valorIcms > 0 && <div className="flex justify-between"><span className="text-muted-foreground">ICMS</span><span className="text-foreground font-medium">{formatCurrency(h.valorIcms)}</span></div>}
+                              {h.valorIpi > 0 && <div className="flex justify-between"><span className="text-muted-foreground">IPI</span><span className="text-foreground font-medium">{formatCurrency(h.valorIpi)}</span></div>}
+                              {h.valorFrete > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Frete</span><span className="text-foreground font-medium">{formatCurrency(h.valorFrete)}</span></div>}
+                              {h.valorSeguro > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Seguro</span><span className="text-foreground font-medium">{formatCurrency(h.valorSeguro)}</span></div>}
+                              {h.valorOutros > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Outros</span><span className="text-foreground font-medium">{formatCurrency(h.valorOutros)}</span></div>}
+                              {h.valorDesconto > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Desconto</span><span className="text-destructive font-medium">−{formatCurrency(h.valorDesconto)}</span></div>}
+                            </div>
+                            {h.quantidade > 0 && (h.valorProduto + h.valorIcms + h.valorIpi + h.valorFrete + h.valorSeguro + h.valorOutros) > 0 && (
+                              <div className="pt-2 border-t border-border/50 flex justify-between text-[10px]">
+                                <span className="text-muted-foreground">Custo total da entrada</span>
+                                <span className="text-gold font-semibold">{formatCurrency(h.custoUnitario * h.quantidade)}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      <span className={`text-[9px] px-2 py-0.5 rounded-full font-semibold ${
-                        h.origem === "nota" ? "bg-success/15 text-success" :
-                        h.origem === "manual" ? "bg-primary/10 text-gold" :
-                        "bg-blue-400/15 text-blue-400"
-                      }`}>
-                        {h.origem}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
