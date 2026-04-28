@@ -114,6 +114,8 @@ export function useProdutoCustos(produtoId?: string) {
       valorSeguro?: number;
       valorOutros?: number;
       valorDesconto?: number;
+      aliquotaIcms?: number;
+      aliquotaIpi?: number;
       observacao?: string;
     }
   ) => {
