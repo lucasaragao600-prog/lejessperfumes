@@ -151,7 +151,16 @@ export default function FiscalCostCalculator({ precoUnitario, onApply, defaultOp
           <button
             type="button"
             disabled={!hasAdjustments}
-            onClick={() => onApply(calc)}
+            onClick={() => {
+              onApply(calc);
+              // Reseta para evitar reaplicação acumulada sobre o novo custo
+              setIcms("0");
+              setIpi("0");
+              setFrete("0");
+              setOutros("0");
+              setDesconto("0");
+              setOpen(false);
+            }}
             className="w-full py-2 rounded-lg text-xs font-semibold text-primary-foreground disabled:opacity-40"
             style={{ background: "var(--gradient-gold)" }}
           >
