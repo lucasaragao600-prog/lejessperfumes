@@ -356,8 +356,26 @@ export default function NotasFiscais() {
                         {item.codigoXml && <p className="text-[10px] text-muted-foreground mt-0.5">Cód: {item.codigoXml}</p>}
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <p className="text-[10px] text-muted-foreground">{formatCurrency(item.valorUnitario)}/un</p>
+                        <p className="text-[10px] text-muted-foreground">Custo real</p>
+                        <p className="text-xs font-semibold text-gold">{formatCurrency(item.valorUnitario)}/un</p>
                       </div>
+                    </div>
+
+                    {/* Discriminação fiscal */}
+                    {(item.valorIcmsUnit > 0 || item.valorIpiUnit > 0 || item.valorFreteUnit > 0 || item.valorSeguroUnit > 0 || item.valorOutrosUnit > 0 || item.valorDescontoUnit > 0) && (
+                      <div className="mb-3 px-3 py-2 rounded-lg bg-surface-overlay border border-border">
+                        <p className="text-[9px] text-muted-foreground uppercase tracking-wider mb-1.5">Composição do custo (un.)</p>
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
+                          <div className="flex justify-between"><span className="text-muted-foreground">Produto</span><span className="text-foreground">{formatCurrency(item.valorProdutoUnit)}</span></div>
+                          {item.valorIcmsUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">ICMS</span><span className="text-foreground">{formatCurrency(item.valorIcmsUnit)}</span></div>}
+                          {item.valorIpiUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">IPI</span><span className="text-foreground">{formatCurrency(item.valorIpiUnit)}</span></div>}
+                          {item.valorFreteUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Frete</span><span className="text-foreground">{formatCurrency(item.valorFreteUnit)}</span></div>}
+                          {item.valorSeguroUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Seguro</span><span className="text-foreground">{formatCurrency(item.valorSeguroUnit)}</span></div>}
+                          {item.valorOutrosUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Outros</span><span className="text-foreground">{formatCurrency(item.valorOutrosUnit)}</span></div>}
+                          {item.valorDescontoUnit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Desconto</span><span className="text-destructive">−{formatCurrency(item.valorDescontoUnit)}</span></div>}
+                        </div>
+                      </div>
+                    )}
                     </div>
 
                     {/* Editable quantity */}
