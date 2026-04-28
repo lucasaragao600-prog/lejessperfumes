@@ -8,6 +8,8 @@ import {
   type Casa,
 } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
+import { useProdutoCustos } from "@/hooks/useProdutoCustos";
+import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalCostCalculator";
 
 interface Props {
   onClose: () => void;
@@ -17,7 +19,9 @@ type Tab = "cadastrar" | "casas";
 
 export default function CadastroPerfume({ onClose }: Props) {
   const { casas, adicionarCasaDB, removerCasaDB, adicionarPerfume, proximaLinhaPorCasa, tiposPerfumeConfig, concentracoesConfig, volumesPadrao } = useApp();
+  const { registrarCusto } = useProdutoCustos();
   const [tab, setTab] = useState<Tab>("cadastrar");
+  const [fiscalBreakdown, setFiscalBreakdown] = useState<FiscalBreakdown | null>(null);
 
   // --- Estado do formulário ---
   const [tipo, setTipo] = useState<TipoPerfume>("NI");
@@ -109,10 +113,12 @@ export default function CadastroPerfume({ onClose }: Props) {
 
   const casasFiltradas = casas.filter((c) => c.tipo === tipo);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!casaSelecionada || !nome || !custo || !precoVenda) return;
+    const custoFinal = fiscalBreakdown ? fiscalBreakdown.custoReal : parseFloat(custo);
+    const novoId = `p${Date.now()}`;
     const novoPerfume: Perfume = {
-      id: `p${Date.now()}`,
+      id: novoId,
       codigo: gerarCodigo(tipo, casaSelecionada.sigla, concentracao, linhaCasa, volume),
       codigoBarras: codigoBarras.trim(),
       nome,
@@ -122,7 +128,7 @@ export default function CadastroPerfume({ onClose }: Props) {
       concentracao,
       tamanho: `${volume}ml`,
       volume,
-      custo: parseFloat(custo),
+      custo: custoFinal,
       precoVenda: parseFloat(precoVenda),
       estoques: {
         Casa: parseInt(estCasa) || 0,
@@ -131,7 +137,28 @@ export default function CadastroPerfume({ onClose }: Props) {
       },
       estoqueMinimo: parseInt(estoqueMinimo) || 2,
     };
-    adicionarPerfume(novoPerfume);
+    await adicionarPerfume(novoPerfume);
+    // Registra histórico de custo discriminado se houve cálculo fiscal
+    if (fiscalBreakdown) {
+      const qtdInicial = (parseInt(estCasa) || 0) + (parseInt(estSumauma) || 0) + (parseInt(estAmazonas) || 0);
+      try {
+        await registrarCusto({
+          produtoId: novoId,
+          custoUnitario: fiscalBreakdown.custoReal,
+          origem: "manual",
+          quantidade: qtdInicial,
+          valorProduto: fiscalBreakdown.precoUnitario * Math.max(qtdInicial, 1),
+          valorIcms: fiscalBreakdown.valorIcmsUnit * Math.max(qtdInicial, 1),
+          valorIpi: fiscalBreakdown.valorIpiUnit * Math.max(qtdInicial, 1),
+          valorFrete: fiscalBreakdown.freteUnit * Math.max(qtdInicial, 1),
+          valorOutros: fiscalBreakdown.outrosUnit * Math.max(qtdInicial, 1),
+          valorDesconto: fiscalBreakdown.descontoUnit * Math.max(qtdInicial, 1),
+          observacao: `Cadastro inicial · ICMS ${fiscalBreakdown.aliquotaIcms}% · IPI ${fiscalBreakdown.aliquotaIpi}%`,
+        });
+      } catch (e) {
+        console.error("Erro ao registrar histórico de custo no cadastro:", e);
+      }
+    }
     onClose();
   };
 
@@ -359,7 +386,22 @@ export default function CadastroPerfume({ onClose }: Props) {
               </div>
             </div>
 
-            {/* Markup Calculator */}
+            {/* Calculadora Fiscal: ICMS/IPI/Frete -> Custo Real */}
+            {custoNum > 0 && (
+              <FiscalCostCalculator
+                precoUnitario={custoNum}
+                onApply={(b) => {
+                  setFiscalBreakdown(b);
+                  setCusto(b.custoReal.toFixed(2));
+                }}
+              />
+            )}
+            {fiscalBreakdown && (
+              <div className="text-[10px] text-gold/80 -mt-3">
+                ✓ Custo real aplicado: {fiscalBreakdown.custoReal.toFixed(2)} (Produto + ICMS + IPI + Frete)
+              </div>
+            )}
+
             {custoNum > 0 && (
               <div className="border border-gold-muted rounded-xl overflow-hidden">
                 <button

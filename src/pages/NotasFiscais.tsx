@@ -5,6 +5,7 @@ import { useProdutoCustos } from "@/hooks/useProdutoCustos";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
+import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalCostCalculator";
 import { formatCurrency, formatDate, type Deposito } from "@/data/mockData";
 import { processarXmlNFe } from "@/lib/nfeXmlParser";
 
@@ -24,6 +25,7 @@ export default function NotasFiscais() {
   const [depositoDestino, setDepositoDestino] = useState<string>("Casa");
   const [editableQtds, setEditableQtds] = useState<EditableQty>({});
   const [showManual, setShowManual] = useState(false);
+  const [manualFiscal, setManualFiscal] = useState<FiscalBreakdown | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Manual invoice form
@@ -183,7 +185,10 @@ export default function NotasFiscais() {
     const p = perfumes.find((x) => x.id === manualForm.perfumeId);
     if (!p) return;
 
-    // Create a manual invoice entry
+    // Custo final: usa fiscal aplicado se houver, senão custo digitado
+    const custoFinal = manualFiscal ? manualFiscal.custoReal : manualForm.custoUnitario;
+
+    // Create a manual invoice entry com discriminação fiscal
     await criarNota({
       numero: `MAN-${Date.now()}`,
       fornecedor: manualForm.fornecedor,
@@ -193,22 +198,41 @@ export default function NotasFiscais() {
         descricaoXml: p.nome,
         codigoXml: p.codigo,
         quantidade: manualForm.quantidade,
-        valorUnitario: manualForm.custoUnitario,
+        valorUnitario: custoFinal,
+        valorProdutoUnit: manualFiscal?.precoUnitario ?? manualForm.custoUnitario,
+        valorIcmsUnit: manualFiscal?.valorIcmsUnit ?? 0,
+        valorIpiUnit: manualFiscal?.valorIpiUnit ?? 0,
+        valorFreteUnit: manualFiscal?.freteUnit ?? 0,
+        valorOutrosUnit: manualFiscal?.outrosUnit ?? 0,
+        valorDescontoUnit: manualFiscal?.descontoUnit ?? 0,
       }],
     });
 
-    // Directly add stock and update cost
+    // Directly add stock and update cost com discriminação
     await adicionarEstoque(manualForm.perfumeId, manualForm.deposito, manualForm.quantidade);
     const estoqueTotal = Object.values(p.estoques).reduce((a, b) => a + b, 0);
-    await atualizarCustoMedio(manualForm.perfumeId, estoqueTotal, p.custo, manualForm.quantidade, manualForm.custoUnitario);
-
-    // Auto-conciliate
-    const latestNotas = await new Promise<NotaFiscal[]>((resolve) => {
-      // We'll just close the form - the nota was created
-      resolve([]);
-    });
+    const qtd = manualForm.quantidade;
+    await atualizarCustoMedio(
+      manualForm.perfumeId,
+      estoqueTotal,
+      p.custo,
+      qtd,
+      custoFinal,
+      manualFiscal
+        ? {
+            valorProduto: manualFiscal.precoUnitario * qtd,
+            valorIcms: manualFiscal.valorIcmsUnit * qtd,
+            valorIpi: manualFiscal.valorIpiUnit * qtd,
+            valorFrete: manualFiscal.freteUnit * qtd,
+            valorOutros: manualFiscal.outrosUnit * qtd,
+            valorDesconto: manualFiscal.descontoUnit * qtd,
+            observacao: `Entrada manual · ${manualForm.fornecedor} · ICMS ${manualFiscal.aliquotaIcms}% · IPI ${manualFiscal.aliquotaIpi}%`,
+          }
+        : { observacao: `Entrada manual · ${manualForm.fornecedor}` }
+    );
 
     setManualForm({ fornecedor: "", perfumeId: "", quantidade: 1, custoUnitario: 0, data: new Date().toISOString().split("T")[0], observacao: "", deposito: "Casa" });
+    setManualFiscal(null);
     setShowManual(false);
   };
 
@@ -303,6 +327,23 @@ export default function NotasFiscais() {
                   className="input-premium px-3 py-2.5 text-sm" />
               </div>
             </div>
+
+            {/* Calculadora Fiscal: ICMS/IPI/Frete -> Custo Real */}
+            {manualForm.custoUnitario > 0 && (
+              <FiscalCostCalculator
+                precoUnitario={manualForm.custoUnitario}
+                onApply={(b) => {
+                  setManualFiscal(b);
+                  setManualForm({ ...manualForm, custoUnitario: b.custoReal });
+                }}
+              />
+            )}
+            {manualFiscal && (
+              <div className="text-[10px] text-gold/80">
+                ✓ Custo real aplicado: {formatCurrency(manualFiscal.custoReal)} — discriminação ficará no histórico do produto.
+              </div>
+            )}
+
             <div className="flex gap-3 pt-1">
               <button onClick={() => setShowManual(false)} className="btn-secondary flex-1 py-2.5">Cancelar</button>
               <button onClick={handleManualCreate}

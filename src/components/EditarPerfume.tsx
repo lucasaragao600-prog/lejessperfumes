@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { X, Check, History, DollarSign, ChevronDown } from "lucide-react";
 import MarkupCalculator from "@/components/MarkupCalculator";
 import ProductImageUpload from "@/components/ProductImageUpload";
+import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalCostCalculator";
 import {
   gerarCodigo,
   formatCurrency,
@@ -37,6 +38,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
   const [codigoBarras, setCodigoBarras] = useState(perfume.codigoBarras || "");
   const [tab, setTab] = useState<"editar" | "custos" | "precos" | "fiscal">("editar");
   const [expandedCustoId, setExpandedCustoId] = useState<string | null>(null);
+  const [fiscalBreakdown, setFiscalBreakdown] = useState<FiscalBreakdown | null>(null);
   // Fiscal fields
   const [ncm, setNcm] = useState(perfume.ncm || "");
   const [cfop, setCfop] = useState(perfume.cfop || "");
@@ -87,16 +89,26 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
       if (novoCusto !== perfume.custo) {
         try {
           const estoqueTotal = Object.values(perfume.estoques || {}).reduce((sum, v) => sum + v, 0);
-          // For manual cost change, treat as if re-evaluating current stock at new cost
           const custoMedioAtual = perfume.custoMedio || perfume.custo;
           const novoCustoMedio = estoqueTotal > 0
             ? ((custoMedioAtual * estoqueTotal + novoCusto * estoqueTotal) / (estoqueTotal * 2))
             : novoCusto;
 
+          const qtd = Math.max(estoqueTotal, 1);
           await registrarCusto({
             produtoId: perfume.id,
             custoUnitario: novoCusto,
             origem: "manual",
+            quantidade: estoqueTotal,
+            valorProduto: fiscalBreakdown ? fiscalBreakdown.precoUnitario * qtd : 0,
+            valorIcms: fiscalBreakdown ? fiscalBreakdown.valorIcmsUnit * qtd : 0,
+            valorIpi: fiscalBreakdown ? fiscalBreakdown.valorIpiUnit * qtd : 0,
+            valorFrete: fiscalBreakdown ? fiscalBreakdown.freteUnit * qtd : 0,
+            valorOutros: fiscalBreakdown ? fiscalBreakdown.outrosUnit * qtd : 0,
+            valorDesconto: fiscalBreakdown ? fiscalBreakdown.descontoUnit * qtd : 0,
+            observacao: fiscalBreakdown
+              ? `Ajuste manual · ICMS ${fiscalBreakdown.aliquotaIcms}% · IPI ${fiscalBreakdown.aliquotaIpi}% · Frete ${formatCurrency(fiscalBreakdown.freteUnit)}/un`
+              : "Ajuste manual de custo",
           });
 
           // Update custo_medio on perfumes table
@@ -333,6 +345,22 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
               />
             </div>
           </div>
+
+          {/* Calculadora Fiscal: ICMS/IPI/Frete -> Custo Real */}
+          {(parseFloat(custo) || 0) > 0 && (
+            <FiscalCostCalculator
+              precoUnitario={parseFloat(custo) || 0}
+              onApply={(b) => {
+                setFiscalBreakdown(b);
+                setCusto(b.custoReal.toFixed(2));
+              }}
+            />
+          )}
+          {fiscalBreakdown && (
+            <div className="text-[10px] text-gold/80">
+              ✓ Custo real aplicado: {formatCurrency(fiscalBreakdown.custoReal)} (Produto + ICMS + IPI + Frete + Outros − Desconto)
+            </div>
+          )}
 
           {/* Markup Calculator */}
           <MarkupCalculator
