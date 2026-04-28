@@ -6,6 +6,7 @@ import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
 import { formatCurrency, formatDate, type Deposito } from "@/data/mockData";
+import { processarXmlNFe } from "@/lib/nfeXmlParser";
 
 type SubTab = "pendentes" | "conciliadas" | "canceladas";
 
