@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { FileText, Upload, Check, X, Plus, Pencil } from "lucide-react";
+import { FileText, Upload, Check, X, Plus, Pencil, ArrowRight, Image as ImageIcon, Eye } from "lucide-react";
 import { useNotasFiscais, type NotaFiscal } from "@/hooks/useNotasFiscais";
 import { useProdutoCustos } from "@/hooks/useProdutoCustos";
 import { useApp } from "@/context/AppContext";
