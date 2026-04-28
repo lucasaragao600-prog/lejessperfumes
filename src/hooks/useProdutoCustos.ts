@@ -8,6 +8,15 @@ export interface ProdutoCusto {
   custoUnitario: number;
   origem: "nota" | "manual" | "ajuste";
   notaId?: string;
+  quantidade: number;
+  valorProduto: number;
+  valorIcms: number;
+  valorIpi: number;
+  valorFrete: number;
+  valorSeguro: number;
+  valorOutros: number;
+  valorDesconto: number;
+  observacao: string;
 }
 
 export function useProdutoCustos(produtoId?: string) {
@@ -30,6 +39,15 @@ export function useProdutoCustos(produtoId?: string) {
         custoUnitario: Number(r.custo_unitario),
         origem: r.origem as "nota" | "manual" | "ajuste",
         notaId: r.nota_id,
+        quantidade: Number(r.quantidade ?? 0),
+        valorProduto: Number(r.valor_produto ?? 0),
+        valorIcms: Number(r.valor_icms ?? 0),
+        valorIpi: Number(r.valor_ipi ?? 0),
+        valorFrete: Number(r.valor_frete ?? 0),
+        valorSeguro: Number(r.valor_seguro ?? 0),
+        valorOutros: Number(r.valor_outros ?? 0),
+        valorDesconto: Number(r.valor_desconto ?? 0),
+        observacao: String(r.observacao ?? ""),
       }));
     },
   });
