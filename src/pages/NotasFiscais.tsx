@@ -477,7 +477,7 @@ export default function NotasFiscais() {
                               <div className="flex-1 min-w-0">
                                 <p className="text-xs font-semibold text-foreground leading-snug">{perfCorr.nome}</p>
                                 <p className="text-[10px] text-muted-foreground mt-0.5">Cód: {perfCorr.codigo}</p>
-                                {perfCorr.casa && <p className="text-[10px] text-muted-foreground">{perfCorr.casa}</p>}
+                                {perfCorr.marca && <p className="text-[10px] text-muted-foreground">{perfCorr.marca}</p>}
                               </div>
                             </div>
 
