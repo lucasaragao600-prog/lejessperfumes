@@ -26,6 +26,8 @@ export default function NotasFiscais() {
   const [editableQtds, setEditableQtds] = useState<EditableQty>({});
   const [showManual, setShowManual] = useState(false);
   const [manualFiscal, setManualFiscal] = useState<FiscalBreakdown | null>(null);
+  const [conciliando, setConciliando] = useState(false);
+  const [salvandoManual, setSalvandoManual] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Manual invoice form
@@ -139,7 +141,9 @@ export default function NotasFiscais() {
   };
 
   const handleConciliar = async () => {
-    if (!notaSelecionada) return;
+    if (!notaSelecionada || conciliando) return;
+    setConciliando(true);
+    try {
     const itensCorrespondidos = notaSelecionada.itens.filter((i) => i.perfumeId);
 
     for (const item of itensCorrespondidos) {
@@ -177,10 +181,16 @@ export default function NotasFiscais() {
     await conciliarNota({ notaId: notaSelecionada.id, conciliadaPor: profile?.nome || "Sistema" });
     setNotaSelecionada(null);
     setEditableQtds({});
+    } finally {
+      setConciliando(false);
+    }
   };
 
   const handleManualCreate = async () => {
     if (!manualForm.fornecedor || !manualForm.perfumeId || manualForm.quantidade < 1) return;
+    if (salvandoManual) return;
+    setSalvandoManual(true);
+    try {
 
     const p = perfumes.find((x) => x.id === manualForm.perfumeId);
     if (!p) return;
