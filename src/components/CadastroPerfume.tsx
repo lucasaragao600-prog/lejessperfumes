@@ -685,6 +685,17 @@ export default function CadastroPerfume({ onClose }: Props) {
           </button>
         </div>
       )}
+
+      {similares && (
+        <SimilarProductsDialog
+          candidates={similares}
+          onRevisar={() => setSimilares(null)}
+          onContinuar={async () => {
+            setSimilares(null);
+            await executarCadastro();
+          }}
+        />
+      )}
     </div>
   );
 }
