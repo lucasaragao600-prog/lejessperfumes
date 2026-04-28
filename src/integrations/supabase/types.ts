@@ -749,6 +749,13 @@ export type Database = {
           perfume_id: string | null
           quantidade: number
           status_correspondencia: string
+          valor_desconto_unit: number
+          valor_frete_unit: number
+          valor_icms_unit: number
+          valor_ipi_unit: number
+          valor_outros_unit: number
+          valor_produto_unit: number
+          valor_seguro_unit: number
           valor_unitario: number
         }
         Insert: {
@@ -760,6 +767,13 @@ export type Database = {
           perfume_id?: string | null
           quantidade?: number
           status_correspondencia?: string
+          valor_desconto_unit?: number
+          valor_frete_unit?: number
+          valor_icms_unit?: number
+          valor_ipi_unit?: number
+          valor_outros_unit?: number
+          valor_produto_unit?: number
+          valor_seguro_unit?: number
           valor_unitario?: number
         }
         Update: {
@@ -771,6 +785,13 @@ export type Database = {
           perfume_id?: string | null
           quantidade?: number
           status_correspondencia?: string
+          valor_desconto_unit?: number
+          valor_frete_unit?: number
+          valor_icms_unit?: number
+          valor_ipi_unit?: number
+          valor_outros_unit?: number
+          valor_produto_unit?: number
+          valor_seguro_unit?: number
           valor_unitario?: number
         }
         Relationships: [
@@ -924,8 +945,17 @@ export type Database = {
           data: string
           id: string
           nota_id: string | null
+          observacao: string
           origem: string
           produto_id: string
+          quantidade: number
+          valor_desconto: number
+          valor_frete: number
+          valor_icms: number
+          valor_ipi: number
+          valor_outros: number
+          valor_produto: number
+          valor_seguro: number
         }
         Insert: {
           created_at?: string
@@ -933,8 +963,17 @@ export type Database = {
           data?: string
           id?: string
           nota_id?: string | null
+          observacao?: string
           origem?: string
           produto_id: string
+          quantidade?: number
+          valor_desconto?: number
+          valor_frete?: number
+          valor_icms?: number
+          valor_ipi?: number
+          valor_outros?: number
+          valor_produto?: number
+          valor_seguro?: number
         }
         Update: {
           created_at?: string
@@ -942,8 +981,17 @@ export type Database = {
           data?: string
           id?: string
           nota_id?: string | null
+          observacao?: string
           origem?: string
           produto_id?: string
+          quantidade?: number
+          valor_desconto?: number
+          valor_frete?: number
+          valor_icms?: number
+          valor_ipi?: number
+          valor_outros?: number
+          valor_produto?: number
+          valor_seguro?: number
         }
         Relationships: [
           {
