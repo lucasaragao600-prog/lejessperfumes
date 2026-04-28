@@ -5,6 +5,7 @@ import { useProdutoCustos } from "@/hooks/useProdutoCustos";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
+import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalCostCalculator";
 import { formatCurrency, formatDate, type Deposito } from "@/data/mockData";
 import { processarXmlNFe } from "@/lib/nfeXmlParser";
 
@@ -24,6 +25,7 @@ export default function NotasFiscais() {
   const [depositoDestino, setDepositoDestino] = useState<string>("Casa");
   const [editableQtds, setEditableQtds] = useState<EditableQty>({});
   const [showManual, setShowManual] = useState(false);
+  const [manualFiscal, setManualFiscal] = useState<FiscalBreakdown | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Manual invoice form
