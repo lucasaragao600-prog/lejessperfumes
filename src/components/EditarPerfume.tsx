@@ -89,16 +89,26 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
       if (novoCusto !== perfume.custo) {
         try {
           const estoqueTotal = Object.values(perfume.estoques || {}).reduce((sum, v) => sum + v, 0);
-          // For manual cost change, treat as if re-evaluating current stock at new cost
           const custoMedioAtual = perfume.custoMedio || perfume.custo;
           const novoCustoMedio = estoqueTotal > 0
             ? ((custoMedioAtual * estoqueTotal + novoCusto * estoqueTotal) / (estoqueTotal * 2))
             : novoCusto;
 
+          const qtd = Math.max(estoqueTotal, 1);
           await registrarCusto({
             produtoId: perfume.id,
             custoUnitario: novoCusto,
             origem: "manual",
+            quantidade: estoqueTotal,
+            valorProduto: fiscalBreakdown ? fiscalBreakdown.precoUnitario * qtd : 0,
+            valorIcms: fiscalBreakdown ? fiscalBreakdown.valorIcmsUnit * qtd : 0,
+            valorIpi: fiscalBreakdown ? fiscalBreakdown.valorIpiUnit * qtd : 0,
+            valorFrete: fiscalBreakdown ? fiscalBreakdown.freteUnit * qtd : 0,
+            valorOutros: fiscalBreakdown ? fiscalBreakdown.outrosUnit * qtd : 0,
+            valorDesconto: fiscalBreakdown ? fiscalBreakdown.descontoUnit * qtd : 0,
+            observacao: fiscalBreakdown
+              ? `Ajuste manual · ICMS ${fiscalBreakdown.aliquotaIcms}% · IPI ${fiscalBreakdown.aliquotaIpi}% · Frete ${formatCurrency(fiscalBreakdown.freteUnit)}/un`
+              : "Ajuste manual de custo",
           });
 
           // Update custo_medio on perfumes table
