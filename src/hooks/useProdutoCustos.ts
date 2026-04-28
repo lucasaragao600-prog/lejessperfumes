@@ -148,6 +148,8 @@ export function useProdutoCustos(produtoId?: string) {
       valorSeguro: detalhes?.valorSeguro,
       valorOutros: detalhes?.valorOutros,
       valorDesconto: detalhes?.valorDesconto,
+      aliquotaIcms: detalhes?.aliquotaIcms,
+      aliquotaIpi: detalhes?.aliquotaIpi,
       observacao: detalhes?.observacao,
     });
 
