@@ -10,6 +10,8 @@ import {
 import { useApp } from "@/context/AppContext";
 import { useProdutoCustos } from "@/hooks/useProdutoCustos";
 import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalCostCalculator";
+import SimilarProductsDialog from "@/components/SimilarProductsDialog";
+import { findSimilarProducts, type SimilarityCandidate } from "@/lib/productSimilarity";
 
 interface Props {
   onClose: () => void;
@@ -18,10 +20,11 @@ interface Props {
 type Tab = "cadastrar" | "casas";
 
 export default function CadastroPerfume({ onClose }: Props) {
-  const { casas, adicionarCasaDB, removerCasaDB, adicionarPerfume, proximaLinhaPorCasa, tiposPerfumeConfig, concentracoesConfig, volumesPadrao } = useApp();
+  const { perfumes, casas, adicionarCasaDB, removerCasaDB, adicionarPerfume, proximaLinhaPorCasa, tiposPerfumeConfig, concentracoesConfig, volumesPadrao } = useApp();
   const { registrarCusto } = useProdutoCustos();
   const [tab, setTab] = useState<Tab>("cadastrar");
   const [fiscalBreakdown, setFiscalBreakdown] = useState<FiscalBreakdown | null>(null);
+  const [similares, setSimilares] = useState<SimilarityCandidate[] | null>(null);
 
   // --- Estado do formulário ---
   const [tipo, setTipo] = useState<TipoPerfume>("NI");
@@ -113,8 +116,8 @@ export default function CadastroPerfume({ onClose }: Props) {
 
   const casasFiltradas = casas.filter((c) => c.tipo === tipo);
 
-  const handleSubmit = async () => {
-    if (!casaSelecionada || !nome || !custo || !precoVenda) return;
+  const executarCadastro = async () => {
+    if (!casaSelecionada) return;
     const custoFinal = fiscalBreakdown ? fiscalBreakdown.custoReal : parseFloat(custo);
     const novoId = `p${Date.now()}`;
     const novoPerfume: Perfume = {
@@ -160,6 +163,27 @@ export default function CadastroPerfume({ onClose }: Props) {
       }
     }
     onClose();
+  };
+
+  const handleSubmit = async () => {
+    if (!casaSelecionada || !nome || !custo || !precoVenda) return;
+    // Validação de similaridade (>= 80%)
+    const candidatos = findSimilarProducts(
+      {
+        nome,
+        marca: casaSelecionada.nome,
+        casaSigla: casaSelecionada.sigla,
+        concentracao,
+        volume,
+      },
+      perfumes,
+      0.8,
+    );
+    if (candidatos.length > 0) {
+      setSimilares(candidatos);
+      return;
+    }
+    await executarCadastro();
   };
 
   const handleAdicionarCasa = async () => {
@@ -660,6 +684,17 @@ export default function CadastroPerfume({ onClose }: Props) {
             Cadastrar Produto · {codigoPreview}
           </button>
         </div>
+      )}
+
+      {similares && (
+        <SimilarProductsDialog
+          candidates={similares}
+          onRevisar={() => setSimilares(null)}
+          onContinuar={async () => {
+            setSimilares(null);
+            await executarCadastro();
+          }}
+        />
       )}
     </div>
   );
