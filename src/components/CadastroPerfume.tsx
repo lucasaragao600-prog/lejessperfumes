@@ -383,10 +383,24 @@ export default function CadastroPerfume({ onClose }: Props) {
                   onChange={(e) => setPrecoVenda(e.target.value)}
                   className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
                 />
-              </div>
             </div>
 
-            {/* Markup Calculator */}
+            {/* Calculadora Fiscal: ICMS/IPI/Frete -> Custo Real */}
+            {custoNum > 0 && (
+              <FiscalCostCalculator
+                precoUnitario={custoNum}
+                onApply={(b) => {
+                  setFiscalBreakdown(b);
+                  setCusto(b.custoReal.toFixed(2));
+                }}
+              />
+            )}
+            {fiscalBreakdown && (
+              <div className="text-[10px] text-gold/80 -mt-3">
+                ✓ Custo real aplicado: {fiscalBreakdown.custoReal.toFixed(2)} (Produto + ICMS + IPI + Frete)
+              </div>
+            )}
+
             {custoNum > 0 && (
               <div className="border border-gold-muted rounded-xl overflow-hidden">
                 <button
