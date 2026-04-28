@@ -383,6 +383,7 @@ export default function CadastroPerfume({ onClose }: Props) {
                   onChange={(e) => setPrecoVenda(e.target.value)}
                   className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
                 />
+              </div>
             </div>
 
             {/* Calculadora Fiscal: ICMS/IPI/Frete -> Custo Real */}
