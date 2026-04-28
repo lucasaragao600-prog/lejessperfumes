@@ -49,6 +49,8 @@ export function useProdutoCustos(produtoId?: string) {
         valorSeguro: Number(r.valor_seguro ?? 0),
         valorOutros: Number(r.valor_outros ?? 0),
         valorDesconto: Number(r.valor_desconto ?? 0),
+        aliquotaIcms: Number(r.aliquota_icms ?? 0),
+        aliquotaIpi: Number(r.aliquota_ipi ?? 0),
         observacao: String(r.observacao ?? ""),
       }));
     },
