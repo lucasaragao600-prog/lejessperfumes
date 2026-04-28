@@ -106,6 +106,8 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
             valorFrete: fiscalBreakdown ? fiscalBreakdown.freteUnit * qtd : 0,
             valorOutros: fiscalBreakdown ? fiscalBreakdown.outrosUnit * qtd : 0,
             valorDesconto: fiscalBreakdown ? fiscalBreakdown.descontoUnit * qtd : 0,
+            aliquotaIcms: fiscalBreakdown ? fiscalBreakdown.aliquotaIcms : 0,
+            aliquotaIpi: fiscalBreakdown ? fiscalBreakdown.aliquotaIpi : 0,
             observacao: fiscalBreakdown
               ? `Ajuste manual · ICMS ${fiscalBreakdown.aliquotaIcms}% · IPI ${fiscalBreakdown.aliquotaIpi}% · Frete ${formatCurrency(fiscalBreakdown.freteUnit)}/un`
               : "Ajuste manual de custo",
