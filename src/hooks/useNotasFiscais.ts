@@ -87,11 +87,16 @@ export function useNotasFiscais() {
       fornecedor: string;
       cnpj: string;
       dataEmissao?: string;
+      status?: "pendente" | "conciliada" | "cancelada";
+      conciliadaPor?: string;
+      depositoDestino?: string;
       itens: {
         descricaoXml: string;
         codigoXml?: string;
         quantidade: number;
         valorUnitario: number;
+        perfumeId?: string;
+        statusCorrespondencia?: "pendente" | "correspondido" | "ignorado";
         valorProdutoUnit?: number;
         valorIcmsUnit?: number;
         valorIpiUnit?: number;
@@ -108,6 +113,10 @@ export function useNotasFiscais() {
           fornecedor: nota.fornecedor,
           cnpj: nota.cnpj,
           data_emissao: nota.dataEmissao || null,
+          status: nota.status || "pendente",
+          conciliada_em: nota.status === "conciliada" ? new Date().toISOString() : null,
+          conciliada_por: nota.status === "conciliada" ? nota.conciliadaPor || null : null,
+          deposito_destino: nota.depositoDestino || null,
         })
         .select()
         .single();
@@ -121,6 +130,8 @@ export function useNotasFiscais() {
             codigo_xml: i.codigoXml || null,
             quantidade: i.quantidade,
             valor_unitario: i.valorUnitario,
+            perfume_id: i.perfumeId || null,
+            status_correspondencia: i.statusCorrespondencia || (i.perfumeId ? "correspondido" : "pendente"),
             valor_produto_unit: i.valorProdutoUnit ?? 0,
             valor_icms_unit: i.valorIcmsUnit ?? 0,
             valor_ipi_unit: i.valorIpiUnit ?? 0,

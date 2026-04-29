@@ -220,6 +220,8 @@ export default function NotasFiscais() {
             codigoXml: p?.codigo,
             quantidade: it.quantidade,
             valorUnitario: custoFinal,
+            perfumeId: it.perfumeId,
+            statusCorrespondencia: "correspondido" as const,
             valorProdutoUnit: it.fiscal?.precoUnitario ?? it.custoUnitario,
             valorIcmsUnit: it.fiscal?.valorIcmsUnit ?? 0,
             valorIpiUnit: it.fiscal?.valorIpiUnit ?? 0,
@@ -235,6 +237,9 @@ export default function NotasFiscais() {
         fornecedor: manualForm.fornecedor,
         cnpj: "Manual",
         dataEmissao: manualForm.data,
+        status: "conciliada",
+        conciliadaPor: profile?.nome || "Sistema",
+        depositoDestino: manualForm.deposito,
         itens: itensNota.map((x) => x.payload),
       });
 
