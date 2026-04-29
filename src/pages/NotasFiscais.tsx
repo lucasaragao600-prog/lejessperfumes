@@ -30,16 +30,30 @@ export default function NotasFiscais() {
   const [salvandoManual, setSalvandoManual] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Manual invoice form
+  // Manual invoice form (header)
   const [manualForm, setManualForm] = useState({
     fornecedor: "",
-    perfumeId: "",
-    quantidade: 1,
-    custoUnitario: 0,
     data: new Date().toISOString().split("T")[0],
     observacao: "",
     deposito: "Casa" as Deposito,
   });
+
+  // Itens da entrada manual (vários produtos por nota)
+  interface ManualItem {
+    id: string;
+    perfumeId: string;
+    quantidade: number;
+    custoUnitario: number;
+    fiscal: FiscalBreakdown | null;
+  }
+  const novoItem = (): ManualItem => ({
+    id: `m-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    perfumeId: "",
+    quantidade: 1,
+    custoUnitario: 0,
+    fiscal: null,
+  });
+  const [manualItens, setManualItens] = useState<ManualItem[]>([novoItem()]);
 
   // Mantém notaSelecionada sincronizada com refetch após atualizar correspondência
   useEffect(() => {
