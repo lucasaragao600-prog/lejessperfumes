@@ -30,16 +30,30 @@ export default function NotasFiscais() {
   const [salvandoManual, setSalvandoManual] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // Manual invoice form
+  // Manual invoice form (header)
   const [manualForm, setManualForm] = useState({
     fornecedor: "",
-    perfumeId: "",
-    quantidade: 1,
-    custoUnitario: 0,
     data: new Date().toISOString().split("T")[0],
     observacao: "",
     deposito: "Casa" as Deposito,
   });
+
+  // Itens da entrada manual (vários produtos por nota)
+  interface ManualItem {
+    id: string;
+    perfumeId: string;
+    quantidade: number;
+    custoUnitario: number;
+    fiscal: FiscalBreakdown | null;
+  }
+  const novoItem = (): ManualItem => ({
+    id: `m-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    perfumeId: "",
+    quantidade: 1,
+    custoUnitario: 0,
+    fiscal: null,
+  });
+  const [manualItens, setManualItens] = useState<ManualItem[]>([novoItem()]);
 
   // Mantém notaSelecionada sincronizada com refetch após atualizar correspondência
   useEffect(() => {
@@ -187,63 +201,73 @@ export default function NotasFiscais() {
   };
 
   const handleManualCreate = async () => {
-    if (!manualForm.fornecedor || !manualForm.perfumeId || manualForm.quantidade < 1) return;
+    if (!manualForm.fornecedor) return;
+    const itensValidos = manualItens.filter((it) => it.perfumeId && it.quantidade > 0);
+    if (itensValidos.length === 0) return;
     if (salvandoManual) return;
     setSalvandoManual(true);
     try {
+      // Monta itens da nota agregando dados fiscais por linha
+      const itensNota = itensValidos.map((it) => {
+        const p = perfumes.find((x) => x.id === it.perfumeId);
+        const custoFinal = it.fiscal ? it.fiscal.custoReal : it.custoUnitario;
+        return {
+          it,
+          p,
+          custoFinal,
+          payload: {
+            descricaoXml: p?.nome || "",
+            codigoXml: p?.codigo,
+            quantidade: it.quantidade,
+            valorUnitario: custoFinal,
+            valorProdutoUnit: it.fiscal?.precoUnitario ?? it.custoUnitario,
+            valorIcmsUnit: it.fiscal?.valorIcmsUnit ?? 0,
+            valorIpiUnit: it.fiscal?.valorIpiUnit ?? 0,
+            valorFreteUnit: it.fiscal?.freteUnit ?? 0,
+            valorOutrosUnit: it.fiscal?.outrosUnit ?? 0,
+            valorDescontoUnit: it.fiscal?.descontoUnit ?? 0,
+          },
+        };
+      });
 
-    const p = perfumes.find((x) => x.id === manualForm.perfumeId);
-    if (!p) return;
+      await criarNota({
+        numero: `MAN-${Date.now()}`,
+        fornecedor: manualForm.fornecedor,
+        cnpj: "Manual",
+        dataEmissao: manualForm.data,
+        itens: itensNota.map((x) => x.payload),
+      });
 
-    // Custo final: usa fiscal aplicado se houver, senão custo digitado
-    const custoFinal = manualFiscal ? manualFiscal.custoReal : manualForm.custoUnitario;
+      // Estoque + custo médio para cada item
+      for (const { it, p, custoFinal } of itensNota) {
+        if (!p) continue;
+        await adicionarEstoque(it.perfumeId, manualForm.deposito, it.quantidade);
+        const estoqueTotal = Object.values(p.estoques).reduce((a, b) => a + b, 0);
+        const qtd = it.quantidade;
+        await atualizarCustoMedio(
+          it.perfumeId,
+          estoqueTotal,
+          p.custo,
+          qtd,
+          custoFinal,
+          it.fiscal
+            ? {
+                valorProduto: it.fiscal.precoUnitario * qtd,
+                valorIcms: it.fiscal.valorIcmsUnit * qtd,
+                valorIpi: it.fiscal.valorIpiUnit * qtd,
+                valorFrete: it.fiscal.freteUnit * qtd,
+                valorOutros: it.fiscal.outrosUnit * qtd,
+                valorDesconto: it.fiscal.descontoUnit * qtd,
+                observacao: `Entrada manual · ${manualForm.fornecedor} · ICMS ${it.fiscal.aliquotaIcms}% · IPI ${it.fiscal.aliquotaIpi}%`,
+              }
+            : { observacao: `Entrada manual · ${manualForm.fornecedor}` }
+        );
+      }
 
-    // Create a manual invoice entry com discriminação fiscal
-    await criarNota({
-      numero: `MAN-${Date.now()}`,
-      fornecedor: manualForm.fornecedor,
-      cnpj: "Manual",
-      dataEmissao: manualForm.data,
-      itens: [{
-        descricaoXml: p.nome,
-        codigoXml: p.codigo,
-        quantidade: manualForm.quantidade,
-        valorUnitario: custoFinal,
-        valorProdutoUnit: manualFiscal?.precoUnitario ?? manualForm.custoUnitario,
-        valorIcmsUnit: manualFiscal?.valorIcmsUnit ?? 0,
-        valorIpiUnit: manualFiscal?.valorIpiUnit ?? 0,
-        valorFreteUnit: manualFiscal?.freteUnit ?? 0,
-        valorOutrosUnit: manualFiscal?.outrosUnit ?? 0,
-        valorDescontoUnit: manualFiscal?.descontoUnit ?? 0,
-      }],
-    });
-
-    // Directly add stock and update cost com discriminação
-    await adicionarEstoque(manualForm.perfumeId, manualForm.deposito, manualForm.quantidade);
-    const estoqueTotal = Object.values(p.estoques).reduce((a, b) => a + b, 0);
-    const qtd = manualForm.quantidade;
-    await atualizarCustoMedio(
-      manualForm.perfumeId,
-      estoqueTotal,
-      p.custo,
-      qtd,
-      custoFinal,
-      manualFiscal
-        ? {
-            valorProduto: manualFiscal.precoUnitario * qtd,
-            valorIcms: manualFiscal.valorIcmsUnit * qtd,
-            valorIpi: manualFiscal.valorIpiUnit * qtd,
-            valorFrete: manualFiscal.freteUnit * qtd,
-            valorOutros: manualFiscal.outrosUnit * qtd,
-            valorDesconto: manualFiscal.descontoUnit * qtd,
-            observacao: `Entrada manual · ${manualForm.fornecedor} · ICMS ${manualFiscal.aliquotaIcms}% · IPI ${manualFiscal.aliquotaIpi}%`,
-          }
-        : { observacao: `Entrada manual · ${manualForm.fornecedor}` }
-    );
-
-    setManualForm({ fornecedor: "", perfumeId: "", quantidade: 1, custoUnitario: 0, data: new Date().toISOString().split("T")[0], observacao: "", deposito: "Casa" });
-    setManualFiscal(null);
-    setShowManual(false);
+      setManualForm({ fornecedor: "", data: new Date().toISOString().split("T")[0], observacao: "", deposito: "Casa" });
+      setManualItens([novoItem()]);
+      setManualFiscal(null);
+      setShowManual(false);
     } finally {
       setSalvandoManual(false);
     }
@@ -289,29 +313,12 @@ export default function NotasFiscais() {
         <div className="mx-4 mb-5 card-premium p-5 animate-fade-in" style={{ boxShadow: "var(--shadow-gold)" }}>
           <h3 className="font-display text-lg text-foreground mb-4">Entrada Manual</h3>
           <div className="space-y-3">
-            <div>
-              <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Fornecedor</label>
-              <input type="text" value={manualForm.fornecedor}
-                onChange={(e) => setManualForm({ ...manualForm, fornecedor: e.target.value })}
-                placeholder="Nome do fornecedor"
-                className="input-premium px-3 py-2.5 text-sm" />
-            </div>
-            <div>
-              <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Produto</label>
-              <PerfumeSearchSelect perfumes={perfumes} value={manualForm.perfumeId}
-                onChange={(id) => setManualForm({ ...manualForm, perfumeId: id })} concentracoesConfig={concentracoesConfig} />
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Qtd</label>
-                <input type="number" min={1} value={manualForm.quantidade}
-                  onChange={(e) => setManualForm({ ...manualForm, quantidade: parseInt(e.target.value) || 1 })}
-                  className="input-premium px-3 py-2.5 text-sm" />
-              </div>
-              <div>
-                <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Custo Un.</label>
-                <input type="number" min={0} step="0.01" value={manualForm.custoUnitario || ""}
-                  onChange={(e) => setManualForm({ ...manualForm, custoUnitario: parseFloat(e.target.value) || 0 })}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div className="md:col-span-1">
+                <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Fornecedor</label>
+                <input type="text" value={manualForm.fornecedor}
+                  onChange={(e) => setManualForm({ ...manualForm, fornecedor: e.target.value })}
+                  placeholder="Nome do fornecedor"
                   className="input-premium px-3 py-2.5 text-sm" />
               </div>
               <div>
@@ -324,43 +331,89 @@ export default function NotasFiscais() {
                   <option value="Amazonas">Amazonas</option>
                 </select>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Data</label>
                 <input type="date" value={manualForm.data}
                   onChange={(e) => setManualForm({ ...manualForm, data: e.target.value })}
                   className="input-premium px-3 py-2.5 text-sm [color-scheme:dark]" />
               </div>
-              <div>
-                <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Observação</label>
-                <input type="text" value={manualForm.observacao}
-                  onChange={(e) => setManualForm({ ...manualForm, observacao: e.target.value })}
-                  placeholder="Opcional"
-                  className="input-premium px-3 py-2.5 text-sm" />
-              </div>
             </div>
 
-            {/* Calculadora Fiscal: ICMS/IPI/Frete -> Custo Real */}
-            {manualForm.custoUnitario > 0 && (
-              <FiscalCostCalculator
-                precoUnitario={manualForm.custoUnitario}
-                onApply={(b) => {
-                  setManualFiscal(b);
-                  setManualForm({ ...manualForm, custoUnitario: b.custoReal });
-                }}
-              />
-            )}
-            {manualFiscal && (
-              <div className="text-[10px] text-gold/80">
-                ✓ Custo real aplicado: {formatCurrency(manualFiscal.custoReal)} — discriminação ficará no histórico do produto.
+            <div>
+              <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Observação</label>
+              <input type="text" value={manualForm.observacao}
+                onChange={(e) => setManualForm({ ...manualForm, observacao: e.target.value })}
+                placeholder="Opcional"
+                className="input-premium px-3 py-2.5 text-sm" />
+            </div>
+
+            {/* Itens da nota */}
+            <div className="space-y-3 pt-2 border-t border-border">
+              <div className="flex items-center justify-between">
+                <h4 className="text-[11px] uppercase tracking-wider font-medium text-muted-foreground">Produtos ({manualItens.length})</h4>
+                <button type="button"
+                  onClick={() => setManualItens([...manualItens, novoItem()])}
+                  className="text-xs text-gold hover:text-gold/80 flex items-center gap-1">
+                  <Plus size={14} /> Adicionar produto
+                </button>
               </div>
-            )}
+
+              {manualItens.map((it, idx) => (
+                <div key={it.id} className="rounded-lg border border-border bg-surface-overlay p-3 space-y-2 relative">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Item {idx + 1}</span>
+                    {manualItens.length > 1 && (
+                      <button type="button"
+                        onClick={() => setManualItens(manualItens.filter((m) => m.id !== it.id))}
+                        className="text-muted-foreground hover:text-destructive">
+                        <X size={14} />
+                      </button>
+                    )}
+                  </div>
+                  <div>
+                    <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Produto</label>
+                    <PerfumeSearchSelect perfumes={perfumes} value={it.perfumeId}
+                      onChange={(id) => setManualItens(manualItens.map((m) => m.id === it.id ? { ...m, perfumeId: id } : m))}
+                      concentracoesConfig={concentracoesConfig} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Qtd</label>
+                      <input type="number" min={1} value={it.quantidade || ""}
+                        placeholder="0"
+                        onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                        onChange={(e) => setManualItens(manualItens.map((m) => m.id === it.id ? { ...m, quantidade: parseInt(e.target.value) || 0 } : m))}
+                        className="input-premium px-3 py-2.5 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium">Custo Un.</label>
+                      <input type="number" min={0} step="0.01" value={it.custoUnitario || ""}
+                        placeholder="0,00"
+                        onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                        onChange={(e) => setManualItens(manualItens.map((m) => m.id === it.id ? { ...m, custoUnitario: parseFloat(e.target.value) || 0 } : m))}
+                        className="input-premium px-3 py-2.5 text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                    </div>
+                  </div>
+
+                  {it.custoUnitario > 0 && (
+                    <FiscalCostCalculator
+                      precoUnitario={it.custoUnitario}
+                      onApply={(b) => setManualItens(manualItens.map((m) => m.id === it.id ? { ...m, fiscal: b, custoUnitario: b.custoReal } : m))}
+                    />
+                  )}
+                  {it.fiscal && (
+                    <div className="text-[10px] text-gold/80">
+                      ✓ Custo real aplicado: {formatCurrency(it.fiscal.custoReal)} — discriminação ficará no histórico.
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
 
             <div className="flex gap-3 pt-1">
               <button onClick={() => setShowManual(false)} className="btn-secondary flex-1 py-2.5">Cancelar</button>
               <button onClick={handleManualCreate}
-                disabled={salvandoManual || !manualForm.fornecedor || !manualForm.perfumeId || manualForm.quantidade < 1}
+                disabled={salvandoManual || !manualForm.fornecedor || manualItens.filter((i) => i.perfumeId && i.quantidade > 0).length === 0}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-primary-foreground disabled:opacity-50"
                 style={{ background: "var(--gradient-gold)" }}>
                 <Check size={14} className="inline mr-1" /> {salvandoManual ? "Salvando..." : "Dar Entrada"}
