@@ -516,19 +516,39 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
                             {h.quantidade > 0 && (
                               <p className="text-[10px] text-muted-foreground">Quantidade: <span className="text-foreground font-medium">{h.quantidade}</span></p>
                             )}
-                            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
-                              {h.valorProduto > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Produto</span><span className="text-foreground font-medium">{formatCurrency(h.valorProduto)}</span></div>}
-                              {(h.valorIcms > 0 || h.aliquotaIcms > 0) && <div className="flex justify-between"><span className="text-muted-foreground">ICMS{h.aliquotaIcms > 0 ? ` (${h.aliquotaIcms}%)` : ""}</span><span className="text-foreground font-medium">{formatCurrency(h.valorIcms)}</span></div>}
-                              {(h.valorIpi > 0 || h.aliquotaIpi > 0) && <div className="flex justify-between"><span className="text-muted-foreground">IPI{h.aliquotaIpi > 0 ? ` (${h.aliquotaIpi}%)` : ""}</span><span className="text-foreground font-medium">{formatCurrency(h.valorIpi)}</span></div>}
-                              {h.valorFrete > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Frete</span><span className="text-foreground font-medium">{formatCurrency(h.valorFrete)}</span></div>}
-                              {h.valorSeguro > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Seguro</span><span className="text-foreground font-medium">{formatCurrency(h.valorSeguro)}</span></div>}
-                              {h.valorOutros > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Outros</span><span className="text-foreground font-medium">{formatCurrency(h.valorOutros)}</span></div>}
-                              {h.valorDesconto > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Desconto</span><span className="text-destructive font-medium">−{formatCurrency(h.valorDesconto)}</span></div>}
-                            </div>
+                            {(() => {
+                              const qtd = h.quantidade > 0 ? h.quantidade : 1;
+                              const unit = (v: number) => v / qtd;
+                              const Row = ({ label, valor, destrutivo }: { label: string; valor: number; destrutivo?: boolean }) => (
+                                <div className="flex justify-between gap-2">
+                                  <span className="text-muted-foreground truncate">{label}</span>
+                                  <span className={`${destrutivo ? "text-destructive" : "text-foreground"} font-medium whitespace-nowrap`}>
+                                    {destrutivo ? "−" : ""}{formatCurrency(valor)}
+                                    {h.quantidade > 0 && (
+                                      <span className="text-muted-foreground font-normal"> · un. {destrutivo ? "−" : ""}{formatCurrency(unit(valor))}</span>
+                                    )}
+                                  </span>
+                                </div>
+                              );
+                              return (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-1.5 text-[10px]">
+                                  {h.valorProduto > 0 && <Row label="Produto" valor={h.valorProduto} />}
+                                  {(h.valorIcms > 0 || h.aliquotaIcms > 0) && <Row label={`ICMS${h.aliquotaIcms > 0 ? ` (${h.aliquotaIcms}%)` : ""}`} valor={h.valorIcms} />}
+                                  {(h.valorIpi > 0 || h.aliquotaIpi > 0) && <Row label={`IPI${h.aliquotaIpi > 0 ? ` (${h.aliquotaIpi}%)` : ""}`} valor={h.valorIpi} />}
+                                  {h.valorFrete > 0 && <Row label="Frete" valor={h.valorFrete} />}
+                                  {h.valorSeguro > 0 && <Row label="Seguro" valor={h.valorSeguro} />}
+                                  {h.valorOutros > 0 && <Row label="Outros" valor={h.valorOutros} />}
+                                  {h.valorDesconto > 0 && <Row label="Desconto" valor={h.valorDesconto} destrutivo />}
+                                </div>
+                              );
+                            })()}
                             {h.quantidade > 0 && (h.valorProduto + h.valorIcms + h.valorIpi + h.valorFrete + h.valorSeguro + h.valorOutros) > 0 && (
                               <div className="pt-2 border-t border-border/50 flex justify-between text-[10px]">
                                 <span className="text-muted-foreground">Custo total da entrada</span>
-                                <span className="text-gold font-semibold">{formatCurrency(h.custoUnitario * h.quantidade)}</span>
+                                <span className="text-gold font-semibold">
+                                  {formatCurrency(h.custoUnitario * h.quantidade)}
+                                  <span className="text-muted-foreground font-normal"> · un. {formatCurrency(h.custoUnitario)}</span>
+                                </span>
                               </div>
                             )}
                           </div>
