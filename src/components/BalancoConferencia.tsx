@@ -110,6 +110,12 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
   const [tab, setTab] = useState<"scan" | "lista">(isBarras ? "scan" : "lista");
   const casaLabelMap = useMemo(() => Object.fromEntries(casas.map((c) => [c.sigla, c.nome])), [casas]);
 
+  // Lançamento rápido na aba Lista (bipe + busca manual)
+  const [listaCodigo, setListaCodigo] = useState("");
+  const [listaPerfumeId, setListaPerfumeId] = useState("");
+  const [listaQtd, setListaQtd] = useState("1");
+  const listaCodigoRef = useRef<HTMLInputElement>(null);
+
   // Auto-focus contínuo no campo de scan
   useEffect(() => {
     if (tab === "scan") scanRef.current?.focus();
