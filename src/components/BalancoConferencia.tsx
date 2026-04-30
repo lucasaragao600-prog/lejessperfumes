@@ -76,6 +76,7 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
   const { data: leituras = [] } = useBalancoLeituras(balancoId);
   const { concentracoesConfig } = useConfiguracoes();
   const { casas } = useCasas();
+  const { perfumes } = usePerfumes();
   const balanco = balancos.find((b) => b.id === balancoId);
 
   const isCega = balanco?.tipo_contagem === "cega";
