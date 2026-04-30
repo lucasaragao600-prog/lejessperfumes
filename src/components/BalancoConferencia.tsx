@@ -617,6 +617,108 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
       {/* Filtros + lista (sempre disponíveis em tab=lista, ou para modo manual) */}
       {(tab === "lista" || !isBarras || !editavel) && (
         <div className="space-y-3">
+          {/* Lançamento rápido: bipe + busca manual lado a lado */}
+          {editavel && (
+            <div className="card-premium p-4 space-y-3 border border-gold/30">
+              <div className="flex items-center gap-2">
+                <ScanBarcode className="text-gold" size={16} />
+                <span className="font-display text-sm">Lançar contagem</span>
+                <span className="text-[10px] text-muted-foreground ml-auto">Bipe ou selecione o perfume</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {/* Coluna 1: bipe por código */}
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Código (GTIN/SKU)</label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <ScanBarcode size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gold" />
+                      <input
+                        ref={listaCodigoRef}
+                        value={listaCodigo}
+                        onChange={(e) => setListaCodigo(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const v = listaCodigo.trim();
+                            if (!v) return;
+                            setListaCodigo("");
+                            void handleScan(v, parseInt(listaQtd, 10) || 1);
+                            setTimeout(() => listaCodigoRef.current?.focus(), 50);
+                          }
+                        }}
+                        placeholder="Bipe ou digite o código"
+                        className="input-premium pl-9 pr-3 py-2.5 w-full text-sm font-mono"
+                        autoComplete="off"
+                      />
+                    </div>
+                    <button
+                      onClick={() => {
+                        const v = listaCodigo.trim();
+                        if (!v) return;
+                        setListaCodigo("");
+                        void handleScan(v, parseInt(listaQtd, 10) || 1);
+                        setTimeout(() => listaCodigoRef.current?.focus(), 50);
+                      }}
+                      className="btn-primary px-3 text-xs"
+                    >
+                      Bipar
+                    </button>
+                  </div>
+                </div>
+
+                {/* Coluna 2: busca manual de perfume */}
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Buscar perfume</label>
+                  <div className="flex gap-2">
+                    <div className="flex-1 min-w-0">
+                      <PerfumeSearchSelect
+                        perfumes={perfumes}
+                        value={listaPerfumeId}
+                        onChange={setListaPerfumeId}
+                        concentracoesConfig={concentracoesConfig}
+                        placeholder="Pesquise marca, nome ou SKU…"
+                      />
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (!listaPerfumeId) {
+                          toast.error("Selecione um perfume");
+                          return;
+                        }
+                        const p = perfumes.find((x) => x.id === listaPerfumeId);
+                        if (!p) return;
+                        await handleScan(p.codigo, parseInt(listaQtd, 10) || 1);
+                        setListaPerfumeId("");
+                      }}
+                      className="btn-primary px-3 text-xs"
+                    >
+                      Lançar
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Quantidade compartilhada */}
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Qtd</label>
+                <input
+                  value={listaQtd}
+                  onChange={(e) => setListaQtd(e.target.value.replace(/[^0-9]/g, ""))}
+                  onBlur={() => { if (!listaQtd) setListaQtd("1"); }}
+                  onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                  inputMode="numeric"
+                  className="input-premium px-2 py-1.5 w-16 text-center text-sm"
+                />
+                {ultimoBip && (
+                  <div className={`flex-1 text-right text-[11px] truncate ${ultimoBip.ok ? "text-success" : "text-destructive"}`}>
+                    {ultimoBip.ok ? "✓" : "✗"} {ultimoBip.nome} · total {ultimoBip.qtd}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
