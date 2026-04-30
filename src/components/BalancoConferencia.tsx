@@ -7,6 +7,7 @@ import { useBalancos, useBalancoItens, type BalancoItem } from "@/hooks/useBalan
 import { useAuth } from "@/context/AuthContext";
 import { usePerfumes } from "@/hooks/usePerfumes";
 import { useProdutoGtins } from "@/hooks/useProdutoGtins";
+import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
 import { useBalancoLeituras } from "@/hooks/useBalancoLeituras";
 import { useConfiguracoes } from "@/hooks/useConfiguracoes";
 import { useCasas } from "@/hooks/useCasas";
