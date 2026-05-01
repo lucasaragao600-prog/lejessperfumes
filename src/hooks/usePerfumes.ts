@@ -224,7 +224,8 @@ export function usePerfumes() {
   };
 
   const proximaLinhaPorCasa = (casaSigla: string): number => {
-    const sigla = casaSigla.replace(/[^A-Z0-9]/gi, "").toUpperCase().padEnd(3, "X").slice(0, 3);
+    const siglaLimpa = casaSigla.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+    const sigla = (/^[0-9]+$/.test(siglaLimpa) ? siglaLimpa.padStart(3, "0") : siglaLimpa.padEnd(3, "X")).slice(0, 3);
     let maxLinha = 0;
     for (const p of perfumes) {
       if (p.casaSigla !== casaSigla) continue;
