@@ -209,7 +209,8 @@ export default function ImportarPlanilha() {
         linhasPorCasa[item.casaSigla] = linha + 1;
 
         const tt = item.tipo.padEnd(2, "X").slice(0, 2);
-        const mm = item.casaSigla.replace(/[^A-Z0-9]/gi, "").toUpperCase().padEnd(3, "X").slice(0, 3);
+        const siglaLimpa = item.casaSigla.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+        const mm = (/^[0-9]+$/.test(siglaLimpa) ? siglaLimpa.padStart(3, "0") : siglaLimpa.padEnd(3, "X")).slice(0, 3);
         const cc = item.concentracao.slice(0, 2).toUpperCase();
         const llll = String(linha).padStart(4, "0");
         const vvv = String(item.volume).padStart(3, "0");
