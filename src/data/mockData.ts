@@ -127,7 +127,11 @@ export function gerarCodigo(
   volume: number
 ): string {
   const tt = tipo.padEnd(2, "X").slice(0, 2);
-  const mmm = casaSigla.replace(/[^A-Z0-9]/gi, "").toUpperCase().padEnd(3, "X").slice(0, 3);
+  const siglaLimpa = casaSigla.replace(/[^A-Z0-9]/gi, "").toUpperCase();
+  // Se a sigla for puramente numérica, completa com zeros à esquerda; caso contrário, com X à direita
+  const mmm = (/^[0-9]+$/.test(siglaLimpa)
+    ? siglaLimpa.padStart(3, "0")
+    : siglaLimpa.padEnd(3, "X")).slice(0, 3);
   const cc = concentracao.slice(0, 2).toUpperCase();
   const llll = String(linhaPorCasa).padStart(4, "0");
   const vvv = String(volume).padStart(3, "0");
