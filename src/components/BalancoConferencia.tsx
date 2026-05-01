@@ -801,14 +801,15 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
         )
       )}
 
-      {/* Action bar */}
-      {editavel && Object.keys(edits).length > 0 && (
-        <div className="fixed bottom-20 md:bottom-6 left-0 right-0 px-4 z-40">
-          <div className="max-w-md md:max-w-2xl mx-auto card-premium p-3 flex gap-2 shadow-elevated">
-            <button onClick={handleSalvarTudo} className="btn-secondary flex-1 py-2.5 text-sm">
-              <Save size={14} /> Salvar todos ({Object.keys(edits).length})
-            </button>
-          </div>
+      {/* Atalho: salvar todos os itens editados de uma vez */}
+      {editavel && Object.keys(edits).length > 1 && (
+        <div className="card-premium p-3 flex items-center gap-3">
+          <p className="text-xs text-muted-foreground flex-1">
+            {Object.keys(edits).length} itens com contagem pendente de salvar
+          </p>
+          <button onClick={handleSalvarTudo} className="btn-primary px-4 py-2 text-xs">
+            <Save size={14} /> Salvar todos
+          </button>
         </div>
       )}
 
