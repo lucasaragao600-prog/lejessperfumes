@@ -23,12 +23,15 @@ import { useAuth } from "@/context/AuthContext";
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const tipos = ["Entrada", "Ajuste", "Transferência", "Saída Tester"] as const;
 
-const tipoConfig = {
+const tipoConfig: Record<string, { icon: any; color: string; bg: string }> = {
   "Entrada": { icon: ArrowDown, color: "text-success", bg: "bg-success/10 border-success/30" },
+  "Saída": { icon: ArrowUpDown, color: "text-orange-400", bg: "bg-orange-400/10 border-orange-400/30" },
   "Ajuste": { icon: RefreshCw, color: "text-blue-400", bg: "bg-blue-400/10 border-blue-400/30" },
   "Transferência": { icon: ArrowLeftRight, color: "text-gold", bg: "bg-primary/10 border-gold-muted" },
   "Saída Tester": { icon: FlaskConical, color: "text-purple-400", bg: "bg-purple-400/10 border-purple-400/30" },
+  "Transferência Tester": { icon: FlaskConical, color: "text-purple-400", bg: "bg-purple-400/10 border-purple-400/30" },
 };
+const tipoConfigDefault = { icon: RefreshCw, color: "text-muted-foreground", bg: "bg-muted/10 border-border" };
 
 export default function Movimentacoes() {
   const { movimentacoes, perfumes, baixarEstoque, adicionarEstoque, ajustarEstoque, transferirEstoque, adicionarTester, adicionarMovimentacao, concentracoesConfig } = useApp();
