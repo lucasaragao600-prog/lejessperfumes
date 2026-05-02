@@ -311,7 +311,7 @@ export default function Movimentacoes() {
       {/* List */}
       <div className="px-4 space-y-2.5">
         {filtradas.map((m) => {
-          const cfg = tipoConfig[m.tipo];
+          const cfg = tipoConfig[m.tipo] || tipoConfigDefault;
           const Icon = cfg.icon;
           const pf = perfumes.find((p) => p.id === m.perfumeId);
           return (
