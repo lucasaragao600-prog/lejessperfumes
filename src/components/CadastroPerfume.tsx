@@ -392,6 +392,26 @@ export default function CadastroPerfume({ onClose }: Props) {
               />
             </div>
 
+            {/* Classificação */}
+            <div>
+              <label className="text-xs text-muted-foreground mb-2 block">Classificação do Perfume</label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {CLASSIFICACOES_PERFUME.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setClassificacao(c)}
+                    className={`py-2 px-2 rounded-lg text-xs border transition-all ${
+                      classificacao === c
+                        ? "bg-gold text-primary-foreground border-gold"
+                        : "bg-surface border-border text-muted-foreground"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Preços */}
             <div className="grid grid-cols-2 gap-3">
               <div>
