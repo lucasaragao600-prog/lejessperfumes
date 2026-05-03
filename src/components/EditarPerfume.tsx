@@ -6,9 +6,11 @@ import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalC
 import {
   gerarCodigo,
   formatCurrency,
+  CLASSIFICACOES_PERFUME,
   type TipoPerfume,
   type Concentracao,
   type Perfume,
+  type ClassificacaoPerfume,
 } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
@@ -44,6 +46,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
   const [cfop, setCfop] = useState(perfume.cfop || "");
   const [cstCsosn, setCstCsosn] = useState(perfume.cstCsosn || "");
   const [unidadeFiscal, setUnidadeFiscal] = useState(perfume.unidadeFiscal || "UN");
+  const [classificacao, setClassificacao] = useState<ClassificacaoPerfume>((perfume.classificacao as ClassificacaoPerfume) || "Compartilhável");
   const { historico, isLoading: historicoLoading } = useProdutoCustos(perfume.id);
   const { historico: precoHistorico, isLoading: precoLoading, registrar: registrarPreco } = usePrecoHistorico(perfume.id);
 
@@ -147,7 +150,8 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
         cstCsosn,
         unidadeFiscal,
         codigoBarras: codigoBarras.trim(),
-      });
+        classificacao,
+      } as any);
       onClose();
     } finally {
       setSalvando(false);
@@ -325,6 +329,26 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
               onChange={(e) => setNome(e.target.value)}
               className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
             />
+          </div>
+
+          {/* Classificação */}
+          <div>
+            <label className="text-xs text-muted-foreground mb-2 block">Classificação do Perfume</label>
+            <div className="grid grid-cols-3 gap-1.5">
+              {CLASSIFICACOES_PERFUME.map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setClassificacao(c)}
+                  className={`py-2 px-2 rounded-lg text-xs border transition-all ${
+                    classificacao === c
+                      ? "bg-gold text-primary-foreground border-gold"
+                      : "bg-surface border-border text-muted-foreground"
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Preços */}
