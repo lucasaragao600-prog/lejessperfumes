@@ -815,6 +815,7 @@ export type Database = {
         Row: {
           casa_sigla: string
           cfop: string
+          classificacao: string
           codigo: string
           codigo_barras: string
           concentracao: string
@@ -842,6 +843,7 @@ export type Database = {
         Insert: {
           casa_sigla: string
           cfop?: string
+          classificacao?: string
           codigo: string
           codigo_barras?: string
           concentracao: string
@@ -869,6 +871,7 @@ export type Database = {
         Update: {
           casa_sigla?: string
           cfop?: string
+          classificacao?: string
           codigo?: string
           codigo_barras?: string
           concentracao?: string

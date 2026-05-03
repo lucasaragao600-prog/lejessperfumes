@@ -30,6 +30,7 @@ function rowToPerfume(row: any): Perfume {
     cfop: row.cfop || "",
     cstCsosn: row.cst_csosn || "",
     unidadeFiscal: row.unidade_fiscal || "UN",
+    classificacao: (row.classificacao || "Compartilhável") as any,
   };
 }
 
@@ -50,6 +51,7 @@ function perfumeToRow(p: Perfume) {
     estoque_sumauma: p.estoques["Sumaúma"],
     estoque_amazonas: p.estoques.Amazonas,
     estoque_minimo: p.estoqueMinimo,
+    classificacao: (p as any).classificacao || "Compartilhável",
   };
 }
 
@@ -126,6 +128,7 @@ export function usePerfumes() {
       if (p.cstCsosn !== undefined) updateData.cst_csosn = p.cstCsosn;
       if (p.unidadeFiscal !== undefined) updateData.unidade_fiscal = p.unidadeFiscal;
       if (p.codigoBarras !== undefined) updateData.codigo_barras = p.codigoBarras;
+      if ((p as any).classificacao !== undefined) updateData.classificacao = (p as any).classificacao;
       const { error } = await supabase
         .from("perfumes")
         .update(updateData)

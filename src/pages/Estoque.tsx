@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download, Trash2 } from "lucide-react";
-import { formatCurrency, type Deposito, type Perfume, type TipoPerfume } from "@/data/mockData";
+import { formatCurrency, CLASSIFICACOES_PERFUME, type Deposito, type Perfume, type TipoPerfume, type ClassificacaoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import CadastroPerfume from "@/components/CadastroPerfume";
@@ -23,6 +23,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [busca, setBusca] = useState("");
   const [depositoFiltro, setDepositoFiltro] = useState<Deposito | "Todos">(userLoja || "Todos");
   const [tipoFiltro, setTipoFiltro] = useState<TipoPerfume | "Todos">("Todos");
+  const [classificacaoFiltro, setClassificacaoFiltro] = useState<ClassificacaoPerfume | "Todos">("Todos");
   const [showAlertas, setShowAlertas] = useState(false);
   const [custoMin, setCustoMin] = useState("");
   const [custoMax, setCustoMax] = useState("");
@@ -76,6 +77,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         String(p.volume).includes(term);
 
       const matchTipo = tipoFiltro === "Todos" || p.tipo === tipoFiltro;
+      const matchClassificacao = classificacaoFiltro === "Todos" || (p.classificacao || "Compartilhável") === classificacaoFiltro;
       const matchCustoMin = custoMin === "" || p.custo >= Number(custoMin);
       const matchCustoMax = custoMax === "" || p.custo <= Number(custoMax);
       const matchVendaMin = vendaMin === "" || p.precoVenda >= Number(vendaMin);
@@ -88,12 +90,12 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
       const matchEstoque = matchEstoqueMin && matchEstoqueMax;
 
       if (userLoja) {
-        if (showAlertas) return matchBusca && matchTipo && matchPreco && matchEstoque && qtd <= p.estoqueMinimo;
-        return matchBusca && matchTipo && matchPreco && matchEstoque;
+        if (showAlertas) return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && qtd <= p.estoqueMinimo;
+        return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque;
       }
 
-      if (showAlertas) return matchBusca && matchTipo && matchPreco && matchEstoque && qtd <= p.estoqueMinimo;
-      return matchBusca && matchTipo && matchPreco && matchEstoque;
+      if (showAlertas) return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && qtd <= p.estoqueMinimo;
+      return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque;
     });
 
     if (ordenacaoEstoque === "asc") {
@@ -103,7 +105,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     }
 
     return result;
-  }, [perfumes, busca, effectiveDeposito, tipoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax, ordenacaoEstoque, userLoja, isMaster, getQtdForFilter, concentracoesConfig]);
+  }, [perfumes, busca, effectiveDeposito, tipoFiltro, classificacaoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax, ordenacaoEstoque, userLoja, isMaster, getQtdForFilter, concentracoesConfig]);
 
   const totais = useMemo(() => {
     return filtrados.reduce(
@@ -249,6 +251,19 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
           ))}
         </div>
 
+        {/* Classificação filter */}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-2">
+          {(["Todos", ...CLASSIFICACOES_PERFUME] as const).map((c) => (
+            <button
+              key={c}
+              onClick={() => setClassificacaoFiltro(c as any)}
+              className={`pill text-[11px] ${classificacaoFiltro === c ? "pill-active" : "pill-inactive"}`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+
         {/* Price filters - master only */}
         {isMaster && (
           <div className="grid grid-cols-2 gap-2">
@@ -359,7 +374,12 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                     {baixo && <AlertTriangle size={12} className="text-destructive flex-shrink-0" />}
                   </div>
                   <h3 className="font-display text-base text-foreground mt-1.5 truncate">{p.nome}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">{p.marca} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {p.marca} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}
+                    {p.classificacao && (
+                      <span className="ml-1 text-[10px] text-gold/70">· {p.classificacao}</span>
+                    )}
+                  </p>
                 </div>
 
                 {/* Botão de ações rápidas no canto */}

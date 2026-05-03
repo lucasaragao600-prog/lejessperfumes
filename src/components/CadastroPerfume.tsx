@@ -2,10 +2,12 @@ import { useState, useMemo } from "react";
 import { Plus, Settings, X, ChevronDown, ChevronUp, Calculator } from "lucide-react";
 import {
   gerarCodigo,
+  CLASSIFICACOES_PERFUME,
   type TipoPerfume,
   type Concentracao,
   type Perfume,
   type Casa,
+  type ClassificacaoPerfume,
 } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useProdutoCustos } from "@/hooks/useProdutoCustos";
@@ -40,6 +42,7 @@ export default function CadastroPerfume({ onClose }: Props) {
   const [estCasa, setEstCasa] = useState("0");
   const [estSumauma, setEstSumauma] = useState("0");
   const [estAmazonas, setEstAmazonas] = useState("0");
+  const [classificacao, setClassificacao] = useState<ClassificacaoPerfume>("Compartilhável");
   const [showMarkup, setShowMarkup] = useState(false);
 
   // Parâmetros de markup
@@ -139,6 +142,7 @@ export default function CadastroPerfume({ onClose }: Props) {
         Amazonas: parseInt(estAmazonas) || 0,
       },
       estoqueMinimo: parseInt(estoqueMinimo) || 2,
+      classificacao,
     };
     await adicionarPerfume(novoPerfume);
     // Registra histórico de custo discriminado se houve cálculo fiscal
@@ -386,6 +390,26 @@ export default function CadastroPerfume({ onClose }: Props) {
                 onChange={(e) => setNome(e.target.value)}
                 className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
               />
+            </div>
+
+            {/* Classificação */}
+            <div>
+              <label className="text-xs text-muted-foreground mb-2 block">Classificação do Perfume</label>
+              <div className="grid grid-cols-3 gap-1.5">
+                {CLASSIFICACOES_PERFUME.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => setClassificacao(c)}
+                    className={`py-2 px-2 rounded-lg text-xs border transition-all ${
+                      classificacao === c
+                        ? "bg-gold text-primary-foreground border-gold"
+                        : "bg-surface border-border text-muted-foreground"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Preços */}
