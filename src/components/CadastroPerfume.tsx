@@ -2,10 +2,12 @@ import { useState, useMemo } from "react";
 import { Plus, Settings, X, ChevronDown, ChevronUp, Calculator } from "lucide-react";
 import {
   gerarCodigo,
+  CLASSIFICACOES_PERFUME,
   type TipoPerfume,
   type Concentracao,
   type Perfume,
   type Casa,
+  type ClassificacaoPerfume,
 } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useProdutoCustos } from "@/hooks/useProdutoCustos";
@@ -40,6 +42,7 @@ export default function CadastroPerfume({ onClose }: Props) {
   const [estCasa, setEstCasa] = useState("0");
   const [estSumauma, setEstSumauma] = useState("0");
   const [estAmazonas, setEstAmazonas] = useState("0");
+  const [classificacao, setClassificacao] = useState<ClassificacaoPerfume>("Compartilhável");
   const [showMarkup, setShowMarkup] = useState(false);
 
   // Parâmetros de markup
@@ -139,6 +142,7 @@ export default function CadastroPerfume({ onClose }: Props) {
         Amazonas: parseInt(estAmazonas) || 0,
       },
       estoqueMinimo: parseInt(estoqueMinimo) || 2,
+      classificacao,
     };
     await adicionarPerfume(novoPerfume);
     // Registra histórico de custo discriminado se houve cálculo fiscal
