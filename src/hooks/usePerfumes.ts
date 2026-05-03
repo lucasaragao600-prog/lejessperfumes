@@ -51,6 +51,7 @@ function perfumeToRow(p: Perfume) {
     estoque_sumauma: p.estoques["Sumaúma"],
     estoque_amazonas: p.estoques.Amazonas,
     estoque_minimo: p.estoqueMinimo,
+    classificacao: (p as any).classificacao || "Compartilhável",
   };
 }
 
