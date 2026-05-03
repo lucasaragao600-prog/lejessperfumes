@@ -47,7 +47,11 @@ export interface Perfume {
   cfop?: string;
   cstCsosn?: string;
   unidadeFiscal?: string;
+  classificacao?: ClassificacaoPerfume;
 }
+
+export type ClassificacaoPerfume = "Masculino" | "Feminino" | "Compartilhável";
+export const CLASSIFICACOES_PERFUME: ClassificacaoPerfume[] = ["Masculino", "Feminino", "Compartilhável"];
 
 export type TipoAjusteValor = "desconto" | "acrescimo";
 export type TipoPagamento = "Dinheiro" | "Pix" | "Débito" | "Crédito" | "Conta Assinada";
