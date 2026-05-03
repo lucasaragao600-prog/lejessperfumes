@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react";
 import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download, Trash2 } from "lucide-react";
-import { formatCurrency, type Deposito, type Perfume, type TipoPerfume } from "@/data/mockData";
+import { formatCurrency, CLASSIFICACOES_PERFUME, type Deposito, type Perfume, type TipoPerfume, type ClassificacaoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import CadastroPerfume from "@/components/CadastroPerfume";
@@ -23,6 +23,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [busca, setBusca] = useState("");
   const [depositoFiltro, setDepositoFiltro] = useState<Deposito | "Todos">(userLoja || "Todos");
   const [tipoFiltro, setTipoFiltro] = useState<TipoPerfume | "Todos">("Todos");
+  const [classificacaoFiltro, setClassificacaoFiltro] = useState<ClassificacaoPerfume | "Todos">("Todos");
   const [showAlertas, setShowAlertas] = useState(false);
   const [custoMin, setCustoMin] = useState("");
   const [custoMax, setCustoMax] = useState("");
@@ -76,6 +77,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         String(p.volume).includes(term);
 
       const matchTipo = tipoFiltro === "Todos" || p.tipo === tipoFiltro;
+      const matchClassificacao = classificacaoFiltro === "Todos" || (p.classificacao || "Compartilhável") === classificacaoFiltro;
       const matchCustoMin = custoMin === "" || p.custo >= Number(custoMin);
       const matchCustoMax = custoMax === "" || p.custo <= Number(custoMax);
       const matchVendaMin = vendaMin === "" || p.precoVenda >= Number(vendaMin);
