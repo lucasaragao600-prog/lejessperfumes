@@ -133,7 +133,8 @@ export default function GerenciarUsuarios() {
               />
               <input
                 type="password"
-                placeholder="Senha"
+                placeholder="Senha (mín. 6 caracteres)"
+                minLength={6}
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted"
