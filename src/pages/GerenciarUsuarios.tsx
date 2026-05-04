@@ -50,6 +50,10 @@ export default function GerenciarUsuarios() {
 
   const handleCreate = async () => {
     if (!form.email || !form.password || !form.nome) return;
+    if (form.password.length < 6) {
+      toast({ title: "Senha muito curta", description: "A senha deve ter no mínimo 6 caracteres.", variant: "destructive" });
+      return;
+    }
     if (form.role === "vendedor" && !form.loja) {
       toast({ title: "Erro", description: "Vendedoras devem ter uma loja atribuída.", variant: "destructive" });
       return;
@@ -129,7 +133,8 @@ export default function GerenciarUsuarios() {
               />
               <input
                 type="password"
-                placeholder="Senha"
+                placeholder="Senha (mín. 6 caracteres)"
+                minLength={6}
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 className="w-full bg-surface-overlay border border-border rounded-lg px-3 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted"
