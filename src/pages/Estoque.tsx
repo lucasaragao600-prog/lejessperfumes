@@ -373,12 +373,24 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                     </span>
                     {baixo && <AlertTriangle size={12} className="text-destructive flex-shrink-0" />}
                   </div>
-                  <h3 className="font-display text-base text-foreground mt-1.5 truncate">{p.nome}</h3>
+                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                    <h3 className="font-display text-base text-foreground truncate">{p.nome}</h3>
+                    {p.classificacao && (
+                      <span
+                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md border ${
+                          p.classificacao === "Masculino"
+                            ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
+                            : p.classificacao === "Feminino"
+                            ? "bg-pink-500/15 text-pink-400 border-pink-500/30"
+                            : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                        }`}
+                      >
+                        {p.classificacao}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {p.marca} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}
-                    {p.classificacao && (
-                      <span className="ml-1 text-[10px] text-gold/70">· {p.classificacao}</span>
-                    )}
                   </p>
                 </div>
 
