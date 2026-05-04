@@ -50,6 +50,10 @@ export default function GerenciarUsuarios() {
 
   const handleCreate = async () => {
     if (!form.email || !form.password || !form.nome) return;
+    if (form.password.length < 6) {
+      toast({ title: "Senha muito curta", description: "A senha deve ter no mínimo 6 caracteres.", variant: "destructive" });
+      return;
+    }
     if (form.role === "vendedor" && !form.loja) {
       toast({ title: "Erro", description: "Vendedoras devem ter uma loja atribuída.", variant: "destructive" });
       return;
