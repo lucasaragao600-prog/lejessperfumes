@@ -54,7 +54,7 @@ interface AppContextType {
   adicionarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
   transferirEstoque: (perfumeId: string, origem: Deposito, destino: Deposito, quantidade: number) => void;
   adicionarTester: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
-  adicionarPerfume: (perfume: Perfume) => void;
+  adicionarPerfume: (perfume: Perfume) => Promise<void>;
   editarPerfume: (perfume: Partial<Perfume> & { id: string }) => Promise<void>;
   excluirPerfume: (perfumeId: string) => Promise<void>;
   atualizarPrecos: (perfumeId: string, custo: number, precoVenda: number) => Promise<void>;
@@ -113,8 +113,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const adicionarPerfume = (perfume: Perfume) => {
-    adicionarPerfumeDB(perfume);
+  const adicionarPerfume = async (perfume: Perfume) => {
+    await adicionarPerfumeDB(perfume);
   };
 
   const atualizarPrecos = async (perfumeId: string, custo: number, precoVenda: number) => {
