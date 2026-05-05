@@ -248,7 +248,7 @@ function ClasseBadge({ classe }: { classe: string }) {
 }
 
 /* ============= GIRO ============= */
-function GiroTab({ analise, concNome, tipoNome }: { analise: any[]; concNome: (s: string) => string; tipoNome: (s: string) => string }) {
+function GiroTab({ analise, concNome }: { analise: any[]; concNome: (s: string) => string }) {
   const ordenado = [...analise].filter((x) => x.estoqueAtual > 0 || x.qtdVendida > 0).sort((a, b) => b.giro - a.giro);
   const top = ordenado.slice(0, 10);
   const bottom = [...ordenado].reverse().slice(0, 10);
