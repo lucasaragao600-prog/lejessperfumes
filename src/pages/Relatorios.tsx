@@ -211,7 +211,7 @@ export default function Relatorios() {
           <TabsTrigger value="alertas" className="text-xs py-2"><Zap size={14} className="mr-1.5 hidden md:inline" />Alertas</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="giro"><GiroTab analise={analise} concNome={concNome} /></TabsContent>
+        <TabsContent value="giro"><GiroTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
         <TabsContent value="margem"><MargemTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
         <TabsContent value="problemas"><ProblematicosTab analise={analise} concNome={concNome} /></TabsContent>
         <TabsContent value="abc"><CurvaAbcTab analise={analise} concNome={concNome} /></TabsContent>
