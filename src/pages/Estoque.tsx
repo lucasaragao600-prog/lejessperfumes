@@ -159,9 +159,10 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
       "Estoque Sumaúma": p.estoques["Sumaúma"],
       "Estoque Amazonas": p.estoques.Amazonas,
       "Estoque Mínimo": p.estoqueMinimo,
-      Concentração: p.concentracao,
+      Concentração: concentracoesConfig?.[p.concentracao] || p.concentracao,
       Volume: p.volume,
-      Tipo: p.tipo,
+      Tipo: tiposPerfumeConfig?.[p.tipo] || p.tipo,
+      Classificação: p.classificacao || "",
     }));
     const ws = XLSX.utils.json_to_sheet(dados);
     const wb = XLSX.utils.book_new();

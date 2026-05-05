@@ -211,7 +211,7 @@ export default function Relatorios() {
           <TabsTrigger value="alertas" className="text-xs py-2"><Zap size={14} className="mr-1.5 hidden md:inline" />Alertas</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="giro"><GiroTab analise={analise} concNome={concNome} /></TabsContent>
+        <TabsContent value="giro"><GiroTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
         <TabsContent value="margem"><MargemTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
         <TabsContent value="problemas"><ProblematicosTab analise={analise} concNome={concNome} /></TabsContent>
         <TabsContent value="abc"><CurvaAbcTab analise={analise} concNome={concNome} /></TabsContent>
@@ -248,7 +248,7 @@ function ClasseBadge({ classe }: { classe: string }) {
 }
 
 /* ============= GIRO ============= */
-function GiroTab({ analise, concNome }: { analise: any[]; concNome: (s: string) => string }) {
+function GiroTab({ analise, concNome, tipoNome }: { analise: any[]; concNome: (s: string) => string; tipoNome: (s: string) => string }) {
   const ordenado = [...analise].filter((x) => x.estoqueAtual > 0 || x.qtdVendida > 0).sort((a, b) => b.giro - a.giro);
   const top = ordenado.slice(0, 10);
   const bottom = [...ordenado].reverse().slice(0, 10);
@@ -258,7 +258,9 @@ function GiroTab({ analise, concNome }: { analise: any[]; concNome: (s: string) 
       Código: x.perfume.codigo,
       Produto: x.perfume.nome,
       Marca: x.perfume.marca,
-      Tipo: x.perfume.tipo,
+      Tipo: tipoNome(x.perfume.tipo),
+      Concentração: concNome(x.perfume.concentracao),
+      Volume: x.perfume.volume,
       Vendido: x.qtdVendida,
       Estoque: x.estoqueAtual,
       "Média/dia": x.mediaDiaria.toFixed(2),
@@ -378,7 +380,10 @@ function MargemTab({ analise, concNome, tipoNome }: { analise: any[]; concNome: 
     comVenda.map((x) => ({
       Código: x.perfume.codigo,
       Produto: x.perfume.nome,
-      Categoria: x.perfume.tipo,
+      Marca: x.perfume.marca,
+      Categoria: tipoNome(x.perfume.tipo),
+      Concentração: concNome(x.perfume.concentracao),
+      Volume: x.perfume.volume,
       Vendido: x.qtdVendida,
       Receita: x.receita.toFixed(2),
       Custo: x.custoTotal.toFixed(2),
