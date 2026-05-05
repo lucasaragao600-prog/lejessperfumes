@@ -131,7 +131,7 @@ export default function CadastroPerfume({ onClose }: Props) {
     const novoId = `p${Date.now()}`;
     const novoPerfume: Perfume = {
       id: novoId,
-      codigo: gerarCodigo(tipo, casaSelecionada.sigla, concentracao, linhaCasa, volume),
+      codigo: codigoPreview,
       codigoBarras: codigoBarras.trim(),
       nome,
       marca: casaSelecionada.nome,
