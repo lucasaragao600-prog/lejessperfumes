@@ -14,6 +14,7 @@ import { useProdutoCustos } from "@/hooks/useProdutoCustos";
 import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalCostCalculator";
 import SimilarProductsDialog from "@/components/SimilarProductsDialog";
 import { findSimilarProducts, type SimilarityCandidate } from "@/lib/productSimilarity";
+import { toast } from "sonner";
 
 interface Props {
   onClose: () => void;
@@ -127,12 +128,22 @@ export default function CadastroPerfume({ onClose }: Props) {
 
   const executarCadastro = async () => {
     if (!casaSelecionada) return;
+    const codigoBarrasLimpo = codigoBarras.trim();
+    if (codigoBarrasLimpo) {
+      const produtoComMesmoCodigoBarras = perfumes.find((p) => p.codigoBarras?.trim() === codigoBarrasLimpo);
+      if (produtoComMesmoCodigoBarras) {
+        toast.error("Código de barras já cadastrado", {
+          description: `${produtoComMesmoCodigoBarras.marca} · ${produtoComMesmoCodigoBarras.nome}`,
+        });
+        return;
+      }
+    }
     const custoFinal = fiscalBreakdown ? fiscalBreakdown.custoReal : parseFloat(custo);
     const novoId = `p${Date.now()}`;
     const novoPerfume: Perfume = {
       id: novoId,
       codigo: codigoPreview,
-      codigoBarras: codigoBarras.trim(),
+      codigoBarras: codigoBarrasLimpo,
       nome,
       marca: casaSelecionada.nome,
       casaSigla: casaSelecionada.sigla,
@@ -150,7 +161,26 @@ export default function CadastroPerfume({ onClose }: Props) {
       estoqueMinimo: parseInt(estoqueMinimo) || 2,
       classificacao,
     };
-    await adicionarPerfume(novoPerfume);
+    try {
+      await adicionarPerfume(novoPerfume);
+    } catch (error: any) {
+      if (error?.code === "23505" && error?.message?.includes("codigo_barras")) {
+        toast.error("Código de barras já cadastrado", {
+          description: "Esse código de barras pertence a outro produto. Deixe em branco ou informe outro.",
+        });
+        return;
+      }
+      if (error?.code === "23505" && error?.message?.includes("codigo")) {
+        toast.error("Código interno já existe", {
+          description: "Atualize a tela e tente cadastrar novamente.",
+        });
+        return;
+      }
+      toast.error("Não foi possível cadastrar o produto", {
+        description: error?.message || "Verifique os dados e tente novamente.",
+      });
+      return;
+    }
     // Registra histórico de custo discriminado se houve cálculo fiscal
     if (fiscalBreakdown) {
       const qtdInicial = (parseInt(estCasa) || 0) + (parseInt(estSumauma) || 0) + (parseInt(estAmazonas) || 0);
