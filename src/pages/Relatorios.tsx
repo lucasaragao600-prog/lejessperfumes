@@ -380,7 +380,10 @@ function MargemTab({ analise, concNome, tipoNome }: { analise: any[]; concNome: 
     comVenda.map((x) => ({
       Código: x.perfume.codigo,
       Produto: x.perfume.nome,
-      Categoria: x.perfume.tipo,
+      Marca: x.perfume.marca,
+      Categoria: tipoNome(x.perfume.tipo),
+      Concentração: concNome(x.perfume.concentracao),
+      Volume: x.perfume.volume,
       Vendido: x.qtdVendida,
       Receita: x.receita.toFixed(2),
       Custo: x.custoTotal.toFixed(2),
