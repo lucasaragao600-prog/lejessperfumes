@@ -108,14 +108,20 @@ export default function CadastroPerfume({ onClose }: Props) {
   const [novaCasaSigla, setNovaCasaSigla] = useState("");
   const [novaCasaTipo, setNovaCasaTipo] = useState<TipoPerfume>("NI");
 
-  // Próximo número de linha por casa selecionada
-  const linhaCasa = casaSelecionada ? proximaLinhaPorCasa(casaSelecionada.sigla) : 1;
-
-  // Código gerado ao vivo
-  const codigoPreview =
-    casaSelecionada
-      ? gerarCodigo(tipo, casaSelecionada.sigla, concentracao, linhaCasa, volume)
-      : "——";
+  // Próximo número de linha por casa, garantindo que o código completo seja único
+  const codigosExistentes = useMemo(() => new Set(perfumes.map((p) => p.codigo)), [perfumes]);
+  const { linhaCasa, codigoPreview } = useMemo(() => {
+    if (!casaSelecionada) return { linhaCasa: 1, codigoPreview: "——" };
+    let linha = proximaLinhaPorCasa(casaSelecionada.sigla);
+    let codigo = gerarCodigo(tipo, casaSelecionada.sigla, concentracao, linha, volume);
+    let safety = 0;
+    while (codigosExistentes.has(codigo) && safety < 9999) {
+      linha += 1;
+      codigo = gerarCodigo(tipo, casaSelecionada.sigla, concentracao, linha, volume);
+      safety += 1;
+    }
+    return { linhaCasa: linha, codigoPreview: codigo };
+  }, [casaSelecionada, tipo, concentracao, volume, codigosExistentes, proximaLinhaPorCasa]);
 
   const casasFiltradas = casas.filter((c) => c.tipo === tipo);
 
@@ -125,7 +131,7 @@ export default function CadastroPerfume({ onClose }: Props) {
     const novoId = `p${Date.now()}`;
     const novoPerfume: Perfume = {
       id: novoId,
-      codigo: gerarCodigo(tipo, casaSelecionada.sigla, concentracao, linhaCasa, volume),
+      codigo: codigoPreview,
       codigoBarras: codigoBarras.trim(),
       nome,
       marca: casaSelecionada.nome,
