@@ -714,3 +714,155 @@ function AlertasTab({ analise, concNome }: { analise: any[]; concNome: (s: strin
     </div>
   );
 }
+
+/* ============= CLASSIFICAÇÃO (Gênero) ============= */
+const CLASSES_GENERO = ["Masculino", "Feminino", "Compartilhável"] as const;
+const CORES_CLASSE: Record<string, string> = {
+  Masculino: "hsl(217 91% 60%)",
+  Feminino: "hsl(330 81% 60%)",
+  Compartilhável: "hsl(160 84% 39%)",
+};
+
+function ClassificacaoTab({ analise, concNome, tipoNome }: { analise: any[]; concNome: (s: string) => string; tipoNome: (s: string) => string }) {
+  const porClasse = useMemo(() => {
+    const map = new Map<string, { qtd: number; receita: number; lucro: number; produtos: number }>();
+    for (const c of CLASSES_GENERO) map.set(c, { qtd: 0, receita: 0, lucro: 0, produtos: 0 });
+    for (const x of analise) {
+      const c = (x.perfume.classificacao || "Compartilhável") as string;
+      if (!map.has(c)) map.set(c, { qtd: 0, receita: 0, lucro: 0, produtos: 0 });
+      const cur = map.get(c)!;
+      cur.qtd += x.qtdVendida;
+      cur.receita += x.receita;
+      cur.lucro += x.lucro;
+      if (x.qtdVendida > 0) cur.produtos += 1;
+    }
+    return Array.from(map.entries()).map(([classe, v]) => ({ classe, ...v }));
+  }, [analise]);
+
+  const totalReceita = porClasse.reduce((s, x) => s + x.receita, 0);
+
+  const exportar = (filtro?: string) => {
+    const lista = analise
+      .filter((x) => x.qtdVendida > 0)
+      .filter((x) => !filtro || (x.perfume.classificacao || "Compartilhável") === filtro)
+      .sort((a, b) => b.receita - a.receita)
+      .map((x) => ({
+        Código: x.perfume.codigo,
+        Produto: x.perfume.nome,
+        Marca: x.perfume.marca,
+        Classificação: x.perfume.classificacao || "Compartilhável",
+        Tipo: tipoNome(x.perfume.tipo),
+        Concentração: concNome(x.perfume.concentracao),
+        Volume: x.perfume.volume,
+        Vendido: x.qtdVendida,
+        Receita: x.receita.toFixed(2),
+        Lucro: x.lucro.toFixed(2),
+        "Margem %": x.margemPct.toFixed(2),
+      }));
+    exportXlsx(lista, filtro ? `vendas_${filtro.toLowerCase()}` : "vendas_por_classificacao");
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center flex-wrap gap-2">
+        <p className="text-xs text-muted-foreground">Vendas agrupadas por classificação de gênero</p>
+        <div className="flex gap-2 flex-wrap">
+          <Button size="sm" variant="outline" onClick={() => exportar()} className="gap-2"><Download size={14} />Geral</Button>
+          {CLASSES_GENERO.map((c) => (
+            <Button key={c} size="sm" variant="outline" onClick={() => exportar(c)} className="gap-2">
+              <Download size={14} />{c}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {porClasse.map((p) => (
+          <Card key={p.classe} className="p-4 bg-card border-border border-l-4" style={{ borderLeftColor: CORES_CLASSE[p.classe] }}>
+            <p className="text-[10px] uppercase tracking-wider mb-1" style={{ color: CORES_CLASSE[p.classe] }}>{p.classe}</p>
+            <p className="text-2xl font-display font-semibold text-foreground">{fmtBRL(p.receita)}</p>
+            <p className="text-[11px] text-muted-foreground mt-1">{p.qtd} un · {p.produtos} produtos · Lucro {fmtBRL(p.lucro)}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">{totalReceita > 0 ? ((p.receita / totalReceita) * 100).toFixed(1) : "0"}% da receita</p>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid md:grid-cols-2 gap-4">
+        <Card className="p-4 bg-card border-border">
+          <h3 className="text-sm font-semibold mb-3">Receita por classificação</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={porClasse} dataKey="receita" nameKey="classe" cx="50%" cy="50%" outerRadius={80} label={(e) => e.classe}>
+                  {porClasse.map((p) => <Cell key={p.classe} fill={CORES_CLASSE[p.classe]} />)}
+                </Pie>
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} formatter={(v: any) => fmtBRL(Number(v))} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+        <Card className="p-4 bg-card border-border">
+          <h3 className="text-sm font-semibold mb-3">Quantidade vendida</h3>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={porClasse} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                <XAxis dataKey="classe" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+                <Bar dataKey="qtd" name="Unidades" radius={[6, 6, 0, 0]}>
+                  {porClasse.map((p) => <Cell key={p.classe} fill={CORES_CLASSE[p.classe]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      </div>
+
+      {CLASSES_GENERO.map((classe) => {
+        const itens = analise
+          .filter((x) => (x.perfume.classificacao || "Compartilhável") === classe && x.qtdVendida > 0)
+          .sort((a, b) => b.receita - a.receita)
+          .slice(0, 20);
+        if (!itens.length) return null;
+        return (
+          <Card key={classe} className="bg-card border-border overflow-hidden">
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full" style={{ background: CORES_CLASSE[classe] }} />
+                Top {classe}
+              </h3>
+              <Badge variant="outline" className="text-[10px]">{itens.length} produtos</Badge>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead className="bg-surface border-b border-border">
+                  <tr>
+                    <th className="text-left p-3 font-medium">Produto</th>
+                    <th className="text-right p-3 font-medium">Vendido</th>
+                    <th className="text-right p-3 font-medium">Receita</th>
+                    <th className="text-right p-3 font-medium">Lucro</th>
+                    <th className="text-right p-3 font-medium">Margem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {itens.map((x) => (
+                    <tr key={x.perfume.id} className="border-b border-border/50 hover:bg-surface/50">
+                      <td className="p-3">
+                        <p className="font-medium text-foreground">{x.perfume.nome}</p>
+                        <p className="text-[10px] text-muted-foreground">{x.perfume.marca} · {tipoNome(x.perfume.tipo)} · {concNome(x.perfume.concentracao)} · {x.perfume.volume}ml</p>
+                      </td>
+                      <td className="text-right p-3">{x.qtdVendida}</td>
+                      <td className="text-right p-3 font-medium">{fmtBRL(x.receita)}</td>
+                      <td className="text-right p-3">{fmtBRL(x.lucro)}</td>
+                      <td className="text-right p-3 text-muted-foreground">{x.margemPct.toFixed(1)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
