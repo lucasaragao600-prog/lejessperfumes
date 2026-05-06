@@ -160,19 +160,28 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const exportarExcel = useCallback(() => {
     const dados = filtrados.map((p) => ({
       SKU: p.codigo,
+      "Código de Barras": p.codigoBarras || "",
       Nome: p.nome,
       Marca: p.marca,
+      Casa: p.casaSigla,
+      Tipo: tiposPerfumeConfig?.[p.tipo] || p.tipo,
+      Concentração: concentracoesConfig?.[p.concentracao] || p.concentracao,
+      Tamanho: p.tamanho,
+      Volume: p.volume,
+      Classificação: p.classificacao || "",
       "Custo Atual": p.custo,
+      "Custo Médio": p.custoMedio || 0,
+      "Último Custo Em": p.ultimoCustoEm || "",
       "Preço Venda": p.precoVenda,
       "Estoque Total": Object.values(p.estoques).reduce((a, b) => a + b, 0),
       "Estoque Casa": p.estoques.Casa,
       "Estoque Sumaúma": p.estoques["Sumaúma"],
       "Estoque Amazonas": p.estoques.Amazonas,
       "Estoque Mínimo": p.estoqueMinimo,
-      Concentração: concentracoesConfig?.[p.concentracao] || p.concentracao,
-      Volume: p.volume,
-      Tipo: tiposPerfumeConfig?.[p.tipo] || p.tipo,
-      Classificação: p.classificacao || "",
+      NCM: p.ncm || "",
+      CFOP: p.cfop || "",
+      "CST/CSOSN": p.cstCsosn || "",
+      "Unidade Fiscal": p.unidadeFiscal || "UN",
     }));
     const ws = XLSX.utils.json_to_sheet(dados);
     const wb = XLSX.utils.book_new();
