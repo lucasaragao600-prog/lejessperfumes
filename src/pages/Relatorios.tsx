@@ -204,12 +204,13 @@ export default function Relatorios() {
       </div>
 
       <Tabs defaultValue="giro" className="w-full">
-        <TabsList className="grid grid-cols-5 w-full bg-surface mb-4 h-auto">
+        <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full bg-surface mb-4 h-auto">
           <TabsTrigger value="giro" className="text-xs py-2"><Activity size={14} className="mr-1.5 hidden md:inline" />Giro</TabsTrigger>
           <TabsTrigger value="margem" className="text-xs py-2"><TrendingUp size={14} className="mr-1.5 hidden md:inline" />Margem</TabsTrigger>
           <TabsTrigger value="problemas" className="text-xs py-2"><AlertTriangle size={14} className="mr-1.5 hidden md:inline" />Problemáticos</TabsTrigger>
           <TabsTrigger value="abc" className="text-xs py-2"><Layers size={14} className="mr-1.5 hidden md:inline" />Curva ABC</TabsTrigger>
           <TabsTrigger value="alertas" className="text-xs py-2"><Zap size={14} className="mr-1.5 hidden md:inline" />Alertas</TabsTrigger>
+          <TabsTrigger value="classificacao" className="text-xs py-2"><Users size={14} className="mr-1.5 hidden md:inline" />Classificação</TabsTrigger>
         </TabsList>
 
         <TabsContent value="giro"><GiroTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
@@ -217,6 +218,7 @@ export default function Relatorios() {
         <TabsContent value="problemas"><ProblematicosTab analise={analise} concNome={concNome} /></TabsContent>
         <TabsContent value="abc"><CurvaAbcTab analise={analise} concNome={concNome} /></TabsContent>
         <TabsContent value="alertas"><AlertasTab analise={analise} concNome={concNome} /></TabsContent>
+        <TabsContent value="classificacao"><ClassificacaoTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
       </Tabs>
     </div>
   );
