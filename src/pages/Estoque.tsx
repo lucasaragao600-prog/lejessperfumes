@@ -35,6 +35,16 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [showCadastro, setShowCadastro] = useState(false);
   const [editandoPerfume, setEditandoPerfume] = useState<Perfume | null>(null);
   const [imagemExpandida, setImagemExpandida] = useState<{ url: string; nome: string } | null>(null);
+  const [filtrosColapsados, setFiltrosColapsados] = useState(false);
+  const touchStartY = useRef<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartY.current = e.touches[0].clientY; };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    if (dy < -40) setFiltrosColapsados(true);
+    else if (dy > 40) setFiltrosColapsados(false);
+    touchStartY.current = null;
+  };
 
   // Force deposit filter for vendedores
   const effectiveDeposito = userLoja || depositoFiltro;
