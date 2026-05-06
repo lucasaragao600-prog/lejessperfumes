@@ -186,8 +186,12 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
       {editandoPerfume && <EditarPerfume perfume={editandoPerfume} onClose={() => setEditandoPerfume(null)} />}
 
       {/* Header */}
-      <div className="sticky top-0 z-10 px-4 pt-12 pb-4"
-        style={{ background: "var(--gradient-header)" }}>
+      <div
+        className="sticky top-0 z-10 px-4 pt-12 pb-4"
+        style={{ background: "var(--gradient-header)" }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <div className="flex items-center justify-between mb-5">
           <div>
             <h1 className="page-title">Estoque</h1>
