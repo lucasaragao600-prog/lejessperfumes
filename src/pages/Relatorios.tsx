@@ -16,6 +16,7 @@ import {
   PieChart as PieIcon,
   TrendingDown,
   TrendingUp,
+  Users,
   Zap,
 } from "lucide-react";
 import {
