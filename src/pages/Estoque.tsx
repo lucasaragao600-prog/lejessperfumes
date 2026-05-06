@@ -226,7 +226,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
           </div>
         </div>
 
-        {/* Search */}
+        {/* Search - sempre visível */}
         <div className="relative mb-3">
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -238,85 +238,107 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
           />
         </div>
 
-        {/* Deposit filter - hidden for vendedores with assigned loja */}
-        {!userLoja && (
+        {/* Filtros recolhíveis */}
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-out ${
+            filtrosColapsados ? "max-h-0 opacity-0" : "max-h-[600px] opacity-100"
+          }`}
+        >
+          {/* Deposit filter - hidden for vendedores with assigned loja */}
+          {!userLoja && (
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-2">
+              {(["Todos", ...depositos] as const).map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setDepositoFiltro(d)}
+                  className={`pill ${depositoFiltro === d ? "pill-active" : "pill-inactive"}`}
+                >
+                  {d}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Type filter */}
           <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-2">
-            {(["Todos", ...depositos] as const).map((d) => (
+            {([{ key: "Todos" as const, label: "Todos os tipos" }, ...tipos]).map(({ key, label }) => (
               <button
-                key={d}
-                onClick={() => setDepositoFiltro(d)}
-                className={`pill ${depositoFiltro === d ? "pill-active" : "pill-inactive"}`}
+                key={key}
+                onClick={() => setTipoFiltro(key)}
+                className={`pill text-[11px] ${tipoFiltro === key ? "pill-active" : "pill-inactive"}`}
               >
-                {d}
+                {label}
               </button>
             ))}
           </div>
-        )}
 
-        {/* Type filter */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-2">
-          {([{ key: "Todos" as const, label: "Todos os tipos" }, ...tipos]).map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => setTipoFiltro(key)}
-              className={`pill text-[11px] ${tipoFiltro === key ? "pill-active" : "pill-inactive"}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+          {/* Classificação filter */}
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-2">
+            {(["Todos", ...CLASSIFICACOES_PERFUME] as const).map((c) => (
+              <button
+                key={c}
+                onClick={() => setClassificacaoFiltro(c as any)}
+                className={`pill text-[11px] ${classificacaoFiltro === c ? "pill-active" : "pill-inactive"}`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
 
-        {/* Classificação filter */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide mb-2">
-          {(["Todos", ...CLASSIFICACOES_PERFUME] as const).map((c) => (
-            <button
-              key={c}
-              onClick={() => setClassificacaoFiltro(c as any)}
-              className={`pill text-[11px] ${classificacaoFiltro === c ? "pill-active" : "pill-inactive"}`}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
+          {/* Price filters - master only */}
+          {isMaster && (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="flex gap-1.5 items-center">
+                <input type="number" placeholder="Custo mín" value={custoMin} onChange={(e) => setCustoMin(e.target.value)}
+                  className="input-premium px-2.5 py-2 text-[11px] w-full" />
+                <span className="text-[10px] text-muted-foreground">-</span>
+                <input type="number" placeholder="Custo máx" value={custoMax} onChange={(e) => setCustoMax(e.target.value)}
+                  className="input-premium px-2.5 py-2 text-[11px] w-full" />
+              </div>
+              <div className="flex gap-1.5 items-center">
+                <input type="number" placeholder="Venda mín" value={vendaMin} onChange={(e) => setVendaMin(e.target.value)}
+                  className="input-premium px-2.5 py-2 text-[11px] w-full" />
+                <span className="text-[10px] text-muted-foreground">-</span>
+                <input type="number" placeholder="Venda máx" value={vendaMax} onChange={(e) => setVendaMax(e.target.value)}
+                  className="input-premium px-2.5 py-2 text-[11px] w-full" />
+              </div>
+            </div>
+          )}
 
-        {/* Price filters - master only */}
-        {isMaster && (
-          <div className="grid grid-cols-2 gap-2">
+          {/* Stock filters */}
+          <div className="grid grid-cols-2 gap-2 mt-2">
             <div className="flex gap-1.5 items-center">
-              <input type="number" placeholder="Custo mín" value={custoMin} onChange={(e) => setCustoMin(e.target.value)}
+              <input type="number" placeholder="Estoque mín" value={estoqueMin} onChange={(e) => setEstoqueMin(e.target.value)}
                 className="input-premium px-2.5 py-2 text-[11px] w-full" />
               <span className="text-[10px] text-muted-foreground">-</span>
-              <input type="number" placeholder="Custo máx" value={custoMax} onChange={(e) => setCustoMax(e.target.value)}
+              <input type="number" placeholder="Estoque máx" value={estoqueMax} onChange={(e) => setEstoqueMax(e.target.value)}
                 className="input-premium px-2.5 py-2 text-[11px] w-full" />
             </div>
             <div className="flex gap-1.5 items-center">
-              <input type="number" placeholder="Venda mín" value={vendaMin} onChange={(e) => setVendaMin(e.target.value)}
-                className="input-premium px-2.5 py-2 text-[11px] w-full" />
-              <span className="text-[10px] text-muted-foreground">-</span>
-              <input type="number" placeholder="Venda máx" value={vendaMax} onChange={(e) => setVendaMax(e.target.value)}
-                className="input-premium px-2.5 py-2 text-[11px] w-full" />
+              <select value={ordenacaoEstoque} onChange={(e) => setOrdenacaoEstoque(e.target.value as "none" | "asc" | "desc")}
+                className="input-premium px-2.5 py-2 text-[11px] w-full">
+                <option value="none">Ordenar estoque</option>
+                <option value="asc">Menor → Maior</option>
+                <option value="desc">Maior → Menor</option>
+              </select>
             </div>
           </div>
-        )}
-
-        {/* Stock filters */}
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          <div className="flex gap-1.5 items-center">
-            <input type="number" placeholder="Estoque mín" value={estoqueMin} onChange={(e) => setEstoqueMin(e.target.value)}
-              className="input-premium px-2.5 py-2 text-[11px] w-full" />
-            <span className="text-[10px] text-muted-foreground">-</span>
-            <input type="number" placeholder="Estoque máx" value={estoqueMax} onChange={(e) => setEstoqueMax(e.target.value)}
-              className="input-premium px-2.5 py-2 text-[11px] w-full" />
-          </div>
-          <div className="flex gap-1.5 items-center">
-            <select value={ordenacaoEstoque} onChange={(e) => setOrdenacaoEstoque(e.target.value as "none" | "asc" | "desc")}
-              className="input-premium px-2.5 py-2 text-[11px] w-full">
-              <option value="none">Ordenar estoque</option>
-              <option value="asc">Menor → Maior</option>
-              <option value="desc">Maior → Menor</option>
-            </select>
-          </div>
         </div>
+
+        {/* Handle - clique ou arraste para recolher/expandir */}
+        <button
+          type="button"
+          onClick={() => setFiltrosColapsados((v) => !v)}
+          className="w-full flex flex-col items-center justify-center pt-2 pb-1 group"
+          aria-label={filtrosColapsados ? "Mostrar filtros" : "Recolher filtros"}
+        >
+          <div className="w-10 h-1 rounded-full bg-border group-hover:bg-gold/50 transition-colors mb-1" />
+          {filtrosColapsados ? (
+            <ChevronDown size={12} className="text-muted-foreground" />
+          ) : (
+            <ChevronUp size={12} className="text-muted-foreground" />
+          )}
+        </button>
       </div>
 
       {/* Quantity cards - hidden for vendedores */}
