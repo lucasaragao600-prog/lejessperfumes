@@ -436,7 +436,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                     )}
                   </div>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    {p.marca} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}
+                    {p.marca} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}{p.codigoBarras ? ` · ${p.codigoBarras}` : ""}
                   </p>
                 </div>
 
