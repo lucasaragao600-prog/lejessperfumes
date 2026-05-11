@@ -540,6 +540,39 @@ function rangeReport(
     }
   }
 
+  // Descontos & acréscimos do período (resumo)
+  const totalDescontosPeriodo = vendasPeriodo
+    .filter((v) => v.tipoAjuste !== "acrescimo")
+    .reduce((s, v) => s + (Number(v.desconto) || 0), 0);
+  const totalAcrescimosPeriodo = vendasPeriodo
+    .filter((v) => v.tipoAjuste === "acrescimo")
+    .reduce((s, v) => s + (Number(v.desconto) || 0), 0);
+  const qtdDescontos = vendasPeriodo.filter((v) => v.tipoAjuste !== "acrescimo" && Number(v.desconto) > 0).length;
+  const qtdAcrescimos = vendasPeriodo.filter((v) => v.tipoAjuste === "acrescimo" && Number(v.desconto) > 0).length;
+
+  if (totalDescontosPeriodo > 0 || totalAcrescimosPeriodo > 0) {
+    y = ensureSpace(doc, y, 30);
+    y = sectionTitle(doc, y, "Descontos e acréscimos no período");
+    autoTable(doc, {
+      startY: y,
+      head: [["Tipo", "Qtd. ocorrências", "Total"]],
+      body: [
+        ["Descontos concedidos", String(qtdDescontos), `- ${fmtBRL(totalDescontosPeriodo)}`],
+        ["Acréscimos aplicados", String(qtdAcrescimos), `+ ${fmtBRL(totalAcrescimosPeriodo)}`],
+      ],
+      headStyles: { fillColor: DARK, textColor: 255 },
+      styles: { fontSize: 9 },
+      columnStyles: { 1: { halign: "right" }, 2: { halign: "right", fontStyle: "bold" } },
+      didParseCell: (data) => {
+        if (data.section === "body" && data.column.index === 2) {
+          data.cell.styles.textColor = data.row.index === 0 ? RED : GOLD;
+        }
+      },
+      margin: { left: 12, right: 12 },
+    });
+    y = (doc as any).lastAutoTable.finalY + 6;
+  }
+
   // Top produtos
   const mapProd = new Map<string, { desc: string; qtd: number; valor: number }>();
   for (const v of vendasPeriodo) {
