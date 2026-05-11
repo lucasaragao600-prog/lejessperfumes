@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from "react";
-import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download, Trash2, ChevronUp, ChevronDown, Barcode } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatCurrency, CLASSIFICACOES_PERFUME, type Deposito, type Perfume, type TipoPerfume, type ClassificacaoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
@@ -12,7 +13,7 @@ import * as XLSX from "xlsx";
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
-  const { perfumes, testers, tiposPerfumeConfig, concentracoesConfig, excluirPerfume } = useApp();
+  const { perfumes, testers, movimentacoes, vendas, tiposPerfumeConfig, concentracoesConfig, excluirPerfume } = useApp();
   const { profile } = useAuth();
   const userLoja = (!isMaster && profile?.loja) ? profile.loja as Deposito : null;
 
@@ -36,6 +37,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [editandoPerfume, setEditandoPerfume] = useState<Perfume | null>(null);
   const [imagemExpandida, setImagemExpandida] = useState<{ url: string; nome: string } | null>(null);
   const [filtrosColapsados, setFiltrosColapsados] = useState(false);
+  const [showSemBarcode, setShowSemBarcode] = useState(false);
   const touchStartY = useRef<number | null>(null);
   const handleTouchStart = (e: React.TouchEvent) => { touchStartY.current = e.touches[0].clientY; };
   const handleTouchEnd = (e: React.TouchEvent) => {
@@ -61,6 +63,29 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     });
     return map;
   }, [testers]);
+
+  // Histórico real de movimentação por depósito (movimentações + vendas)
+  const historicoPorDeposito = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    const add = (dep: string | undefined | null, pid: string) => {
+      if (!dep || !pid) return;
+      if (!map.has(dep)) map.set(dep, new Set());
+      map.get(dep)!.add(pid);
+    };
+    for (const m of movimentacoes) {
+      add(m.deposito, m.perfumeId);
+      add(m.depositoOrigem, m.perfumeId);
+      add(m.depositoDestino, m.perfumeId);
+    }
+    for (const v of vendas) add(v.deposito, v.perfumeId);
+    return map;
+  }, [movimentacoes, vendas]);
+
+  // Produtos sem código de barras
+  const produtosSemBarcode = useMemo(
+    () => perfumes.filter((p) => !p.codigoBarras || !p.codigoBarras.trim()),
+    [perfumes]
+  );
 
   const getTesterQtd = (perfumeId: string, deposito?: Deposito) => {
     if (deposito) return testerMap.get(`${perfumeId}-${deposito}`) || 0;
@@ -99,13 +124,17 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
       const matchEstoqueMax = estoqueMax === "" || qtd <= Number(estoqueMax);
       const matchEstoque = matchEstoqueMin && matchEstoqueMax;
 
+      // Filtro por histórico real de movimentação no depósito selecionado
+      const depositoAlvo = userLoja || (effectiveDeposito !== "Todos" ? (effectiveDeposito as Deposito) : null);
+      const matchHistorico = !depositoAlvo || (historicoPorDeposito.get(depositoAlvo)?.has(p.id) ?? false);
+
       if (userLoja) {
-        if (showAlertas) return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && qtd <= p.estoqueMinimo;
-        return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque;
+        if (showAlertas) return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && matchHistorico && qtd <= p.estoqueMinimo;
+        return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && matchHistorico;
       }
 
-      if (showAlertas) return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && qtd <= p.estoqueMinimo;
-      return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque;
+      if (showAlertas) return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && matchHistorico && qtd <= p.estoqueMinimo;
+      return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && matchHistorico;
     });
 
     if (ordenacaoEstoque === "asc") {
@@ -115,7 +144,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     }
 
     return result;
-  }, [perfumes, busca, effectiveDeposito, tipoFiltro, classificacaoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax, ordenacaoEstoque, userLoja, isMaster, getQtdForFilter, concentracoesConfig]);
+  }, [perfumes, busca, effectiveDeposito, tipoFiltro, classificacaoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax, ordenacaoEstoque, userLoja, isMaster, getQtdForFilter, concentracoesConfig, historicoPorDeposito]);
 
   const totais = useMemo(() => {
     return filtrados.reduce(
@@ -222,6 +251,20 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
               <AlertTriangle size={13} />
               {alertas}
             </button>
+            {isMaster && (
+              <button
+                onClick={() => setShowSemBarcode(true)}
+                title="Produtos sem código de barras"
+                className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 ${
+                  produtosSemBarcode.length > 0
+                    ? "bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/15"
+                    : "btn-secondary"
+                }`}
+              >
+                <Barcode size={13} className={produtosSemBarcode.length > 0 ? "animate-pulse" : ""} />
+                {produtosSemBarcode.length}
+              </button>
+            )}
             {isMaster && (
               <button onClick={exportarExcel} className="btn-secondary px-3 py-2">
                 <Download size={14} />
@@ -557,10 +600,71 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         {filtrados.length === 0 && (
           <div className="text-center py-20">
             <Package size={40} className="text-muted-foreground mx-auto mb-4 opacity-40" />
-            <p className="text-muted-foreground text-sm">Nenhum produto encontrado</p>
+            <p className="text-muted-foreground text-sm">
+              {effectiveDeposito !== "Todos" || userLoja
+                ? "Nenhum produto possui movimentação registrada neste estoque."
+                : "Nenhum produto encontrado"}
+            </p>
           </div>
         )}
       </div>
+
+      {/* Modal: Produtos sem código de barras */}
+      <Dialog open={showSemBarcode} onOpenChange={setShowSemBarcode}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Barcode size={18} className="text-amber-400" />
+              Produtos sem código de barras
+              <span className="text-xs text-muted-foreground font-normal">
+                ({produtosSemBarcode.length})
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto -mx-6 px-6 space-y-2">
+            {produtosSemBarcode.length === 0 ? (
+              <div className="text-center py-12">
+                <Barcode size={36} className="text-muted-foreground mx-auto mb-3 opacity-40" />
+                <p className="text-sm text-muted-foreground">
+                  Todos os produtos possuem código de barras cadastrado
+                </p>
+              </div>
+            ) : (
+              produtosSemBarcode.map((p) => {
+                const qtdTotal = Object.values(p.estoques).reduce((a, b) => a + b, 0);
+                return (
+                  <div
+                    key={p.id}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface-overlay/40 hover:border-gold-muted transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] text-gold font-mono bg-primary/10 px-2 py-0.5 rounded-md">
+                          {p.codigo}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">{qtdTotal} un.</span>
+                      </div>
+                      <p className="text-sm font-medium text-foreground truncate">{p.nome}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {p.marca} · {(tiposPerfumeConfig[p.tipo] || p.tipo)} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setEditandoPerfume(p);
+                        setShowSemBarcode(false);
+                      }}
+                      className="btn-secondary px-3 py-1.5 text-xs flex items-center gap-1.5 flex-shrink-0"
+                    >
+                      <Pencil size={11} /> Editar
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Image expanded modal */}
       {imagemExpandida && (
