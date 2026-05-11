@@ -124,13 +124,17 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
       const matchEstoqueMax = estoqueMax === "" || qtd <= Number(estoqueMax);
       const matchEstoque = matchEstoqueMin && matchEstoqueMax;
 
+      // Filtro por histórico real de movimentação no depósito selecionado
+      const depositoAlvo = userLoja || (effectiveDeposito !== "Todos" ? (effectiveDeposito as Deposito) : null);
+      const matchHistorico = !depositoAlvo || (historicoPorDeposito.get(depositoAlvo)?.has(p.id) ?? false);
+
       if (userLoja) {
-        if (showAlertas) return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && qtd <= p.estoqueMinimo;
-        return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque;
+        if (showAlertas) return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && matchHistorico && qtd <= p.estoqueMinimo;
+        return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && matchHistorico;
       }
 
-      if (showAlertas) return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && qtd <= p.estoqueMinimo;
-      return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque;
+      if (showAlertas) return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && matchHistorico && qtd <= p.estoqueMinimo;
+      return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && matchHistorico;
     });
 
     if (ordenacaoEstoque === "asc") {
