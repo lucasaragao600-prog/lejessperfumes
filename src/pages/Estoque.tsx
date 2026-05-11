@@ -600,10 +600,71 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         {filtrados.length === 0 && (
           <div className="text-center py-20">
             <Package size={40} className="text-muted-foreground mx-auto mb-4 opacity-40" />
-            <p className="text-muted-foreground text-sm">Nenhum produto encontrado</p>
+            <p className="text-muted-foreground text-sm">
+              {effectiveDeposito !== "Todos" || userLoja
+                ? "Nenhum produto possui movimentação registrada neste estoque."
+                : "Nenhum produto encontrado"}
+            </p>
           </div>
         )}
       </div>
+
+      {/* Modal: Produtos sem código de barras */}
+      <Dialog open={showSemBarcode} onOpenChange={setShowSemBarcode}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Barcode size={18} className="text-amber-400" />
+              Produtos sem código de barras
+              <span className="text-xs text-muted-foreground font-normal">
+                ({produtosSemBarcode.length})
+              </span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto -mx-6 px-6 space-y-2">
+            {produtosSemBarcode.length === 0 ? (
+              <div className="text-center py-12">
+                <Barcode size={36} className="text-muted-foreground mx-auto mb-3 opacity-40" />
+                <p className="text-sm text-muted-foreground">
+                  Todos os produtos possuem código de barras cadastrado
+                </p>
+              </div>
+            ) : (
+              produtosSemBarcode.map((p) => {
+                const qtdTotal = Object.values(p.estoques).reduce((a, b) => a + b, 0);
+                return (
+                  <div
+                    key={p.id}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface-overlay/40 hover:border-gold-muted transition-colors"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] text-gold font-mono bg-primary/10 px-2 py-0.5 rounded-md">
+                          {p.codigo}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">{qtdTotal} un.</span>
+                      </div>
+                      <p className="text-sm font-medium text-foreground truncate">{p.nome}</p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {p.marca} · {(tiposPerfumeConfig[p.tipo] || p.tipo)} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setEditandoPerfume(p);
+                        setShowSemBarcode(false);
+                      }}
+                      className="btn-secondary px-3 py-1.5 text-xs flex items-center gap-1.5 flex-shrink-0"
+                    >
+                      <Pencil size={11} /> Editar
+                    </button>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Image expanded modal */}
       {imagemExpandida && (
