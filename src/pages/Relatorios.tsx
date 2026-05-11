@@ -1,24 +1,34 @@
 import { useMemo, useState } from "react";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
+import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 import {
   Activity,
   AlertTriangle,
   ArrowDownRight,
   ArrowUpRight,
   Download,
+  FileText,
   Layers,
   PieChart as PieIcon,
   TrendingDown,
   TrendingUp,
   Users,
+  Wallet,
   Zap,
 } from "lucide-react";
+import {
+  gerarFluxoCaixaDiario,
+  gerarFluxoCaixaQuinzenal,
+  gerarFluxoCaixaMensal,
+} from "@/lib/pdf/fluxoCaixa";
 import {
   Bar,
   BarChart,
