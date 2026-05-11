@@ -1,24 +1,34 @@
 import { useMemo, useState } from "react";
 import { useApp } from "@/context/AppContext";
+import { useAuth } from "@/context/AuthContext";
+import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { toast } from "sonner";
 import {
   Activity,
   AlertTriangle,
   ArrowDownRight,
   ArrowUpRight,
   Download,
+  FileText,
   Layers,
   PieChart as PieIcon,
   TrendingDown,
   TrendingUp,
   Users,
+  Wallet,
   Zap,
 } from "lucide-react";
+import {
+  gerarFluxoCaixaDiario,
+  gerarFluxoCaixaQuinzenal,
+  gerarFluxoCaixaMensal,
+} from "@/lib/pdf/fluxoCaixa";
 import {
   Bar,
   BarChart,
@@ -203,8 +213,9 @@ export default function Relatorios() {
         <KpiCard icon={<AlertTriangle size={16} />} label="Estoque crítico" value={String(totalCriticos)} accent="destructive" />
       </div>
 
-      <Tabs defaultValue="giro" className="w-full">
-        <TabsList className="grid grid-cols-3 md:grid-cols-6 w-full bg-surface mb-4 h-auto">
+      <Tabs defaultValue="fluxo" className="w-full">
+        <TabsList className="grid grid-cols-3 md:grid-cols-7 w-full bg-surface mb-4 h-auto">
+          <TabsTrigger value="fluxo" className="text-xs py-2"><Wallet size={14} className="mr-1.5 hidden md:inline" />Fluxo de Caixa</TabsTrigger>
           <TabsTrigger value="giro" className="text-xs py-2"><Activity size={14} className="mr-1.5 hidden md:inline" />Giro</TabsTrigger>
           <TabsTrigger value="margem" className="text-xs py-2"><TrendingUp size={14} className="mr-1.5 hidden md:inline" />Margem</TabsTrigger>
           <TabsTrigger value="problemas" className="text-xs py-2"><AlertTriangle size={14} className="mr-1.5 hidden md:inline" />Problemáticos</TabsTrigger>
@@ -213,6 +224,7 @@ export default function Relatorios() {
           <TabsTrigger value="classificacao" className="text-xs py-2"><Users size={14} className="mr-1.5 hidden md:inline" />Classificação</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="fluxo"><FluxoCaixaTab concNome={concNome} /></TabsContent>
         <TabsContent value="giro"><GiroTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
         <TabsContent value="margem"><MargemTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
         <TabsContent value="problemas"><ProblematicosTab analise={analise} concNome={concNome} /></TabsContent>
@@ -863,6 +875,167 @@ function ClassificacaoTab({ analise, concNome, tipoNome }: { analise: any[]; con
           </Card>
         );
       })}
+    </div>
+  );
+}
+
+/* ============= FLUXO DE CAIXA ============= */
+function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
+  const { perfumes, vendas, pagamentos } = useApp();
+  const { role, profile } = useAuth();
+  const { configFiscal } = useConfiguracoesFiscais();
+
+  const lojasDisponiveis: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
+  const lojaInicial: Deposito =
+    role === "vendedor" && profile?.loja && (lojasDisponiveis as string[]).includes(profile.loja)
+      ? (profile.loja as Deposito)
+      : "Casa";
+
+  const [loja, setLoja] = useState<Deposito>(lojaInicial);
+  const hoje = todayStr();
+  const [periodo, setPeriodo] = useState<"diario" | "quinzenal" | "mensal">("diario");
+  const [dataDiario, setDataDiario] = useState(hoje);
+  const [mes, setMes] = useState(hoje.slice(0, 7));
+  const [quinzena, setQuinzena] = useState<"1" | "2">("1");
+  const [gerando, setGerando] = useState(false);
+
+  const podeMudarLoja = role !== "vendedor";
+
+  const intervaloPeriodo = (): { inicio: string; fim: string; label: string } => {
+    const [y, m] = mes.split("-").map(Number);
+    const ultimo = new Date(y, m, 0).getDate(); // último dia do mês
+    if (periodo === "quinzenal") {
+      if (quinzena === "1") {
+        return { inicio: `${mes}-01`, fim: `${mes}-15`, label: "1ª quinzena" };
+      }
+      return { inicio: `${mes}-16`, fim: `${mes}-${String(ultimo).padStart(2, "0")}`, label: "2ª quinzena" };
+    }
+    return { inicio: `${mes}-01`, fim: `${mes}-${String(ultimo).padStart(2, "0")}`, label: "Mensal" };
+  };
+
+  const gerar = async () => {
+    setGerando(true);
+    try {
+      let doc;
+      let nomeArquivo = "";
+      if (periodo === "diario") {
+        doc = gerarFluxoCaixaDiario({
+          loja,
+          vendas,
+          pagamentos,
+          perfumes,
+          config: configFiscal,
+          concNome,
+          data: dataDiario,
+        });
+        nomeArquivo = `fluxo-caixa-diario-${loja}-${dataDiario}.pdf`;
+      } else if (periodo === "quinzenal") {
+        const { inicio, fim } = intervaloPeriodo();
+        doc = gerarFluxoCaixaQuinzenal({
+          loja,
+          vendas,
+          pagamentos,
+          perfumes,
+          config: configFiscal,
+          concNome,
+          dataInicio: inicio,
+          dataFim: fim,
+        });
+        nomeArquivo = `fluxo-caixa-quinzenal-${loja}-${mes}-Q${quinzena}.pdf`;
+      } else {
+        const { inicio, fim } = intervaloPeriodo();
+        doc = gerarFluxoCaixaMensal({
+          loja,
+          vendas,
+          pagamentos,
+          perfumes,
+          config: configFiscal,
+          concNome,
+          dataInicio: inicio,
+          dataFim: fim,
+        });
+        nomeArquivo = `fluxo-caixa-mensal-${loja}-${mes}.pdf`;
+      }
+      doc.save(nomeArquivo);
+      toast.success("Relatório gerado com sucesso");
+    } catch (e: any) {
+      console.error(e);
+      toast.error("Erro ao gerar relatório", { description: e?.message });
+    } finally {
+      setGerando(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="p-4 bg-card border-border">
+        <div className="flex items-center gap-2 mb-4">
+          <Wallet size={16} className="text-gold" />
+          <h3 className="text-sm font-semibold">Relatório de Fluxo de Caixa em PDF</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 block">Loja</label>
+            <Select value={loja} onValueChange={(v) => setLoja(v as Deposito)} disabled={!podeMudarLoja}>
+              <SelectTrigger className="bg-surface"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {lojasDisponiveis.map((l) => (
+                  <SelectItem key={l} value={l}>{l}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 block">Período</label>
+            <Select value={periodo} onValueChange={(v) => setPeriodo(v as any)}>
+              <SelectTrigger className="bg-surface"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="diario">Diário</SelectItem>
+                <SelectItem value="quinzenal">Quinzenal</SelectItem>
+                <SelectItem value="mensal">Mensal</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {periodo === "diario" ? (
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 block">Data</label>
+              <Input type="date" value={dataDiario} onChange={(e) => setDataDiario(e.target.value)} className="bg-surface" />
+            </div>
+          ) : (
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 block">Mês</label>
+              <Input type="month" value={mes} onChange={(e) => setMes(e.target.value)} className="bg-surface" />
+            </div>
+          )}
+
+          {periodo === "quinzenal" && (
+            <div>
+              <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 block">Quinzena</label>
+              <Select value={quinzena} onValueChange={(v) => setQuinzena(v as "1" | "2")}>
+                <SelectTrigger className="bg-surface"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1ª (dias 1–15)</SelectItem>
+                  <SelectItem value="2">2ª (dia 16 ao fim)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+
+        <Button onClick={gerar} disabled={gerando} className="gap-2">
+          <FileText size={16} />
+          {gerando ? "Gerando..." : "Gerar PDF"}
+        </Button>
+
+        <div className="mt-4 text-xs text-muted-foreground space-y-1">
+          <p>• <strong>Diário</strong>: pagamentos por modalidade (com gráfico de pizza), vendas por vendedor, perfumes vendidos e reposição de estoque.</p>
+          <p>• <strong>Quinzenal</strong>: faturamento, top produtos, ranking de vendedoras por quantidade e valor.</p>
+          <p>• <strong>Mensal</strong>: vendedora destaque, comparativo, produtos mais vendidos e maior giro.</p>
+        </div>
+      </Card>
     </div>
   );
 }
