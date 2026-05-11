@@ -252,6 +252,20 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
               {alertas}
             </button>
             {isMaster && (
+              <button
+                onClick={() => setShowSemBarcode(true)}
+                title="Produtos sem código de barras"
+                className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 ${
+                  produtosSemBarcode.length > 0
+                    ? "bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/15"
+                    : "btn-secondary"
+                }`}
+              >
+                <Barcode size={13} className={produtosSemBarcode.length > 0 ? "animate-pulse" : ""} />
+                {produtosSemBarcode.length}
+              </button>
+            )}
+            {isMaster && (
               <button onClick={exportarExcel} className="btn-secondary px-3 py-2">
                 <Download size={14} />
               </button>
