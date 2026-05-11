@@ -378,7 +378,7 @@ export function gerarFluxoCaixaDiario(params: FluxoCaixaInput & { data: string }
 function rangeReport(
   params: FluxoCaixaInput & { dataInicio: string; dataFim: string; titulo: string; periodoLabel: string; modo: "quinzenal" | "mensal" },
 ): jsPDF {
-  const { loja, vendas, perfumes, config, concNome, dataInicio, dataFim, titulo, periodoLabel, modo } = params;
+  const { loja, vendas, pagamentos, perfumes, config, concNome, dataInicio, dataFim, titulo, periodoLabel, modo } = params;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const perfumeById = new Map(perfumes.map((p) => [p.id, p]));
 
@@ -406,6 +406,68 @@ function rangeReport(
   doc.setFontSize(9);
   doc.text(`${totalProdutos} produto(s) vendido(s)`, 192, y + 14, { align: "right" });
   y += 24;
+
+  // Modalidades de pagamento
+  const grupos = new Set(vendasPeriodo.map((v) => v.grupoVenda).filter(Boolean) as string[]);
+  const pagsPeriodo = pagamentos.filter((p) => grupos.has(p.grupoVenda));
+
+  const mapAgrup = new Map<string, { modalidade: string; bandeira: string; qtd: number; total: number }>();
+  const grupoChave = (tipo: string, bandeira: string) => {
+    if (tipo === "Crédito" || tipo === "Débito") return `${tipo} — ${bandeira || "N/A"}`;
+    return tipo;
+  };
+
+  if (pagsPeriodo.length > 0) {
+    for (const p of pagsPeriodo) {
+      const key = grupoChave(p.tipoPagamento, p.bandeira);
+      const cur = mapAgrup.get(key) || {
+        modalidade: p.tipoPagamento,
+        bandeira: p.tipoPagamento === "Crédito" || p.tipoPagamento === "Débito" ? p.bandeira || "N/A" : "—",
+        qtd: 0,
+        total: 0,
+      };
+      cur.qtd += 1;
+      cur.total += Number(p.valor) || 0;
+      mapAgrup.set(key, cur);
+    }
+  } else {
+    for (const v of vendasPeriodo) {
+      const key = grupoChave(v.tipoPagamento, v.bandeira);
+      const cur = mapAgrup.get(key) || {
+        modalidade: v.tipoPagamento,
+        bandeira: v.tipoPagamento === "Crédito" || v.tipoPagamento === "Débito" ? v.bandeira || "N/A" : "—",
+        qtd: 0,
+        total: 0,
+      };
+      cur.qtd += 1;
+      cur.total += v.total;
+      mapAgrup.set(key, cur);
+    }
+  }
+
+  const linhas = Array.from(mapAgrup.values()).sort(
+    (a, b) => a.modalidade.localeCompare(b.modalidade) || a.bandeira.localeCompare(b.bandeira),
+  );
+  const totalPags = linhas.reduce((s, l) => s + l.total, 0);
+
+  if (linhas.length) {
+    autoTable(doc, {
+      startY: y,
+      head: [["Modalidade", "Bandeira", "Qtd. transações", "Total (R$)"]],
+      body: [
+        ...linhas.map((l) => [l.modalidade, l.bandeira, String(l.qtd), fmtBRL(l.total)]),
+        [
+          { content: "TOTAL", colSpan: 3, styles: { fontStyle: "bold", halign: "right", fillColor: GOLD, textColor: 255 } },
+          { content: fmtBRL(totalPags), styles: { fontStyle: "bold", fillColor: GOLD, textColor: 255 } },
+        ],
+      ],
+      headStyles: { fillColor: DARK, textColor: 255 },
+      styles: { fontSize: 9 },
+      columnStyles: { 2: { halign: "right" }, 3: { halign: "right" } },
+      margin: { left: 12, right: 12 },
+    });
+    y = (doc as any).lastAutoTable.finalY + 6;
+  }
 
   // Top produtos
   const mapProd = new Map<string, { desc: string; qtd: number; valor: number }>();
