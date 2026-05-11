@@ -13,7 +13,7 @@ import * as XLSX from "xlsx";
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
-  const { perfumes, testers, tiposPerfumeConfig, concentracoesConfig, excluirPerfume } = useApp();
+  const { perfumes, testers, movimentacoes, vendas, tiposPerfumeConfig, concentracoesConfig, excluirPerfume } = useApp();
   const { profile } = useAuth();
   const userLoja = (!isMaster && profile?.loja) ? profile.loja as Deposito : null;
 
