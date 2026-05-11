@@ -467,6 +467,29 @@ function rangeReport(
       margin: { left: 12, right: 12 },
     });
     y = (doc as any).lastAutoTable.finalY + 6;
+
+    // Gráfico de pizza por modalidade
+    const acumPorModal = new Map<string, number>();
+    for (const l of linhas) {
+      acumPorModal.set(l.modalidade, (acumPorModal.get(l.modalidade) || 0) + l.total);
+    }
+    const palette: Record<string, string> = {
+      "Crédito": "#C9A24A",
+      "Débito": "#2563EB",
+      "Pix": "#10B981",
+      "Dinheiro": "#22C55E",
+      "Crediário": "#F97316",
+      "Conta Assinada": "#8B5CF6",
+    };
+    const slices: PieSlice[] = Array.from(acumPorModal.entries())
+      .filter(([, v]) => v > 0)
+      .map(([label, value]) => ({ label, value, color: palette[label] || "#6B7280" }));
+    if (slices.length > 0) {
+      const pieDataUrl = renderPieChartDataUrl(slices);
+      y = ensureSpace(doc, y, 80);
+      doc.addImage(pieDataUrl, "PNG", 12, y, 186, 70);
+      y += 76;
+    }
   }
 
   // Top produtos
