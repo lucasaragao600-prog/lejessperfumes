@@ -492,21 +492,41 @@ function rangeReport(
     return tipo;
   };
 
-  if (pagsPeriodo.length > 0) {
-    for (const p of pagsPeriodo) {
-      const key = grupoChave(p.tipoPagamento, p.bandeira);
-      const cur = mapAgrup.get(key) || {
-        modalidade: p.tipoPagamento,
-        bandeira: p.tipoPagamento === "Crédito" || p.tipoPagamento === "Débito" ? p.bandeira || "N/A" : "—",
-        qtd: 0,
-        total: 0,
-      };
-      cur.qtd += 1;
-      cur.total += Number(p.valor) || 0;
-      mapAgrup.set(key, cur);
-    }
-  } else {
-    for (const v of vendasPeriodo) {
+  // Decide POR GRUPO: split quando existe, senão tipo da venda. Garante soma == faturamento.
+  const pagsPorGrupo = new Map<string, typeof pagsPeriodo>();
+  for (const p of pagsPeriodo) {
+    const arr = pagsPorGrupo.get(p.grupoVenda) || [];
+    arr.push(p);
+    pagsPorGrupo.set(p.grupoVenda, arr);
+  }
+  const totalPorGrupo = new Map<string, number>();
+  for (const v of vendasPeriodo) {
+    if (!v.grupoVenda) continue;
+    totalPorGrupo.set(v.grupoVenda, (totalPorGrupo.get(v.grupoVenda) || 0) + v.total);
+  }
+  const gruposProcessados = new Set<string>();
+  for (const v of vendasPeriodo) {
+    const grupo = v.grupoVenda;
+    if (grupo && gruposProcessados.has(grupo)) continue;
+    const splits = grupo ? pagsPorGrupo.get(grupo) : undefined;
+    if (splits && splits.length > 0) {
+      const somaSplit = splits.reduce((s, p) => s + (Number(p.valor) || 0), 0);
+      const totalGrupo = totalPorGrupo.get(grupo!) || somaSplit;
+      const fator = somaSplit > 0 ? totalGrupo / somaSplit : 1;
+      for (const p of splits) {
+        const key = grupoChave(p.tipoPagamento, p.bandeira);
+        const cur = mapAgrup.get(key) || {
+          modalidade: p.tipoPagamento,
+          bandeira: p.tipoPagamento === "Crédito" || p.tipoPagamento === "Débito" ? p.bandeira || "N/A" : "—",
+          qtd: 0,
+          total: 0,
+        };
+        cur.qtd += 1;
+        cur.total += (Number(p.valor) || 0) * fator;
+        mapAgrup.set(key, cur);
+      }
+      gruposProcessados.add(grupo!);
+    } else {
       const key = grupoChave(v.tipoPagamento, v.bandeira);
       const cur = mapAgrup.get(key) || {
         modalidade: v.tipoPagamento,
