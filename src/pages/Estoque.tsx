@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from "react";
-import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download, Trash2, ChevronUp, ChevronDown, Barcode } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatCurrency, CLASSIFICACOES_PERFUME, type Deposito, type Perfume, type TipoPerfume, type ClassificacaoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
