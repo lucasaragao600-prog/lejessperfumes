@@ -142,22 +142,49 @@ export function gerarFluxoCaixaDiario(params: FluxoCaixaInput & { data: string }
 
   const mapAgrup = new Map<string, { modalidade: string; bandeira: string; qtd: number; total: number }>();
 
-  // Fonte preferencial: venda_pagamentos. Fallback: vendas (caso não haja split registrado).
-  if (pagsDoDia.length > 0) {
-    for (const p of pagsDoDia) {
-      const key = grupoChave(p.tipoPagamento, p.bandeira);
-      const cur = mapAgrup.get(key) || {
-        modalidade: p.tipoPagamento,
-        bandeira: p.tipoPagamento === "Crédito" || p.tipoPagamento === "Débito" ? p.bandeira || "N/A" : "—",
-        qtd: 0,
-        total: 0,
-      };
-      cur.qtd += 1;
-      cur.total += Number(p.valor) || 0;
-      mapAgrup.set(key, cur);
-    }
-  } else {
-    for (const v of vendasDoDia) {
+  // Decide POR GRUPO: se existe split registrado para o grupo, usa o split; senão usa o tipo da própria venda.
+  // Garante que a soma das modalidades = faturamento (vendas.total).
+  const pagsPorGrupo = new Map<string, typeof pagsDoDia>();
+  for (const p of pagsDoDia) {
+    const arr = pagsPorGrupo.get(p.grupoVenda) || [];
+    arr.push(p);
+    pagsPorGrupo.set(p.grupoVenda, arr);
+  }
+
+  // Soma dos totais de venda por grupo (para alocar split proporcionalmente quando necessário)
+  const totalPorGrupo = new Map<string, number>();
+  for (const v of vendasDoDia) {
+    if (!v.grupoVenda) continue;
+    totalPorGrupo.set(v.grupoVenda, (totalPorGrupo.get(v.grupoVenda) || 0) + v.total);
+  }
+
+  const gruposProcessados = new Set<string>();
+  for (const v of vendasDoDia) {
+    const grupo = v.grupoVenda;
+    // Se grupo já processado via split, pula (split cobre o grupo inteiro)
+    if (grupo && gruposProcessados.has(grupo)) continue;
+
+    const splits = grupo ? pagsPorGrupo.get(grupo) : undefined;
+    if (splits && splits.length > 0) {
+      // Usa pagamentos do grupo. Reconcilia com total do grupo se houver diferença (arredondamento/legado).
+      const somaSplit = splits.reduce((s, p) => s + (Number(p.valor) || 0), 0);
+      const totalGrupo = totalPorGrupo.get(grupo!) || somaSplit;
+      const fator = somaSplit > 0 ? totalGrupo / somaSplit : 1;
+      for (const p of splits) {
+        const key = grupoChave(p.tipoPagamento, p.bandeira);
+        const cur = mapAgrup.get(key) || {
+          modalidade: p.tipoPagamento,
+          bandeira: p.tipoPagamento === "Crédito" || p.tipoPagamento === "Débito" ? p.bandeira || "N/A" : "—",
+          qtd: 0,
+          total: 0,
+        };
+        cur.qtd += 1;
+        cur.total += (Number(p.valor) || 0) * fator;
+        mapAgrup.set(key, cur);
+      }
+      gruposProcessados.add(grupo!);
+    } else {
+      // Sem split: usa tipo_pagamento/bandeira da própria venda
       const key = grupoChave(v.tipoPagamento, v.bandeira);
       const cur = mapAgrup.get(key) || {
         modalidade: v.tipoPagamento,
