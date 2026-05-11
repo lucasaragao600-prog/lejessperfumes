@@ -144,7 +144,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     }
 
     return result;
-  }, [perfumes, busca, effectiveDeposito, tipoFiltro, classificacaoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax, ordenacaoEstoque, userLoja, isMaster, getQtdForFilter, concentracoesConfig]);
+  }, [perfumes, busca, effectiveDeposito, tipoFiltro, classificacaoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax, ordenacaoEstoque, userLoja, isMaster, getQtdForFilter, concentracoesConfig, historicoPorDeposito]);
 
   const totais = useMemo(() => {
     return filtrados.reduce(
