@@ -64,6 +64,29 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     return map;
   }, [testers]);
 
+  // Histórico real de movimentação por depósito (movimentações + vendas)
+  const historicoPorDeposito = useMemo(() => {
+    const map = new Map<string, Set<string>>();
+    const add = (dep: string | undefined | null, pid: string) => {
+      if (!dep || !pid) return;
+      if (!map.has(dep)) map.set(dep, new Set());
+      map.get(dep)!.add(pid);
+    };
+    for (const m of movimentacoes) {
+      add(m.deposito, m.perfumeId);
+      add(m.depositoOrigem, m.perfumeId);
+      add(m.depositoDestino, m.perfumeId);
+    }
+    for (const v of vendas) add(v.deposito, v.perfumeId);
+    return map;
+  }, [movimentacoes, vendas]);
+
+  // Produtos sem código de barras
+  const produtosSemBarcode = useMemo(
+    () => perfumes.filter((p) => !p.codigoBarras || !p.codigoBarras.trim()),
+    [perfumes]
+  );
+
   const getTesterQtd = (perfumeId: string, deposito?: Deposito) => {
     if (deposito) return testerMap.get(`${perfumeId}-${deposito}`) || 0;
     return testerMap.get(`${perfumeId}-total`) || 0;
