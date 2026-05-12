@@ -108,6 +108,10 @@ export default function RelatoriosInteligentes() {
 
   const [preset, setPreset] = useState<Preset>("30d");
   const [customRange, setCustomRange] = useState<{ from: string; to: string }>(getPresetRange("30d"));
+  const [pickerRange, setPickerRange] = useState<{ from?: Date; to?: Date }>({
+    from: parseISO(getPresetRange("30d").from),
+    to: parseISO(getPresetRange("30d").to),
+  });
   const [marcas, setMarcas] = useState<string[]>([]);
   const [depositos, setDepositos] = useState<string[]>([]);
   const [tipos, setTipos] = useState<string[]>([]);
