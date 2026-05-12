@@ -39,6 +39,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
   const [salvando, setSalvando] = useState(false);
   const [imageUrl, setImageUrl] = useState(perfume.imageUrl || "");
   const [codigoBarras, setCodigoBarras] = useState(perfume.codigoBarras || "");
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [tab, setTab] = useState<"editar" | "custos" | "precos" | "fiscal">("editar");
   const [expandedCustoId, setExpandedCustoId] = useState<string | null>(null);
   const [fiscalBreakdown, setFiscalBreakdown] = useState<FiscalBreakdown | null>(null);
