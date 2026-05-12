@@ -40,6 +40,7 @@ export default function CadastroPerfume({ onClose }: Props) {
   const [custo, setCusto] = useState("");
   const [precoVenda, setPrecoVenda] = useState("");
   const [codigoBarras, setCodigoBarras] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [estoqueMinimo, setEstoqueMinimo] = useState("2");
   const [estCasa, setEstCasa] = useState("0");
   const [estSumauma, setEstSumauma] = useState("0");
