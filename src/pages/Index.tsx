@@ -21,6 +21,7 @@ import NfcePendentes from "@/pages/NfcePendentes";
 import BalancoEstoque from "@/pages/BalancoEstoque";
 import Relatorios from "@/pages/Relatorios";
 import InteligenciaOperacional from "@/pages/InteligenciaOperacional";
+import RelatoriosInteligentes from "@/pages/RelatoriosInteligentes";
 import { AppProvider } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useAlertas } from "@/hooks/useAlertas";
