@@ -108,6 +108,10 @@ export default function RelatoriosInteligentes() {
 
   const [preset, setPreset] = useState<Preset>("30d");
   const [customRange, setCustomRange] = useState<{ from: string; to: string }>(getPresetRange("30d"));
+  const [pickerRange, setPickerRange] = useState<{ from?: Date; to?: Date }>({
+    from: parseISO(getPresetRange("30d").from),
+    to: parseISO(getPresetRange("30d").to),
+  });
   const [marcas, setMarcas] = useState<string[]>([]);
   const [depositos, setDepositos] = useState<string[]>([]);
   const [tipos, setTipos] = useState<string[]>([]);
@@ -417,12 +421,18 @@ export default function RelatoriosInteligentes() {
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="range"
-                      selected={{ from: parseISO(customRange.from), to: parseISO(customRange.to) }}
+                      selected={pickerRange as any}
                       onSelect={(r: any) => {
+                        setPickerRange(r || {});
                         if (r?.from && r?.to) {
-                          setCustomRange({ from: format(r.from, "yyyy-MM-dd"), to: format(r.to, "yyyy-MM-dd") });
+                          setCustomRange({
+                            from: format(r.from, "yyyy-MM-dd"),
+                            to: format(r.to, "yyyy-MM-dd"),
+                          });
                         }
                       }}
+                      numberOfMonths={2}
+                      defaultMonth={pickerRange.from}
                       locale={ptBR}
                       className="p-3 pointer-events-auto"
                     />
