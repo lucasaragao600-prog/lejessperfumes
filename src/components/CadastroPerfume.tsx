@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { Plus, Settings, X, ChevronDown, ChevronUp, Calculator } from "lucide-react";
+import { Plus, Settings, X, ChevronDown, ChevronUp, Calculator, Camera } from "lucide-react";
+import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import {
   gerarCodigo,
   CLASSIFICACOES_PERFUME,
