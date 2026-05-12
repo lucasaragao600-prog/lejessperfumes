@@ -421,12 +421,18 @@ export default function RelatoriosInteligentes() {
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="range"
-                      selected={{ from: parseISO(customRange.from), to: parseISO(customRange.to) }}
+                      selected={pickerRange as any}
                       onSelect={(r: any) => {
+                        setPickerRange(r || {});
                         if (r?.from && r?.to) {
-                          setCustomRange({ from: format(r.from, "yyyy-MM-dd"), to: format(r.to, "yyyy-MM-dd") });
+                          setCustomRange({
+                            from: format(r.from, "yyyy-MM-dd"),
+                            to: format(r.to, "yyyy-MM-dd"),
+                          });
                         }
                       }}
+                      numberOfMonths={2}
+                      defaultMonth={pickerRange.from}
                       locale={ptBR}
                       className="p-3 pointer-events-auto"
                     />
