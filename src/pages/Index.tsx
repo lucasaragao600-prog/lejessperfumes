@@ -120,6 +120,7 @@ function IndexContent({
       case "notas": return isMaster ? <NotasFiscais /> : <Estoque isMaster={false} />;
       case "dashboards": return isMaster ? <Dashboards /> : <Estoque isMaster={false} />;
       case "relatorios": return isMaster ? <Relatorios /> : <Estoque isMaster={false} />;
+      case "relatorios-pro": return isMaster ? <RelatoriosInteligentes /> : <Estoque isMaster={false} />;
       case "inteligencia": return isMaster ? <InteligenciaOperacional /> : <Estoque isMaster={false} />;
       case "importar": return isMaster ? <ImportarPlanilha /> : <Estoque isMaster={false} />;
       case "caixa": return <FechamentoCaixa />;
