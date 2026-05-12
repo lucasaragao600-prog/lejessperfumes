@@ -136,7 +136,10 @@ export default function RelatoriosInteligentes() {
 
   const marcasUnicas = useMemo(() => Array.from(new Set(perfumes.map((p) => p.marca))).sort(), [perfumes]);
   const tiposUnicos = useMemo(() => Array.from(new Set(perfumes.map((p) => p.tipo))).sort(), [perfumes]);
-  const depositosUnicos = useMemo(() => casas.map((c) => c.sigla), [casas]);
+  const depositosUnicos = useMemo(
+    () => Array.from(new Set(vendas.map((v) => v.deposito).filter(Boolean))).sort(),
+    [vendas],
+  );
 
   // Produtos filtrados pelos filtros gerais (para a busca de produtos)
   const produtosFiltrados = useMemo(() => {
