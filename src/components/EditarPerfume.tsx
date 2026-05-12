@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { X, Check, History, DollarSign, ChevronDown } from "lucide-react";
+import { X, Check, History, DollarSign, ChevronDown, Camera } from "lucide-react";
+import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import MarkupCalculator from "@/components/MarkupCalculator";
 import ProductImageUpload from "@/components/ProductImageUpload";
 import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalCostCalculator";
