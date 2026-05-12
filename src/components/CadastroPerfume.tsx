@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { Plus, Settings, X, ChevronDown, ChevronUp, Calculator } from "lucide-react";
+import { Plus, Settings, X, ChevronDown, ChevronUp, Calculator, Camera } from "lucide-react";
+import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import {
   gerarCodigo,
   CLASSIFICACOES_PERFUME,
@@ -39,6 +40,7 @@ export default function CadastroPerfume({ onClose }: Props) {
   const [custo, setCusto] = useState("");
   const [precoVenda, setPrecoVenda] = useState("");
   const [codigoBarras, setCodigoBarras] = useState("");
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [estoqueMinimo, setEstoqueMinimo] = useState("2");
   const [estCasa, setEstCasa] = useState("0");
   const [estSumauma, setEstSumauma] = useState("0");
@@ -407,14 +409,35 @@ export default function CadastroPerfume({ onClose }: Props) {
             {/* Código de Barras */}
             <div>
               <label className="text-xs text-muted-foreground mb-1.5 block">Código de Barras (opcional)</label>
-              <input
-                type="text"
-                placeholder="Ex: 7898123456789"
-                value={codigoBarras}
-                onChange={(e) => setCodigoBarras(e.target.value)}
-                className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Ex: 7898123456789"
+                  value={codigoBarras}
+                  onChange={(e) => setCodigoBarras(e.target.value)}
+                  className="flex-1 bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
+                />
+                <button
+                  type="button"
+                  onClick={() => setScannerOpen(true)}
+                  className="px-3 rounded-xl border border-border bg-surface hover:border-gold-muted text-foreground flex items-center gap-1.5 text-sm"
+                  aria-label="Ler com a câmera"
+                >
+                  <Camera className="w-4 h-4 text-gold-muted" />
+                </button>
+              </div>
             </div>
+
+            <BarcodeScannerDialog
+              open={scannerOpen}
+              onClose={() => setScannerOpen(false)}
+              onDetected={(code) => {
+                setCodigoBarras(code);
+                setScannerOpen(false);
+                toast.success("Código lido", { description: code });
+              }}
+            />
+
 
             {/* Nome */}
             <div>

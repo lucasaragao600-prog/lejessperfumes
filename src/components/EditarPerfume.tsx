@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { X, Check, History, DollarSign, ChevronDown } from "lucide-react";
+import { X, Check, History, DollarSign, ChevronDown, Camera } from "lucide-react";
+import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import MarkupCalculator from "@/components/MarkupCalculator";
 import ProductImageUpload from "@/components/ProductImageUpload";
 import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalCostCalculator";
@@ -38,6 +39,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
   const [salvando, setSalvando] = useState(false);
   const [imageUrl, setImageUrl] = useState(perfume.imageUrl || "");
   const [codigoBarras, setCodigoBarras] = useState(perfume.codigoBarras || "");
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [tab, setTab] = useState<"editar" | "custos" | "precos" | "fiscal">("editar");
   const [expandedCustoId, setExpandedCustoId] = useState<string | null>(null);
   const [fiscalBreakdown, setFiscalBreakdown] = useState<FiscalBreakdown | null>(null);
@@ -311,14 +313,34 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
           {/* Código de Barras */}
           <div>
             <label className="text-xs text-muted-foreground mb-1.5 block">Código de Barras</label>
-            <input
-              type="text"
-              placeholder="Ex: 7898123456789"
-              value={codigoBarras}
-              onChange={(e) => setCodigoBarras(e.target.value)}
-              className="w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
-            />
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Ex: 7898123456789"
+                value={codigoBarras}
+                onChange={(e) => setCodigoBarras(e.target.value)}
+                className="flex-1 bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-foreground focus:outline-none focus:border-gold-muted"
+              />
+              <button
+                type="button"
+                onClick={() => setScannerOpen(true)}
+                className="px-3 rounded-xl border border-border bg-surface hover:border-gold-muted text-foreground flex items-center gap-1.5 text-sm"
+                aria-label="Ler com a câmera"
+              >
+                <Camera className="w-4 h-4 text-gold-muted" />
+              </button>
+            </div>
           </div>
+
+          <BarcodeScannerDialog
+            open={scannerOpen}
+            onClose={() => setScannerOpen(false)}
+            onDetected={(code) => {
+              setCodigoBarras(code);
+              setScannerOpen(false);
+            }}
+          />
+
 
           {/* Nome */}
           <div>
