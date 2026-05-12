@@ -21,6 +21,7 @@ import NfcePendentes from "@/pages/NfcePendentes";
 import BalancoEstoque from "@/pages/BalancoEstoque";
 import Relatorios from "@/pages/Relatorios";
 import InteligenciaOperacional from "@/pages/InteligenciaOperacional";
+import RelatoriosInteligentes from "@/pages/RelatoriosInteligentes";
 import { AppProvider } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useAlertas } from "@/hooks/useAlertas";
@@ -119,6 +120,7 @@ function IndexContent({
       case "notas": return isMaster ? <NotasFiscais /> : <Estoque isMaster={false} />;
       case "dashboards": return isMaster ? <Dashboards /> : <Estoque isMaster={false} />;
       case "relatorios": return isMaster ? <Relatorios /> : <Estoque isMaster={false} />;
+      case "relatorios-pro": return isMaster ? <RelatoriosInteligentes /> : <Estoque isMaster={false} />;
       case "inteligencia": return isMaster ? <InteligenciaOperacional /> : <Estoque isMaster={false} />;
       case "importar": return isMaster ? <ImportarPlanilha /> : <Estoque isMaster={false} />;
       case "caixa": return <FechamentoCaixa />;

@@ -21,6 +21,7 @@ const allTabs = [
   { id: "notas", label: "Notas Fiscais", icon: FileText, masterOnly: true },
   { id: "dashboards", label: "Dashboard", icon: BarChart3, masterOnly: true },
   { id: "relatorios", label: "Relatórios", icon: LineChart, masterOnly: true },
+  { id: "relatorios-pro", label: "Relatórios+", icon: Sparkles, masterOnly: true },
   { id: "inteligencia", label: "Inteligência", icon: Sparkles, masterOnly: true },
   { id: "importar", label: "Importar", icon: FileSpreadsheet, masterOnly: true },
   { id: "configuracoes", label: "Configurações", icon: Settings, masterOnly: true },
