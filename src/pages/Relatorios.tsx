@@ -1024,20 +1024,36 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
                 <SelectItem value="diario">Diário</SelectItem>
                 <SelectItem value="quinzenal">Quinzenal</SelectItem>
                 <SelectItem value="mensal">Mensal</SelectItem>
+                <SelectItem value="personalizado">Personalizado</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {periodo === "diario" ? (
+          {periodo === "diario" && (
             <div>
               <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 block">Data</label>
               <Input type="date" value={dataDiario} onChange={(e) => setDataDiario(e.target.value)} className="bg-surface" />
             </div>
-          ) : (
+          )}
+
+          {(periodo === "quinzenal" || periodo === "mensal") && (
             <div>
               <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 block">Mês</label>
               <Input type="month" value={mes} onChange={(e) => setMes(e.target.value)} className="bg-surface" />
             </div>
+          )}
+
+          {periodo === "personalizado" && (
+            <>
+              <div>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 block">Data início</label>
+                <Input type="date" value={dataPersonalizadoInicio} onChange={(e) => setDataPersonalizadoInicio(e.target.value)} className="bg-surface" />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 block">Data fim</label>
+                <Input type="date" value={dataPersonalizadoFim} onChange={(e) => setDataPersonalizadoFim(e.target.value)} className="bg-surface" />
+              </div>
+            </>
           )}
 
           {periodo === "quinzenal" && (
