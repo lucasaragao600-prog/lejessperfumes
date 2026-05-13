@@ -922,8 +922,8 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
       return { inicio: `${mes}-16`, fim: `${mes}-${String(ultimo).padStart(2, "0")}`, label: "2ª quinzena" };
     }
     if (periodo === "personalizado") {
-      const inicio = isValidDate(dataPersonalizadoInicio) ? dataPersonalizadoInicio : daysAgoStr(7);
-      const fim = isValidDate(dataPersonalizadoFim) ? dataPersonalizadoFim : hoje;
+      const inicio = isDateValid(dataPersonalizadoInicio) ? dataPersonalizadoInicio : daysAgoStr(7);
+      const fim = isDateValid(dataPersonalizadoFim) ? dataPersonalizadoFim : hoje;
       return { inicio, fim, label: `${fmtDataBr(inicio)} a ${fmtDataBr(fim)}` };
     }
     return { inicio: `${mes}-01`, fim: `${mes}-${String(ultimo).padStart(2, "0")}`, label: "Mensal" };
