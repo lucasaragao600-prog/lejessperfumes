@@ -893,10 +893,12 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
 
   const [loja, setLoja] = useState<Deposito>(lojaInicial);
   const hoje = todayStr();
-  const [periodo, setPeriodo] = useState<"diario" | "quinzenal" | "mensal">("diario");
+  const [periodo, setPeriodo] = useState<"diario" | "quinzenal" | "mensal" | "personalizado">("diario");
   const [dataDiario, setDataDiario] = useState(hoje);
   const [mes, setMes] = useState(hoje.slice(0, 7));
   const [quinzena, setQuinzena] = useState<"1" | "2">("1");
+  const [dataPersonalizadoInicio, setDataPersonalizadoInicio] = useState(daysAgoStr(7));
+  const [dataPersonalizadoFim, setDataPersonalizadoFim] = useState(hoje);
   const [gerando, setGerando] = useState(false);
 
   const podeMudarLoja = role !== "vendedor";
@@ -909,6 +911,11 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
         return { inicio: `${mes}-01`, fim: `${mes}-15`, label: "1ª quinzena" };
       }
       return { inicio: `${mes}-16`, fim: `${mes}-${String(ultimo).padStart(2, "0")}`, label: "2ª quinzena" };
+    }
+    if (periodo === "personalizado") {
+      const inicio = isValidDate(dataPersonalizadoInicio) ? dataPersonalizadoInicio : daysAgoStr(7);
+      const fim = isValidDate(dataPersonalizadoFim) ? dataPersonalizadoFim : hoje;
+      return { inicio, fim, label: `${fmtDataBr(inicio)} a ${fmtDataBr(fim)}` };
     }
     return { inicio: `${mes}-01`, fim: `${mes}-${String(ultimo).padStart(2, "0")}`, label: "Mensal" };
   };
@@ -942,6 +949,19 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
           dataFim: fim,
         });
         nomeArquivo = `fluxo-caixa-quinzenal-${loja}-${mes}-Q${quinzena}.pdf`;
+      } else if (periodo === "personalizado") {
+        const { inicio, fim } = intervaloPeriodo();
+        doc = gerarFluxoCaixaPersonalizado({
+          loja,
+          vendas,
+          pagamentos,
+          perfumes,
+          config: configFiscal,
+          concNome,
+          dataInicio: inicio,
+          dataFim: fim,
+        });
+        nomeArquivo = `fluxo-caixa-personalizado-${loja}-${inicio}-a-${fim}.pdf`;
       } else {
         const { inicio, fim } = intervaloPeriodo();
         doc = gerarFluxoCaixaMensal({
