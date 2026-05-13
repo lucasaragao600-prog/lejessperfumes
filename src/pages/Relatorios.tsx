@@ -1070,10 +1070,13 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
           )}
         </div>
 
-        <Button onClick={gerar} disabled={gerando} className="gap-2">
+        <Button onClick={gerar} disabled={gerando || (periodo === "personalizado" && dataPersonalizadoInicio > dataPersonalizadoFim)} className="gap-2">
           <FileText size={16} />
           {gerando ? "Gerando..." : "Gerar PDF"}
         </Button>
+        {periodo === "personalizado" && dataPersonalizadoInicio > dataPersonalizadoFim && (
+          <p className="mt-2 text-xs text-destructive">A data de início não pode ser maior que a data de fim.</p>
+        )}
 
         <div className="mt-4 text-xs text-muted-foreground space-y-1">
           <p>• <strong>Diário</strong>: pagamentos por modalidade (com gráfico de pizza), vendas por vendedor, perfumes vendidos e reposição de estoque.</p>
