@@ -1079,6 +1079,7 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
           <p>• <strong>Diário</strong>: pagamentos por modalidade (com gráfico de pizza), vendas por vendedor, perfumes vendidos e reposição de estoque.</p>
           <p>• <strong>Quinzenal</strong>: faturamento, top produtos, ranking de vendedoras por quantidade e valor.</p>
           <p>• <strong>Mensal</strong>: vendedora destaque, comparativo, produtos mais vendidos e maior giro.</p>
+          <p>• <strong>Personalizado</strong>: escolha livre de data início e fim — relatório completo com faturamento, modalidades, top produtos e comparativo de vendedoras.</p>
         </div>
       </Card>
     </div>
