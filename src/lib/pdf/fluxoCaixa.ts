@@ -756,3 +756,14 @@ export function gerarFluxoCaixaMensal(
     modo: "mensal",
   });
 }
+
+export function gerarFluxoCaixaPersonalizado(
+  params: FluxoCaixaInput & { dataInicio: string; dataFim: string },
+): jsPDF {
+  return rangeReport({
+    ...params,
+    titulo: "Relatório de Fluxo de Caixa — Período Personalizado",
+    periodoLabel: `Período: ${fmtData(params.dataInicio)} a ${fmtData(params.dataFim)}`,
+    modo: "mensal",
+  });
+}
