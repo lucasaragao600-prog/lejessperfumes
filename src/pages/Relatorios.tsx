@@ -28,6 +28,7 @@ import {
   gerarFluxoCaixaDiario,
   gerarFluxoCaixaQuinzenal,
   gerarFluxoCaixaMensal,
+  gerarFluxoCaixaPersonalizado,
 } from "@/lib/pdf/fluxoCaixa";
 import {
   Bar,
