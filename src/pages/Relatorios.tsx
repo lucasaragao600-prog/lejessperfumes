@@ -28,6 +28,7 @@ import {
   gerarFluxoCaixaDiario,
   gerarFluxoCaixaQuinzenal,
   gerarFluxoCaixaMensal,
+  gerarFluxoCaixaPersonalizado,
 } from "@/lib/pdf/fluxoCaixa";
 import {
   Bar,
@@ -880,6 +881,14 @@ function ClassificacaoTab({ analise, concNome, tipoNome }: { analise: any[]; con
 }
 
 /* ============= FLUXO DE CAIXA ============= */
+function isDateValid(s: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) && Number.isFinite(new Date(s).getTime());
+}
+function fmtDataBr(iso: string) {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
 function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
   const { perfumes, vendas, pagamentos } = useApp();
   const { role, profile } = useAuth();
@@ -893,10 +902,12 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
 
   const [loja, setLoja] = useState<Deposito>(lojaInicial);
   const hoje = todayStr();
-  const [periodo, setPeriodo] = useState<"diario" | "quinzenal" | "mensal">("diario");
+  const [periodo, setPeriodo] = useState<"diario" | "quinzenal" | "mensal" | "personalizado">("diario");
   const [dataDiario, setDataDiario] = useState(hoje);
   const [mes, setMes] = useState(hoje.slice(0, 7));
   const [quinzena, setQuinzena] = useState<"1" | "2">("1");
+  const [dataPersonalizadoInicio, setDataPersonalizadoInicio] = useState(daysAgoStr(7));
+  const [dataPersonalizadoFim, setDataPersonalizadoFim] = useState(hoje);
   const [gerando, setGerando] = useState(false);
 
   const podeMudarLoja = role !== "vendedor";
@@ -909,6 +920,11 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
         return { inicio: `${mes}-01`, fim: `${mes}-15`, label: "1ª quinzena" };
       }
       return { inicio: `${mes}-16`, fim: `${mes}-${String(ultimo).padStart(2, "0")}`, label: "2ª quinzena" };
+    }
+    if (periodo === "personalizado") {
+      const inicio = isDateValid(dataPersonalizadoInicio) ? dataPersonalizadoInicio : daysAgoStr(7);
+      const fim = isDateValid(dataPersonalizadoFim) ? dataPersonalizadoFim : hoje;
+      return { inicio, fim, label: `${fmtDataBr(inicio)} a ${fmtDataBr(fim)}` };
     }
     return { inicio: `${mes}-01`, fim: `${mes}-${String(ultimo).padStart(2, "0")}`, label: "Mensal" };
   };
@@ -942,6 +958,19 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
           dataFim: fim,
         });
         nomeArquivo = `fluxo-caixa-quinzenal-${loja}-${mes}-Q${quinzena}.pdf`;
+      } else if (periodo === "personalizado") {
+        const { inicio, fim } = intervaloPeriodo();
+        doc = gerarFluxoCaixaPersonalizado({
+          loja,
+          vendas,
+          pagamentos,
+          perfumes,
+          config: configFiscal,
+          concNome,
+          dataInicio: inicio,
+          dataFim: fim,
+        });
+        nomeArquivo = `fluxo-caixa-personalizado-${loja}-${inicio}-a-${fim}.pdf`;
       } else {
         const { inicio, fim } = intervaloPeriodo();
         doc = gerarFluxoCaixaMensal({
@@ -995,20 +1024,36 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
                 <SelectItem value="diario">Diário</SelectItem>
                 <SelectItem value="quinzenal">Quinzenal</SelectItem>
                 <SelectItem value="mensal">Mensal</SelectItem>
+                <SelectItem value="personalizado">Personalizado</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {periodo === "diario" ? (
+          {periodo === "diario" && (
             <div>
               <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 block">Data</label>
               <Input type="date" value={dataDiario} onChange={(e) => setDataDiario(e.target.value)} className="bg-surface" />
             </div>
-          ) : (
+          )}
+
+          {(periodo === "quinzenal" || periodo === "mensal") && (
             <div>
               <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 block">Mês</label>
               <Input type="month" value={mes} onChange={(e) => setMes(e.target.value)} className="bg-surface" />
             </div>
+          )}
+
+          {periodo === "personalizado" && (
+            <>
+              <div>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 block">Data início</label>
+                <Input type="date" value={dataPersonalizadoInicio} onChange={(e) => setDataPersonalizadoInicio(e.target.value)} className="bg-surface" />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 block">Data fim</label>
+                <Input type="date" value={dataPersonalizadoFim} onChange={(e) => setDataPersonalizadoFim(e.target.value)} className="bg-surface" />
+              </div>
+            </>
           )}
 
           {periodo === "quinzenal" && (
@@ -1025,15 +1070,19 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
           )}
         </div>
 
-        <Button onClick={gerar} disabled={gerando} className="gap-2">
+        <Button onClick={gerar} disabled={gerando || (periodo === "personalizado" && dataPersonalizadoInicio > dataPersonalizadoFim)} className="gap-2">
           <FileText size={16} />
           {gerando ? "Gerando..." : "Gerar PDF"}
         </Button>
+        {periodo === "personalizado" && dataPersonalizadoInicio > dataPersonalizadoFim && (
+          <p className="mt-2 text-xs text-destructive">A data de início não pode ser maior que a data de fim.</p>
+        )}
 
         <div className="mt-4 text-xs text-muted-foreground space-y-1">
           <p>• <strong>Diário</strong>: pagamentos por modalidade (com gráfico de pizza), vendas por vendedor, perfumes vendidos e reposição de estoque.</p>
           <p>• <strong>Quinzenal</strong>: faturamento, top produtos, ranking de vendedoras por quantidade e valor.</p>
           <p>• <strong>Mensal</strong>: vendedora destaque, comparativo, produtos mais vendidos e maior giro.</p>
+          <p>• <strong>Personalizado</strong>: escolha livre de data início e fim — relatório completo com faturamento, modalidades, top produtos e comparativo de vendedoras.</p>
         </div>
       </Card>
     </div>
