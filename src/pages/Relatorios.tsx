@@ -881,6 +881,14 @@ function ClassificacaoTab({ analise, concNome, tipoNome }: { analise: any[]; con
 }
 
 /* ============= FLUXO DE CAIXA ============= */
+function isDateValid(s: string) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) && Number.isFinite(new Date(s).getTime());
+}
+function fmtDataBr(iso: string) {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
+}
+
 function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
   const { perfumes, vendas, pagamentos } = useApp();
   const { role, profile } = useAuth();
