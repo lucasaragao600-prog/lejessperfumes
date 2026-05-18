@@ -54,25 +54,46 @@ export function useVendas() {
   const { data: vendas = [], isLoading } = useQuery({
     queryKey: ["vendas"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("vendas")
-        .select("*")
-        .order("data", { ascending: false });
-      if (error) throw error;
-      return (data || []).map(rowToVenda);
+      const PAGE = 1000;
+      let all: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("vendas")
+          .select("*")
+          .order("data", { ascending: false })
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        const rows = data || [];
+        all = all.concat(rows);
+        if (rows.length < PAGE) break;
+        from += PAGE;
+      }
+      return all.map(rowToVenda);
     },
   });
 
   const { data: pagamentos = [] } = useQuery({
     queryKey: ["venda_pagamentos"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("venda_pagamentos")
-        .select("*");
-      if (error) throw error;
-      return (data || []).map(rowToPagamento);
+      const PAGE = 1000;
+      let all: any[] = [];
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("venda_pagamentos")
+          .select("*")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        const rows = data || [];
+        all = all.concat(rows);
+        if (rows.length < PAGE) break;
+        from += PAGE;
+      }
+      return all.map(rowToPagamento);
     },
   });
+
 
   const adicionarVendaMulti = useMutation({
     mutationFn: async ({
