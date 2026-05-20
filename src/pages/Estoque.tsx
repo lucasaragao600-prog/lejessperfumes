@@ -88,6 +88,12 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     [perfumes]
   );
 
+  // Produtos sem tester em nenhum depósito
+  const produtosSemTester = useMemo(
+    () => perfumes.filter((p) => getTesterQtd(p.id) === 0),
+    [perfumes, testerMap]
+  );
+
   const getTesterQtd = (perfumeId: string, deposito?: Deposito) => {
     if (deposito) return testerMap.get(`${perfumeId}-${deposito}`) || 0;
     return testerMap.get(`${perfumeId}-total`) || 0;
