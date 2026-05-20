@@ -273,6 +273,20 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
               </button>
             )}
             {isMaster && (
+              <button
+                onClick={() => setShowSemTester(true)}
+                title="Produtos sem tester"
+                className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 ${
+                  produtosSemTester.length > 0
+                    ? "bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/15"
+                    : "btn-secondary"
+                }`}
+              >
+                <Beaker size={13} className={produtosSemTester.length > 0 ? "animate-pulse" : ""} />
+                {produtosSemTester.length}
+              </button>
+            )}
+            {isMaster && (
               <button onClick={exportarExcel} className="btn-secondary px-3 py-2">
                 <Download size={14} />
               </button>
