@@ -90,7 +90,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
 
   // Produtos sem tester em nenhum depósito
   const produtosSemTester = useMemo(
-    () => perfumes.filter((p) => getTesterQtd(p.id) === 0),
+    () => perfumes.filter((p) => (testerMap.get(`${p.id}-total`) || 0) === 0),
     [perfumes, testerMap]
   );
 
