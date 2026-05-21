@@ -343,11 +343,22 @@ export function useBalancos() {
   };
 
   const recalcularTotais = async (balancoId: string) => {
-    const { data: itens } = await supabase
-      .from("balanco_itens")
-      .select("*")
-      .eq("balanco_id", balancoId);
-    const list = (itens || []) as BalancoItem[];
+    const list: BalancoItem[] = [];
+    const PAGE = 1000;
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from("balanco_itens")
+        .select("*")
+        .eq("balanco_id", balancoId)
+        .range(from, from + PAGE - 1);
+      if (error) throw error;
+      const rows = (data || []) as BalancoItem[];
+      list.push(...rows);
+      if (rows.length < PAGE) break;
+      from += PAGE;
+    }
+
     const conferidos = list.filter((i) => i.status !== "pendente").length;
     const divergencias = list.filter((i) => i.status === "sobra" || i.status === "falta").length;
     const sobras = list.filter((i) => i.status === "sobra").length;
@@ -381,15 +392,26 @@ export function useBalancos() {
 
   const aplicarAjustes = useMutation({
     mutationFn: async (input: { balancoId: string; usuario: string }) => {
-      const { data: itens, error } = await supabase
-        .from("balanco_itens")
-        .select("*")
-        .eq("balanco_id", input.balancoId)
-        .in("status", ["sobra", "falta"])
-        .eq("ajuste_aplicado", false);
-      if (error) throw error;
+      const itens: BalancoItem[] = [];
+      const PAGE = 1000;
+      let pageFrom = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("balanco_itens")
+          .select("*")
+          .eq("balanco_id", input.balancoId)
+          .in("status", ["sobra", "falta"])
+          .eq("ajuste_aplicado", false)
+          .range(pageFrom, pageFrom + PAGE - 1);
+        if (error) throw error;
+        const rows = (data || []) as BalancoItem[];
+        itens.push(...rows);
+        if (rows.length < PAGE) break;
+        pageFrom += PAGE;
+      }
 
-      for (const item of (itens || []) as BalancoItem[]) {
+      for (const item of itens) {
+
         if (item.diferenca === 0) continue;
         const col = depCol[item.deposito];
         if (!col) continue;
@@ -433,7 +455,7 @@ export function useBalancos() {
         })
         .eq("id", input.balancoId);
 
-      await log(input.balancoId, "ajuste_aplicado", input.usuario, { total: (itens || []).length });
+      await log(input.balancoId, "ajuste_aplicado", input.usuario, { total: itens.length });
     },
     onSuccess: () => {
       invalidate();
@@ -512,13 +534,25 @@ export function useBalancoItens(balancoId: string | null) {
     queryKey: ["balanco-itens", balancoId],
     enabled: !!balancoId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("balanco_itens")
-        .select("*, perfumes(image_url, casa_sigla, concentracao, volume, tamanho, codigo_barras)")
-        .eq("balanco_id", balancoId!)
-        .order("perfume_nome");
-      if (error) throw error;
-      return (data || []).map((row: any) => {
+      const all: any[] = [];
+      const PAGE = 1000;
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("balanco_itens")
+          .select("*, perfumes(image_url, casa_sigla, concentracao, volume, tamanho, codigo_barras)")
+          .eq("balanco_id", balancoId!)
+          .order("perfume_nome")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        const rows = data || [];
+        all.push(...rows);
+        if (rows.length < PAGE) break;
+        from += PAGE;
+      }
+
+      return all.map((row: any) => {
+
         const perfume = row.perfumes || {};
         const { perfumes, ...item } = row;
         return {
