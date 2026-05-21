@@ -534,12 +534,25 @@ export function useBalancoItens(balancoId: string | null) {
     queryKey: ["balanco-itens", balancoId],
     enabled: !!balancoId,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("balanco_itens")
-        .select("*, perfumes(image_url, casa_sigla, concentracao, volume, tamanho, codigo_barras)")
-        .eq("balanco_id", balancoId!)
-        .order("perfume_nome");
-      if (error) throw error;
+      const all: any[] = [];
+      const PAGE = 1000;
+      let from = 0;
+      while (true) {
+        const { data, error } = await supabase
+          .from("balanco_itens")
+          .select("*, perfumes(image_url, casa_sigla, concentracao, volume, tamanho, codigo_barras)")
+          .eq("balanco_id", balancoId!)
+          .order("perfume_nome")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        const rows = data || [];
+        all.push(...rows);
+        if (rows.length < PAGE) break;
+        from += PAGE;
+      }
+      const data = all;
+      if (false) { } // keep structure below
+
       return (data || []).map((row: any) => {
         const perfume = row.perfumes || {};
         const { perfumes, ...item } = row;
