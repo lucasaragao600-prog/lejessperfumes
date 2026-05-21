@@ -1195,7 +1195,8 @@ function ItemRow({
         />
       )}
 
-      {editavel && (
+      {editavel && !isAreas && (
+
         <div className="flex justify-between items-center text-xs gap-2">
           <span className="text-muted-foreground truncate">
             {!isCega && (
