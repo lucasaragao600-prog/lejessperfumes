@@ -637,8 +637,10 @@ export function useBalancos() {
     cancelarBalanco: cancelarBalanco.mutateAsync,
     excluirBalanco: excluirBalanco.mutateAsync,
     recalcularTotais,
+    refreshVendasDurante,
   };
 }
+
 
 export function useBalancoItens(balancoId: string | null) {
   const qc = useQueryClient();
