@@ -343,11 +343,22 @@ export function useBalancos() {
   };
 
   const recalcularTotais = async (balancoId: string) => {
-    const { data: itens } = await supabase
-      .from("balanco_itens")
-      .select("*")
-      .eq("balanco_id", balancoId);
-    const list = (itens || []) as BalancoItem[];
+    const list: BalancoItem[] = [];
+    const PAGE = 1000;
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from("balanco_itens")
+        .select("*")
+        .eq("balanco_id", balancoId)
+        .range(from, from + PAGE - 1);
+      if (error) throw error;
+      const rows = (data || []) as BalancoItem[];
+      list.push(...rows);
+      if (rows.length < PAGE) break;
+      from += PAGE;
+    }
+
     const conferidos = list.filter((i) => i.status !== "pendente").length;
     const divergencias = list.filter((i) => i.status === "sobra" || i.status === "falta").length;
     const sobras = list.filter((i) => i.status === "sobra").length;
