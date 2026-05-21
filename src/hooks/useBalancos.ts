@@ -22,6 +22,7 @@ export interface Balanco {
   tipo_contagem: TipoContagem;
   modo_contagem: ModoContagem;
   dupla_conferencia: boolean;
+  areas_split: boolean;
   iniciado_em: string;
   concluido_em?: string | null;
   ajustado_em?: string | null;
@@ -38,6 +39,8 @@ export interface Balanco {
   created_at: string;
   updated_at: string;
 }
+
+export type Area = "deposito" | "salao";
 
 export interface BalancoItem {
   id: string;
@@ -56,6 +59,9 @@ export interface BalancoItem {
   estoque_sistema: number;
   quantidade_contada: number | null;
   quantidade_contada_2: number | null;
+  quantidade_deposito: number | null;
+  quantidade_salao: number | null;
+  vendas_durante: number;
   diferenca: number;
   custo_unitario: number;
   impacto_financeiro: number;
@@ -69,6 +75,7 @@ export interface BalancoItem {
   ajuste_aplicado: boolean;
   movimentacao_id?: string | null;
 }
+
 
 export interface BalancoAuditoria {
   id: string;
