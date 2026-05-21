@@ -236,7 +236,7 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
       resetScanCapture();
       setTimeout(() => scanRef.current?.focus(), 50);
     }
-  }, [balancoId, scanCodigo, scanQtd, filtroDeposito, somAtivo, profile, contagemAtiva, balanco?.dupla_conferencia, bipar, resetScanCapture]);
+  }, [balancoId, scanCodigo, scanQtd, filtroDeposito, somAtivo, profile, contagemAtiva, balanco?.dupla_conferencia, bipar, resetScanCapture, isAreas, areaAtiva]);
 
   const scheduleAutoScan = useCallback((codigo: string) => {
     if (tab !== "scan" || !editavel) return;
