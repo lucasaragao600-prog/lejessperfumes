@@ -550,10 +550,9 @@ export function useBalancoItens(balancoId: string | null) {
         if (rows.length < PAGE) break;
         from += PAGE;
       }
-      const data = all;
-      if (false) { } // keep structure below
 
-      return (data || []).map((row: any) => {
+      return all.map((row: any) => {
+
         const perfume = row.perfumes || {};
         const { perfumes, ...item } = row;
         return {
