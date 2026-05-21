@@ -69,6 +69,8 @@ export default function BalancoNovo({ onBack, onCreated }: Props) {
         tipo_contagem: tipoContagem,
         modo_contagem: modoContagem,
         dupla_conferencia: duplaConferencia,
+        areas_split: podeDuasAreas && areasSplit,
+
         filtros: {
           marca: marca || undefined,
           tipo: tipo || undefined,
