@@ -1181,8 +1181,10 @@ function ItemRow({
           />
         )}
       </div>
+      )}
 
-      {editavel && !isCega && diffPreview !== null && diffPreview !== 0 && (
+      {!isAreas && editavel && !isCega && diffPreview !== null && diffPreview !== 0 && (
+
         <input
           value={e.just}
           onChange={(ev) =>
