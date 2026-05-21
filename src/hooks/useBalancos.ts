@@ -22,6 +22,7 @@ export interface Balanco {
   tipo_contagem: TipoContagem;
   modo_contagem: ModoContagem;
   dupla_conferencia: boolean;
+  areas_split: boolean;
   iniciado_em: string;
   concluido_em?: string | null;
   ajustado_em?: string | null;
@@ -38,6 +39,8 @@ export interface Balanco {
   created_at: string;
   updated_at: string;
 }
+
+export type Area = "deposito" | "salao";
 
 export interface BalancoItem {
   id: string;
@@ -56,6 +59,9 @@ export interface BalancoItem {
   estoque_sistema: number;
   quantidade_contada: number | null;
   quantidade_contada_2: number | null;
+  quantidade_deposito: number | null;
+  quantidade_salao: number | null;
+  vendas_durante: number;
   diferenca: number;
   custo_unitario: number;
   impacto_financeiro: number;
@@ -69,6 +75,7 @@ export interface BalancoItem {
   ajuste_aplicado: boolean;
   movimentacao_id?: string | null;
 }
+
 
 export interface BalancoAuditoria {
   id: string;
@@ -116,6 +123,7 @@ export function useBalancos() {
       tipo_contagem: TipoContagem;
       modo_contagem: ModoContagem;
       dupla_conferencia: boolean;
+      areas_split?: boolean;
       filtros?: { marca?: string; tipo?: string; comEstoque?: boolean };
     }) => {
       // paginação para >1000 produtos
@@ -167,6 +175,7 @@ export function useBalancos() {
           tipo_contagem: input.tipo_contagem,
           modo_contagem: input.modo_contagem,
           dupla_conferencia: input.dupla_conferencia,
+          areas_split: !!input.areas_split,
           status: "em_andamento",
           total_itens: itens.length,
         })
@@ -187,6 +196,7 @@ export function useBalancos() {
         total_itens: itens.length,
         tipo_contagem: input.tipo_contagem,
         modo_contagem: input.modo_contagem,
+        areas_split: !!input.areas_split,
       });
 
       return bal as Balanco;
@@ -194,42 +204,74 @@ export function useBalancos() {
     onSuccess: invalidate,
   });
 
-  /** Atualiza item (1ª ou 2ª contagem) e recalcula campos derivados */
+
+  /** Atualiza item (1ª ou 2ª contagem) e recalcula campos derivados.
+   *  Quando `area` é informado, atualiza somente aquela área (Depósito ou Salão)
+   *  e o total contado vira a soma das duas áreas. A diferença passa a descontar
+   *  as vendas registradas durante o balanço (vendas_durante).
+   */
   const atualizarItem = useMutation({
     mutationFn: async (input: {
       itemId: string;
       quantidade_contada: number;
       contagem?: 1 | 2;
+      area?: Area;
       justificativa?: string;
       conferido_por: string;
       estoque_sistema: number;
       custo_unitario: number;
     }) => {
       const contagem = input.contagem ?? 1;
-      const diff = input.quantidade_contada - input.estoque_sistema;
-      const status: ItemStatus =
-        diff === 0 ? "sem_divergencia" : diff > 0 ? "sobra" : "falta";
       const now = new Date().toISOString();
+      const patch: Record<string, any> = {};
 
-      const patch: Record<string, any> =
-        contagem === 1
-          ? {
-              quantidade_contada: input.quantidade_contada,
-              diferenca: diff,
-              status,
-              justificativa: input.justificativa ?? undefined,
-              conferido_por: input.conferido_por,
-              conferido_em: now,
-              impacto_financeiro: Math.abs(diff) * input.custo_unitario,
-            }
-          : {
-              quantidade_contada_2: input.quantidade_contada,
-              conferido_por_2: input.conferido_por,
-              conferido_em_2: now,
-            };
+      if (input.area) {
+        // Modo duas áreas: persiste a área e recalcula soma
+        const { data: row } = await supabase
+          .from("balanco_itens")
+          .select("quantidade_deposito, quantidade_salao, vendas_durante")
+          .eq("id", input.itemId)
+          .maybeSingle();
+        const outraArea: Area = input.area === "deposito" ? "salao" : "deposito";
+        const valorOutra = Number(
+          (row as any)?.[`quantidade_${outraArea}`] ?? 0,
+        );
+        const valorEsta = input.quantidade_contada;
+        const total = valorEsta + valorOutra;
+        const vendas = Number((row as any)?.vendas_durante ?? 0);
+        const baseSistema = Math.max(0, input.estoque_sistema - vendas);
+        const diff = total - baseSistema;
+        const status: ItemStatus =
+          diff === 0 ? "sem_divergencia" : diff > 0 ? "sobra" : "falta";
+        patch[`quantidade_${input.area}`] = valorEsta;
+        patch.quantidade_contada = total;
+        patch.diferenca = diff;
+        patch.status = status;
+        patch.impacto_financeiro = Math.abs(diff) * input.custo_unitario;
+        patch.conferido_por = input.conferido_por;
+        patch.conferido_em = now;
+        if (input.justificativa !== undefined) patch.justificativa = input.justificativa;
+      } else {
+        const diff = input.quantidade_contada - input.estoque_sistema;
+        const status: ItemStatus =
+          diff === 0 ? "sem_divergencia" : diff > 0 ? "sobra" : "falta";
+        if (contagem === 1) {
+          patch.quantidade_contada = input.quantidade_contada;
+          patch.diferenca = diff;
+          patch.status = status;
+          if (input.justificativa !== undefined) patch.justificativa = input.justificativa;
+          patch.conferido_por = input.conferido_por;
+          patch.conferido_em = now;
+          patch.impacto_financeiro = Math.abs(diff) * input.custo_unitario;
+        } else {
+          patch.quantidade_contada_2 = input.quantidade_contada;
+          patch.conferido_por_2 = input.conferido_por;
+          patch.conferido_em_2 = now;
+        }
+      }
 
       // Calcular divergência entre contadores
-      if (contagem === 2) {
+      if (contagem === 2 && !input.area) {
         const { data: row } = await supabase
           .from("balanco_itens")
           .select("quantidade_contada")
@@ -247,6 +289,7 @@ export function useBalancos() {
     onSuccess: invalidateItens,
   });
 
+
   /**
    * Bipa um código durante contagem por código de barras.
    * - Procura GTIN, depois SKU
@@ -260,6 +303,7 @@ export function useBalancos() {
     quantidade?: number;
     deposito?: string;
     contagem?: 1 | 2;
+    area?: Area;
     usuario: string;
   }): Promise<
     | { tipo: "ok"; item: BalancoItem; origem: "gtin" | "sku"; novaQtd: number }
@@ -307,26 +351,41 @@ export function useBalancos() {
       return { tipo: "produto_fora_balanco", perfumeId: resolvido.perfumeId };
     }
 
-    // Se há múltiplos depósitos no balanço e usuário não filtrou: usar o primeiro com pendência ou o primeiro
     const item = (itens.find((i: any) =>
       contagem === 1 ? i.quantidade_contada == null : i.quantidade_contada_2 == null
     ) || itens[0]) as BalancoItem;
 
-    const atualCount =
-      contagem === 1
-        ? Number(item.quantidade_contada ?? 0)
-        : Number(item.quantidade_contada_2 ?? 0);
-    const novaQtd = atualCount + qtd;
-
-    await atualizarItem.mutateAsync({
-      itemId: item.id,
-      quantidade_contada: novaQtd,
-      contagem,
-      conferido_por: input.usuario,
-      estoque_sistema: item.estoque_sistema,
-      custo_unitario: item.custo_unitario,
-      justificativa: item.justificativa,
-    });
+    let novaQtd: number;
+    if (input.area) {
+      const atualArea = Number((item as any)[`quantidade_${input.area}`] ?? 0);
+      const novaArea = atualArea + qtd;
+      await atualizarItem.mutateAsync({
+        itemId: item.id,
+        quantidade_contada: novaArea,
+        area: input.area,
+        conferido_por: input.usuario,
+        estoque_sistema: item.estoque_sistema,
+        custo_unitario: item.custo_unitario,
+        justificativa: item.justificativa,
+      });
+      const outra = input.area === "deposito" ? "salao" : "deposito";
+      novaQtd = novaArea + Number((item as any)[`quantidade_${outra}`] ?? 0);
+    } else {
+      const atualCount =
+        contagem === 1
+          ? Number(item.quantidade_contada ?? 0)
+          : Number(item.quantidade_contada_2 ?? 0);
+      novaQtd = atualCount + qtd;
+      await atualizarItem.mutateAsync({
+        itemId: item.id,
+        quantidade_contada: novaQtd,
+        contagem,
+        conferido_por: input.usuario,
+        estoque_sistema: item.estoque_sistema,
+        custo_unitario: item.custo_unitario,
+        justificativa: item.justificativa,
+      });
+    }
 
     await registrarLeitura({
       balanco_id: input.balancoId,
@@ -341,6 +400,84 @@ export function useBalancos() {
 
     return { tipo: "ok", item: { ...item, quantidade_contada: novaQtd }, origem: resolvido.origem, novaQtd };
   };
+
+  /** Atualiza para cada item do balanço o número de vendas registradas
+   *  para o mesmo perfume/depósito desde a abertura do balanço. */
+  const refreshVendasDurante = async (balancoId: string) => {
+    const { data: bal } = await supabase
+      .from("balancos")
+      .select("iniciado_em, areas_split, depositos")
+      .eq("id", balancoId)
+      .maybeSingle();
+    if (!bal || !(bal as any).areas_split) return;
+    const iniciadoEm = (bal as any).iniciado_em as string;
+    const deps = ((bal as any).depositos || []) as string[];
+
+    // Carrega itens (paginação)
+    const itens: any[] = [];
+    const PAGE = 1000;
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from("balanco_itens")
+        .select("id, perfume_id, deposito, estoque_sistema, custo_unitario, quantidade_deposito, quantidade_salao, vendas_durante")
+        .eq("balanco_id", balancoId)
+        .range(from, from + PAGE - 1);
+      if (error) throw error;
+      const rows = data || [];
+      itens.push(...rows);
+      if (rows.length < PAGE) break;
+      from += PAGE;
+    }
+
+    // Vendas desde iniciado_em para os depósitos do balanço
+    const vendas: any[] = [];
+    let vfrom = 0;
+    while (true) {
+      const { data, error } = await supabase
+        .from("vendas")
+        .select("perfume_id, quantidade, deposito")
+        .gte("created_at", iniciadoEm)
+        .in("deposito", deps)
+        .range(vfrom, vfrom + PAGE - 1);
+      if (error) throw error;
+      const rows = data || [];
+      vendas.push(...rows);
+      if (rows.length < PAGE) break;
+      vfrom += PAGE;
+    }
+
+    // Mapa perfume+deposito -> total vendido
+    const map = new Map<string, number>();
+    for (const v of vendas) {
+      const k = `${v.perfume_id}|${v.deposito}`;
+      map.set(k, (map.get(k) || 0) + Number(v.quantidade || 0));
+    }
+
+    // Atualiza somente itens cujo vendas_durante mudou
+    for (const it of itens) {
+      const k = `${it.perfume_id}|${it.deposito}`;
+      const novo = map.get(k) || 0;
+      if (novo === Number(it.vendas_durante || 0)) continue;
+      const total = Number(it.quantidade_deposito || 0) + Number(it.quantidade_salao || 0);
+      const base = Math.max(0, Number(it.estoque_sistema || 0) - novo);
+      const diff = (it.quantidade_deposito == null && it.quantidade_salao == null) ? 0 : total - base;
+      const status: ItemStatus = (it.quantidade_deposito == null && it.quantidade_salao == null)
+        ? "pendente"
+        : diff === 0 ? "sem_divergencia" : diff > 0 ? "sobra" : "falta";
+      await supabase
+        .from("balanco_itens")
+        .update({
+          vendas_durante: novo,
+          diferenca: diff,
+          status,
+          impacto_financeiro: Math.abs(diff) * Number(it.custo_unitario || 0),
+        })
+        .eq("id", it.id);
+    }
+    qc.invalidateQueries({ queryKey: ["balanco-itens", balancoId] });
+  };
+
 
   const recalcularTotais = async (balancoId: string) => {
     const list: BalancoItem[] = [];
@@ -500,8 +637,10 @@ export function useBalancos() {
     cancelarBalanco: cancelarBalanco.mutateAsync,
     excluirBalanco: excluirBalanco.mutateAsync,
     recalcularTotais,
+    refreshVendasDurante,
   };
 }
+
 
 export function useBalancoItens(balancoId: string | null) {
   const qc = useQueryClient();

@@ -147,8 +147,11 @@ export type Database = {
           perfume_nome: string
           quantidade_contada: number | null
           quantidade_contada_2: number | null
+          quantidade_deposito: number | null
+          quantidade_salao: number | null
           status: string
           updated_at: string
+          vendas_durante: number
         }
         Insert: {
           ajuste_aplicado?: boolean
@@ -173,8 +176,11 @@ export type Database = {
           perfume_nome?: string
           quantidade_contada?: number | null
           quantidade_contada_2?: number | null
+          quantidade_deposito?: number | null
+          quantidade_salao?: number | null
           status?: string
           updated_at?: string
+          vendas_durante?: number
         }
         Update: {
           ajuste_aplicado?: boolean
@@ -199,8 +205,11 @@ export type Database = {
           perfume_nome?: string
           quantidade_contada?: number | null
           quantidade_contada_2?: number | null
+          quantidade_deposito?: number | null
+          quantidade_salao?: number | null
           status?: string
           updated_at?: string
+          vendas_durante?: number
         }
         Relationships: [
           {
@@ -262,6 +271,7 @@ export type Database = {
         Row: {
           ajustado_em: string | null
           ajustado_por: string | null
+          areas_split: boolean
           cancelado_em: string | null
           cancelado_por: string | null
           concluido_em: string | null
@@ -290,6 +300,7 @@ export type Database = {
         Insert: {
           ajustado_em?: string | null
           ajustado_por?: string | null
+          areas_split?: boolean
           cancelado_em?: string | null
           cancelado_por?: string | null
           concluido_em?: string | null
@@ -318,6 +329,7 @@ export type Database = {
         Update: {
           ajustado_em?: string | null
           ajustado_por?: string | null
+          areas_split?: boolean
           cancelado_em?: string | null
           cancelado_por?: string | null
           concluido_em?: string | null

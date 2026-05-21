@@ -71,7 +71,7 @@ function playBeep(ok: boolean) {
 export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico }: Props) {
   const { profile, role } = useAuth();
   const isMaster = role === "master";
-  const { balancos, atualizarItem, bipar, concluirBalanco, aplicarAjustes, recalcularTotais } = useBalancos();
+  const { balancos, atualizarItem, bipar, concluirBalanco, aplicarAjustes, recalcularTotais, refreshVendasDurante } = useBalancos();
   const { data: itens = [], isLoading } = useBalancoItens(balancoId);
   const { data: leituras = [] } = useBalancoLeituras(balancoId);
   const { concentracoesConfig } = useConfiguracoes();
@@ -81,20 +81,24 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
 
   const isCega = balanco?.tipo_contagem === "cega";
   const isBarras = balanco?.modo_contagem === "codigo_barras";
+  const isAreas = !!balanco?.areas_split;
   const editavel = balanco?.status === "em_andamento" || balanco?.status === "rascunho";
 
   const [busca, setBusca] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState<string>("Todos");
   const [filtroStatus, setFiltroStatus] = useState<string>("Todos");
   const [edits, setEdits] = useState<Record<string, { qtd: string; just: string }>>({});
+  const [editsArea, setEditsArea] = useState<Record<string, { deposito: string; salao: string; just: string }>>({});
   const [showRevisao, setShowRevisao] = useState(false);
   const [ordenarDivergencia, setOrdenarDivergencia] = useState(false);
+  const [areaAtiva, setAreaAtiva] = useState<"deposito" | "salao">("deposito");
 
   // Modo contagem rápida (scan)
   const [scanCodigo, setScanCodigo] = useState("");
   const [scanQtd, setScanQtd] = useState("1");
   const [somAtivo, setSomAtivo] = useState(true);
   const [contagemAtiva, setContagemAtiva] = useState<1 | 2>(1);
+
   const [ultimoBip, setUltimoBip] = useState<{
     nome: string; deposito: string; qtd: number; ok: boolean; ts: number;
   } | null>(null);
@@ -203,8 +207,10 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
         quantidade: qtd,
         deposito: dep,
         contagem: balanco?.dupla_conferencia ? contagemAtiva : 1,
+        area: isAreas ? areaAtiva : undefined,
         usuario: profile?.nome || "—",
       });
+
 
       if (r.tipo === "ok") {
         if (somAtivo) playBeep(true);
@@ -230,7 +236,7 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
       resetScanCapture();
       setTimeout(() => scanRef.current?.focus(), 50);
     }
-  }, [balancoId, scanCodigo, scanQtd, filtroDeposito, somAtivo, profile, contagemAtiva, balanco?.dupla_conferencia, bipar, resetScanCapture]);
+  }, [balancoId, scanCodigo, scanQtd, filtroDeposito, somAtivo, profile, contagemAtiva, balanco?.dupla_conferencia, bipar, resetScanCapture, isAreas, areaAtiva]);
 
   const scheduleAutoScan = useCallback((codigo: string) => {
     if (tab !== "scan" || !editavel) return;
@@ -376,9 +382,15 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
   // Recalcular totais periodicamente em modo scan
   useEffect(() => {
     if (!editavel) return;
-    const h = setInterval(() => recalcularTotais(balancoId), 8000);
+    const h = setInterval(() => {
+      recalcularTotais(balancoId);
+      if (isAreas) void refreshVendasDurante(balancoId);
+    }, 8000);
+    // primeira corrida imediata para vendas durante
+    if (isAreas) void refreshVendasDurante(balancoId);
     return () => clearInterval(h);
-  }, [balancoId, editavel, recalcularTotais]);
+  }, [balancoId, editavel, recalcularTotais, isAreas, refreshVendasDurante]);
+
 
   if (!balanco) return null;
 
@@ -484,6 +496,29 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                 </button>
               </div>
             </div>
+
+            {/* Seletor de área (somente em modo duas áreas) */}
+            {isAreas && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-gold/5 border border-gold/30">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Área:</span>
+                <div className="flex bg-surface rounded-lg p-0.5 flex-1">
+                  <button
+                    onClick={() => setAreaAtiva("deposito")}
+                    className={`flex-1 px-2 py-1.5 text-xs font-semibold rounded ${areaAtiva === "deposito" ? "bg-gold text-background" : "text-muted-foreground"}`}
+                  >
+                    Depósito (cima)
+                  </button>
+                  <button
+                    onClick={() => setAreaAtiva("salao")}
+                    className={`flex-1 px-2 py-1.5 text-xs font-semibold rounded ${areaAtiva === "salao" ? "bg-gold text-background" : "text-muted-foreground"}`}
+                  >
+                    Salão (baixo)
+                  </button>
+                </div>
+              </div>
+            )}
+
+
 
             <div className="flex gap-2">
               <div className="relative flex-1">
@@ -779,7 +814,22 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                 editavel={!!editavel}
                 edits={edits}
                 setEdits={setEdits}
+                editsArea={editsArea}
+                setEditsArea={setEditsArea}
+                isAreas={isAreas}
                 onSalvar={handleSalvarItem}
+                onSalvarArea={async (i, area, qtd, just) => {
+                  await atualizarItem({
+                    itemId: i.id,
+                    quantidade_contada: qtd,
+                    area,
+                    justificativa: just,
+                    conferido_por: profile?.nome || "—",
+                    estoque_sistema: i.estoque_sistema,
+                    custo_unitario: i.custo_unitario,
+                  });
+                  toast.success(`${area === "deposito" ? "Depósito" : "Salão"} salvo`);
+                }}
                 onConferir={(qtd) =>
                   atualizarItem({
                     itemId: item.id,
@@ -797,6 +847,7 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                 casaLabelMap={casaLabelMap}
               />
             ))}
+
           </div>
         )
       )}
@@ -910,7 +961,8 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
 
 /* ----------- Linha de item ----------- */
 function ItemRow({
-  item, isCega, editavel, edits, setEdits, onSalvar, onConferir, contagemAtiva, duplaConferencia,
+  item, isCega, editavel, edits, setEdits, editsArea, setEditsArea, isAreas,
+  onSalvar, onSalvarArea, onConferir, contagemAtiva, duplaConferencia,
   concentracoesConfig, casaLabelMap,
 }: {
   item: BalancoItem;
@@ -918,13 +970,18 @@ function ItemRow({
   editavel: boolean;
   edits: Record<string, { qtd: string; just: string }>;
   setEdits: React.Dispatch<React.SetStateAction<Record<string, { qtd: string; just: string }>>>;
+  editsArea: Record<string, { deposito: string; salao: string; just: string }>;
+  setEditsArea: React.Dispatch<React.SetStateAction<Record<string, { deposito: string; salao: string; just: string }>>>;
+  isAreas: boolean;
   onSalvar: (i: BalancoItem) => void;
+  onSalvarArea: (i: BalancoItem, area: "deposito" | "salao", qtd: number, just: string) => void;
   onConferir: (qtd: number) => void;
   contagemAtiva: 1 | 2;
   duplaConferencia: boolean;
   concentracoesConfig: Record<string, string>;
   casaLabelMap: Record<string, string>;
 }) {
+
   const atualQtd =
     duplaConferencia && contagemAtiva === 2 ? item.quantidade_contada_2 : item.quantidade_contada;
   const e = edits[item.id] || { qtd: atualQtd?.toString() ?? "", just: item.justificativa || "" };
@@ -978,7 +1035,105 @@ function ItemRow({
         </div>
       </div>
 
+      {isAreas && (() => {
+        const ea = editsArea[item.id] || {
+          deposito: item.quantidade_deposito?.toString() ?? "",
+          salao: item.quantidade_salao?.toString() ?? "",
+          just: item.justificativa || "",
+        };
+        const setArea = (patch: Partial<typeof ea>) =>
+          setEditsArea((p) => ({ ...p, [item.id]: { ...ea, ...patch } }));
+        const dn = ea.deposito === "" ? null : parseInt(ea.deposito, 10);
+        const sn = ea.salao === "" ? null : parseInt(ea.salao, 10);
+        const total = (dn ?? 0) + (sn ?? 0);
+        const base = Math.max(0, item.estoque_sistema - Number(item.vendas_durante || 0));
+        const diff = total - base;
+        return (
+          <div className="rounded-lg border border-gold/30 bg-gold/5 p-2 mb-2 space-y-2">
+            {item.vendas_durante > 0 && (
+              <p className="text-[10px] text-warning flex items-center gap-1">
+                <AlertTriangle size={10} /> {item.vendas_durante} venda(s) durante o balanço (desconto automático)
+              </p>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p className="text-[9px] uppercase text-muted-foreground mb-1">Depósito (cima)</p>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={ea.deposito}
+                  disabled={!editavel}
+                  onChange={(ev) => setArea({ deposito: ev.target.value })}
+                  onWheel={(ev) => (ev.target as HTMLInputElement).blur()}
+                  className="input-premium px-2 py-1.5 text-sm w-full text-center"
+                />
+              </div>
+              <div>
+                <p className="text-[9px] uppercase text-muted-foreground mb-1">Salão (baixo)</p>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={ea.salao}
+                  disabled={!editavel}
+                  onChange={(ev) => setArea({ salao: ev.target.value })}
+                  onWheel={(ev) => (ev.target as HTMLInputElement).blur()}
+                  className="input-premium px-2 py-1.5 text-sm w-full text-center"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+              <div className="bg-surface rounded p-1">
+                <p className="text-muted-foreground">Sistema</p>
+                <p className="font-semibold text-sm">{item.estoque_sistema}{item.vendas_durante > 0 && <span className="text-warning"> −{item.vendas_durante}</span>}</p>
+              </div>
+              <div className="bg-surface rounded p-1">
+                <p className="text-muted-foreground">Soma</p>
+                <p className="font-semibold text-sm text-gold">{total}</p>
+              </div>
+              <div className="bg-surface rounded p-1">
+                <p className="text-muted-foreground">Diferença</p>
+                <p className={`font-semibold text-sm ${diff > 0 ? "text-warning" : diff < 0 ? "text-destructive" : "text-success"}`}>
+                  {diff > 0 ? `+${diff}` : diff}
+                </p>
+              </div>
+            </div>
+            {!isCega && diff !== 0 && editavel && (
+              <input
+                value={ea.just}
+                onChange={(ev) => setArea({ just: ev.target.value })}
+                placeholder="Justificativa obrigatória para divergência"
+                className="input-premium px-2 py-1.5 text-xs w-full"
+              />
+            )}
+            {editavel && (
+              <div className="flex gap-1 justify-end">
+                <button
+                  onClick={() => {
+                    if (dn === null || isNaN(dn)) return toast.error("Informe a contagem do Depósito");
+                    onSalvarArea(item, "deposito", dn, ea.just);
+                  }}
+                  className="btn-secondary px-2 py-1 text-[10px]"
+                >
+                  Salvar Depósito
+                </button>
+                <button
+                  onClick={() => {
+                    if (sn === null || isNaN(sn)) return toast.error("Informe a contagem do Salão");
+                    onSalvarArea(item, "salao", sn, ea.just);
+                  }}
+                  className="btn-primary px-2 py-1 text-[10px]"
+                >
+                  Salvar Salão
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {!isAreas && (
       <div className={`grid ${isCega ? "grid-cols-2" : "grid-cols-3"} gap-2 mb-2`}>
+
         {!isCega && <Field label="Sistema" value={item.estoque_sistema.toString()} />}
         <Field
           label={duplaConferencia ? `Contado ${contagemAtiva === 2 ? "(2ª)" : "(1ª)"}` : "Contado"}
@@ -1026,8 +1181,10 @@ function ItemRow({
           />
         )}
       </div>
+      )}
 
-      {editavel && !isCega && diffPreview !== null && diffPreview !== 0 && (
+      {!isAreas && editavel && !isCega && diffPreview !== null && diffPreview !== 0 && (
+
         <input
           value={e.just}
           onChange={(ev) =>
@@ -1038,7 +1195,8 @@ function ItemRow({
         />
       )}
 
-      {editavel && (
+      {editavel && !isAreas && (
+
         <div className="flex justify-between items-center text-xs gap-2">
           <span className="text-muted-foreground truncate">
             {!isCega && (
