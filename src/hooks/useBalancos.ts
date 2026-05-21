@@ -123,6 +123,7 @@ export function useBalancos() {
       tipo_contagem: TipoContagem;
       modo_contagem: ModoContagem;
       dupla_conferencia: boolean;
+      areas_split?: boolean;
       filtros?: { marca?: string; tipo?: string; comEstoque?: boolean };
     }) => {
       // paginação para >1000 produtos
@@ -174,6 +175,7 @@ export function useBalancos() {
           tipo_contagem: input.tipo_contagem,
           modo_contagem: input.modo_contagem,
           dupla_conferencia: input.dupla_conferencia,
+          areas_split: !!input.areas_split,
           status: "em_andamento",
           total_itens: itens.length,
         })
@@ -194,12 +196,14 @@ export function useBalancos() {
         total_itens: itens.length,
         tipo_contagem: input.tipo_contagem,
         modo_contagem: input.modo_contagem,
+        areas_split: !!input.areas_split,
       });
 
       return bal as Balanco;
     },
     onSuccess: invalidate,
   });
+
 
   /** Atualiza item (1ª ou 2ª contagem) e recalcula campos derivados */
   const atualizarItem = useMutation({
