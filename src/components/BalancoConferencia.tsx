@@ -382,9 +382,15 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
   // Recalcular totais periodicamente em modo scan
   useEffect(() => {
     if (!editavel) return;
-    const h = setInterval(() => recalcularTotais(balancoId), 8000);
+    const h = setInterval(() => {
+      recalcularTotais(balancoId);
+      if (isAreas) void refreshVendasDurante(balancoId);
+    }, 8000);
+    // primeira corrida imediata para vendas durante
+    if (isAreas) void refreshVendasDurante(balancoId);
     return () => clearInterval(h);
-  }, [balancoId, editavel, recalcularTotais]);
+  }, [balancoId, editavel, recalcularTotais, isAreas, refreshVendasDurante]);
+
 
   if (!balanco) return null;
 
