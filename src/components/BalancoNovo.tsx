@@ -28,7 +28,12 @@ export default function BalancoNovo({ onBack, onCreated }: Props) {
   const [tipoContagem, setTipoContagem] = useState<TipoContagem>("normal");
   const [modoContagem, setModoContagem] = useState<ModoContagem>("codigo_barras");
   const [duplaConferencia, setDuplaConferencia] = useState(false);
+  const [areasSplit, setAreasSplit] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Modo "duas áreas" só disponível para Sumaúma sozinha
+  const podeDuasAreas = depositos.length === 1 && depositos[0] === "Sumaúma";
+
 
   const marcas = useMemo(() => Array.from(new Set(perfumes.map((p) => p.marca))).sort(), [perfumes]);
   const tipos = useMemo(() => Array.from(new Set(perfumes.map((p) => p.tipo))).sort(), [perfumes]);
