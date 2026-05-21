@@ -814,7 +814,22 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                 editavel={!!editavel}
                 edits={edits}
                 setEdits={setEdits}
+                editsArea={editsArea}
+                setEditsArea={setEditsArea}
+                isAreas={isAreas}
                 onSalvar={handleSalvarItem}
+                onSalvarArea={async (i, area, qtd, just) => {
+                  await atualizarItem({
+                    itemId: i.id,
+                    quantidade_contada: qtd,
+                    area,
+                    justificativa: just,
+                    conferido_por: profile?.nome || "—",
+                    estoque_sistema: i.estoque_sistema,
+                    custo_unitario: i.custo_unitario,
+                  });
+                  toast.success(`${area === "deposito" ? "Depósito" : "Salão"} salvo`);
+                }}
                 onConferir={(qtd) =>
                   atualizarItem({
                     itemId: item.id,
@@ -832,6 +847,7 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
                 casaLabelMap={casaLabelMap}
               />
             ))}
+
           </div>
         )
       )}
