@@ -1035,7 +1035,105 @@ function ItemRow({
         </div>
       </div>
 
+      {isAreas && (() => {
+        const ea = editsArea[item.id] || {
+          deposito: item.quantidade_deposito?.toString() ?? "",
+          salao: item.quantidade_salao?.toString() ?? "",
+          just: item.justificativa || "",
+        };
+        const setArea = (patch: Partial<typeof ea>) =>
+          setEditsArea((p) => ({ ...p, [item.id]: { ...ea, ...patch } }));
+        const dn = ea.deposito === "" ? null : parseInt(ea.deposito, 10);
+        const sn = ea.salao === "" ? null : parseInt(ea.salao, 10);
+        const total = (dn ?? 0) + (sn ?? 0);
+        const base = Math.max(0, item.estoque_sistema - Number(item.vendas_durante || 0));
+        const diff = total - base;
+        return (
+          <div className="rounded-lg border border-gold/30 bg-gold/5 p-2 mb-2 space-y-2">
+            {item.vendas_durante > 0 && (
+              <p className="text-[10px] text-warning flex items-center gap-1">
+                <AlertTriangle size={10} /> {item.vendas_durante} venda(s) durante o balanço (desconto automático)
+              </p>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p className="text-[9px] uppercase text-muted-foreground mb-1">Depósito (cima)</p>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={ea.deposito}
+                  disabled={!editavel}
+                  onChange={(ev) => setArea({ deposito: ev.target.value })}
+                  onWheel={(ev) => (ev.target as HTMLInputElement).blur()}
+                  className="input-premium px-2 py-1.5 text-sm w-full text-center"
+                />
+              </div>
+              <div>
+                <p className="text-[9px] uppercase text-muted-foreground mb-1">Salão (baixo)</p>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  value={ea.salao}
+                  disabled={!editavel}
+                  onChange={(ev) => setArea({ salao: ev.target.value })}
+                  onWheel={(ev) => (ev.target as HTMLInputElement).blur()}
+                  className="input-premium px-2 py-1.5 text-sm w-full text-center"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
+              <div className="bg-surface rounded p-1">
+                <p className="text-muted-foreground">Sistema</p>
+                <p className="font-semibold text-sm">{item.estoque_sistema}{item.vendas_durante > 0 && <span className="text-warning"> −{item.vendas_durante}</span>}</p>
+              </div>
+              <div className="bg-surface rounded p-1">
+                <p className="text-muted-foreground">Soma</p>
+                <p className="font-semibold text-sm text-gold">{total}</p>
+              </div>
+              <div className="bg-surface rounded p-1">
+                <p className="text-muted-foreground">Diferença</p>
+                <p className={`font-semibold text-sm ${diff > 0 ? "text-warning" : diff < 0 ? "text-destructive" : "text-success"}`}>
+                  {diff > 0 ? `+${diff}` : diff}
+                </p>
+              </div>
+            </div>
+            {!isCega && diff !== 0 && editavel && (
+              <input
+                value={ea.just}
+                onChange={(ev) => setArea({ just: ev.target.value })}
+                placeholder="Justificativa obrigatória para divergência"
+                className="input-premium px-2 py-1.5 text-xs w-full"
+              />
+            )}
+            {editavel && (
+              <div className="flex gap-1 justify-end">
+                <button
+                  onClick={() => {
+                    if (dn === null || isNaN(dn)) return toast.error("Informe a contagem do Depósito");
+                    onSalvarArea(item, "deposito", dn, ea.just);
+                  }}
+                  className="btn-secondary px-2 py-1 text-[10px]"
+                >
+                  Salvar Depósito
+                </button>
+                <button
+                  onClick={() => {
+                    if (sn === null || isNaN(sn)) return toast.error("Informe a contagem do Salão");
+                    onSalvarArea(item, "salao", sn, ea.just);
+                  }}
+                  className="btn-primary px-2 py-1 text-[10px]"
+                >
+                  Salvar Salão
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {!isAreas && (
       <div className={`grid ${isCega ? "grid-cols-2" : "grid-cols-3"} gap-2 mb-2`}>
+
         {!isCega && <Field label="Sistema" value={item.estoque_sistema.toString()} />}
         <Field
           label={duplaConferencia ? `Contado ${contagemAtiva === 2 ? "(2ª)" : "(1ª)"}` : "Contado"}
