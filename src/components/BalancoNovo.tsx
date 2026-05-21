@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { ArrowLeft, Plus, ScanBarcode, Eye, EyeOff, Users } from "lucide-react";
+import { ArrowLeft, Plus, ScanBarcode, Eye, EyeOff, Users, Layers } from "lucide-react";
+
 import { useBalancos, type TipoContagem, type ModoContagem } from "@/hooks/useBalancos";
 import { usePerfumes } from "@/hooks/usePerfumes";
 import { useAuth } from "@/context/AuthContext";
