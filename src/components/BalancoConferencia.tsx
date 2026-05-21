@@ -961,7 +961,8 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
 
 /* ----------- Linha de item ----------- */
 function ItemRow({
-  item, isCega, editavel, edits, setEdits, onSalvar, onConferir, contagemAtiva, duplaConferencia,
+  item, isCega, editavel, edits, setEdits, editsArea, setEditsArea, isAreas,
+  onSalvar, onSalvarArea, onConferir, contagemAtiva, duplaConferencia,
   concentracoesConfig, casaLabelMap,
 }: {
   item: BalancoItem;
@@ -969,13 +970,18 @@ function ItemRow({
   editavel: boolean;
   edits: Record<string, { qtd: string; just: string }>;
   setEdits: React.Dispatch<React.SetStateAction<Record<string, { qtd: string; just: string }>>>;
+  editsArea: Record<string, { deposito: string; salao: string; just: string }>;
+  setEditsArea: React.Dispatch<React.SetStateAction<Record<string, { deposito: string; salao: string; just: string }>>>;
+  isAreas: boolean;
   onSalvar: (i: BalancoItem) => void;
+  onSalvarArea: (i: BalancoItem, area: "deposito" | "salao", qtd: number, just: string) => void;
   onConferir: (qtd: number) => void;
   contagemAtiva: 1 | 2;
   duplaConferencia: boolean;
   concentracoesConfig: Record<string, string>;
   casaLabelMap: Record<string, string>;
 }) {
+
   const atualQtd =
     duplaConferencia && contagemAtiva === 2 ? item.quantidade_contada_2 : item.quantidade_contada;
   const e = edits[item.id] || { qtd: atualQtd?.toString() ?? "", just: item.justificativa || "" };
