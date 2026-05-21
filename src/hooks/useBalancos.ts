@@ -205,42 +205,73 @@ export function useBalancos() {
   });
 
 
-  /** Atualiza item (1ª ou 2ª contagem) e recalcula campos derivados */
+  /** Atualiza item (1ª ou 2ª contagem) e recalcula campos derivados.
+   *  Quando `area` é informado, atualiza somente aquela área (Depósito ou Salão)
+   *  e o total contado vira a soma das duas áreas. A diferença passa a descontar
+   *  as vendas registradas durante o balanço (vendas_durante).
+   */
   const atualizarItem = useMutation({
     mutationFn: async (input: {
       itemId: string;
       quantidade_contada: number;
       contagem?: 1 | 2;
+      area?: Area;
       justificativa?: string;
       conferido_por: string;
       estoque_sistema: number;
       custo_unitario: number;
     }) => {
       const contagem = input.contagem ?? 1;
-      const diff = input.quantidade_contada - input.estoque_sistema;
-      const status: ItemStatus =
-        diff === 0 ? "sem_divergencia" : diff > 0 ? "sobra" : "falta";
       const now = new Date().toISOString();
+      const patch: Record<string, any> = {};
 
-      const patch: Record<string, any> =
-        contagem === 1
-          ? {
-              quantidade_contada: input.quantidade_contada,
-              diferenca: diff,
-              status,
-              justificativa: input.justificativa ?? undefined,
-              conferido_por: input.conferido_por,
-              conferido_em: now,
-              impacto_financeiro: Math.abs(diff) * input.custo_unitario,
-            }
-          : {
-              quantidade_contada_2: input.quantidade_contada,
-              conferido_por_2: input.conferido_por,
-              conferido_em_2: now,
-            };
+      if (input.area) {
+        // Modo duas áreas: persiste a área e recalcula soma
+        const { data: row } = await supabase
+          .from("balanco_itens")
+          .select("quantidade_deposito, quantidade_salao, vendas_durante")
+          .eq("id", input.itemId)
+          .maybeSingle();
+        const outraArea: Area = input.area === "deposito" ? "salao" : "deposito";
+        const valorOutra = Number(
+          (row as any)?.[`quantidade_${outraArea}`] ?? 0,
+        );
+        const valorEsta = input.quantidade_contada;
+        const total = valorEsta + valorOutra;
+        const vendas = Number((row as any)?.vendas_durante ?? 0);
+        const baseSistema = Math.max(0, input.estoque_sistema - vendas);
+        const diff = total - baseSistema;
+        const status: ItemStatus =
+          diff === 0 ? "sem_divergencia" : diff > 0 ? "sobra" : "falta";
+        patch[`quantidade_${input.area}`] = valorEsta;
+        patch.quantidade_contada = total;
+        patch.diferenca = diff;
+        patch.status = status;
+        patch.impacto_financeiro = Math.abs(diff) * input.custo_unitario;
+        patch.conferido_por = input.conferido_por;
+        patch.conferido_em = now;
+        if (input.justificativa !== undefined) patch.justificativa = input.justificativa;
+      } else {
+        const diff = input.quantidade_contada - input.estoque_sistema;
+        const status: ItemStatus =
+          diff === 0 ? "sem_divergencia" : diff > 0 ? "sobra" : "falta";
+        if (contagem === 1) {
+          patch.quantidade_contada = input.quantidade_contada;
+          patch.diferenca = diff;
+          patch.status = status;
+          if (input.justificativa !== undefined) patch.justificativa = input.justificativa;
+          patch.conferido_por = input.conferido_por;
+          patch.conferido_em = now;
+          patch.impacto_financeiro = Math.abs(diff) * input.custo_unitario;
+        } else {
+          patch.quantidade_contada_2 = input.quantidade_contada;
+          patch.conferido_por_2 = input.conferido_por;
+          patch.conferido_em_2 = now;
+        }
+      }
 
       // Calcular divergência entre contadores
-      if (contagem === 2) {
+      if (contagem === 2 && !input.area) {
         const { data: row } = await supabase
           .from("balanco_itens")
           .select("quantidade_contada")
@@ -257,6 +288,7 @@ export function useBalancos() {
     },
     onSuccess: invalidateItens,
   });
+
 
   /**
    * Bipa um código durante contagem por código de barras.
