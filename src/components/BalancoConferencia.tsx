@@ -497,6 +497,29 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
               </div>
             </div>
 
+            {/* Seletor de área (somente em modo duas áreas) */}
+            {isAreas && (
+              <div className="flex items-center gap-2 p-2 rounded-lg bg-gold/5 border border-gold/30">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Área:</span>
+                <div className="flex bg-surface rounded-lg p-0.5 flex-1">
+                  <button
+                    onClick={() => setAreaAtiva("deposito")}
+                    className={`flex-1 px-2 py-1.5 text-xs font-semibold rounded ${areaAtiva === "deposito" ? "bg-gold text-background" : "text-muted-foreground"}`}
+                  >
+                    Depósito (cima)
+                  </button>
+                  <button
+                    onClick={() => setAreaAtiva("salao")}
+                    className={`flex-1 px-2 py-1.5 text-xs font-semibold rounded ${areaAtiva === "salao" ? "bg-gold text-background" : "text-muted-foreground"}`}
+                  >
+                    Salão (baixo)
+                  </button>
+                </div>
+              </div>
+            )}
+
+
+
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <ScanBarcode size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gold" />
