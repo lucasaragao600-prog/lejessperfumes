@@ -455,7 +455,7 @@ export function useBalancos() {
         })
         .eq("id", input.balancoId);
 
-      await log(input.balancoId, "ajuste_aplicado", input.usuario, { total: (itens || []).length });
+      await log(input.balancoId, "ajuste_aplicado", input.usuario, { total: itens.length });
     },
     onSuccess: () => {
       invalidate();
