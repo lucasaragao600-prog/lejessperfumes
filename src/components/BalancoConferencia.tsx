@@ -207,8 +207,10 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
         quantidade: qtd,
         deposito: dep,
         contagem: balanco?.dupla_conferencia ? contagemAtiva : 1,
+        area: isAreas ? areaAtiva : undefined,
         usuario: profile?.nome || "—",
       });
+
 
       if (r.tipo === "ok") {
         if (somAtivo) playBeep(true);
