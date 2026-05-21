@@ -213,6 +213,30 @@ export default function BalancoNovo({ onBack, onCreated }: Props) {
           </div>
         </label>
 
+        {/* Duas áreas (somente Sumaúma) */}
+        {podeDuasAreas && (
+          <label className="flex items-start gap-3 cursor-pointer p-3 rounded-xl border border-gold/40 bg-gold/5 hover:bg-gold/10 transition-colors">
+            <input
+              type="checkbox"
+              checked={areasSplit}
+              onChange={(e) => setAreasSplit(e.target.checked)}
+              className="w-4 h-4 accent-gold mt-0.5"
+            />
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <Layers size={14} className="text-gold" />
+                <span className="text-sm font-semibold">Contar em duas áreas (Depósito + Salão)</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Cada produto recebe duas contagens (cima/baixo) e a soma vira o total.
+                Vendas feitas durante o balanço são descontadas automaticamente.
+              </p>
+            </div>
+          </label>
+        )}
+
+
+
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="text-xs text-muted-foreground mb-1.5 block">Marca (opcional)</label>
