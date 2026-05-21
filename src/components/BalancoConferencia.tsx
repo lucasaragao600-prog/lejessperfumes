@@ -71,7 +71,7 @@ function playBeep(ok: boolean) {
 export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico }: Props) {
   const { profile, role } = useAuth();
   const isMaster = role === "master";
-  const { balancos, atualizarItem, bipar, concluirBalanco, aplicarAjustes, recalcularTotais } = useBalancos();
+  const { balancos, atualizarItem, bipar, concluirBalanco, aplicarAjustes, recalcularTotais, refreshVendasDurante } = useBalancos();
   const { data: itens = [], isLoading } = useBalancoItens(balancoId);
   const { data: leituras = [] } = useBalancoLeituras(balancoId);
   const { concentracoesConfig } = useConfiguracoes();
@@ -81,20 +81,24 @@ export default function BalancoConferencia({ balancoId, onBack, onOpenHistorico 
 
   const isCega = balanco?.tipo_contagem === "cega";
   const isBarras = balanco?.modo_contagem === "codigo_barras";
+  const isAreas = !!balanco?.areas_split;
   const editavel = balanco?.status === "em_andamento" || balanco?.status === "rascunho";
 
   const [busca, setBusca] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState<string>("Todos");
   const [filtroStatus, setFiltroStatus] = useState<string>("Todos");
   const [edits, setEdits] = useState<Record<string, { qtd: string; just: string }>>({});
+  const [editsArea, setEditsArea] = useState<Record<string, { deposito: string; salao: string; just: string }>>({});
   const [showRevisao, setShowRevisao] = useState(false);
   const [ordenarDivergencia, setOrdenarDivergencia] = useState(false);
+  const [areaAtiva, setAreaAtiva] = useState<"deposito" | "salao">("deposito");
 
   // Modo contagem rápida (scan)
   const [scanCodigo, setScanCodigo] = useState("");
   const [scanQtd, setScanQtd] = useState("1");
   const [somAtivo, setSomAtivo] = useState(true);
   const [contagemAtiva, setContagemAtiva] = useState<1 | 2>(1);
+
   const [ultimoBip, setUltimoBip] = useState<{
     nome: string; deposito: string; qtd: number; ok: boolean; ts: number;
   } | null>(null);
