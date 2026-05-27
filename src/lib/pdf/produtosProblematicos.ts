@@ -23,27 +23,72 @@ export interface ProdutosProblematicosOptions {
   loja?: string;
 }
 
+async function loadImageViaCanvas(url: string): Promise<{ data: string; w: number; h: number } | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    const timer = setTimeout(() => resolve(null), 10000);
+    img.onload = () => {
+      clearTimeout(timer);
+      try {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth || 1;
+        canvas.height = img.naturalHeight || 1;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(null);
+        ctx.drawImage(img, 0, 0);
+        const data = canvas.toDataURL("image/jpeg", 0.85);
+        resolve({ data, w: canvas.width, h: canvas.height });
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => {
+      clearTimeout(timer);
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
+
 async function urlToDataUrl(url: string): Promise<{ data: string; w: number; h: number } | null> {
+  if (!url) return null;
+  // 1) Try fetch
   try {
-    const res = await fetch(url, { mode: "cors" });
-    if (!res.ok) return null;
-    const blob = await res.blob();
-    const dataUrl: string = await new Promise((resolve, reject) => {
-      const r = new FileReader();
-      r.onloadend = () => resolve(r.result as string);
-      r.onerror = reject;
-      r.readAsDataURL(blob);
-    });
-    const dim = await new Promise<{ w: number; h: number }>((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve({ w: img.width, h: img.height });
-      img.onerror = () => resolve({ w: 1, h: 1 });
-      img.src = dataUrl;
-    });
-    return { data: dataUrl, w: dim.w, h: dim.h };
+    const res = await fetch(url, { mode: "cors", cache: "force-cache" });
+    if (res.ok) {
+      const blob = await res.blob();
+      const dataUrl: string = await new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onloadend = () => resolve(r.result as string);
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+      });
+      const dim = await new Promise<{ w: number; h: number }>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve({ w: img.width, h: img.height });
+        img.onerror = () => resolve({ w: 1, h: 1 });
+        img.src = dataUrl;
+      });
+      return { data: dataUrl, w: dim.w, h: dim.h };
+    }
   } catch {
-    return null;
+    /* fallthrough */
   }
+  // 2) Canvas with crossOrigin
+  const viaCanvas = await loadImageViaCanvas(url);
+  if (viaCanvas) return viaCanvas;
+  // 3) Proxy via images.weserv.nl to bypass CORS
+  try {
+    const cleaned = url.replace(/^https?:\/\//, "");
+    const proxied = `https://images.weserv.nl/?url=${encodeURIComponent(cleaned)}`;
+    const viaProxy = await loadImageViaCanvas(proxied);
+    if (viaProxy) return viaProxy;
+  } catch {
+    /* ignore */
+  }
+  console.warn("[PDF] Não foi possível carregar imagem:", url);
+  return null;
 }
 
 export async function gerarProdutosProblematicosPdf(
