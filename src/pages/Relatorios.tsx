@@ -457,6 +457,11 @@ function MargemTab({ analise, concNome, tipoNome }: { analise: any[]; concNome: 
 
 /* ============= PROBLEMÁTICOS ============= */
 function ProblematicosTab({ analise, concNome }: { analise: any[]; concNome: (s: string) => string }) {
+  const [minDiasSemVenda, setMinDiasSemVenda] = useState<number>(0);
+  const [incluirSugestoes, setIncluirSugestoes] = useState<boolean>(true);
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+  const [gerandoPdf, setGerandoPdf] = useState(false);
+
   const problemas = useMemo(() => {
     return analise.map((x) => {
       const flags: string[] = [];
@@ -485,8 +490,28 @@ function ProblematicosTab({ analise, concNome }: { analise: any[]; concNome: (s:
     }).filter((x) => x.flags.length > 0).sort((a, b) => b.score - a.score);
   }, [analise]);
 
+  const problemasFiltrados = useMemo(() => {
+    if (minDiasSemVenda <= 0) return problemas;
+    return problemas.filter((x) => x.diasSemVenda !== null && x.diasSemVenda >= minDiasSemVenda);
+  }, [problemas, minDiasSemVenda]);
+
+  const allSelected = problemasFiltrados.length > 0 && problemasFiltrados.every((x) => selected[x.perfume.id]);
+  const someSelected = problemasFiltrados.some((x) => selected[x.perfume.id]);
+
+  const toggleAll = () => {
+    if (allSelected) {
+      const next = { ...selected };
+      problemasFiltrados.forEach((x) => delete next[x.perfume.id]);
+      setSelected(next);
+    } else {
+      const next = { ...selected };
+      problemasFiltrados.forEach((x) => { next[x.perfume.id] = true; });
+      setSelected(next);
+    }
+  };
+
   const exportar = () => exportXlsx(
-    problemas.map((x) => ({
+    problemasFiltrados.map((x) => ({
       Código: x.perfume.codigo,
       Produto: x.perfume.nome,
       Estoque: x.estoqueAtual,
@@ -498,43 +523,155 @@ function ProblematicosTab({ analise, concNome }: { analise: any[]; concNome: (s:
     "produtos_problematicos",
   );
 
+  const gerarPdf = async () => {
+    const itensSelecionados = problemasFiltrados.filter((x) => selected[x.perfume.id]);
+    const itens = itensSelecionados.length > 0 ? itensSelecionados : problemasFiltrados;
+    if (itens.length === 0) {
+      toast.error("Nenhum produto para gerar");
+      return;
+    }
+    setGerandoPdf(true);
+    try {
+      const { gerarProdutosProblematicosPdf } = await import("@/lib/pdf/produtosProblematicos");
+      const doc = await gerarProdutosProblematicosPdf({
+        itens: itens.map((x) => ({
+          perfume: x.perfume,
+          estoqueAtual: x.estoqueAtual,
+          qtdVendida: x.qtdVendida,
+          diasSemVenda: x.diasSemVenda,
+          flags: x.flags,
+          sugestoes: x.sugestoes,
+          score: x.score,
+        })),
+        incluirSugestoes,
+        diasMinimoSemVenda: minDiasSemVenda > 0 ? minDiasSemVenda : null,
+      });
+      doc.save(`produtos_problematicos_${new Date().toISOString().slice(0, 10)}.pdf`);
+      toast.success(`PDF gerado com ${itens.length} produto(s)`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Falha ao gerar PDF");
+    } finally {
+      setGerandoPdf(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <p className="text-xs text-muted-foreground">{problemas.length} produtos requerem atenção</p>
-        <Button size="sm" variant="outline" onClick={exportar} className="gap-2"><Download size={14} />Excel</Button>
+      {/* Filtros */}
+      <Card className="p-3 bg-card border-border">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div>
+            <label className="text-[10px] uppercase text-muted-foreground block mb-1">Mínimo dias sem venda</label>
+            <Input
+              type="number"
+              min={0}
+              value={minDiasSemVenda || ""}
+              placeholder="0 (todos)"
+              onChange={(e) => setMinDiasSemVenda(Math.max(0, Number(e.target.value) || 0))}
+              className="h-9 text-sm"
+            />
+          </div>
+          <div className="flex items-end">
+            <label className="flex items-center gap-2 text-xs cursor-pointer">
+              <input
+                type="checkbox"
+                checked={incluirSugestoes}
+                onChange={(e) => setIncluirSugestoes(e.target.checked)}
+                className="w-4 h-4 accent-gold"
+              />
+              Incluir sugestões no PDF
+            </label>
+          </div>
+          <div className="flex items-end">
+            <p className="text-[11px] text-muted-foreground">
+              {Object.values(selected).filter(Boolean).length > 0
+                ? `${Object.values(selected).filter(Boolean).length} selecionado(s)`
+                : "Nenhum selecionado = todos do filtro"}
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      <div className="flex flex-wrap justify-between items-center gap-2">
+        <div className="flex items-center gap-3">
+          <p className="text-xs text-muted-foreground">{problemasFiltrados.length} produto(s)</p>
+          {problemasFiltrados.length > 0 && (
+            <button
+              onClick={toggleAll}
+              className="text-[11px] underline text-gold hover:text-gold/80"
+            >
+              {allSelected ? "Desmarcar todos" : "Selecionar todos"}
+            </button>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={exportar} className="gap-2"><Download size={14} />Excel</Button>
+          <Button size="sm" onClick={gerarPdf} disabled={gerandoPdf} className="gap-2">
+            <FileText size={14} />{gerandoPdf ? "Gerando..." : "PDF"}
+          </Button>
+        </div>
       </div>
 
-      {problemas.length === 0 ? (
+      {problemasFiltrados.length === 0 ? (
         <Card className="p-8 text-center bg-card border-border">
-          <p className="text-sm text-muted-foreground">🎉 Nenhum produto problemático encontrado no período</p>
+          <p className="text-sm text-muted-foreground">🎉 Nenhum produto problemático encontrado</p>
         </Card>
       ) : (
         <div className="space-y-3">
-          {problemas.slice(0, 50).map((x) => (
-            <Card key={x.perfume.id} className="p-4 bg-card border-border border-l-4 border-l-destructive">
-              <div className="flex items-start justify-between gap-4 flex-wrap">
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-foreground">{x.perfume.nome}</p>
-                  <p className="text-[11px] text-muted-foreground mb-2">{x.perfume.marca} · {x.perfume.codigo} · Estoque: {x.estoqueAtual} · Vendidos: {x.qtdVendida} · {x.diasSemVenda !== null ? `${x.diasSemVenda}d sem venda` : "Nunca vendido"}</p>
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {x.flags.map((f: string) => (
-                      <Badge key={f} variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/30">{f}</Badge>
-                    ))}
+          {problemasFiltrados.slice(0, 100).map((x) => {
+            const isSelected = !!selected[x.perfume.id];
+            return (
+              <Card
+                key={x.perfume.id}
+                className={`p-4 bg-card border-border border-l-4 border-l-destructive cursor-pointer transition-colors ${isSelected ? "ring-1 ring-gold" : ""}`}
+                onClick={() => setSelected((s) => ({ ...s, [x.perfume.id]: !s[x.perfume.id] }))}
+              >
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={(e) => { e.stopPropagation(); setSelected((s) => ({ ...s, [x.perfume.id]: !s[x.perfume.id] })); }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-1 w-4 h-4 accent-gold flex-shrink-0"
+                  />
+                  {x.perfume.imageUrl ? (
+                    <img
+                      src={x.perfume.imageUrl}
+                      alt={x.perfume.nome}
+                      className="w-14 h-14 rounded-md object-cover bg-muted flex-shrink-0"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                    />
+                  ) : (
+                    <div className="w-14 h-14 rounded-md bg-muted flex items-center justify-center text-[9px] text-muted-foreground flex-shrink-0">sem foto</div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-foreground">{x.perfume.nome}</p>
+                    <p className="text-[11px] text-muted-foreground mb-2">{x.perfume.marca} · {x.perfume.codigo} · Estoque: {x.estoqueAtual} · Vendidos: {x.qtdVendida} · {x.diasSemVenda !== null ? `${x.diasSemVenda}d sem venda` : "Nunca vendido"}</p>
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {x.flags.map((f: string) => (
+                        <Badge key={f} variant="outline" className="text-[10px] bg-destructive/10 text-destructive border-destructive/30">{f}</Badge>
+                      ))}
+                    </div>
+                    {incluirSugestoes && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {x.sugestoes.map((s: string) => (
+                          <Badge key={s} variant="outline" className="text-[10px] bg-gold/10 text-gold border-gold/30">💡 {s}</Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {x.sugestoes.map((s: string) => (
-                      <Badge key={s} variant="outline" className="text-[10px] bg-gold/10 text-gold border-gold/30">💡 {s}</Badge>
-                    ))}
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-[10px] uppercase text-muted-foreground">Risco</p>
+                    <p className="text-2xl font-display font-semibold text-destructive">{x.score}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-[10px] uppercase text-muted-foreground">Risco</p>
-                  <p className="text-2xl font-display font-semibold text-destructive">{x.score}</p>
-                </div>
-              </div>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
+          {problemasFiltrados.length > 100 && (
+            <p className="text-[11px] text-center text-muted-foreground">Mostrando 100 de {problemasFiltrados.length}. Use o filtro para refinar — o PDF/Excel inclui todos.</p>
+          )}
         </div>
       )}
     </div>
