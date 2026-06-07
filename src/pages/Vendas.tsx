@@ -12,6 +12,7 @@ import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import type { VendaPagamento } from "@/hooks/useVendas";
 import { getHojeManaus } from "@/lib/dateUtils";
+import { calcularParcelamento, TAXAS_MDR, PARCELAS_SEM_JUROS_LIMITE } from "@/lib/parcelamento";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const hoje = getHojeManaus();
