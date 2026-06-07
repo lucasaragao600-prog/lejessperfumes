@@ -243,6 +243,8 @@ export default function Vendas() {
       setTipoAjusteVenda("desconto");
       setTipoCalculoVenda("valor");
       setObservacaoAjuste("");
+      setModoAjuste("desconto");
+      setParcelasCredito(null);
       setItemForm({ perfumeId: "", deposito: userLoja || "", quantidade: 1, observacao: "" });
       setShowForm(false);
     } finally {
