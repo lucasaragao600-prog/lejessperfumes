@@ -87,15 +87,32 @@ export default function Vendas() {
   const [ajusteVenda, setAjusteVenda] = useState(0);
   const [tipoCalculoVenda, setTipoCalculoVenda] = useState<"valor" | "percent">("valor");
   const [observacaoAjuste, setObservacaoAjuste] = useState("");
+  // Aba ativa: desconto | acrescimo | credito (parcelamento)
+  const [modoAjuste, setModoAjuste] = useState<"desconto" | "acrescimo" | "credito">("desconto");
+  const [parcelasCredito, setParcelasCredito] = useState<number | null>(null);
 
   const perfumeSelecionado = perfumes.find((p) => p.id === itemForm.perfumeId);
   const subtotalItem = perfumeSelecionado ? perfumeSelecionado.precoVenda * itemForm.quantidade : 0;
 
   const subtotalCarrinho = carrinho.reduce((a, i) => a + i.precoUnitario * i.quantidade, 0);
-  const ajusteCalcVenda = tipoCalculoVenda === "percent" ? (subtotalCarrinho * ajusteVenda) / 100 : ajusteVenda;
-  const totalCarrinho = tipoAjusteVenda === "desconto" ? Math.max(0, subtotalCarrinho - ajusteCalcVenda) : subtotalCarrinho + ajusteCalcVenda;
+
+  // Acréscimo gerado pelo parcelamento (apenas para 7x-10x)
+  const acrescimoCredito = useMemo(() => {
+    if (modoAjuste !== "credito" || !parcelasCredito || parcelasCredito <= PARCELAS_SEM_JUROS_LIMITE) return 0;
+    const taxa = TAXAS_MDR[parcelasCredito];
+    const total = subtotalCarrinho / (1 - taxa / 100);
+    return total - subtotalCarrinho;
+  }, [modoAjuste, parcelasCredito, subtotalCarrinho]);
+
+  const ajusteCalcVenda = modoAjuste === "credito"
+    ? acrescimoCredito
+    : (tipoCalculoVenda === "percent" ? (subtotalCarrinho * ajusteVenda) / 100 : ajusteVenda);
+  const totalCarrinho = modoAjuste === "desconto"
+    ? Math.max(0, subtotalCarrinho - ajusteCalcVenda)
+    : subtotalCarrinho + ajusteCalcVenda;
   const totalPagamentos = pagamentosForm.reduce((a, p) => a + p.valor, 0);
   const restantePagamento = totalCarrinho - totalPagamentos;
+
 
   const isRetroativa = isMaster && dataVenda !== hoje;
   const vaiDescontar = !isRetroativa || descontarEstoque;
