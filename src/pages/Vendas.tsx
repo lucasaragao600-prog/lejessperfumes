@@ -793,37 +793,106 @@ export default function Vendas() {
 
               {/* Ajuste no valor total */}
               <div className="mb-4 p-3 bg-surface-overlay rounded-xl space-y-2">
-                <p className="text-[11px] text-muted-foreground font-medium">Desconto / Acréscimo na venda</p>
+                <p className="text-[11px] text-muted-foreground font-medium">Ajuste na venda</p>
                 <div className="flex gap-1.5">
-                  {(["desconto", "acrescimo"] as TipoAjusteValor[]).map((t) => (
-                    <button key={t} onClick={() => setTipoAjusteVenda(t)}
+                  {([
+                    { key: "desconto", label: "Desconto" },
+                    { key: "acrescimo", label: "Acréscimo" },
+                    { key: "credito", label: "Crédito" },
+                  ] as const).map((t) => (
+                    <button key={t.key} onClick={() => {
+                      setModoAjuste(t.key);
+                      if (t.key === "credito") {
+                        setAjusteVenda(0);
+                        setObservacaoAjuste("");
+                      } else {
+                        setParcelasCredito(null);
+                        if (t.key === "desconto" || t.key === "acrescimo") setTipoAjusteVenda(t.key);
+                      }
+                    }}
                       className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
-                        tipoAjusteVenda === t ? "border-gold-muted bg-primary/10 text-gold" : "border-border bg-surface-overlay text-muted-foreground"
+                        modoAjuste === t.key ? "border-gold-muted bg-primary/10 text-gold" : "border-border bg-surface-overlay text-muted-foreground"
                       }`}>
-                      {t === "desconto" ? "Desconto" : "Acréscimo"}
+                      {t.label}
                     </button>
                   ))}
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex gap-1">
-                    {(["valor", "percent"] as const).map((tc) => (
-                      <button key={tc} onClick={() => setTipoCalculoVenda(tc)}
-                        className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
-                          tipoCalculoVenda === tc ? "border-gold-muted bg-primary/10 text-gold" : "border-border bg-surface-overlay text-muted-foreground"
-                        }`}>
-                        {tc === "valor" ? "R$" : "%"}
-                      </button>
-                    ))}
+
+                {modoAjuste !== "credito" && (
+                  <>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="flex gap-1">
+                        {(["valor", "percent"] as const).map((tc) => (
+                          <button key={tc} onClick={() => setTipoCalculoVenda(tc)}
+                            className={`flex-1 py-1.5 rounded-lg text-[11px] font-medium border transition-all ${
+                              tipoCalculoVenda === tc ? "border-gold-muted bg-primary/10 text-gold" : "border-border bg-surface-overlay text-muted-foreground"
+                            }`}>
+                            {tc === "valor" ? "R$" : "%"}
+                          </button>
+                        ))}
+                      </div>
+                      <input type="number" min={0} value={ajusteVenda || ""} placeholder="0"
+                        onChange={(e) => setAjusteVenda(parseFloat(e.target.value) || 0)}
+                        className="input-premium px-3 py-1.5 text-xs" />
+                    </div>
+                    {ajusteVenda > 0 && (
+                      <input type="text" value={observacaoAjuste}
+                        onChange={(e) => setObservacaoAjuste(e.target.value)}
+                        placeholder="Observação (obrigatória com ajuste)"
+                        className="input-premium px-3 py-2 text-xs" />
+                    )}
+                  </>
+                )}
+
+                {modoAjuste === "credito" && (
+                  <div className="space-y-1.5 max-h-[260px] overflow-y-auto pr-1">
+                    <p className="text-[10px] text-muted-foreground">Parcelamento no Crédito</p>
+                    {calcularParcelamento(subtotalCarrinho).map((op) => {
+                      const isFirstComJuros = op.parcelas === PARCELAS_SEM_JUROS_LIMITE + 1;
+                      const selected = parcelasCredito === op.parcelas;
+                      return (
+                        <div key={op.parcelas}>
+                          {isFirstComJuros && (
+                            <p className="text-[9px] text-amber-400/80 text-center my-1.5 font-semibold tracking-wide">
+                              ───── Com juros ─────
+                            </p>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => setParcelasCredito(op.parcelas)}
+                            className={`w-full flex items-center justify-between gap-2 px-2.5 py-2 rounded-lg border text-left transition-all ${
+                              selected
+                                ? "border-gold bg-primary/15"
+                                : "border-border bg-surface-overlay hover:border-gold-muted"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${selected ? "border-gold" : "border-muted-foreground"}`}>
+                                {selected && <span className="w-1.5 h-1.5 rounded-full bg-gold" />}
+                              </span>
+                              <span className={`text-xs font-bold ${op.temJuros ? "text-amber-300" : "text-foreground"}`}>
+                                {op.parcelas}x {formatCurrency(op.valorParcela)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <span className={`text-[10px] ${op.temJuros ? "text-amber-300" : "text-muted-foreground"}`}>
+                                {formatCurrency(op.valorTotal)}
+                              </span>
+                              {op.temJuros ? (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 font-bold">
+                                  +{op.taxa.toFixed(2).replace(".", ",")}%
+                                </span>
+                              ) : (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 font-bold">
+                                  Sem juros
+                                </span>
+                              )}
+                            </div>
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <input type="number" min={0} value={ajusteVenda || ""} placeholder="0"
-                    onChange={(e) => setAjusteVenda(parseFloat(e.target.value) || 0)}
-                    className="input-premium px-3 py-1.5 text-xs" />
-                </div>
-                {ajusteVenda > 0 && (
-                  <input type="text" value={observacaoAjuste}
-                    onChange={(e) => setObservacaoAjuste(e.target.value)}
-                    placeholder="Observação (obrigatória com ajuste)"
-                    className="input-premium px-3 py-2 text-xs" />
                 )}
               </div>
 
@@ -833,23 +902,35 @@ export default function Vendas() {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span className="text-foreground">{formatCurrency(subtotalCarrinho)}</span>
                 </div>
-                {ajusteCalcVenda > 0 && tipoAjusteVenda === "desconto" && (
+                {ajusteCalcVenda > 0 && modoAjuste === "desconto" && (
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Desconto</span>
                     <span className="text-destructive">-{formatCurrency(ajusteCalcVenda)}</span>
                   </div>
                 )}
-                {ajusteCalcVenda > 0 && tipoAjusteVenda === "acrescimo" && (
+                {ajusteCalcVenda > 0 && modoAjuste === "acrescimo" && (
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Acréscimo</span>
                     <span className="text-success">+{formatCurrency(ajusteCalcVenda)}</span>
+                  </div>
+                )}
+                {modoAjuste === "credito" && parcelasCredito && acrescimoCredito > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Juros parcelamento ({TAXAS_MDR[parcelasCredito].toFixed(2).replace(".", ",")}%)</span>
+                    <span className="text-amber-400">+{formatCurrency(acrescimoCredito)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-base font-bold pt-1 border-t border-border">
                   <span className="text-foreground">Total da Venda</span>
                   <span className="text-gold">{formatCurrency(totalCarrinho)}</span>
                 </div>
+                {modoAjuste === "credito" && parcelasCredito && (
+                  <p className="text-[10px] text-muted-foreground text-right">
+                    {parcelasCredito}x de {formatCurrency(totalCarrinho / parcelasCredito)} {parcelasCredito > PARCELAS_SEM_JUROS_LIMITE ? `— com juros de ${TAXAS_MDR[parcelasCredito].toFixed(2).replace(".", ",")}%` : "— sem juros"}
+                  </p>
+                )}
               </div>
+
 
               {/* Formas de pagamento */}
               <div className="space-y-2 mb-3">
