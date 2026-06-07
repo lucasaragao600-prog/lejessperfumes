@@ -577,8 +577,18 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                     </div>
                     <div>
                       <p className="text-[9px] text-muted-foreground">Venda unit.</p>
-                      <p className="text-xs text-gold font-medium">{formatCurrency(p.precoVenda)}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs text-gold font-medium">{formatCurrency(p.precoVenda)}</p>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setParcelamentoPerfume(p); }}
+                          className="flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-md border border-gold/30 text-gold/80 hover:bg-gold/10 hover:text-gold transition-colors"
+                          title="Ver opções de parcelamento"
+                        >
+                          <Percent size={9} />10x
+                        </button>
+                      </div>
                     </div>
+
                     <div className="text-right flex items-center justify-end gap-3">
                       <button
                         onClick={() => setEditandoPerfume(p)}
