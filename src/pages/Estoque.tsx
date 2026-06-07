@@ -41,6 +41,8 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [filtrosColapsados, setFiltrosColapsados] = useState(false);
   const [showSemBarcode, setShowSemBarcode] = useState(false);
   const [showSemTester, setShowSemTester] = useState(false);
+  const [parcelamentoPerfume, setParcelamentoPerfume] = useState<Perfume | null>(null);
+
   const touchStartY = useRef<number | null>(null);
   const handleTouchStart = (e: React.TouchEvent) => { touchStartY.current = e.touches[0].clientY; };
   const handleTouchEnd = (e: React.TouchEvent) => {
