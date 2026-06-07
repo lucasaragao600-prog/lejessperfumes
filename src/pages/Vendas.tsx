@@ -176,7 +176,14 @@ export default function Vendas() {
       return;
     }
 
-    if (ajusteVenda > 0 && !observacaoAjuste.trim()) {
+    const temAjusteEfetivo = modoAjuste === "credito" ? acrescimoCredito > 0 : ajusteVenda > 0;
+    const tipoAjusteEfetivo: TipoAjusteValor = modoAjuste === "credito" ? "acrescimo" : tipoAjusteVenda;
+    const obsCredito = modoAjuste === "credito" && parcelasCredito
+      ? `Parcelado em ${parcelasCredito}x${parcelasCredito > PARCELAS_SEM_JUROS_LIMITE ? ` (+${TAXAS_MDR[parcelasCredito].toFixed(2).replace(".", ",")}% MDR)` : " sem juros"}`
+      : "";
+    const obsEfetiva = modoAjuste === "credito" ? obsCredito : observacaoAjuste;
+
+    if (modoAjuste !== "credito" && ajusteVenda > 0 && !observacaoAjuste.trim()) {
       alert("Preencha a observação para justificar o ajuste de valor.");
       return;
     }
@@ -188,7 +195,7 @@ export default function Vendas() {
       const itens: Venda[] = carrinho.map((item, idx) => {
         const proporcao = subtotalCarrinho > 0 ? (item.precoUnitario * item.quantidade) / subtotalCarrinho : 1 / carrinho.length;
         const ajusteItem = ajusteCalcVenda * proporcao;
-        const totalItem = tipoAjusteVenda === "desconto"
+        const totalItem = tipoAjusteEfetivo === "desconto"
           ? Math.max(0, item.precoUnitario * item.quantidade - ajusteItem)
           : item.precoUnitario * item.quantidade + ajusteItem;
 
@@ -200,16 +207,17 @@ export default function Vendas() {
           deposito: item.deposito,
           quantidade: item.quantidade,
           precoUnitario: item.precoUnitario,
-          tipoAjuste: ajusteVenda > 0 ? tipoAjusteVenda : "desconto" as TipoAjusteValor,
+          tipoAjuste: temAjusteEfetivo ? tipoAjusteEfetivo : "desconto" as TipoAjusteValor,
           desconto: ajusteItem,
           total: totalItem,
           vendedora: vendedoraSelecionada,
           tipoPagamento: pagamentosForm[0].tipoPagamento,
           bandeira: pagamentosForm[0].bandeira,
-          observacao: ajusteVenda > 0 ? observacaoAjuste : (pagamentosForm.some(p => p.tipoPagamento === "Conta Assinada" && p.observacao) ? pagamentosForm.filter(p => p.tipoPagamento === "Conta Assinada").map(p => `Conta Assinada: ${p.observacao}`).join("; ") : item.observacao),
+          observacao: temAjusteEfetivo ? obsEfetiva : (pagamentosForm.some(p => p.tipoPagamento === "Conta Assinada" && p.observacao) ? pagamentosForm.filter(p => p.tipoPagamento === "Conta Assinada").map(p => `Conta Assinada: ${p.observacao}`).join("; ") : item.observacao),
           registradoPor: profile?.nome || "Desconhecido",
         };
       });
+
 
       const pagamentosVenda: Omit<VendaPagamento, "id">[] = pagamentosForm.map((p) => ({
         grupoVenda: "",
