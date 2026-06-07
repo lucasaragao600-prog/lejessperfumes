@@ -789,6 +789,13 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
           </div>
         </div>
       )}
+
+      <ParcelamentoModal
+        open={!!parcelamentoPerfume}
+        onOpenChange={(o) => { if (!o) setParcelamentoPerfume(null); }}
+        valor={parcelamentoPerfume?.precoVenda || 0}
+        titulo={parcelamentoPerfume ? `${parcelamentoPerfume.marca} ${parcelamentoPerfume.nome}` : undefined}
+      />
     </div>
   );
 }
