@@ -8,6 +8,7 @@ import CadastroPerfume from "@/components/CadastroPerfume";
 import EditarPerfume from "@/components/EditarPerfume";
 import QuickActionMenu from "@/components/QuickActionMenu";
 import ParcelamentoModal from "@/components/ParcelamentoModal";
+import { useCasas } from "@/hooks/useCasas";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
