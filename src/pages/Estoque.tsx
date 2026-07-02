@@ -8,6 +8,7 @@ import CadastroPerfume from "@/components/CadastroPerfume";
 import EditarPerfume from "@/components/EditarPerfume";
 import QuickActionMenu from "@/components/QuickActionMenu";
 import ParcelamentoModal from "@/components/ParcelamentoModal";
+import { useCasas } from "@/hooks/useCasas";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -16,6 +17,7 @@ const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const { perfumes, testers, movimentacoes, vendas, tiposPerfumeConfig, concentracoesConfig, excluirPerfume } = useApp();
+  const { casas } = useCasas();
   const { profile } = useAuth();
   const userLoja = (!isMaster && profile?.loja) ? profile.loja as Deposito : null;
 
@@ -198,12 +200,14 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const isBaixo = (p: Perfume) => getQtd(p) <= p.estoqueMinimo;
 
   const exportarExcel = useCallback(() => {
+    const casaMap = new Map(casas.map((c) => [c.sigla, c.nome]));
     const dados = filtrados.map((p) => ({
       SKU: p.codigo,
       "Código de Barras": p.codigoBarras || "",
       Nome: p.nome,
       Marca: p.marca,
-      Casa: p.casaSigla,
+      Casa: casaMap.get(p.casaSigla) || p.casaSigla,
+      "Sigla Casa": p.casaSigla,
       Tipo: tiposPerfumeConfig?.[p.tipo] || p.tipo,
       Concentração: concentracoesConfig?.[p.concentracao] || p.concentracao,
       Tamanho: p.tamanho,
@@ -227,7 +231,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Produtos");
     XLSX.writeFile(wb, `produtos_${new Date().toISOString().split("T")[0]}.xlsx`);
-  }, [filtrados]);
+  }, [filtrados, casas, tiposPerfumeConfig, concentracoesConfig]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
