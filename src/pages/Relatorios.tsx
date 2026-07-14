@@ -1019,6 +1019,247 @@ function ClassificacaoTab({ analise, concNome, tipoNome }: { analise: any[]; con
   );
 }
 
+/* ============= VENDEDOR ============= */
+function VendedorTab({
+  vendasFiltradas,
+  perfumes,
+  concNome,
+  tipoNome,
+  dInicio,
+  dFim,
+}: {
+  vendasFiltradas: any[];
+  perfumes: Perfume[];
+  concNome: (s: string) => string;
+  tipoNome: (s: string) => string;
+  dInicio: string;
+  dFim: string;
+}) {
+  const [vendedorSel, setVendedorSel] = useState<string>("todos");
+
+  const perfMap = useMemo(() => {
+    const m = new Map<string, Perfume>();
+    for (const p of perfumes) m.set(p.id, p);
+    return m;
+  }, [perfumes]);
+
+  const vendedores = useMemo(() => {
+    const s = new Set<string>();
+    for (const v of vendasFiltradas) if (v.vendedora) s.add(v.vendedora);
+    return Array.from(s).sort();
+  }, [vendasFiltradas]);
+
+  const porVendedor = useMemo(() => {
+    const map = new Map<string, {
+      vendedora: string;
+      qtd: number;
+      receita: number;
+      lucro: number;
+      desconto: number;
+      transacoes: Set<string>;
+    }>();
+    for (const v of vendasFiltradas) {
+      const nome = v.vendedora || "(sem vendedor)";
+      if (!map.has(nome)) map.set(nome, { vendedora: nome, qtd: 0, receita: 0, lucro: 0, desconto: 0, transacoes: new Set() });
+      const cur = map.get(nome)!;
+      const p = perfMap.get(v.perfumeId);
+      const custoUn = p ? (p.custoMedio || p.custo || 0) : 0;
+      cur.qtd += v.quantidade;
+      cur.receita += v.total;
+      cur.lucro += v.total - custoUn * v.quantidade;
+      cur.desconto += Number(v.desconto || 0);
+      cur.transacoes.add(v.grupoVenda || v.id);
+    }
+    return Array.from(map.values())
+      .map((x) => ({ ...x, transacoes: x.transacoes.size, ticket: x.transacoes.size ? x.receita / x.transacoes.size : 0 }))
+      .sort((a, b) => b.receita - a.receita);
+  }, [vendasFiltradas, perfMap]);
+
+  const totalReceita = porVendedor.reduce((s, x) => s + x.receita, 0);
+
+  const vendasDoSel = useMemo(() => {
+    if (vendedorSel === "todos") return vendasFiltradas;
+    return vendasFiltradas.filter((v) => (v.vendedora || "(sem vendedor)") === vendedorSel);
+  }, [vendasFiltradas, vendedorSel]);
+
+  const produtosDoSel = useMemo(() => {
+    const map = new Map<string, { perfume: Perfume | undefined; nome: string; qtd: number; receita: number; lucro: number }>();
+    for (const v of vendasDoSel) {
+      const p = perfMap.get(v.perfumeId);
+      const custoUn = p ? (p.custoMedio || p.custo || 0) : 0;
+      if (!map.has(v.perfumeId)) map.set(v.perfumeId, { perfume: p, nome: v.perfumeNome, qtd: 0, receita: 0, lucro: 0 });
+      const cur = map.get(v.perfumeId)!;
+      cur.qtd += v.quantidade;
+      cur.receita += v.total;
+      cur.lucro += v.total - custoUn * v.quantidade;
+    }
+    return Array.from(map.values()).sort((a, b) => b.receita - a.receita);
+  }, [vendasDoSel, perfMap]);
+
+  const exportarRanking = () => {
+    exportXlsx(
+      porVendedor.map((v) => ({
+        Vendedor: v.vendedora,
+        Transações: v.transacoes,
+        "Produtos vendidos": v.qtd,
+        Faturamento: v.receita.toFixed(2),
+        Lucro: v.lucro.toFixed(2),
+        "Ticket médio": v.ticket.toFixed(2),
+        "Desconto concedido": v.desconto.toFixed(2),
+        "% do total": totalReceita > 0 ? ((v.receita / totalReceita) * 100).toFixed(2) : "0",
+      })),
+      `ranking_vendedores_${dInicio}_a_${dFim}`
+    );
+  };
+
+  const exportarProdutosSel = () => {
+    exportXlsx(
+      produtosDoSel.map((x) => ({
+        Vendedor: vendedorSel,
+        Código: x.perfume?.codigo || "",
+        Produto: x.nome,
+        Marca: x.perfume?.marca || "",
+        Tipo: x.perfume ? tipoNome(x.perfume.tipo) : "",
+        Concentração: x.perfume ? concNome(x.perfume.concentracao) : "",
+        Volume: x.perfume?.volume || "",
+        Quantidade: x.qtd,
+        Faturamento: x.receita.toFixed(2),
+        Lucro: x.lucro.toFixed(2),
+      })),
+      `vendas_${vendedorSel}_${dInicio}_a_${dFim}`
+    );
+  };
+
+  const selData = porVendedor.find((v) => v.vendedora === vendedorSel);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex justify-between items-center flex-wrap gap-2">
+        <p className="text-xs text-muted-foreground">Desempenho por vendedor no período selecionado ({fmtDataBr(dInicio)} a {fmtDataBr(dFim)})</p>
+        <Button size="sm" variant="outline" onClick={exportarRanking} className="gap-2"><Download size={14} />Ranking Excel</Button>
+      </div>
+
+      {/* Ranking cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        {porVendedor.map((v, i) => (
+          <Card key={v.vendedora} className="p-4 bg-card border-border">
+            <div className="flex items-center justify-between mb-2">
+              <Badge variant={i === 0 ? "default" : "outline"} className="text-[10px]">
+                {i === 0 ? "🏆 " : `#${i + 1} `}{v.vendedora}
+              </Badge>
+              <span className="text-[10px] text-muted-foreground">{totalReceita > 0 ? ((v.receita / totalReceita) * 100).toFixed(1) : 0}%</span>
+            </div>
+            <p className="text-2xl font-display font-semibold text-foreground">{fmtBRL(v.receita)}</p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {v.transacoes} venda(s) · {v.qtd} un · Ticket {fmtBRL(v.ticket)}
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Lucro {fmtBRL(v.lucro)} · Desc. {fmtBRL(v.desconto)}</p>
+          </Card>
+        ))}
+        {!porVendedor.length && (
+          <Card className="p-6 bg-card border-border col-span-full text-center text-sm text-muted-foreground">
+            Nenhuma venda registrada no período.
+          </Card>
+        )}
+      </div>
+
+      {porVendedor.length > 0 && (
+        <div className="grid md:grid-cols-2 gap-4">
+          <Card className="p-4 bg-card border-border">
+            <h3 className="text-sm font-semibold mb-3">Faturamento por vendedor</h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={porVendedor} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+                  <XAxis dataKey="vendedora" stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={11} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} formatter={(v: any) => fmtBRL(Number(v))} />
+                  <Bar dataKey="receita" name="Faturamento" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+          <Card className="p-4 bg-card border-border">
+            <h3 className="text-sm font-semibold mb-3">Participação na receita</h3>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={porVendedor} dataKey="receita" nameKey="vendedora" cx="50%" cy="50%" outerRadius={80} label={(e: any) => e.vendedora}>
+                    {porVendedor.map((_, i) => (
+                      <Cell key={i} fill={`hsl(${(i * 57) % 360} 70% 55%)`} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} formatter={(v: any) => fmtBRL(Number(v))} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Detalhes por vendedor */}
+      <Card className="p-4 bg-card border-border">
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+          <h3 className="text-sm font-semibold">Produtos vendidos</h3>
+          <div className="flex gap-2 items-center">
+            <Select value={vendedorSel} onValueChange={setVendedorSel}>
+              <SelectTrigger className="bg-surface w-56"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os vendedores</SelectItem>
+                {vendedores.map((v) => (
+                  <SelectItem key={v} value={v}>{v}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button size="sm" variant="outline" onClick={exportarProdutosSel} className="gap-2" disabled={!produtosDoSel.length}>
+              <Download size={14} />Excel
+            </Button>
+          </div>
+        </div>
+
+        {selData && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+            <div className="p-2 rounded bg-surface"><p className="text-[10px] text-muted-foreground">Faturamento</p><p className="text-sm font-semibold">{fmtBRL(selData.receita)}</p></div>
+            <div className="p-2 rounded bg-surface"><p className="text-[10px] text-muted-foreground">Lucro</p><p className="text-sm font-semibold">{fmtBRL(selData.lucro)}</p></div>
+            <div className="p-2 rounded bg-surface"><p className="text-[10px] text-muted-foreground">Vendas</p><p className="text-sm font-semibold">{selData.transacoes}</p></div>
+            <div className="p-2 rounded bg-surface"><p className="text-[10px] text-muted-foreground">Ticket médio</p><p className="text-sm font-semibold">{fmtBRL(selData.ticket)}</p></div>
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-surface border-b border-border">
+              <tr>
+                <th className="text-left p-3 font-medium">Produto</th>
+                <th className="text-right p-3 font-medium">Qtd</th>
+                <th className="text-right p-3 font-medium">Faturamento</th>
+                <th className="text-right p-3 font-medium">Lucro</th>
+              </tr>
+            </thead>
+            <tbody>
+              {produtosDoSel.map((x, i) => (
+                <tr key={i} className="border-b border-border/50 hover:bg-surface/50">
+                  <td className="p-3">
+                    <p className="font-medium text-foreground">{x.nome}</p>
+                    {x.perfume && (
+                      <p className="text-[10px] text-muted-foreground">{x.perfume.marca} · {tipoNome(x.perfume.tipo)} · {concNome(x.perfume.concentracao)} · {x.perfume.volume}ml</p>
+                    )}
+                  </td>
+                  <td className="text-right p-3">{x.qtd}</td>
+                  <td className="text-right p-3 font-medium">{fmtBRL(x.receita)}</td>
+                  <td className="text-right p-3 text-muted-foreground">{fmtBRL(x.lucro)}</td>
+                </tr>
+              ))}
+              {!produtosDoSel.length && (
+                <tr><td colSpan={4} className="p-6 text-center text-muted-foreground">Nenhuma venda encontrada.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 /* ============= FLUXO DE CAIXA ============= */
 function isDateValid(s: string) {
   return /^\d{4}-\d{2}-\d{2}$/.test(s) && Number.isFinite(new Date(s).getTime());
