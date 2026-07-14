@@ -215,17 +215,19 @@ export default function Relatorios() {
       </div>
 
       <Tabs defaultValue="fluxo" className="w-full">
-        <TabsList className="grid grid-cols-3 md:grid-cols-7 w-full bg-surface mb-4 h-auto">
+        <TabsList className="grid grid-cols-3 md:grid-cols-8 w-full bg-surface mb-4 h-auto">
           <TabsTrigger value="fluxo" className="text-xs py-2"><Wallet size={14} className="mr-1.5 hidden md:inline" />Fluxo de Caixa</TabsTrigger>
+          <TabsTrigger value="vendedor" className="text-xs py-2"><Users size={14} className="mr-1.5 hidden md:inline" />Vendedor</TabsTrigger>
           <TabsTrigger value="giro" className="text-xs py-2"><Activity size={14} className="mr-1.5 hidden md:inline" />Giro</TabsTrigger>
           <TabsTrigger value="margem" className="text-xs py-2"><TrendingUp size={14} className="mr-1.5 hidden md:inline" />Margem</TabsTrigger>
           <TabsTrigger value="problemas" className="text-xs py-2"><AlertTriangle size={14} className="mr-1.5 hidden md:inline" />Problemáticos</TabsTrigger>
           <TabsTrigger value="abc" className="text-xs py-2"><Layers size={14} className="mr-1.5 hidden md:inline" />Curva ABC</TabsTrigger>
           <TabsTrigger value="alertas" className="text-xs py-2"><Zap size={14} className="mr-1.5 hidden md:inline" />Alertas</TabsTrigger>
-          <TabsTrigger value="classificacao" className="text-xs py-2"><Users size={14} className="mr-1.5 hidden md:inline" />Classificação</TabsTrigger>
+          <TabsTrigger value="classificacao" className="text-xs py-2"><PieIcon size={14} className="mr-1.5 hidden md:inline" />Classificação</TabsTrigger>
         </TabsList>
 
         <TabsContent value="fluxo"><FluxoCaixaTab concNome={concNome} /></TabsContent>
+        <TabsContent value="vendedor"><VendedorTab vendasFiltradas={vendasFiltradas} perfumes={perfumes} concNome={concNome} tipoNome={tipoNome} dInicio={dInicio} dFim={dFim} /></TabsContent>
         <TabsContent value="giro"><GiroTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
         <TabsContent value="margem"><MargemTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
         <TabsContent value="problemas"><ProblematicosTab analise={analise} concNome={concNome} /></TabsContent>
