@@ -18,6 +18,7 @@ import PDV from "@/pages/PDV";
 import FechamentoCaixa from "@/pages/FechamentoCaixa";
 import PedidosVenda from "@/pages/PedidosVenda";
 import NfcePendentes from "@/pages/NfcePendentes";
+import Reposicao from "@/pages/Reposicao";
 
 import Relatorios from "@/pages/Relatorios";
 import InteligenciaOperacional from "@/pages/InteligenciaOperacional";
@@ -126,6 +127,7 @@ function IndexContent({
       case "caixa": return <FechamentoCaixa />;
       case "pedidos": return <PedidosVenda />;
       case "nfce-pendentes": return <NfcePendentes />;
+      case "reposicao": return <Reposicao isMaster={isMaster} />
       case "configuracoes": return isMaster ? <Configuracoes /> : <Estoque isMaster={false} />;
       case "usuarios": return isMaster ? <GerenciarUsuarios /> : <Estoque isMaster={false} />;
       default: return <Estoque isMaster={isMaster} />;
