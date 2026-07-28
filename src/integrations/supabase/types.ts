@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      ajuste_auditoria: {
+        Row: {
+          created_at: string
+          deposito: string
+          diferenca: number
+          id: string
+          motivo: string
+          produto_id: string
+          produto_nome: string
+          quantidade_anterior: number
+          quantidade_nova: number
+          registrado_por: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          deposito: string
+          diferenca: number
+          id?: string
+          motivo: string
+          produto_id: string
+          produto_nome: string
+          quantidade_anterior: number
+          quantidade_nova: number
+          registrado_por: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          deposito?: string
+          diferenca?: number
+          id?: string
+          motivo?: string
+          produto_id?: string
+          produto_nome?: string
+          quantidade_anterior?: number
+          quantidade_nova?: number
+          registrado_por?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       alertas_estoque: {
         Row: {
           criado_em: string
