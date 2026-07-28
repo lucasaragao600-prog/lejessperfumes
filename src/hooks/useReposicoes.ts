@@ -51,7 +51,15 @@ export function useReposicoes() {
   });
 
   const criar = useMutation({
-    mutationFn: async (r: Omit<Reposicao, "id" | "created_at" | "updated_at" | "conferido_por" | "recebido_por" | "foto_saida_url" | "foto_chegada_url" | "enviado_em" | "recebido_em" | "quantidade_enviada" | "quantidade_recebida" | "status"> & { observacao?: string | null }) => {
+    mutationFn: async (r: {
+      produto_id: string;
+      produto_nome: string;
+      origem: string;
+      destino: string;
+      quantidade_sugerida: number;
+      solicitado_por: string;
+      observacao?: string | null;
+    }) => {
       const { error } = await supabase.from("reposicoes").insert({
         produto_id: r.produto_id,
         produto_nome: r.produto_nome,
