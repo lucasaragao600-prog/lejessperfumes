@@ -8,6 +8,7 @@ import CadastroPerfume from "@/components/CadastroPerfume";
 import EditarPerfume from "@/components/EditarPerfume";
 import QuickActionMenu from "@/components/QuickActionMenu";
 import ParcelamentoModal from "@/components/ParcelamentoModal";
+import HistoricoItem from "@/components/HistoricoItem";
 import { useCasas } from "@/hooks/useCasas";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
@@ -44,6 +45,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [showSemBarcode, setShowSemBarcode] = useState(false);
   const [showSemTester, setShowSemTester] = useState(false);
   const [parcelamentoPerfume, setParcelamentoPerfume] = useState<Perfume | null>(null);
+  const [historicoPerfume, setHistoricoPerfume] = useState<Perfume | null>(null);
 
   const touchStartY = useRef<number | null>(null);
   const handleTouchStart = (e: React.TouchEvent) => { touchStartY.current = e.touches[0].clientY; };
@@ -594,6 +596,13 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                     </div>
 
                     <div className="text-right flex items-center justify-end gap-3">
+                      <button
+                        onClick={() => setHistoricoPerfume(p)}
+                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-gold transition-colors duration-150"
+                        title="Histórico do item"
+                      >
+                        <History size={11} /> Histórico
+                      </button>
                       <button
                         onClick={() => setEditandoPerfume(p)}
                         className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-gold transition-colors duration-150"
