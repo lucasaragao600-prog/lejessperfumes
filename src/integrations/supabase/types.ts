@@ -614,6 +614,10 @@ export type Database = {
           marca: string
           ncm: string
           nome: string
+          notas_coracao: string
+          notas_fundo: string
+          notas_saida: string
+          perfil_olfativo: string
           preco_venda: number
           tamanho: string
           tipo: string
@@ -642,6 +646,10 @@ export type Database = {
           marca: string
           ncm?: string
           nome: string
+          notas_coracao?: string
+          notas_fundo?: string
+          notas_saida?: string
+          perfil_olfativo?: string
           preco_venda?: number
           tamanho: string
           tipo: string
@@ -670,6 +678,10 @@ export type Database = {
           marca?: string
           ncm?: string
           nome?: string
+          notas_coracao?: string
+          notas_fundo?: string
+          notas_saida?: string
+          perfil_olfativo?: string
           preco_venda?: number
           tamanho?: string
           tipo?: string
