@@ -190,6 +190,7 @@ export default function Reposicao({ isMaster = false }: { isMaster?: boolean }) 
                   perfumes={perfumes}
                   value={formManual.perfumeId}
                   onChange={(id) => setFormManual((f) => ({ ...f, perfumeId: id }))}
+                  concentracoesConfig={concentracoesConfig}
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
