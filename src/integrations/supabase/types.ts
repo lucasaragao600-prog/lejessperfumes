@@ -806,6 +806,80 @@ export type Database = {
         }
         Relationships: []
       }
+      reposicoes: {
+        Row: {
+          conferido_por: string | null
+          created_at: string
+          destino: string
+          enviado_em: string | null
+          foto_chegada_url: string | null
+          foto_saida_url: string | null
+          id: string
+          observacao: string | null
+          origem: string
+          produto_id: string
+          produto_nome: string
+          quantidade_enviada: number | null
+          quantidade_recebida: number | null
+          quantidade_sugerida: number
+          recebido_em: string | null
+          recebido_por: string | null
+          solicitado_por: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          conferido_por?: string | null
+          created_at?: string
+          destino: string
+          enviado_em?: string | null
+          foto_chegada_url?: string | null
+          foto_saida_url?: string | null
+          id?: string
+          observacao?: string | null
+          origem: string
+          produto_id: string
+          produto_nome: string
+          quantidade_enviada?: number | null
+          quantidade_recebida?: number | null
+          quantidade_sugerida?: number
+          recebido_em?: string | null
+          recebido_por?: string | null
+          solicitado_por: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          conferido_por?: string | null
+          created_at?: string
+          destino?: string
+          enviado_em?: string | null
+          foto_chegada_url?: string | null
+          foto_saida_url?: string | null
+          id?: string
+          observacao?: string | null
+          origem?: string
+          produto_id?: string
+          produto_nome?: string
+          quantidade_enviada?: number | null
+          quantidade_recebida?: number | null
+          quantidade_sugerida?: number
+          recebido_em?: string | null
+          recebido_por?: string | null
+          solicitado_por?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reposicoes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       testers: {
         Row: {
           created_at: string
