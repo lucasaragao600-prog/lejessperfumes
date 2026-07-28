@@ -1,4 +1,4 @@
-import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon, Monitor, DollarSign, ClipboardList, ClipboardCheck, LineChart, Sparkles } from "lucide-react";
+import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon, Monitor, DollarSign, ClipboardList, LineChart, Sparkles } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
 interface BottomNavProps {
