@@ -14,11 +14,14 @@ function formatHoraManaus(iso?: string): string {
     return "";
   }
 }
-import { ArrowLeftRight, ArrowDown, RefreshCw, FlaskConical, Plus, Search, ArrowUpDown } from "lucide-react";
+import { ArrowLeftRight, ArrowDown, RefreshCw, FlaskConical, Plus, Search, ArrowUpDown, AlertTriangle } from "lucide-react";
 import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
 import { formatDate, type Deposito, type Movimentacao } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const tipos = ["Entrada", "Ajuste", "Transferência", "Saída Tester"] as const;
@@ -52,6 +55,15 @@ export default function Movimentacoes() {
     quantidade: 1,
     observacao: "",
   });
+  const [ajusteModal, setAjusteModal] = useState<{
+    perfumeNome: string;
+    deposito: Deposito;
+    atual: number;
+    nova: number;
+    diferenca: number;
+  } | null>(null);
+  const [motivoAjuste, setMotivoAjuste] = useState("");
+  const [salvandoAjuste, setSalvandoAjuste] = useState(false);
 
   const filtradas = useMemo(() => {
     let result = movimentacoes.filter((m) => {
@@ -65,33 +77,15 @@ export default function Movimentacoes() {
     return result;
   }, [movimentacoes, filtroTipo, busca, ordenacao]);
 
-  const handleSalvar = async () => {
-    if (!form.perfumeId) return;
-    if (form.tipo !== "Ajuste" && form.quantidade < 1) return;
-    if (form.tipo === "Saída Tester" && !form.depositoOrigem) return;
-    if (form.tipo === "Transferência" && (!form.depositoOrigem || !form.depositoDestino)) return;
-    if (form.tipo !== "Transferência" && form.tipo !== "Saída Tester" && !form.deposito) return;
-
+  const executarSalvar = async (motivoAjusteConfirmado?: string) => {
     const p = perfumes.find((x) => x.id === form.perfumeId)!;
-
-    if (form.tipo === "Saída Tester") {
-      const est = p.estoques[form.depositoOrigem as Deposito];
-      if (est < form.quantidade) {
-        alert(`Estoque insuficiente em ${form.depositoOrigem}. Disponível: ${est}`);
-        return;
-      }
-    } else if (form.tipo === "Transferência") {
-      const est = p.estoques[form.depositoOrigem as Deposito];
-      if (est < form.quantidade) {
-        alert(`Estoque insuficiente em ${form.depositoOrigem}. Disponível: ${est}`);
-        return;
-      }
-    }
-    // Ajuste: allow any value >= 0 (absolute stock set)
-
     const hoje = getHojeManaus();
     const estoqueAtual = form.tipo === "Ajuste" ? p.estoques[form.deposito as Deposito] : 0;
     const diferencaAjuste = form.tipo === "Ajuste" ? form.quantidade - estoqueAtual : 0;
+    const obsAjuste = form.tipo === "Ajuste"
+      ? `Ajuste: ${estoqueAtual} → ${form.quantidade} | Motivo: ${motivoAjusteConfirmado}${form.observacao ? ` | ${form.observacao}` : ""}`
+      : (form.observacao || undefined);
+
     const nova: Movimentacao = {
       id: `m${Date.now()}`,
       data: hoje,
@@ -99,7 +93,7 @@ export default function Movimentacoes() {
       perfumeId: form.perfumeId,
       perfumeNome: p.nome,
       quantidade: form.tipo === "Ajuste" ? diferencaAjuste : Math.abs(form.quantidade),
-      observacao: form.tipo === "Ajuste" ? `Ajuste: ${estoqueAtual} → ${form.quantidade}${form.observacao ? ` | ${form.observacao}` : ""}` : (form.observacao || undefined),
+      observacao: obsAjuste,
       registradoPor: profile?.nome || "Desconhecido",
       ...(form.tipo === "Transferência"
         ? { depositoOrigem: form.depositoOrigem as Deposito, depositoDestino: form.depositoDestino as Deposito }
@@ -117,12 +111,89 @@ export default function Movimentacoes() {
       adicionarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
     } else if (form.tipo === "Ajuste") {
       ajustarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
+      // Registra auditoria
+      const { data: userData } = await supabase.auth.getUser();
+      await supabase.from("ajuste_auditoria").insert({
+        produto_id: form.perfumeId,
+        produto_nome: p.nome,
+        deposito: form.deposito,
+        quantidade_anterior: estoqueAtual,
+        quantidade_nova: form.quantidade,
+        diferenca: diferencaAjuste,
+        motivo: motivoAjusteConfirmado || "",
+        registrado_por: profile?.nome || "Desconhecido",
+        user_id: userData.user?.id ?? null,
+      });
     }
 
     await adicionarMovimentacao(nova);
     setForm({ tipo: "Entrada", perfumeId: "", deposito: userLoja || "", depositoOrigem: userLoja || "", depositoDestino: "", quantidade: 1, observacao: "" });
     setShowForm(false);
   };
+
+  const handleSalvar = async () => {
+    if (!form.perfumeId) return;
+    if (form.tipo !== "Ajuste" && form.quantidade < 1) return;
+    if (form.tipo === "Saída Tester" && !form.depositoOrigem) return;
+    if (form.tipo === "Transferência" && (!form.depositoOrigem || !form.depositoDestino)) return;
+    if (form.tipo !== "Transferência" && form.tipo !== "Saída Tester" && !form.deposito) return;
+
+    const p = perfumes.find((x) => x.id === form.perfumeId)!;
+
+    if (form.tipo === "Saída Tester") {
+      const est = p.estoques[form.depositoOrigem as Deposito];
+      if (est < form.quantidade) {
+        toast.error(`Estoque insuficiente em ${form.depositoOrigem}. Disponível: ${est}`);
+        return;
+      }
+    } else if (form.tipo === "Transferência") {
+      const est = p.estoques[form.depositoOrigem as Deposito];
+      if (est < form.quantidade) {
+        toast.error(`Estoque insuficiente em ${form.depositoOrigem}. Disponível: ${est}`);
+        return;
+      }
+    }
+
+    if (form.tipo === "Ajuste") {
+      const atual = p.estoques[form.deposito as Deposito];
+      const diff = form.quantidade - atual;
+      if (diff === 0) {
+        toast.info("A quantidade informada é igual ao estoque atual.");
+        return;
+      }
+      setMotivoAjuste("");
+      setAjusteModal({
+        perfumeNome: p.nome,
+        deposito: form.deposito as Deposito,
+        atual,
+        nova: form.quantidade,
+        diferenca: diff,
+      });
+      return;
+    }
+
+    await executarSalvar();
+  };
+
+  const confirmarAjuste = async () => {
+    const motivo = motivoAjuste.trim();
+    if (motivo.length < 5) {
+      toast.error("Informe um motivo com pelo menos 5 caracteres.");
+      return;
+    }
+    setSalvandoAjuste(true);
+    try {
+      await executarSalvar(motivo);
+      toast.success("Ajuste registrado com sucesso.");
+      setAjusteModal(null);
+      setMotivoAjuste("");
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao registrar ajuste.");
+    } finally {
+      setSalvandoAjuste(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -356,6 +427,63 @@ export default function Movimentacoes() {
           </div>
         )}
       </div>
+
+      {/* Modal de confirmação de Ajuste */}
+      <Dialog open={!!ajusteModal} onOpenChange={(o) => { if (!o) { setAjusteModal(null); setMotivoAjuste(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-blue-400">
+              <AlertTriangle size={18} /> Confirmar ajuste de estoque
+            </DialogTitle>
+          </DialogHeader>
+          {ajusteModal && (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-blue-400/20 bg-blue-400/8 p-4 space-y-1.5">
+                <p className="text-sm font-medium text-foreground">{ajusteModal.perfumeNome}</p>
+                <p className="text-xs text-muted-foreground">Depósito: <strong className="text-foreground">{ajusteModal.deposito}</strong></p>
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  <div className="text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase">Atual</p>
+                    <p className="text-lg font-bold text-foreground">{ajusteModal.atual}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase">Novo</p>
+                    <p className="text-lg font-bold text-blue-400">{ajusteModal.nova}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase">Diferença</p>
+                    <p className={`text-lg font-bold ${ajusteModal.diferenca > 0 ? "text-success" : "text-destructive"}`}>
+                      {ajusteModal.diferenca > 0 ? "+" : ""}{ajusteModal.diferenca}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">
+                  Motivo do ajuste <span className="text-destructive">*</span>
+                </label>
+                <textarea
+                  value={motivoAjuste}
+                  onChange={(e) => setMotivoAjuste(e.target.value)}
+                  placeholder="Ex: contagem física, produto avariado, perda, correção de erro..."
+                  rows={3}
+                  className="input-premium px-3 py-2.5 text-sm w-full resize-none"
+                  autoFocus
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">Mínimo 5 caracteres. Este registro fica salvo na auditoria.</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <button onClick={() => { setAjusteModal(null); setMotivoAjuste(""); }} className="btn-secondary px-4 py-2" disabled={salvandoAjuste}>
+              Cancelar
+            </button>
+            <button onClick={confirmarAjuste} disabled={salvandoAjuste || motivoAjuste.trim().length < 5} className="btn-primary px-4 py-2">
+              {salvandoAjuste ? "Salvando..." : "Confirmar ajuste"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
