@@ -15,6 +15,7 @@ import { useProdutoCustos } from "@/hooks/useProdutoCustos";
 import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalCostCalculator";
 import SimilarProductsDialog from "@/components/SimilarProductsDialog";
 import { findSimilarProducts, type SimilarityCandidate } from "@/lib/productSimilarity";
+import PerfilOlfativoFields from "@/components/PerfilOlfativoFields";
 import { toast } from "sonner";
 
 interface Props {
@@ -46,6 +47,10 @@ export default function CadastroPerfume({ onClose }: Props) {
   const [estSumauma, setEstSumauma] = useState("0");
   const [estAmazonas, setEstAmazonas] = useState("0");
   const [classificacao, setClassificacao] = useState<ClassificacaoPerfume>("Compartilhável");
+  const [perfilOlfativo, setPerfilOlfativo] = useState("");
+  const [notasSaida, setNotasSaida] = useState("");
+  const [notasCoracao, setNotasCoracao] = useState("");
+  const [notasFundo, setNotasFundo] = useState("");
   const [showMarkup, setShowMarkup] = useState(false);
 
   // Parâmetros de markup
@@ -162,6 +167,10 @@ export default function CadastroPerfume({ onClose }: Props) {
       },
       estoqueMinimo: parseInt(estoqueMinimo) || 2,
       classificacao,
+      perfilOlfativo,
+      notasSaida,
+      notasCoracao,
+      notasFundo,
     };
     try {
       await adicionarPerfume(novoPerfume);
@@ -470,6 +479,20 @@ export default function CadastroPerfume({ onClose }: Props) {
                 ))}
               </div>
             </div>
+
+            {/* Perfil Olfativo */}
+            <PerfilOlfativoFields
+              perfilOlfativo={perfilOlfativo}
+              notasSaida={notasSaida}
+              notasCoracao={notasCoracao}
+              notasFundo={notasFundo}
+              onPerfilChange={setPerfilOlfativo}
+              onSaidaChange={setNotasSaida}
+              onCoracaoChange={setNotasCoracao}
+              onFundoChange={setNotasFundo}
+            />
+
+
 
             {/* Preços */}
             <div className="grid grid-cols-2 gap-3">

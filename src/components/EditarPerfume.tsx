@@ -3,6 +3,7 @@ import { X, Check, History, DollarSign, ChevronDown, Camera } from "lucide-react
 import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import MarkupCalculator from "@/components/MarkupCalculator";
 import ProductImageUpload from "@/components/ProductImageUpload";
+import PerfilOlfativoFields from "@/components/PerfilOlfativoFields";
 import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalCostCalculator";
 import {
   gerarCodigo,
@@ -49,6 +50,10 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
   const [cstCsosn, setCstCsosn] = useState(perfume.cstCsosn || "");
   const [unidadeFiscal, setUnidadeFiscal] = useState(perfume.unidadeFiscal || "UN");
   const [classificacao, setClassificacao] = useState<ClassificacaoPerfume>((perfume.classificacao as ClassificacaoPerfume) || "Compartilhável");
+  const [perfilOlfativo, setPerfilOlfativo] = useState(perfume.perfilOlfativo || "");
+  const [notasSaida, setNotasSaida] = useState(perfume.notasSaida || "");
+  const [notasCoracao, setNotasCoracao] = useState(perfume.notasCoracao || "");
+  const [notasFundo, setNotasFundo] = useState(perfume.notasFundo || "");
   const { historico, isLoading: historicoLoading } = useProdutoCustos(perfume.id);
   const { historico: precoHistorico, isLoading: precoLoading, registrar: registrarPreco } = usePrecoHistorico(perfume.id);
 
@@ -153,6 +158,10 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
         unidadeFiscal,
         codigoBarras: codigoBarras.trim(),
         classificacao,
+        perfilOlfativo,
+        notasSaida,
+        notasCoracao,
+        notasFundo,
       } as any);
       onClose();
     } finally {
@@ -372,6 +381,19 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
               ))}
             </div>
           </div>
+
+          {/* Perfil Olfativo */}
+          <PerfilOlfativoFields
+            perfilOlfativo={perfilOlfativo}
+            notasSaida={notasSaida}
+            notasCoracao={notasCoracao}
+            notasFundo={notasFundo}
+            onPerfilChange={setPerfilOlfativo}
+            onSaidaChange={setNotasSaida}
+            onCoracaoChange={setNotasCoracao}
+            onFundoChange={setNotasFundo}
+          />
+
 
           {/* Preços */}
           <div className="grid grid-cols-2 gap-3">
