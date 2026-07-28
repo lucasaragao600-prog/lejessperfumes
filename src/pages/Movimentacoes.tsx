@@ -14,11 +14,14 @@ function formatHoraManaus(iso?: string): string {
     return "";
   }
 }
-import { ArrowLeftRight, ArrowDown, RefreshCw, FlaskConical, Plus, Search, ArrowUpDown } from "lucide-react";
+import { ArrowLeftRight, ArrowDown, RefreshCw, FlaskConical, Plus, Search, ArrowUpDown, AlertTriangle } from "lucide-react";
 import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
 import { formatDate, type Deposito, type Movimentacao } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const tipos = ["Entrada", "Ajuste", "Transferência", "Saída Tester"] as const;
