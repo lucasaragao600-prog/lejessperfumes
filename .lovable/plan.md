@@ -1,119 +1,114 @@
-## Relatório de Fluxo de Caixa em PDF — Plano
 
-### 1. Análise do banco (tabelas e campos identificados)
+# Plano de Implementação — Lejess
 
-Tudo que o relatório precisa **já existe** no schema atual. Não há necessidade de migrações, novas views ou funções no banco.
-
-**Lojas / Depósitos** → `casas` (`sigla`, `nome`, `tipo`)
-A "loja" para fins de relatório é o `deposito` da venda (Casa, Sumaúma, Amazonas).
-
-**Vendas confirmadas** → `vendas`
-Campos: `id`, `data`, `perfume_id`, `perfume_nome`, `deposito`, `quantidade`, `preco_unitario`, `desconto`, `total`, `vendedora`, `tipo_pagamento`, `bandeira`, `grupo_venda`, `cliente_id`, `nfce_status`.
-Filtro de "vendas válidas" = todas as linhas existentes (não há flag de cancelamento; exclusão é hard-delete). Nenhuma flag adicional necessária.
-
-**Pagamentos (split)** → `venda_pagamentos`
-Campos: `grupo_venda`, `tipo_pagamento`, `bandeira`, `valor`, `parcelas`.
-Esta é a fonte de verdade para a Parte 1, pois uma venda pode ter múltiplas formas de pagamento. Soma por `tipo_pagamento` + `bandeira`, agrupando vendas do dia/loja via join com `vendas` por `grupo_venda`.
-
-**Produtos / Estoque** → `perfumes`
-Campos: `id`, `codigo`, `nome`, `marca`, `concentracao`, `tamanho`, `volume`, `estoque_casa`, `estoque_sumauma`, `estoque_amazonas`, `estoque_minimo`.
-A coluna de estoque usada depende da loja selecionada.
-
-**Vendedores** → coluna `vendedora` em `vendas` (texto). Lista mestre em `vendedoras`.
-
-**Configuração da loja** (cabeçalho do PDF) → `configuracoes_fiscais` (`razao_social`, `nome_fantasia`, `endereco`, `cidade`, `uf`).
-
-### 2. Permissões
-
-Usar `useAuth()` — `role` (`master` | `vendedor`) + `profile.loja`.
-- **Master**: pode escolher qualquer loja (Casa / Sumaúma / Amazonas).
-- **Vendedor**: seletor de loja **trava** na `profile.loja` (regra já adotada no resto do app).
-
-### 3. Estrutura de UI
-
-Adicionar nova aba/seção em `src/pages/Relatorios.tsx` chamada **"Fluxo de Caixa"** com:
-
-- Select **Loja** (Casa / Sumaúma / Amazonas, respeitando permissão)
-- Tabs de período: **Diário** | **Quinzenal** | **Mensal**
-- Diário → DatePicker (data única, default hoje em America/Manaus via `getHojeManaus()`)
-- Quinzenal → seleção de mês + radio "1ª quinzena (1–15)" / "2ª quinzena (16–fim)"
-- Mensal → seleção de mês
-- Botão **"Gerar PDF"**
-
-### 4. Geração do PDF (jspdf + jspdf-autotable, já instalados)
-
-Novo arquivo: `src/lib/pdf/fluxoCaixa.ts` exportando `gerarFluxoCaixaDiario`, `gerarFluxoCaixaQuinzenal`, `gerarFluxoCaixaMensal`. Cada função recebe os dados já filtrados e devolve `jsPDF`.
-
-**Cabeçalho padrão** (todas as variações):
-- Nome fantasia da empresa + nome da loja
-- Período (data ou intervalo)
-- "Gerado em: {agora Manaus}"
-- Linha divisória dourada (#C9A24A) seguindo a identidade do app
-
-#### Relatório Diário
-
-**Parte 1 — Modalidades de pagamento** (fonte: `venda_pagamentos` ⨝ `vendas` do dia/loja):
-- Tabela: Modalidade | Bandeira | Qtde transações | Total (R$)
-- Agrupamentos: Crédito (por bandeira), Débito (por bandeira), Pix, Dinheiro, Crediário, Conta Assinada
-- Linha "TOTAL GERAL" destacada
-- **Gráfico de pizza** desenhado em `<canvas>` off-screen com Chart.js (já no projeto via shadcn/ui chart? — se não, desenhar manualmente com `ctx.arc` no canvas e injetar via `doc.addImage`). Plano: usar canvas puro com fatias proporcionais + legenda colorida; sem nova dependência.
-
-**Parte 2 — Vendas por vendedor** (fonte: `vendas` agrupado por `vendedora`):
-- Para cada vendedor (ordenado desc por qtd total de produtos):
-  - Subtítulo: "Vendedor: {nome}" + chips com totais
-  - Tabela: Produto | Qtd | Valor unit. | Total
-  - Rodapé do bloco: "Total de produtos: X · Valor total: R$ Y"
-
-**Parte 3 — Perfumes vendidos no dia** (fonte: `vendas` agrupado por `perfume_id`):
-- Tabela: Descrição (formato completo: SKU - Marca - Nome - Concentração - Volume) | Qtd | Valor unit. médio | Total
-- Rodapé: "Soma total: X produtos · R$ Y"
-
-**Parte 4 — Reposição de estoque** (fonte: `perfumes`, coluna correspondente à loja):
-- Itens com `estoque_loja === 0` → badge **"REPOR URGENTE"** (vermelho)
-- Itens com `0 < estoque_loja <= estoque_minimo` → badge **"ATENÇÃO"** (âmbar)
-- Tabela: Produto | Estoque atual | Mínimo | Prioridade
-- Ordenar zerados primeiro
-
-#### Relatório Quinzenal (1–15 ou 16–fim do mês)
-- Cabeçalho com intervalo
-- Top produtos mais vendidos (tabela com qtd e valor)
-- Vendas por vendedora (qtd total e valor total)
-- **Ranking** das vendedoras: por quantidade e por valor (duas tabelas lado a lado)
-- Faturamento total da quinzena destacado
-
-#### Relatório Mensal
-- Vendedora destaque (maior valor vendido) — card destacado
-- Faturamento total do mês
-- Top produtos mais vendidos (tabela completa)
-- Total de produtos vendidos no mês
-- Comparativo entre vendedoras (tabela: Vendedora | Qtd | Valor | % do total)
-- Seção "Produtos com maior giro" para apoio à reposição (top 20 por qtd vendida)
-
-### 5. Regras de cálculo
-
-- Filtrar `vendas.data` no intervalo + `vendas.deposito === lojaSelecionada`
-- Para Parte 1 do Diário: somar `venda_pagamentos.valor` (não `vendas.total`), pois reflete corretamente vendas com split
-- Demais partes: usar `vendas.total`, `quantidade`, `preco_unitario`
-- Sem flag de cancelamento — todas as linhas em `vendas` contam (exclusão remove a linha)
-
-### 6. Arquivos a criar/editar
-
-**Criar:**
-- `src/lib/pdf/fluxoCaixa.ts` — geração dos três PDFs (compartilha helpers de header, paleta, formatação BRL e data)
-- `src/lib/pdf/pieChart.ts` — desenha gráfico de pizza em canvas e devolve dataURL
-
-**Editar:**
-- `src/pages/Relatorios.tsx` — nova aba "Fluxo de Caixa" com filtros e botão de geração
-
-Sem alterações em hooks (já existem `useVendas`, `usePerfumes`, `useCasas`, `useConfiguracoesFiscais`, `useAuth`). Sem migrações.
-
-### 7. Validações de UX
-
-- Botão desabilitado enquanto carrega
-- Toast de sucesso ao gerar; toast de erro se nenhum dado no período
-- Para vendedor (role), seletor de loja desabilitado e fixo na sua loja
-- Datas exibidas em formato brasileiro (dd/MM/yyyy), sempre em America/Manaus
+Trabalho grande, dividido em 7 blocos. Sugiro **aprovar em fases** (1→2→3→...) para revisar cada entrega antes de seguir. Posso executar tudo de uma vez se preferir, mas o risco de regressão sobe.
 
 ---
 
-Aguardando aprovação para implementar.
+## Fase 1 — Remoção do módulo Balanço
+
+**Frontend**
+- Deletar: `src/pages/BalancoEstoque.tsx`, `src/components/BalancoNovo.tsx`, `src/components/BalancoConferencia.tsx`, `src/components/BalancoDetalhes.tsx`, `src/hooks/useBalancos.ts`, `src/hooks/useBalancoLeituras.ts`.
+- Remover rota e item de menu em `App.tsx` (via `Index.tsx`), `BottomNav.tsx`, `SidebarNav.tsx`, `QuickActionMenu.tsx`.
+- Rodar `rg balanco` para garantir zero referências restantes (relatórios, dashboards, etc).
+
+**Backend (migration)**
+- `DROP TABLE` em cascata: `balanco_leituras`, `balanco_itens`, `balanco_auditoria`, `balancos` (com policies).
+
+---
+
+## Fase 2 — Módulo de Reposição
+
+**Migration**
+- `ALTER TABLE movimentacoes ADD COLUMN entregue_por uuid, conferido_por uuid, foto_saida_url text, foto_chegada_url text`.
+- Criar bucket privado `reposicoes` + policies (leitura autenticados, escrita autenticados no próprio path).
+
+**Frontend**
+- Nova página `src/pages/Reposicao.tsx` + rota + menu.
+- Sugestão automática reaproveitando lógica de `InteligenciaOperacional.tsx` (`mediaDiaria * diasReposicao − estoque atual`), agrupada por loja destino.
+- Fluxo: gerar sugestão → conferente edita quantidades → tira foto saída (upload storage) → registra movimentação tipo `transferencia`/`entrada` → destinatário confirma chegada com foto → status atualiza.
+- Bloqueio de salvar sem as 2 fotos.
+- Aba "Histórico" com filtros (produto, loja, responsável, período).
+
+---
+
+## Fase 3 — Ajuste de Estoque com auditoria
+
+**Migration**
+- Criar `auditoria_estoque` (produto_id, loja, estoque_antes, estoque_depois, diferenca, motivo text NOT NULL, usuario_id, usuario_nome, created_at) + RLS + GRANT.
+
+**Frontend**
+- Novo `src/components/AjusteEstoqueDialog.tsx` substituindo `window.confirm` em `Estoque.tsx`.
+- Campos: novo valor (readonly do input), diferença calculada, `<Select>` de motivo (Quebra, Perda, Erro de contagem, Correção, Outro) + `<Textarea>` obrigatório.
+- Ao confirmar: aplica ajuste + insere linha em `auditoria_estoque`.
+- Aba de consulta do log dentro de Relatórios.
+
+---
+
+## Fase 4 — Histórico do Item
+
+**Frontend apenas** (dados já existem)
+- Novo `src/components/HistoricoItemDialog.tsx` acionado por botão no card de produto (Estoque) e no Editar.
+- Abas:
+  1. **Custos** — timeline de `produto_custos` + `preco_historico` (linha, recharts).
+  2. **Compras** — tabela `notas_fiscais_itens` join `notas_fiscais` (fornecedor, data, qtd, custo unit).
+  3. **Vendas** — tabela + gráfico de tendência mensal por `vendas`.
+
+---
+
+## Fase 5 — Perfil Olfativo
+
+**Migration**
+- `ALTER TABLE perfumes ADD COLUMN perfil_olfativo text, notas_saida text[], notas_coracao text[], notas_fundo text[]`.
+
+**Frontend**
+- `CadastroPerfume.tsx` e `EditarPerfume.tsx`: nova seção "Perfil Olfativo" com Select de família (amadeirado/floral/cítrico/oriental/aquático/gourmand/aromático/chipre/fougère) + 3 inputs de tags (notas separadas por vírgula ou chips).
+- Preenchimento 100% manual (sem scraping).
+
+---
+
+## Fase 6 — DRE (Despesas + Relatório)
+
+**Migration**
+- Criar tabela `despesas` conforme spec (categoria enum, descricao, valor, data, loja opcional, comprovante_url opcional, criado_por, created_at, updated_at + trigger).
+- Bucket privado `comprovantes-despesas`.
+- RLS: leitura autenticados; escrita master (via `has_role`).
+
+**Frontend**
+- `src/pages/Despesas.tsx` — lançamento (form) + lista com filtros por categoria/período/loja + upload comprovante.
+- `src/pages/DRE.tsx` — período (mês/tri/ano/custom):
+  - Receita bruta (`vendas.total`)
+  - (−) CMV (soma custo médio × qtd vendida)
+  - = Lucro Bruto
+  - (−) Despesas agrupadas por categoria
+  - = Resultado Líquido
+  - Gráficos: barras por categoria + evolução mensal (recharts).
+- Menu Master-only.
+
+---
+
+## Fase 7 — Higienizações técnicas
+
+- **Lazy loading**: converter todas rotas em `Index.tsx` para `React.lazy()` + `<Suspense fallback={...}>`.
+- **Testes vitest**:
+  - `src/lib/reposicao.test.ts` — cálculo de sugestão.
+  - `src/lib/dre.test.ts` — agregação de DRE.
+  - `src/lib/ajusteEstoque.test.ts` — cálculo de diferença + validação de motivo.
+- **Tipagem**: novos hooks 100% tipados via `Database` gerado; zero `any`.
+
+---
+
+## Detalhes técnicos
+
+- Todas migrations seguem: CREATE TABLE → GRANT → ENABLE RLS → CREATE POLICY.
+- RLS de escrita nas novas tabelas usa `has_role(auth.uid(),'master')`.
+- Buckets novos são **privados** com signed URLs (fotos podem conter info sensível).
+- Ordem dos DROPs na Fase 1 respeita FKs.
+
+---
+
+## Como prefere executar?
+
+**A)** Aprovo tudo, você entrega em sequência (7 fases, várias horas de trabalho, PR gigante).
+**B)** Aprovo fase a fase — envio "ok fase 1", revejo, "ok fase 2", etc. **(recomendado)**
+**C)** Priorizar subset — me diga quais fases entram primeiro.
