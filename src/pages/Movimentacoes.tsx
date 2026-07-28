@@ -77,33 +77,15 @@ export default function Movimentacoes() {
     return result;
   }, [movimentacoes, filtroTipo, busca, ordenacao]);
 
-  const handleSalvar = async () => {
-    if (!form.perfumeId) return;
-    if (form.tipo !== "Ajuste" && form.quantidade < 1) return;
-    if (form.tipo === "Saída Tester" && !form.depositoOrigem) return;
-    if (form.tipo === "Transferência" && (!form.depositoOrigem || !form.depositoDestino)) return;
-    if (form.tipo !== "Transferência" && form.tipo !== "Saída Tester" && !form.deposito) return;
-
+  const executarSalvar = async (motivoAjusteConfirmado?: string) => {
     const p = perfumes.find((x) => x.id === form.perfumeId)!;
-
-    if (form.tipo === "Saída Tester") {
-      const est = p.estoques[form.depositoOrigem as Deposito];
-      if (est < form.quantidade) {
-        alert(`Estoque insuficiente em ${form.depositoOrigem}. Disponível: ${est}`);
-        return;
-      }
-    } else if (form.tipo === "Transferência") {
-      const est = p.estoques[form.depositoOrigem as Deposito];
-      if (est < form.quantidade) {
-        alert(`Estoque insuficiente em ${form.depositoOrigem}. Disponível: ${est}`);
-        return;
-      }
-    }
-    // Ajuste: allow any value >= 0 (absolute stock set)
-
     const hoje = getHojeManaus();
     const estoqueAtual = form.tipo === "Ajuste" ? p.estoques[form.deposito as Deposito] : 0;
     const diferencaAjuste = form.tipo === "Ajuste" ? form.quantidade - estoqueAtual : 0;
+    const obsAjuste = form.tipo === "Ajuste"
+      ? `Ajuste: ${estoqueAtual} → ${form.quantidade} | Motivo: ${motivoAjusteConfirmado}${form.observacao ? ` | ${form.observacao}` : ""}`
+      : (form.observacao || undefined);
+
     const nova: Movimentacao = {
       id: `m${Date.now()}`,
       data: hoje,
@@ -111,7 +93,7 @@ export default function Movimentacoes() {
       perfumeId: form.perfumeId,
       perfumeNome: p.nome,
       quantidade: form.tipo === "Ajuste" ? diferencaAjuste : Math.abs(form.quantidade),
-      observacao: form.tipo === "Ajuste" ? `Ajuste: ${estoqueAtual} → ${form.quantidade}${form.observacao ? ` | ${form.observacao}` : ""}` : (form.observacao || undefined),
+      observacao: obsAjuste,
       registradoPor: profile?.nome || "Desconhecido",
       ...(form.tipo === "Transferência"
         ? { depositoOrigem: form.depositoOrigem as Deposito, depositoDestino: form.depositoDestino as Deposito }
@@ -129,12 +111,89 @@ export default function Movimentacoes() {
       adicionarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
     } else if (form.tipo === "Ajuste") {
       ajustarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
+      // Registra auditoria
+      const { data: userData } = await supabase.auth.getUser();
+      await supabase.from("ajuste_auditoria").insert({
+        produto_id: form.perfumeId,
+        produto_nome: p.nome,
+        deposito: form.deposito,
+        quantidade_anterior: estoqueAtual,
+        quantidade_nova: form.quantidade,
+        diferenca: diferencaAjuste,
+        motivo: motivoAjusteConfirmado || "",
+        registrado_por: profile?.nome || "Desconhecido",
+        user_id: userData.user?.id ?? null,
+      });
     }
 
     await adicionarMovimentacao(nova);
     setForm({ tipo: "Entrada", perfumeId: "", deposito: userLoja || "", depositoOrigem: userLoja || "", depositoDestino: "", quantidade: 1, observacao: "" });
     setShowForm(false);
   };
+
+  const handleSalvar = async () => {
+    if (!form.perfumeId) return;
+    if (form.tipo !== "Ajuste" && form.quantidade < 1) return;
+    if (form.tipo === "Saída Tester" && !form.depositoOrigem) return;
+    if (form.tipo === "Transferência" && (!form.depositoOrigem || !form.depositoDestino)) return;
+    if (form.tipo !== "Transferência" && form.tipo !== "Saída Tester" && !form.deposito) return;
+
+    const p = perfumes.find((x) => x.id === form.perfumeId)!;
+
+    if (form.tipo === "Saída Tester") {
+      const est = p.estoques[form.depositoOrigem as Deposito];
+      if (est < form.quantidade) {
+        toast.error(`Estoque insuficiente em ${form.depositoOrigem}. Disponível: ${est}`);
+        return;
+      }
+    } else if (form.tipo === "Transferência") {
+      const est = p.estoques[form.depositoOrigem as Deposito];
+      if (est < form.quantidade) {
+        toast.error(`Estoque insuficiente em ${form.depositoOrigem}. Disponível: ${est}`);
+        return;
+      }
+    }
+
+    if (form.tipo === "Ajuste") {
+      const atual = p.estoques[form.deposito as Deposito];
+      const diff = form.quantidade - atual;
+      if (diff === 0) {
+        toast.info("A quantidade informada é igual ao estoque atual.");
+        return;
+      }
+      setMotivoAjuste("");
+      setAjusteModal({
+        perfumeNome: p.nome,
+        deposito: form.deposito as Deposito,
+        atual,
+        nova: form.quantidade,
+        diferenca: diff,
+      });
+      return;
+    }
+
+    await executarSalvar();
+  };
+
+  const confirmarAjuste = async () => {
+    const motivo = motivoAjuste.trim();
+    if (motivo.length < 5) {
+      toast.error("Informe um motivo com pelo menos 5 caracteres.");
+      return;
+    }
+    setSalvandoAjuste(true);
+    try {
+      await executarSalvar(motivo);
+      toast.success("Ajuste registrado com sucesso.");
+      setAjusteModal(null);
+      setMotivoAjuste("");
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao registrar ajuste.");
+    } finally {
+      setSalvandoAjuste(false);
+    }
+  };
+
 
   return (
     <div className="min-h-screen bg-background pb-24">
