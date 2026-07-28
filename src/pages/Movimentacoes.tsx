@@ -427,6 +427,63 @@ export default function Movimentacoes() {
           </div>
         )}
       </div>
+
+      {/* Modal de confirmação de Ajuste */}
+      <Dialog open={!!ajusteModal} onOpenChange={(o) => { if (!o) { setAjusteModal(null); setMotivoAjuste(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-blue-400">
+              <AlertTriangle size={18} /> Confirmar ajuste de estoque
+            </DialogTitle>
+          </DialogHeader>
+          {ajusteModal && (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-blue-400/20 bg-blue-400/8 p-4 space-y-1.5">
+                <p className="text-sm font-medium text-foreground">{ajusteModal.perfumeNome}</p>
+                <p className="text-xs text-muted-foreground">Depósito: <strong className="text-foreground">{ajusteModal.deposito}</strong></p>
+                <div className="grid grid-cols-3 gap-2 pt-2">
+                  <div className="text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase">Atual</p>
+                    <p className="text-lg font-bold text-foreground">{ajusteModal.atual}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase">Novo</p>
+                    <p className="text-lg font-bold text-blue-400">{ajusteModal.nova}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] text-muted-foreground uppercase">Diferença</p>
+                    <p className={`text-lg font-bold ${ajusteModal.diferenca > 0 ? "text-success" : "text-destructive"}`}>
+                      {ajusteModal.diferenca > 0 ? "+" : ""}{ajusteModal.diferenca}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">
+                  Motivo do ajuste <span className="text-destructive">*</span>
+                </label>
+                <textarea
+                  value={motivoAjuste}
+                  onChange={(e) => setMotivoAjuste(e.target.value)}
+                  placeholder="Ex: contagem física, produto avariado, perda, correção de erro..."
+                  rows={3}
+                  className="input-premium px-3 py-2.5 text-sm w-full resize-none"
+                  autoFocus
+                />
+                <p className="text-[10px] text-muted-foreground mt-1">Mínimo 5 caracteres. Este registro fica salvo na auditoria.</p>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <button onClick={() => { setAjusteModal(null); setMotivoAjuste(""); }} className="btn-secondary px-4 py-2" disabled={salvandoAjuste}>
+              Cancelar
+            </button>
+            <button onClick={confirmarAjuste} disabled={salvandoAjuste || motivoAjuste.trim().length < 5} className="btn-primary px-4 py-2">
+              {salvandoAjuste ? "Salvando..." : "Confirmar ajuste"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
