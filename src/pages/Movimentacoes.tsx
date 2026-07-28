@@ -55,6 +55,15 @@ export default function Movimentacoes() {
     quantidade: 1,
     observacao: "",
   });
+  const [ajusteModal, setAjusteModal] = useState<{
+    perfumeNome: string;
+    deposito: Deposito;
+    atual: number;
+    nova: number;
+    diferenca: number;
+  } | null>(null);
+  const [motivoAjuste, setMotivoAjuste] = useState("");
+  const [salvandoAjuste, setSalvandoAjuste] = useState(false);
 
   const filtradas = useMemo(() => {
     let result = movimentacoes.filter((m) => {
