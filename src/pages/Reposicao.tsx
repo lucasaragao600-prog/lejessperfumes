@@ -18,7 +18,7 @@ const STATUS_META: Record<ReposicaoStatus, { label: string; className: string }>
 type TabId = "sugestoes" | "transito" | "recebidas" | "historico";
 
 export default function Reposicao({ isMaster = false }: { isMaster?: boolean }) {
-  const { perfumes, transferirEstoque } = useApp();
+  const { perfumes, transferirEstoque, concentracoesConfig } = useApp();
   const { profile, user } = useAuth();
   const { casas } = useCasas();
   const { reposicoes, criar, atualizar, remover } = useReposicoes();
