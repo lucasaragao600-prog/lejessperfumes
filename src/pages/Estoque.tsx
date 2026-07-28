@@ -809,6 +809,12 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         valor={parcelamentoPerfume?.precoVenda || 0}
         titulo={parcelamentoPerfume ? `${parcelamentoPerfume.marca} ${parcelamentoPerfume.nome}` : undefined}
       />
+
+      <HistoricoItem
+        perfume={historicoPerfume}
+        open={!!historicoPerfume}
+        onOpenChange={(o) => { if (!o) setHistoricoPerfume(null); }}
+      />
     </div>
   );
 }
