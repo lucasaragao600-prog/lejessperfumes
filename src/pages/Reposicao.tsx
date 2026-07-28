@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { PackageSearch, Truck, CheckCircle2, Plus, Camera, X, Loader2, ImageIcon, Trash2, XCircle } from "lucide-react";
+import { PackageSearch, Truck, CheckCircle2, Plus, Camera, X, Loader2, Trash2, XCircle } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useCasas } from "@/hooks/useCasas";
@@ -18,7 +18,7 @@ const STATUS_META: Record<ReposicaoStatus, { label: string; className: string }>
 type TabId = "sugestoes" | "transito" | "recebidas" | "historico";
 
 export default function Reposicao({ isMaster = false }: { isMaster?: boolean }) {
-  const { perfumes, transferirEstoque, concentracoesConfig } = useApp();
+  const { perfumes, concentracoesConfig } = useApp();
   const { profile, user } = useAuth();
   const { casas } = useCasas();
   const { reposicoes, criar, atualizar, remover } = useReposicoes();
