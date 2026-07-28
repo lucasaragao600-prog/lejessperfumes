@@ -275,18 +275,6 @@ export default function Reposicao({ isMaster = false }: { isMaster?: boolean }) 
                 enviado_em: new Date().toISOString(),
               },
             });
-            // atualizar estoque local: origem -1
-            if (p) {
-              const colOrigem = r.origem as Deposito;
-              const destTemp = colOrigem === "Casa" ? "Sumaúma" : "Casa";
-              // hack: transferirEstoque exige destino; usamos "movimento" fake?
-              // melhor: apenas subtrair via baixarEstoque
-            }
-            // Preferimos baixar direto na origem
-            if (p) {
-              const { baixarEstoque } = (window as any).__lejess_ctx || {};
-              // use context method via imported destructuring below
-            }
             setEnviandoId(null);
           }}
           uploadFn={(file, tipo) => uploadReposicaoFoto(file, enviandoId!, tipo)}
