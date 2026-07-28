@@ -31,6 +31,10 @@ function rowToPerfume(row: any): Perfume {
     cstCsosn: row.cst_csosn || "",
     unidadeFiscal: row.unidade_fiscal || "UN",
     classificacao: (row.classificacao || "Compartilhável") as any,
+    perfilOlfativo: row.perfil_olfativo || "",
+    notasSaida: row.notas_saida || "",
+    notasCoracao: row.notas_coracao || "",
+    notasFundo: row.notas_fundo || "",
   };
 }
 
@@ -52,6 +56,10 @@ function perfumeToRow(p: Perfume) {
     estoque_amazonas: p.estoques.Amazonas,
     estoque_minimo: p.estoqueMinimo,
     classificacao: (p as any).classificacao || "Compartilhável",
+    perfil_olfativo: p.perfilOlfativo || "",
+    notas_saida: p.notasSaida || "",
+    notas_coracao: p.notasCoracao || "",
+    notas_fundo: p.notasFundo || "",
   };
 }
 
@@ -129,6 +137,10 @@ export function usePerfumes() {
       if (p.unidadeFiscal !== undefined) updateData.unidade_fiscal = p.unidadeFiscal;
       if (p.codigoBarras !== undefined) updateData.codigo_barras = p.codigoBarras;
       if ((p as any).classificacao !== undefined) updateData.classificacao = (p as any).classificacao;
+      if (p.perfilOlfativo !== undefined) updateData.perfil_olfativo = p.perfilOlfativo;
+      if (p.notasSaida !== undefined) updateData.notas_saida = p.notasSaida;
+      if (p.notasCoracao !== undefined) updateData.notas_coracao = p.notasCoracao;
+      if (p.notasFundo !== undefined) updateData.notas_fundo = p.notasFundo;
       const { error } = await supabase
         .from("perfumes")
         .update(updateData)

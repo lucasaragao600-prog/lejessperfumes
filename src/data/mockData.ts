@@ -48,6 +48,11 @@ export interface Perfume {
   cstCsosn?: string;
   unidadeFiscal?: string;
   classificacao?: ClassificacaoPerfume;
+  // Perfil olfativo
+  perfilOlfativo?: string;
+  notasSaida?: string;
+  notasCoracao?: string;
+  notasFundo?: string;
 }
 
 export type ClassificacaoPerfume = "Masculino" | "Feminino" | "Compartilhável";
