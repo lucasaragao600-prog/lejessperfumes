@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { PackageSearch, Truck, CheckCircle2, Plus, Camera, X, Loader2, Trash2, XCircle } from "lucide-react";
+import { PackageSearch, Truck, CheckCircle2, Plus, Camera, X, Loader2, Trash2, XCircle, Search } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useCasas } from "@/hooks/useCasas";
