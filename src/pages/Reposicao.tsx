@@ -447,43 +447,52 @@ function SugestaoCard({
   };
 
   return (
-    <div className="card p-3 flex flex-col md:flex-row md:items-center gap-3">
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">
+    <div className="card p-3 flex flex-col gap-3">
+      {/* Product name box */}
+      <div className="bg-surface-raised border border-border rounded-lg p-3">
+        <p className="text-sm font-medium text-foreground break-words leading-snug">
           {perfume.codigo} — {perfume.marca} — {perfume.nome} — {perfume.concentracao} — {perfume.volume}ml
         </p>
-        <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground mt-1">
-          <span>Estoque {destino}: <b className="text-amber-500">{estoqueDestino}</b></span>
-          <span>Mín: {perfume.estoqueMinimo}</span>
+        <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground mt-2">
+          <span>Estoque <b className="text-foreground">{destino}</b>: <b className="text-amber-500">{estoqueDestino}</b></span>
+          <span>Mín: <b className="text-foreground">{perfume.estoqueMinimo}</b></span>
           <span>Falta: <b className="text-foreground">{falta}</b></span>
         </div>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <select
-          className="input-primary text-xs py-1.5"
-          value={origem}
-          onChange={(e) => setOrigem(e.target.value as Deposito)}
-        >
-          {origensCandidatas.map((d) => (
-            <option key={d} value={d}>{d} ({perfume.estoques[d] || 0})</option>
-          ))}
-        </select>
-        <input
-          type="number"
-          min={1}
-          max={estoqueOrigem}
-          className="input-primary text-xs py-1.5 w-16 no-spinner"
-          value={qtd || ""}
-          onChange={(e) => setQtd(Math.max(1, Number(e.target.value) || 0))}
-          onWheel={(e) => (e.target as HTMLInputElement).blur()}
-        />
-        <button
-          onClick={handleClick}
-          disabled={saving || qtd < 1 || estoqueOrigem < 1}
-          className="btn-primary text-xs px-3 py-1.5 disabled:opacity-50"
-        >
-          {saving ? <Loader2 size={12} className="animate-spin" /> : "Criar"}
-        </button>
+
+      {/* Origin / quantity / action */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div className="flex items-center gap-2 flex-1">
+          <label className="text-xs text-muted-foreground whitespace-nowrap">Origem:</label>
+          <select
+            className="input-primary text-xs py-1.5 flex-1 bg-surface text-foreground"
+            value={origem}
+            onChange={(e) => setOrigem(e.target.value as Deposito)}
+          >
+            {origensCandidatas.map((d) => (
+              <option key={d} value={d}>{d} ({perfume.estoques[d] || 0})</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-muted-foreground whitespace-nowrap">Qtd:</label>
+          <input
+            type="number"
+            min={1}
+            max={estoqueOrigem}
+            className="input-primary text-xs py-1.5 w-20 no-spinner bg-surface text-foreground"
+            value={qtd || ""}
+            onChange={(e) => setQtd(Math.max(1, Number(e.target.value) || 0))}
+            onWheel={(e) => (e.target as HTMLInputElement).blur()}
+          />
+          <button
+            onClick={handleClick}
+            disabled={saving || qtd < 1 || estoqueOrigem < 1}
+            className="btn-primary text-xs px-4 py-1.5 disabled:opacity-50 whitespace-nowrap"
+          >
+            {saving ? <Loader2 size={12} className="animate-spin" /> : "Criar"}
+          </button>
+        </div>
       </div>
     </div>
   );
