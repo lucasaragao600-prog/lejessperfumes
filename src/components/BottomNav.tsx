@@ -47,13 +47,14 @@ export default function BottomNav({ activeTab, onTabChange, isMaster = true }: B
             <button
               key={id}
               onClick={() => onTabChange(id)}
-              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-150 flex-shrink-0"
+              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-sm transition-all duration-150 flex-shrink-0"
             >
-              <div className={`p-1.5 rounded-lg transition-all duration-150 ${
+              <div className={`p-1.5 rounded-sm transition-all duration-150 ${
                 isActive ? "bg-primary/10" : "bg-transparent"
               }`}>
                 <Icon
                   size={20}
+                    strokeWidth={1.35}
                   className={`transition-colors duration-150 ${
                     isActive ? "text-gold" : "text-muted-foreground"
                   }`}
@@ -70,9 +71,9 @@ export default function BottomNav({ activeTab, onTabChange, isMaster = true }: B
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-150 flex-shrink-0"
+          className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-sm transition-all duration-150 flex-shrink-0"
         >
-          <div className="p-1.5 rounded-lg bg-transparent">
+          <div className="p-1.5 rounded-sm bg-transparent">
             {theme === "dark" ? (
               <Sun size={20} className="text-muted-foreground" />
             ) : (
