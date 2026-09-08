@@ -203,7 +203,7 @@ export default function Reposicao({ isMaster = false }: { isMaster?: boolean }) 
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Origem</label>
                   <select
-                    className="input-primary w-full"
+                    className="input-primary w-full bg-surface text-foreground"
                     value={formManual.origem}
                     onChange={(e) => setFormManual((f) => ({ ...f, origem: e.target.value as Deposito }))}
                   >
@@ -216,7 +216,7 @@ export default function Reposicao({ isMaster = false }: { isMaster?: boolean }) 
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Destino</label>
                   <select
-                    className="input-primary w-full"
+                    className="input-primary w-full bg-surface text-foreground"
                     value={formManual.destino}
                     onChange={(e) => setFormManual((f) => ({ ...f, destino: e.target.value as Deposito }))}
                   >
