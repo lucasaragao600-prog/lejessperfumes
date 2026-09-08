@@ -316,22 +316,34 @@ export default function Reposicao({ isMaster = false }: { isMaster?: boolean }) 
       {/* Content */}
       {tab === "sugestoes" && (
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <label className="text-xs text-muted-foreground">Destino:</label>
-            <select
-              className="input-primary text-xs py-1.5"
-              value={destinoSug}
-              onChange={(e) => setDestinoSug(e.target.value as Deposito)}
-            >
-              {depositos.map((d) => (
-                <option key={d} value={d}>{d} — {casaNome(d)}</option>
-              ))}
-            </select>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-muted-foreground whitespace-nowrap">Destino:</label>
+              <select
+                className="input-primary text-xs py-1.5 bg-surface text-foreground"
+                value={destinoSug}
+                onChange={(e) => setDestinoSug(e.target.value as Deposito)}
+              >
+                {depositos.map((d) => (
+                  <option key={d} value={d}>{d} — {casaNome(d)}</option>
+                ))}
+              </select>
+            </div>
+            <div className="relative flex-1">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Buscar perfume..."
+                className="input-primary w-full text-xs pl-9 pr-3 py-1.5 bg-surface text-foreground placeholder:text-muted-foreground"
+                value={buscaSug}
+                onChange={(e) => setBuscaSug(e.target.value)}
+              />
+            </div>
           </div>
           {sugestoesFiltradas.length === 0 ? (
-            <EmptyState icon={PackageSearch} text={`Sem sugestões para ${destinoSug}. Todos os produtos estão acima do mínimo.`} />
+            <EmptyState icon={PackageSearch} text={buscaSug ? `Nenhum perfume encontrado para "${buscaSug}".` : `Sem sugestões para ${destinoSug}. Todos os produtos estão acima do mínimo.`} />
           ) : (
-            <div className="grid gap-2">
+            <div className="grid gap-3">
               {sugestoesFiltradas.map((s) => (
                 <SugestaoCard
                   key={s.perfume.id}
