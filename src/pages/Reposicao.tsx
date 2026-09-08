@@ -32,6 +32,7 @@ export default function Reposicao({ isMaster = false }: { isMaster?: boolean }) 
 
   // Sugestões automáticas: produtos com estoque < mínimo no destino
   const [destinoSug, setDestinoSug] = useState<Deposito>("Sumaúma");
+  const [buscaSug, setBuscaSug] = useState("");
   const sugestoes = useMemo(() => {
     return perfumes
       .filter((p) => {
