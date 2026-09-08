@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { PackageSearch, Truck, CheckCircle2, Plus, Camera, X, Loader2, Trash2, XCircle } from "lucide-react";
+import { PackageSearch, Truck, CheckCircle2, Plus, Camera, X, Loader2, Trash2, XCircle, Search } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useCasas } from "@/hooks/useCasas";
@@ -32,6 +32,7 @@ export default function Reposicao({ isMaster = false }: { isMaster?: boolean }) 
 
   // Sugestões automáticas: produtos com estoque < mínimo no destino
   const [destinoSug, setDestinoSug] = useState<Deposito>("Sumaúma");
+  const [buscaSug, setBuscaSug] = useState("");
   const sugestoes = useMemo(() => {
     return perfumes
       .filter((p) => {
@@ -78,9 +79,14 @@ export default function Reposicao({ isMaster = false }: { isMaster?: boolean }) 
     return s;
   }, [reposicoes]);
 
-  const sugestoesFiltradas = sugestoes.filter(
-    (s) => !emAndamentoKey.has(`${s.perfume.id}|${destinoSug}`)
-  );
+  const sugestoesFiltradas = sugestoes
+    .filter((s) => !emAndamentoKey.has(`${s.perfume.id}|${destinoSug}`))
+    .filter((s) => {
+      const termo = buscaSug.trim().toLowerCase();
+      if (!termo) return true;
+      const texto = `${s.perfume.codigo} ${s.perfume.marca} ${s.perfume.nome} ${s.perfume.concentracao} ${s.perfume.volume}ml`.toLowerCase();
+      return texto.includes(termo);
+    });
 
   // Handlers
   const [criandoManual, setCriandoManual] = useState(false);
@@ -197,7 +203,7 @@ export default function Reposicao({ isMaster = false }: { isMaster?: boolean }) 
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Origem</label>
                   <select
-                    className="input-primary w-full"
+                    className="input-primary w-full bg-surface text-foreground"
                     value={formManual.origem}
                     onChange={(e) => setFormManual((f) => ({ ...f, origem: e.target.value as Deposito }))}
                   >
@@ -210,7 +216,7 @@ export default function Reposicao({ isMaster = false }: { isMaster?: boolean }) 
                 <div>
                   <label className="text-xs text-muted-foreground mb-1 block">Destino</label>
                   <select
-                    className="input-primary w-full"
+                    className="input-primary w-full bg-surface text-foreground"
                     value={formManual.destino}
                     onChange={(e) => setFormManual((f) => ({ ...f, destino: e.target.value as Deposito }))}
                   >
@@ -310,22 +316,34 @@ export default function Reposicao({ isMaster = false }: { isMaster?: boolean }) 
       {/* Content */}
       {tab === "sugestoes" && (
         <div>
-          <div className="flex items-center gap-2 mb-3">
-            <label className="text-xs text-muted-foreground">Destino:</label>
-            <select
-              className="input-primary text-xs py-1.5"
-              value={destinoSug}
-              onChange={(e) => setDestinoSug(e.target.value as Deposito)}
-            >
-              {depositos.map((d) => (
-                <option key={d} value={d}>{d} — {casaNome(d)}</option>
-              ))}
-            </select>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-3">
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-muted-foreground whitespace-nowrap">Destino:</label>
+              <select
+                className="input-primary text-xs py-1.5 bg-surface text-foreground"
+                value={destinoSug}
+                onChange={(e) => setDestinoSug(e.target.value as Deposito)}
+              >
+                {depositos.map((d) => (
+                  <option key={d} value={d}>{d} — {casaNome(d)}</option>
+                ))}
+              </select>
+            </div>
+            <div className="relative flex-1">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Buscar perfume..."
+                className="input-primary w-full text-xs pl-9 pr-3 py-1.5 bg-surface text-foreground placeholder:text-muted-foreground"
+                value={buscaSug}
+                onChange={(e) => setBuscaSug(e.target.value)}
+              />
+            </div>
           </div>
           {sugestoesFiltradas.length === 0 ? (
-            <EmptyState icon={PackageSearch} text={`Sem sugestões para ${destinoSug}. Todos os produtos estão acima do mínimo.`} />
+            <EmptyState icon={PackageSearch} text={buscaSug ? `Nenhum perfume encontrado para "${buscaSug}".` : `Sem sugestões para ${destinoSug}. Todos os produtos estão acima do mínimo.`} />
           ) : (
-            <div className="grid gap-2">
+            <div className="grid gap-3">
               {sugestoesFiltradas.map((s) => (
                 <SugestaoCard
                   key={s.perfume.id}
@@ -429,43 +447,52 @@ function SugestaoCard({
   };
 
   return (
-    <div className="card p-3 flex flex-col md:flex-row md:items-center gap-3">
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium truncate">
+    <div className="card p-3 flex flex-col gap-3">
+      {/* Product name box */}
+      <div className="bg-surface-raised border border-border rounded-lg p-3">
+        <p className="text-sm font-medium text-foreground break-words leading-snug">
           {perfume.codigo} — {perfume.marca} — {perfume.nome} — {perfume.concentracao} — {perfume.volume}ml
         </p>
-        <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground mt-1">
-          <span>Estoque {destino}: <b className="text-amber-500">{estoqueDestino}</b></span>
-          <span>Mín: {perfume.estoqueMinimo}</span>
+        <div className="flex flex-wrap gap-3 text-[11px] text-muted-foreground mt-2">
+          <span>Estoque <b className="text-foreground">{destino}</b>: <b className="text-amber-500">{estoqueDestino}</b></span>
+          <span>Mín: <b className="text-foreground">{perfume.estoqueMinimo}</b></span>
           <span>Falta: <b className="text-foreground">{falta}</b></span>
         </div>
       </div>
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <select
-          className="input-primary text-xs py-1.5"
-          value={origem}
-          onChange={(e) => setOrigem(e.target.value as Deposito)}
-        >
-          {origensCandidatas.map((d) => (
-            <option key={d} value={d}>{d} ({perfume.estoques[d] || 0})</option>
-          ))}
-        </select>
-        <input
-          type="number"
-          min={1}
-          max={estoqueOrigem}
-          className="input-primary text-xs py-1.5 w-16 no-spinner"
-          value={qtd || ""}
-          onChange={(e) => setQtd(Math.max(1, Number(e.target.value) || 0))}
-          onWheel={(e) => (e.target as HTMLInputElement).blur()}
-        />
-        <button
-          onClick={handleClick}
-          disabled={saving || qtd < 1 || estoqueOrigem < 1}
-          className="btn-primary text-xs px-3 py-1.5 disabled:opacity-50"
-        >
-          {saving ? <Loader2 size={12} className="animate-spin" /> : "Criar"}
-        </button>
+
+      {/* Origin / quantity / action */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div className="flex items-center gap-2 flex-1">
+          <label className="text-xs text-muted-foreground whitespace-nowrap">Origem:</label>
+          <select
+            className="input-primary text-xs py-1.5 flex-1 bg-surface text-foreground"
+            value={origem}
+            onChange={(e) => setOrigem(e.target.value as Deposito)}
+          >
+            {origensCandidatas.map((d) => (
+              <option key={d} value={d}>{d} ({perfume.estoques[d] || 0})</option>
+            ))}
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs text-muted-foreground whitespace-nowrap">Qtd:</label>
+          <input
+            type="number"
+            min={1}
+            max={estoqueOrigem}
+            className="input-primary text-xs py-1.5 w-20 no-spinner bg-surface text-foreground"
+            value={qtd || ""}
+            onChange={(e) => setQtd(Math.max(1, Number(e.target.value) || 0))}
+            onWheel={(e) => (e.target as HTMLInputElement).blur()}
+          />
+          <button
+            onClick={handleClick}
+            disabled={saving || qtd < 1 || estoqueOrigem < 1}
+            className="btn-primary text-xs px-4 py-1.5 disabled:opacity-50 whitespace-nowrap"
+          >
+            {saving ? <Loader2 size={12} className="animate-spin" /> : "Criar"}
+          </button>
+        </div>
       </div>
     </div>
   );
