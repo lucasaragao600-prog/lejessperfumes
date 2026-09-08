@@ -2,30 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
-
 @layer base {
   :root {
-    --background: 240 6% 4%;
-    --foreground: 0 0% 93%;
+    --background: 30 15% 5%;
+    --foreground: 33 29% 86%;
 
-    --card: 240 4% 8%;
-    --card-foreground: 0 0% 93%;
+    --card: 30 13% 8%;
+    --card-foreground: 33 29% 86%;
 
-    --popover: 240 4% 8%;
-    --popover-foreground: 0 0% 93%;
+    --popover: 30 13% 8%;
+    --popover-foreground: 33 29% 86%;
 
-    --primary: 43 74% 49%;
-    --primary-foreground: 240 6% 4%;
+    --primary: 36 42% 63%;
+    --primary-foreground: 30 15% 5%;
 
-    --secondary: 240 3% 12%;
-    --secondary-foreground: 0 0% 74%;
+    --secondary: 30 11% 12%;
+    --secondary-foreground: 33 18% 72%;
 
-    --muted: 240 3% 12%;
-    --muted-foreground: 0 0% 55%;
+    --muted: 30 9% 13%;
+    --muted-foreground: 30 10% 52%;
 
-    --accent: 43 74% 49%;
-    --accent-foreground: 240 6% 4%;
+    --accent: 36 42% 63%;
+    --accent-foreground: 30 15% 5%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
@@ -35,40 +33,40 @@
 
     --warning: 38 92% 50%;
 
-    --border: 240 4% 14%;
-    --input: 240 3% 12%;
-    --ring: 43 74% 49%;
+    --border: 31 11% 17%;
+    --input: 30 11% 12%;
+    --ring: 36 42% 63%;
 
-    --radius: 0.75rem;
+    --radius: 0.25rem;
 
     /* Custom tokens */
-    --gold: 43 74% 49%;
-    --gold-light: 43 80% 65%;
-    --gold-dark: 43 65% 35%;
-    --gold-muted: 43 40% 25%;
-    --surface: 240 4% 8%;
-    --surface-raised: 240 4% 11%;
-    --surface-overlay: 240 4% 14%;
+    --gold: 36 42% 63%;
+    --gold-light: 36 42% 74%;
+    --gold-dark: 36 32% 42%;
+    --gold-muted: 35 23% 28%;
+    --surface: 30 13% 8%;
+    --surface-raised: 30 11% 11%;
+    --surface-overlay: 30 10% 14%;
 
-    --gradient-gold: linear-gradient(135deg, hsl(43 74% 49%), hsl(43 80% 60%));
-    --gradient-gold-subtle: linear-gradient(135deg, hsl(43 74% 49% / 0.12), hsl(43 80% 65% / 0.04));
-    --gradient-dark: linear-gradient(180deg, hsl(240 4% 8%), hsl(240 6% 4%));
-    --gradient-card: linear-gradient(145deg, hsl(240 4% 10%), hsl(240 4% 6%));
-    --gradient-header: linear-gradient(180deg, hsl(240 6% 4%) 80%, transparent);
+    --gradient-gold: linear-gradient(135deg, hsl(36 42% 70%), hsl(36 32% 52%));
+    --gradient-gold-subtle: linear-gradient(135deg, hsl(36 42% 63% / 0.1), hsl(30 13% 8% / 0));
+    --gradient-dark: linear-gradient(180deg, hsl(30 13% 8%), hsl(30 15% 5%));
+    --gradient-card: linear-gradient(145deg, hsl(30 12% 10%), hsl(30 15% 6%));
+    --gradient-header: linear-gradient(180deg, hsl(30 15% 5%) 80%, transparent);
 
-    --shadow-gold: 0 0 20px hsl(43 74% 49% / 0.15);
-    --shadow-card: 0 4px 24px hsl(0 0% 0% / 0.35);
-    --shadow-elevated: 0 8px 32px hsl(0 0% 0% / 0.5);
-    --shadow-card-hover: 0 8px 32px hsl(0 0% 0% / 0.5), 0 0 0 1px hsl(43 74% 49% / 0.08);
+    --shadow-gold: 0 0 24px hsl(36 42% 63% / 0.1);
+    --shadow-card: 0 12px 40px hsl(30 30% 2% / 0.18);
+    --shadow-elevated: 0 18px 52px hsl(30 30% 2% / 0.36);
+    --shadow-card-hover: 0 18px 48px hsl(30 30% 2% / 0.3), 0 0 0 1px hsl(36 42% 63% / 0.1);
 
-    --sidebar-background: 240 4% 6%;
-    --sidebar-foreground: 0 0% 74%;
-    --sidebar-primary: 43 74% 49%;
-    --sidebar-primary-foreground: 240 6% 4%;
-    --sidebar-accent: 240 4% 11%;
-    --sidebar-accent-foreground: 0 0% 85%;
-    --sidebar-border: 240 4% 12%;
-    --sidebar-ring: 43 74% 49%;
+    --sidebar-background: 30 15% 5%;
+    --sidebar-foreground: 30 12% 64%;
+    --sidebar-primary: 36 42% 63%;
+    --sidebar-primary-foreground: 30 15% 5%;
+    --sidebar-accent: 30 11% 11%;
+    --sidebar-accent-foreground: 33 29% 86%;
+    --sidebar-border: 31 11% 15%;
+    --sidebar-ring: 36 42% 63%;
   }
 
   .light {
@@ -153,19 +151,20 @@ input[type="number"] {
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Karla', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   h1, h2, h3 {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 500;
   }
 }
 
 @layer utilities {
   .font-display {
-    font-family: 'Playfair Display', serif;
+    font-family: 'Cormorant Garamond', serif;
   }
 
   .text-gold {
@@ -235,7 +234,7 @@ input[type="number"] {
 
   /* Premium card with hover elevation */
   .card-premium {
-    @apply bg-card border border-border rounded-xl transition-all duration-150;
+    @apply bg-card border border-border rounded-sm transition-all duration-150;
     box-shadow: var(--shadow-card);
   }
 
@@ -246,7 +245,7 @@ input[type="number"] {
 
   /* Alert card with left accent bar */
   .card-alert {
-    @apply bg-card border-l-4 border border-border rounded-xl transition-all duration-150;
+    @apply bg-card border-l-2 border border-border rounded-sm transition-all duration-150;
     border-left-color: hsl(var(--destructive));
     background: linear-gradient(90deg, hsl(0 72% 51% / 0.06), hsl(var(--card)) 40%);
     box-shadow: var(--shadow-card);
@@ -254,7 +253,7 @@ input[type="number"] {
 
   /* Button micro-interaction */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl text-sm font-semibold transition-all duration-150;
+    @apply inline-flex items-center justify-center gap-2 rounded-sm text-sm font-semibold transition-all duration-150;
     background: var(--gradient-gold);
     color: hsl(var(--primary-foreground));
     box-shadow: 0 2px 8px hsl(43 74% 49% / 0.2);
@@ -277,7 +276,7 @@ input[type="number"] {
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl text-sm font-medium border border-border text-foreground transition-all duration-150;
+    @apply inline-flex items-center justify-center gap-2 rounded-sm text-sm font-medium border border-border text-foreground transition-all duration-150;
     background: hsl(var(--surface));
   }
 
@@ -292,7 +291,7 @@ input[type="number"] {
 
   /* Premium page title */
   .page-title {
-    @apply font-display text-3xl tracking-tight;
+    @apply font-display text-4xl font-medium;
     color: hsl(var(--foreground));
   }
 
@@ -327,7 +326,7 @@ input[type="number"] {
 
   /* Input premium */
   .input-premium {
-    @apply w-full border rounded-xl text-sm transition-all duration-150;
+    @apply w-full border rounded-sm text-sm transition-all duration-150;
     background: hsl(var(--surface));
     border-color: hsl(var(--border));
     color: hsl(var(--foreground));
@@ -345,7 +344,7 @@ input[type="number"] {
 
   /* KPI card */
   .kpi-card {
-    @apply rounded-xl p-5 transition-all duration-150;
+    @apply rounded-sm p-5 transition-all duration-150;
     background: var(--gradient-card);
     border: 1px solid hsl(var(--border));
     box-shadow: var(--shadow-card);
@@ -355,6 +354,16 @@ input[type="number"] {
     box-shadow: var(--shadow-card-hover);
     transform: translateY(-1px);
   }
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.18;
+  background-image: repeating-linear-gradient(108deg, transparent 0 23px, hsl(var(--foreground) / 0.018) 24px 25px);
 }
 
 /* Bottom nav safe area */

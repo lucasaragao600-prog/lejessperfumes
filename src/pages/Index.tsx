@@ -140,10 +140,10 @@ function IndexContent({
       <SidebarNav activeTab={activeTab} onTabChange={setActiveTab} isMaster={isMaster} />
 
       {/* Mobile top bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-[60] px-4 pt-3 pb-2.5 flex items-center justify-between"
+      <div className="md:hidden fixed top-0 left-0 right-0 z-[60] px-4 pt-3 pb-2.5 flex items-center justify-between backdrop-blur-xl"
         style={{ background: "hsl(var(--background))", borderBottom: "1px solid hsl(var(--border))" }}>
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-primary-foreground flex-shrink-0 btn-primary"
+          <div className="w-8 h-8 rounded-sm flex items-center justify-center text-[11px] font-bold text-primary-foreground flex-shrink-0 btn-primary"
             style={{ boxShadow: "none" }}>
             {(profile?.nome || user.email || "U")[0].toUpperCase()}
           </div>
@@ -170,10 +170,10 @@ function IndexContent({
       </div>
 
       {/* Desktop top bar */}
-      <div className="hidden md:flex fixed top-0 left-60 right-0 z-[60] px-8 py-4 items-center justify-between"
+       <div className="hidden md:flex fixed top-0 left-[17rem] right-0 z-[60] px-10 py-4 items-center justify-between backdrop-blur-xl"
         style={{ background: "hsl(var(--background))", borderBottom: "1px solid hsl(var(--border))" }}>
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold text-primary-foreground btn-primary"
+          <div className="w-9 h-9 rounded-sm flex items-center justify-center text-xs font-bold text-primary-foreground btn-primary"
             style={{ boxShadow: "none" }}>
             {(profile?.nome || user.email || "U")[0].toUpperCase()}
           </div>
@@ -185,8 +185,8 @@ function IndexContent({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowAlertas(true)} className="relative p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all">
-            <Bell size={18} />
+           <button aria-label="Abrir alertas" onClick={() => setShowAlertas(true)} className="relative p-2 rounded-sm text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all">
+             <Bell size={18} strokeWidth={1.35} />
             {alertCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-destructive text-[9px] font-bold text-white flex items-center justify-center">
                 {alertCount > 9 ? "9+" : alertCount}
@@ -200,8 +200,8 @@ function IndexContent({
       </div>
 
       {/* Content */}
-      <div className="animate-fade-in pt-14 md:pl-60 md:pt-[72px]">
-        <div className="max-w-md mx-auto md:max-w-none md:px-8">
+       <div className="animate-fade-in pt-14 md:pl-[17rem] md:pt-[72px]">
+         <div className="max-w-md mx-auto md:max-w-none md:px-10">
           {renderTab()}
         </div>
       </div>
