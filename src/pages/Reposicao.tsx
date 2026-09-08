@@ -79,9 +79,14 @@ export default function Reposicao({ isMaster = false }: { isMaster?: boolean }) 
     return s;
   }, [reposicoes]);
 
-  const sugestoesFiltradas = sugestoes.filter(
-    (s) => !emAndamentoKey.has(`${s.perfume.id}|${destinoSug}`)
-  );
+  const sugestoesFiltradas = sugestoes
+    .filter((s) => !emAndamentoKey.has(`${s.perfume.id}|${destinoSug}`))
+    .filter((s) => {
+      const termo = buscaSug.trim().toLowerCase();
+      if (!termo) return true;
+      const texto = `${s.perfume.codigo} ${s.perfume.marca} ${s.perfume.nome} ${s.perfume.concentracao} ${s.perfume.volume}ml`.toLowerCase();
+      return texto.includes(termo);
+    });
 
   // Handlers
   const [criandoManual, setCriandoManual] = useState(false);
