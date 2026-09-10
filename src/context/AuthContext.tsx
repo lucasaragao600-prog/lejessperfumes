@@ -18,6 +18,17 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const AUTH_BOOT_TIMEOUT_MS = 8000;
+
+function withTimeout<T>(promise: PromiseLike<T>, timeoutMs: number): Promise<T> {
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise<T>((_, reject) => {
+      window.setTimeout(() => reject(new Error("Tempo limite ao restaurar a sessão")), timeoutMs);
+    }),
+  ]);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -49,8 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    let active = true;
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (!active) return;
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -63,17 +77,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        await fetchUserData(session.user.id);
-      }
-      await checkHasMaster();
-      setLoading(false);
-    });
+    const initializeAuth = async () => {
+      try {
+        const { data } = await withTimeout(supabase.auth.getSession(), AUTH_BOOT_TIMEOUT_MS);
+        if (!active) return;
 
-    return () => subscription.unsubscribe();
+        const restoredSession = data.session;
+        setSession(restoredSession);
+        setUser(restoredSession?.user ?? null);
+
+        if (restoredSession?.user) {
+          await withTimeout(fetchUserData(restoredSession.user.id), AUTH_BOOT_TIMEOUT_MS);
+        }
+
+        void withTimeout(checkHasMaster(), AUTH_BOOT_TIMEOUT_MS).catch(() => {
+          if (active) setHasMaster(true);
+        });
+      } catch (error) {
+        console.warn("Não foi possível restaurar a sessão automaticamente:", error);
+        if (active) {
+          setSession(null);
+          setUser(null);
+          setRole(null);
+          setProfile(null);
+          setHasMaster(true);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+
+    void initializeAuth();
+
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
