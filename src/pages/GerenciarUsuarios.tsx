@@ -3,6 +3,7 @@ import { Users, Plus, Shield, Trash2, Store } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import PermissoesCargo from "@/components/reposicao/PermissoesCargo";
 
 const LOJAS = ["Casa", "Sumaúma", "Amazonas"] as const;
 
@@ -111,6 +112,8 @@ export default function GerenciarUsuarios() {
       </div>
 
       <div className="px-4 space-y-4">
+        <PermissoesCargo />
+
         {/* Formulário de criação */}
         {showForm && (
           <div className="bg-surface border border-gold-muted rounded-xl p-4 space-y-3">
