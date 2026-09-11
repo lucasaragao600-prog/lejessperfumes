@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { usePermissoes } from "@/hooks/usePermissoes";
 import { useReposicao, STATUS_META, TIPOS_DIVERGENCIA, type Reposicao } from "@/hooks/useReposicao";
 import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
+import ProdutoFoto from "@/components/ProdutoFoto";
 import { uploadReposicaoFoto } from "@/hooks/useReposicao";
 import { formatarDataHora, produtoLabel } from "@/lib/reposicaoUtils";
 
@@ -185,8 +186,9 @@ export default function ReceberReposicao() {
         {resultados.length > 0 && (
           <div className="max-h-60 overflow-y-auto rounded-xl border border-border divide-y divide-border">
             {resultados.map((p) => (
-              <button key={p.id} onClick={() => registrar(p.id, 1)} className="w-full text-left px-3 py-2.5 text-sm text-foreground hover:bg-surface-raised">
-                {produtoLabel(p, concentracoesConfig)}
+              <button key={p.id} onClick={() => registrar(p.id, 1)} className="w-full text-left px-3 py-2.5 text-sm text-foreground hover:bg-surface-raised flex items-center gap-3">
+                <ProdutoFoto url={p.imageUrl} nome={p.nome} size={40} />
+                <span className="min-w-0 break-words">{produtoLabel(p, concentracoesConfig)}</span>
               </button>
             ))}
           </div>
@@ -196,6 +198,7 @@ export default function ReceberReposicao() {
       <div className="space-y-2">
         {lidos.map((c) => (
           <div key={c.id} className="card-premium p-3 flex items-center justify-between gap-3">
+            <ProdutoFoto url={perfumes.find((x) => x.id === c.produto_id)?.imageUrl} nome={c.produto_nome} size={44} />
             <p className="text-sm text-foreground break-words flex-1">{c.produto_nome}</p>
             <div className="flex items-center gap-2">
               <button onClick={() => registrar(c.produto_id, -1)} className="btn-secondary w-10 h-10 flex items-center justify-center">

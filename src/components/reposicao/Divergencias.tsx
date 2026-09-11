@@ -2,12 +2,15 @@ import { useState } from "react";
 import { ShieldCheck, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { useApp } from "@/context/AppContext";
 import { usePermissoes } from "@/hooks/usePermissoes";
 import { useReposicao } from "@/hooks/useReposicao";
 import { formatarDataHora } from "@/lib/reposicaoUtils";
 import ReposicaoFotoPreview from "@/components/ReposicaoFotoPreview";
+import ProdutoFoto from "@/components/ProdutoFoto";
 
 export default function Divergencias() {
+  const { perfumes } = useApp();
   const { profile, user } = useAuth();
   const { can } = usePermissoes();
   const { reposicoes, divergencias, aprovarDivergencia } = useReposicao();
@@ -60,11 +63,14 @@ export default function Divergencias() {
         return (
           <div key={d.id} className="card-premium p-4 space-y-2">
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-sm font-semibold text-foreground break-words">{d.produto_nome}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {rep?.codigo} · {rep?.origem} → {rep?.destino}
-                </p>
+              <div className="flex items-center gap-3 min-w-0">
+                <ProdutoFoto url={perfumes.find((x) => x.id === d.produto_id)?.imageUrl} nome={d.produto_nome} size={52} />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground break-words">{d.produto_nome}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {rep?.codigo} · {rep?.origem} → {rep?.destino}
+                  </p>
+                </div>
               </div>
               <span className="text-[10px] px-2 py-1 rounded-full border border-destructive/30 bg-destructive/10 text-destructive whitespace-nowrap">
                 {d.tipo}
