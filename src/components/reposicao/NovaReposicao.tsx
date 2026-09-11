@@ -5,6 +5,7 @@ import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useReposicao } from "@/hooks/useReposicao";
 import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
+import ProdutoFoto from "@/components/ProdutoFoto";
 import { agruparPorCategoria, calcularReservas, categoriaLabel, produtoLabel } from "@/lib/reposicaoUtils";
 import type { Deposito, Perfume } from "@/data/mockData";
 
@@ -177,12 +178,15 @@ export default function NovaReposicao({ onCriada }: { onCriada: () => void }) {
               <button
                 key={p.id}
                 onClick={() => adicionar(p)}
-                className="w-full text-left px-3 py-2.5 hover:bg-surface-raised transition-colors"
+                className="w-full text-left px-3 py-2.5 hover:bg-surface-raised transition-colors flex items-center gap-3"
               >
-                <p className="text-sm text-foreground">{produtoLabel(p, concentracoesConfig)}</p>
-                <p className="text-[11px] text-muted-foreground">
-                  {categoriaLabel(p.tipo, tiposPerfumeConfig)} · disponível em {origem}: {disponivel(p)}
-                </p>
+                <ProdutoFoto url={p.imageUrl} nome={p.nome} />
+                <div className="min-w-0">
+                  <p className="text-sm text-foreground">{produtoLabel(p, concentracoesConfig)}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {categoriaLabel(p.tipo, tiposPerfumeConfig)} · disponível em {origem}: {disponivel(p)}
+                  </p>
+                </div>
               </button>
             ))}
           </div>
@@ -197,7 +201,10 @@ export default function NovaReposicao({ onCriada }: { onCriada: () => void }) {
             const excede = p ? item.quantidade > disponivel(p) : false;
             return (
               <div key={item.produto_id} className="rounded-xl border border-border p-3 space-y-2">
-                <p className="text-sm text-foreground break-words">{item.produto_nome}</p>
+                <div className="flex items-center gap-3">
+                  <ProdutoFoto url={p?.imageUrl} nome={item.produto_nome} />
+                  <p className="text-sm text-foreground break-words flex-1">{item.produto_nome}</p>
+                </div>
                 <div className="flex items-center justify-between gap-3">
                   <span className={`text-[11px] ${excede ? "text-destructive" : "text-muted-foreground"}`}>
                     Disponível em {origem}: {p ? disponivel(p) : 0}

@@ -7,6 +7,7 @@ import { usePermissoes } from "@/hooks/usePermissoes";
 import { useReposicao, STATUS_META, type Reposicao } from "@/hooks/useReposicao";
 import { agruparPorCategoria, formatarDataHora, textoWhatsApp } from "@/lib/reposicaoUtils";
 import { gerarPdfReposicao } from "@/lib/pdf/reposicao";
+import ProdutoFoto from "@/components/ProdutoFoto";
 
 export default function ReposicaoDetalhe({ reposicao, onClose }: { reposicao: Reposicao; onClose: () => void }) {
   const { perfumes } = useApp();
@@ -162,7 +163,10 @@ export default function ReposicaoDetalhe({ reposicao, onClose }: { reposicao: Re
                   recebido == null ? null : recebido === esperado ? "OK" : recebido < esperado ? "FALTANDO" : "EXCEDENTE";
                 return (
                   <div key={item.id} className="rounded-xl border border-border p-3 space-y-2">
-                    <p className="text-sm text-foreground break-words">{item.produto_nome}</p>
+                    <div className="flex items-center gap-3">
+                      <ProdutoFoto url={perfumes.find((x) => x.id === item.produto_id)?.imageUrl} nome={item.produto_nome} />
+                      <p className="text-sm text-foreground break-words flex-1">{item.produto_nome}</p>
+                    </div>
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
                       <span>Solicitado: <span className="text-foreground">{item.quantidade_solicitada}</span></span>
                       {podeVerEsperado && (

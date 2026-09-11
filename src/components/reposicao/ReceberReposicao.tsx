@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { usePermissoes } from "@/hooks/usePermissoes";
 import { useReposicao, STATUS_META, TIPOS_DIVERGENCIA, type Reposicao } from "@/hooks/useReposicao";
 import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
+import ProdutoFoto from "@/components/ProdutoFoto";
 import { uploadReposicaoFoto } from "@/hooks/useReposicao";
 import { formatarDataHora, produtoLabel } from "@/lib/reposicaoUtils";
 
@@ -185,8 +186,9 @@ export default function ReceberReposicao() {
         {resultados.length > 0 && (
           <div className="max-h-60 overflow-y-auto rounded-xl border border-border divide-y divide-border">
             {resultados.map((p) => (
-              <button key={p.id} onClick={() => registrar(p.id, 1)} className="w-full text-left px-3 py-2.5 text-sm text-foreground hover:bg-surface-raised">
-                {produtoLabel(p, concentracoesConfig)}
+              <button key={p.id} onClick={() => registrar(p.id, 1)} className="w-full text-left px-3 py-2.5 text-sm text-foreground hover:bg-surface-raised flex items-center gap-3">
+                <ProdutoFoto url={p.imageUrl} nome={p.nome} size={40} />
+                <span className="min-w-0 break-words">{produtoLabel(p, concentracoesConfig)}</span>
               </button>
             ))}
           </div>
@@ -196,6 +198,7 @@ export default function ReceberReposicao() {
       <div className="space-y-2">
         {lidos.map((c) => (
           <div key={c.id} className="card-premium p-3 flex items-center justify-between gap-3">
+            <ProdutoFoto url={perfumes.find((x) => x.id === c.produto_id)?.imageUrl} nome={c.produto_nome} size={44} />
             <p className="text-sm text-foreground break-words flex-1">{c.produto_nome}</p>
             <div className="flex items-center gap-2">
               <button onClick={() => registrar(c.produto_id, -1)} className="btn-secondary w-10 h-10 flex items-center justify-center">
@@ -240,6 +243,7 @@ interface ComparacaoProps {
 }
 
 function ComparacaoConferencia({ rep, comparacao, extras, onVoltar, usuario, registrarDivergencia }: ComparacaoProps) {
+  const { perfumes } = useApp();
   const [tipo, setTipo] = useState<string>(TIPOS_DIVERGENCIA[0]);
   const [justificativa, setJustificativa] = useState("");
   const [foto, setFoto] = useState<File | null>(null);
@@ -298,7 +302,12 @@ function ComparacaoConferencia({ rep, comparacao, extras, onVoltar, usuario, reg
           <tbody>
             {comparacao.map((c) => (
               <tr key={c.item.id} className="border-t border-border">
-                <td className="p-3 text-foreground">{c.item.produto_nome}</td>
+                <td className="p-3 text-foreground">
+                  <div className="flex items-center gap-2">
+                    <ProdutoFoto url={perfumes.find((x) => x.id === c.item.produto_id)?.imageUrl} nome={c.item.produto_nome} size={36} />
+                    <span className="min-w-0 break-words">{c.item.produto_nome}</span>
+                  </div>
+                </td>
                 <td className="p-3 text-center text-foreground">{c.esperado}</td>
                 <td className="p-3 text-center text-foreground">{c.recebido}</td>
                 <td className={`p-3 text-center ${c.situacao === "OK" ? "text-emerald-400" : "text-destructive"}`}>{c.situacao}</td>
@@ -306,7 +315,12 @@ function ComparacaoConferencia({ rep, comparacao, extras, onVoltar, usuario, reg
             ))}
             {extras.map((e) => (
               <tr key={e.id} className="border-t border-border">
-                <td className="p-3 text-foreground">{e.produto_nome}</td>
+                <td className="p-3 text-foreground">
+                  <div className="flex items-center gap-2">
+                    <ProdutoFoto url={perfumes.find((x) => x.id === e.produto_id)?.imageUrl} nome={e.produto_nome} size={36} />
+                    <span className="min-w-0 break-words">{e.produto_nome}</span>
+                  </div>
+                </td>
                 <td className="p-3 text-center text-muted-foreground">0</td>
                 <td className="p-3 text-center text-foreground">{e.quantidade}</td>
                 <td className="p-3 text-center text-destructive">NÃO ENVIADO</td>
@@ -321,7 +335,10 @@ function ComparacaoConferencia({ rep, comparacao, extras, onVoltar, usuario, reg
           <p className="text-xs font-semibold text-destructive">Registrar divergências</p>
           {divergentes.map((c) => (
             <div key={c.item.id} className="card-premium p-3 space-y-2">
-              <p className="text-sm text-foreground">{c.item.produto_nome}</p>
+              <div className="flex items-center gap-3">
+                <ProdutoFoto url={perfumes.find((x) => x.id === c.item.produto_id)?.imageUrl} nome={c.item.produto_nome} size={44} />
+                <p className="text-sm text-foreground break-words flex-1">{c.item.produto_nome}</p>
+              </div>
               <p className="text-[11px] text-muted-foreground">Enviado {c.esperado} · Recebido {c.recebido}</p>
               {registradas.includes(c.item.id) ? (
                 <p className="text-[11px] text-emerald-400">Divergência registrada.</p>
