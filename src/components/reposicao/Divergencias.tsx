@@ -74,7 +74,9 @@ export default function Divergencias() {
               Enviado {d.quantidade_esperada} · Recebido {d.quantidade_recebida} · {d.usuario_nome} em {formatarDataHora(d.created_at)}
             </p>
             {d.justificativa && <p className="text-xs text-foreground">“{d.justificativa}”</p>}
-            {d.foto_url && <ReposicaoFotoPreview path={d.foto_url} label="Foto da divergência" />}
+            {d.foto_url && (
+              <ReposicaoFotoPreview path={d.foto_url} alt="Foto da divergência" className="w-28 h-28 rounded-xl object-cover" />
+            )}
             {d.aprovado_em ? (
               <p className="text-[11px] text-emerald-400">
                 Aprovada por {d.aprovado_por_nome} em {formatarDataHora(d.aprovado_em)}
