@@ -94,27 +94,22 @@ export async function gerarPdfReposicao(rep: Reposicao, itens: ReposicaoItem[], 
       ];
     });
 
+    doc.setFontSize(9);
+    doc.setTextColor(...GOLD);
+    doc.text(grupo.categoria, 14, y);
+
     autoTable(doc, {
-      startY: y,
+      startY: y + 3,
       head,
       body,
       theme: "grid",
       headStyles: { fillColor: DARK, textColor: [255, 255, 255], fontSize: 8 },
       bodyStyles: { fontSize: 8, textColor: DARK },
       margin: { left: 14, right: 14 },
-      didDrawPage: () => undefined,
-      willDrawPage: () => undefined,
-      showHead: "firstPage",
       tableLineColor: [225, 225, 228],
-      didParseCell: () => undefined,
-      // título da categoria
-      beforePageBreak: () => undefined,
     });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const finalY = (doc as any).lastAutoTable?.finalY ?? y;
-    doc.setFontSize(9);
-    doc.setTextColor(...GOLD);
-    doc.text(grupo.categoria, 14, y - 2);
     y = finalY + 10;
   }
 
