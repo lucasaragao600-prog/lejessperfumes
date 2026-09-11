@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.claim_first_master(uuid) TO anon;
