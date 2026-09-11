@@ -860,79 +860,319 @@ export type Database = {
         }
         Relationships: []
       }
-      reposicoes: {
+      reposicao_conferencias: {
         Row: {
-          conferido_por: string | null
           created_at: string
-          destino: string
-          enviado_em: string | null
-          foto_chegada_url: string | null
-          foto_saida_url: string | null
           id: string
-          observacao: string | null
-          origem: string
           produto_id: string
           produto_nome: string
-          quantidade_enviada: number | null
-          quantidade_recebida: number | null
-          quantidade_sugerida: number
-          recebido_em: string | null
-          recebido_por: string | null
-          solicitado_por: string
-          status: string
-          updated_at: string
+          quantidade: number
+          reposicao_id: string
+          usuario_id: string | null
+          usuario_nome: string
         }
         Insert: {
-          conferido_por?: string | null
           created_at?: string
-          destino: string
-          enviado_em?: string | null
-          foto_chegada_url?: string | null
-          foto_saida_url?: string | null
           id?: string
-          observacao?: string | null
-          origem: string
           produto_id: string
           produto_nome: string
-          quantidade_enviada?: number | null
-          quantidade_recebida?: number | null
-          quantidade_sugerida?: number
-          recebido_em?: string | null
-          recebido_por?: string | null
-          solicitado_por: string
-          status?: string
-          updated_at?: string
+          quantidade?: number
+          reposicao_id: string
+          usuario_id?: string | null
+          usuario_nome?: string
         }
         Update: {
-          conferido_por?: string | null
           created_at?: string
-          destino?: string
-          enviado_em?: string | null
-          foto_chegada_url?: string | null
-          foto_saida_url?: string | null
           id?: string
-          observacao?: string | null
-          origem?: string
           produto_id?: string
           produto_nome?: string
-          quantidade_enviada?: number | null
-          quantidade_recebida?: number | null
-          quantidade_sugerida?: number
-          recebido_em?: string | null
-          recebido_por?: string | null
-          solicitado_por?: string
-          status?: string
-          updated_at?: string
+          quantidade?: number
+          reposicao_id?: string
+          usuario_id?: string | null
+          usuario_nome?: string
         }
         Relationships: [
           {
-            foreignKeyName: "reposicoes_produto_id_fkey"
+            foreignKeyName: "reposicao_conferencias_produto_id_fkey"
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "perfumes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "reposicao_conferencias_reposicao_id_fkey"
+            columns: ["reposicao_id"]
+            isOneToOne: false
+            referencedRelation: "reposicoes"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      reposicao_divergencias: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          aprovado_por_nome: string | null
+          created_at: string
+          foto_url: string | null
+          id: string
+          justificativa: string
+          produto_id: string | null
+          produto_nome: string
+          quantidade_esperada: number
+          quantidade_recebida: number
+          reposicao_id: string
+          tipo: string
+          usuario_id: string | null
+          usuario_nome: string
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          aprovado_por_nome?: string | null
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          justificativa?: string
+          produto_id?: string | null
+          produto_nome?: string
+          quantidade_esperada?: number
+          quantidade_recebida?: number
+          reposicao_id: string
+          tipo: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          aprovado_por_nome?: string | null
+          created_at?: string
+          foto_url?: string | null
+          id?: string
+          justificativa?: string
+          produto_id?: string | null
+          produto_nome?: string
+          quantidade_esperada?: number
+          quantidade_recebida?: number
+          reposicao_id?: string
+          tipo?: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reposicao_divergencias_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reposicao_divergencias_reposicao_id_fkey"
+            columns: ["reposicao_id"]
+            isOneToOne: false
+            referencedRelation: "reposicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reposicao_historico: {
+        Row: {
+          acao: string
+          created_at: string
+          detalhes: string
+          id: string
+          reposicao_id: string
+          usuario_id: string | null
+          usuario_nome: string
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          detalhes?: string
+          id?: string
+          reposicao_id: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          detalhes?: string
+          id?: string
+          reposicao_id?: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reposicao_historico_reposicao_id_fkey"
+            columns: ["reposicao_id"]
+            isOneToOne: false
+            referencedRelation: "reposicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reposicao_itens: {
+        Row: {
+          categoria: string
+          created_at: string
+          id: string
+          produto_id: string
+          produto_nome: string
+          quantidade_enviada: number | null
+          quantidade_recebida: number | null
+          quantidade_separada: number | null
+          quantidade_solicitada: number
+          reposicao_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string
+          created_at?: string
+          id?: string
+          produto_id: string
+          produto_nome: string
+          quantidade_enviada?: number | null
+          quantidade_recebida?: number | null
+          quantidade_separada?: number | null
+          quantidade_solicitada?: number
+          reposicao_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          id?: string
+          produto_id?: string
+          produto_nome?: string
+          quantidade_enviada?: number | null
+          quantidade_recebida?: number | null
+          quantidade_separada?: number | null
+          quantidade_solicitada?: number
+          reposicao_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reposicao_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reposicao_itens_reposicao_id_fkey"
+            columns: ["reposicao_id"]
+            isOneToOne: false
+            referencedRelation: "reposicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reposicoes: {
+        Row: {
+          cancelado_motivo: string | null
+          codigo: string
+          created_at: string
+          criado_por: string | null
+          criado_por_nome: string
+          destino: string
+          enviado_em: string | null
+          enviado_por: string | null
+          enviado_por_nome: string | null
+          finalizado_em: string | null
+          finalizado_por: string | null
+          finalizado_por_nome: string | null
+          id: string
+          observacoes: string
+          origem: string
+          recebido_em: string | null
+          recebido_por: string | null
+          recebido_por_nome: string | null
+          separado_em: string | null
+          separado_por: string | null
+          separado_por_nome: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          cancelado_motivo?: string | null
+          codigo?: string
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string
+          destino: string
+          enviado_em?: string | null
+          enviado_por?: string | null
+          enviado_por_nome?: string | null
+          finalizado_em?: string | null
+          finalizado_por?: string | null
+          finalizado_por_nome?: string | null
+          id?: string
+          observacoes?: string
+          origem: string
+          recebido_em?: string | null
+          recebido_por?: string | null
+          recebido_por_nome?: string | null
+          separado_em?: string | null
+          separado_por?: string | null
+          separado_por_nome?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          cancelado_motivo?: string | null
+          codigo?: string
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string
+          destino?: string
+          enviado_em?: string | null
+          enviado_por?: string | null
+          enviado_por_nome?: string | null
+          finalizado_em?: string | null
+          finalizado_por?: string | null
+          finalizado_por_nome?: string | null
+          id?: string
+          observacoes?: string
+          origem?: string
+          recebido_em?: string | null
+          recebido_por?: string | null
+          recebido_por_nome?: string | null
+          separado_em?: string | null
+          separado_por?: string | null
+          separado_por_nome?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          created_at: string
+          id: string
+          permission: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          permission: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          permission?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
       }
       testers: {
         Row: {
@@ -1154,6 +1394,10 @@ export type Database = {
     Functions: {
       check_master_exists: { Args: never; Returns: boolean }
       claim_first_master: { Args: { p_user_id: string }; Returns: boolean }
+      has_permission: {
+        Args: { _permission: string; _user_id: string }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
