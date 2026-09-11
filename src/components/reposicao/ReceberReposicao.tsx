@@ -302,7 +302,12 @@ function ComparacaoConferencia({ rep, comparacao, extras, onVoltar, usuario, reg
           <tbody>
             {comparacao.map((c) => (
               <tr key={c.item.id} className="border-t border-border">
-                <td className="p-3 text-foreground">{c.item.produto_nome}</td>
+                <td className="p-3 text-foreground">
+                  <div className="flex items-center gap-2">
+                    <ProdutoFoto url={perfumes.find((x) => x.id === c.item.produto_id)?.imageUrl} nome={c.item.produto_nome} size={36} />
+                    <span className="min-w-0 break-words">{c.item.produto_nome}</span>
+                  </div>
+                </td>
                 <td className="p-3 text-center text-foreground">{c.esperado}</td>
                 <td className="p-3 text-center text-foreground">{c.recebido}</td>
                 <td className={`p-3 text-center ${c.situacao === "OK" ? "text-emerald-400" : "text-destructive"}`}>{c.situacao}</td>
@@ -310,7 +315,12 @@ function ComparacaoConferencia({ rep, comparacao, extras, onVoltar, usuario, reg
             ))}
             {extras.map((e) => (
               <tr key={e.id} className="border-t border-border">
-                <td className="p-3 text-foreground">{e.produto_nome}</td>
+                <td className="p-3 text-foreground">
+                  <div className="flex items-center gap-2">
+                    <ProdutoFoto url={perfumes.find((x) => x.id === e.produto_id)?.imageUrl} nome={e.produto_nome} size={36} />
+                    <span className="min-w-0 break-words">{e.produto_nome}</span>
+                  </div>
+                </td>
                 <td className="p-3 text-center text-muted-foreground">0</td>
                 <td className="p-3 text-center text-foreground">{e.quantidade}</td>
                 <td className="p-3 text-center text-destructive">NÃO ENVIADO</td>
@@ -325,7 +335,10 @@ function ComparacaoConferencia({ rep, comparacao, extras, onVoltar, usuario, reg
           <p className="text-xs font-semibold text-destructive">Registrar divergências</p>
           {divergentes.map((c) => (
             <div key={c.item.id} className="card-premium p-3 space-y-2">
-              <p className="text-sm text-foreground">{c.item.produto_nome}</p>
+              <div className="flex items-center gap-3">
+                <ProdutoFoto url={perfumes.find((x) => x.id === c.item.produto_id)?.imageUrl} nome={c.item.produto_nome} size={44} />
+                <p className="text-sm text-foreground break-words flex-1">{c.item.produto_nome}</p>
+              </div>
               <p className="text-[11px] text-muted-foreground">Enviado {c.esperado} · Recebido {c.recebido}</p>
               {registradas.includes(c.item.id) ? (
                 <p className="text-[11px] text-emerald-400">Divergência registrada.</p>
