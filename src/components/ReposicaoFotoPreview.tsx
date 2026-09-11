@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ImageIcon } from "lucide-react";
-import { getReposicaoFotoUrl } from "@/hooks/useReposicoes";
+import { getReposicaoFotoUrl } from "@/hooks/useReposicao";
 
 interface Props {
   path: string | null | undefined;
