@@ -243,6 +243,7 @@ interface ComparacaoProps {
 }
 
 function ComparacaoConferencia({ rep, comparacao, extras, onVoltar, usuario, registrarDivergencia }: ComparacaoProps) {
+  const { perfumes } = useApp();
   const [tipo, setTipo] = useState<string>(TIPOS_DIVERGENCIA[0]);
   const [justificativa, setJustificativa] = useState("");
   const [foto, setFoto] = useState<File | null>(null);
