@@ -16,7 +16,10 @@ import EtapaEquipamentos from "./EtapaEquipamentos";
 import EtapaEstoqueInicial from "./EtapaEstoqueInicial";
 import EtapaFiscal from "./EtapaFiscal";
 import EtapaCaixa from "./EtapaCaixa";
+import EtapaTestes from "./EtapaTestes";
+import EtapaLiberacao from "./EtapaLiberacao";
 import { registrarAuditoria } from "@/lib/audit";
+
 
 interface Props {
   implantacao: Implantacao;

@@ -80,7 +80,11 @@ export const ETAPAS_IMPLEMENTADAS = [
   "estoque",
   "caixa",
   "equipamentos",
+  "testes",
+  "checklist",
+  "liberacao",
 ];
+
 
 export function useImplantacoes() {
   const qc = useQueryClient();
