@@ -20,6 +20,7 @@ import FechamentoCaixa from "@/pages/FechamentoCaixa";
 import PedidosVenda from "@/pages/PedidosVenda";
 import NfcePendentes from "@/pages/NfcePendentes";
 import Reposicao from "@/pages/Reposicao";
+import Transferencias from "@/pages/Transferencias";
 
 import Relatorios from "@/pages/Relatorios";
 import InteligenciaOperacional from "@/pages/InteligenciaOperacional";
