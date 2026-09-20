@@ -199,8 +199,23 @@ export function usePerfumes() {
 
   const adicionarPerfume = useMutation({
     mutationFn: async (p: Perfume) => {
-      const { error } = await supabase.from("perfumes").insert(perfumeToRow(p));
+      const { data, error } = await supabase
+        .from("perfumes")
+        .insert(perfumeToRow(p))
+        .select("id")
+        .single();
       if (error) throw error;
+      // estoque inicial por unidade (via RPC transacional)
+      for (const [unidade, qtd] of Object.entries(p.estoques || {})) {
+        if (!qtd || qtd <= 0) continue;
+        const { error: rpcErr } = await supabase.rpc("fn_ajustar_saldo", {
+          p_produto_id: data.id,
+          p_unidade: unidade,
+          p_quantidade: qtd,
+          p_modo: "set",
+        });
+        if (rpcErr) throw rpcErr;
+      }
     },
     onSuccess: invalidate,
   });
@@ -213,55 +228,50 @@ export function usePerfumes() {
     onSuccess: invalidate,
   });
 
-  const atualizarEstoque = useMutation({
-    mutationFn: async ({
-      perfumeId,
-      deposito,
-      novaQuantidade,
-    }: {
-      perfumeId: string;
-      deposito: Deposito;
-      novaQuantidade: number;
-    }) => {
-      const col = depositoColumn[deposito];
-      const { error } = await supabase
-        .from("perfumes")
-        .update({ [col]: novaQuantidade })
-        .eq("id", perfumeId);
-      if (error) throw error;
-    },
-    onSuccess: invalidate,
-  });
-
-  // Set stock to an exact value (for Ajuste)
-  const ajustarEstoque = async (perfumeId: string, deposito: Deposito, novaQuantidade: number) => {
-    await atualizarEstoque.mutateAsync({
-      perfumeId,
-      deposito,
-      novaQuantidade: Math.max(0, novaQuantidade),
+  const ajustarSaldoRpc = async (
+    perfumeId: string,
+    deposito: Deposito,
+    quantidade: number,
+    modo: "set" | "delta"
+  ) => {
+    const { error } = await supabase.rpc("fn_ajustar_saldo", {
+      p_produto_id: perfumeId,
+      p_unidade: deposito,
+      p_quantidade: quantidade,
+      p_modo: modo,
     });
+    if (error) throw new Error(error.message);
+    invalidate();
   };
 
-  // Helper functions matching AppContext API
+  // Define o saldo exato (Ajuste)
+  const ajustarEstoque = async (perfumeId: string, deposito: Deposito, novaQuantidade: number) => {
+    await ajustarSaldoRpc(perfumeId, deposito, Math.max(0, novaQuantidade), "set");
+  };
+
   const baixarEstoque = async (perfumeId: string, deposito: Deposito, quantidade: number) => {
-    const p = perfumes.find((x) => x.id === perfumeId);
-    if (!p) return;
-    const atual = p.estoques[deposito];
-    await atualizarEstoque.mutateAsync({
-      perfumeId,
-      deposito,
-      novaQuantidade: Math.max(0, atual - quantidade),
-    });
+    await ajustarSaldoRpc(perfumeId, deposito, -Math.abs(quantidade), "delta");
   };
 
   const adicionarEstoque = async (perfumeId: string, deposito: Deposito, quantidade: number) => {
-    const p = perfumes.find((x) => x.id === perfumeId);
-    if (!p) return;
-    await atualizarEstoque.mutateAsync({
-      perfumeId,
-      deposito,
-      novaQuantidade: p.estoques[deposito] + quantidade,
+    await ajustarSaldoRpc(perfumeId, deposito, Math.abs(quantidade), "delta");
+  };
+
+  /** Baixa de venda: atômica e protegida contra concorrência (UPDATE condicional na RPC). */
+  const baixarVenda = async (
+    perfumeId: string,
+    deposito: Deposito,
+    quantidade: number,
+    isTeste = false
+  ) => {
+    const { error } = await supabase.rpc("fn_baixar_venda", {
+      p_produto_id: perfumeId,
+      p_unidade: deposito,
+      p_quantidade: Math.abs(quantidade),
+      p_is_teste: isTeste,
     });
+    if (error) throw new Error(error.message);
+    invalidate();
   };
 
   const transferirEstoque = async (
@@ -270,18 +280,13 @@ export function usePerfumes() {
     destino: Deposito,
     quantidade: number
   ) => {
-    const p = perfumes.find((x) => x.id === perfumeId);
-    if (!p) return;
-    const colOrigem = depositoColumn[origem];
-    const colDestino = depositoColumn[destino];
-    const { error } = await supabase
-      .from("perfumes")
-      .update({
-        [colOrigem]: Math.max(0, p.estoques[origem] - quantidade),
-        [colDestino]: p.estoques[destino] + quantidade,
-      })
-      .eq("id", perfumeId);
-    if (error) throw error;
+    const { error } = await supabase.rpc("fn_transferir", {
+      p_produto_id: perfumeId,
+      p_origem: origem,
+      p_destino: destino,
+      p_quantidade: Math.abs(quantidade),
+    });
+    if (error) throw new Error(error.message);
     invalidate();
   };
 
