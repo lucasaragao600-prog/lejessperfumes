@@ -466,6 +466,72 @@ export type Database = {
           },
         ]
       }
+      equipamentos_unidade: {
+        Row: {
+          created_at: string
+          id: string
+          implantacao_id: string | null
+          ip: string
+          local: string
+          marca: string
+          modelo: string
+          numero_serie: string
+          observacao: string
+          patrimonio: string
+          status: string
+          tipo: string
+          unidade_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          implantacao_id?: string | null
+          ip?: string
+          local?: string
+          marca?: string
+          modelo?: string
+          numero_serie?: string
+          observacao?: string
+          patrimonio?: string
+          status?: string
+          tipo: string
+          unidade_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          implantacao_id?: string | null
+          ip?: string
+          local?: string
+          marca?: string
+          modelo?: string
+          numero_serie?: string
+          observacao?: string
+          patrimonio?: string
+          status?: string
+          tipo?: string
+          unidade_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipamentos_unidade_implantacao_id_fkey"
+            columns: ["implantacao_id"]
+            isOneToOne: false
+            referencedRelation: "implantacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipamentos_unidade_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estoque_unidades: {
         Row: {
           created_at: string
@@ -523,6 +589,278 @@ export type Database = {
           },
           {
             foreignKeyName: "estoque_unidades_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implantacao_checklist: {
+        Row: {
+          anexo_url: string
+          created_at: string
+          data_conclusao: string | null
+          data_prevista: string | null
+          etapa_chave: string
+          id: string
+          implantacao_id: string
+          item: string
+          observacao: string
+          ordem: number
+          responsavel_id: string | null
+          responsavel_nome: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          anexo_url?: string
+          created_at?: string
+          data_conclusao?: string | null
+          data_prevista?: string | null
+          etapa_chave?: string
+          id?: string
+          implantacao_id: string
+          item: string
+          observacao?: string
+          ordem?: number
+          responsavel_id?: string | null
+          responsavel_nome?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          anexo_url?: string
+          created_at?: string
+          data_conclusao?: string | null
+          data_prevista?: string | null
+          etapa_chave?: string
+          id?: string
+          implantacao_id?: string
+          item?: string
+          observacao?: string
+          ordem?: number
+          responsavel_id?: string | null
+          responsavel_nome?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implantacao_checklist_implantacao_id_fkey"
+            columns: ["implantacao_id"]
+            isOneToOne: false
+            referencedRelation: "implantacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implantacao_checklist_modelo: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          etapa_chave: string
+          id: string
+          item: string
+          ordem: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          etapa_chave: string
+          id?: string
+          item: string
+          ordem?: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          etapa_chave?: string
+          id?: string
+          item?: string
+          ordem?: number
+        }
+        Relationships: []
+      }
+      implantacao_etapas: {
+        Row: {
+          aplicavel: boolean
+          chave: string
+          concluida_em: string | null
+          concluida_por: string | null
+          concluida_por_nome: string
+          created_at: string
+          id: string
+          implantacao_id: string
+          nome: string
+          numero: number
+          observacao: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          aplicavel?: boolean
+          chave: string
+          concluida_em?: string | null
+          concluida_por?: string | null
+          concluida_por_nome?: string
+          created_at?: string
+          id?: string
+          implantacao_id: string
+          nome: string
+          numero: number
+          observacao?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          aplicavel?: boolean
+          chave?: string
+          concluida_em?: string | null
+          concluida_por?: string | null
+          concluida_por_nome?: string
+          created_at?: string
+          id?: string
+          implantacao_id?: string
+          nome?: string
+          numero?: number
+          observacao?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implantacao_etapas_implantacao_id_fkey"
+            columns: ["implantacao_id"]
+            isOneToOne: false
+            referencedRelation: "implantacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implantacao_pendencias: {
+        Row: {
+          created_at: string
+          criticidade: string
+          descricao: string
+          etapa_chave: string
+          id: string
+          implantacao_id: string
+          origem: string
+          prazo: string | null
+          resolvido_em: string | null
+          resolvido_por: string | null
+          resolvido_por_nome: string
+          responsavel_id: string | null
+          responsavel_nome: string
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criticidade?: string
+          descricao?: string
+          etapa_chave?: string
+          id?: string
+          implantacao_id: string
+          origem?: string
+          prazo?: string | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          resolvido_por_nome?: string
+          responsavel_id?: string | null
+          responsavel_nome?: string
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criticidade?: string
+          descricao?: string
+          etapa_chave?: string
+          id?: string
+          implantacao_id?: string
+          origem?: string
+          prazo?: string | null
+          resolvido_em?: string | null
+          resolvido_por?: string | null
+          resolvido_por_nome?: string
+          responsavel_id?: string | null
+          responsavel_nome?: string
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implantacao_pendencias_implantacao_id_fkey"
+            columns: ["implantacao_id"]
+            isOneToOne: false
+            referencedRelation: "implantacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      implantacoes: {
+        Row: {
+          created_at: string
+          criado_por: string | null
+          criado_por_nome: string
+          data_inauguracao: string | null
+          data_prevista_inauguracao: string | null
+          id: string
+          liberado_em: string | null
+          liberado_por: string | null
+          liberado_por_nome: string
+          observacoes: string
+          progresso: number
+          responsavel_id: string | null
+          responsavel_nome: string
+          status: string
+          unidade_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string
+          data_inauguracao?: string | null
+          data_prevista_inauguracao?: string | null
+          id?: string
+          liberado_em?: string | null
+          liberado_por?: string | null
+          liberado_por_nome?: string
+          observacoes?: string
+          progresso?: number
+          responsavel_id?: string | null
+          responsavel_nome?: string
+          status?: string
+          unidade_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string
+          data_inauguracao?: string | null
+          data_prevista_inauguracao?: string | null
+          id?: string
+          liberado_em?: string | null
+          liberado_por?: string | null
+          liberado_por_nome?: string
+          observacoes?: string
+          progresso?: number
+          responsavel_id?: string | null
+          responsavel_nome?: string
+          status?: string
+          unidade_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implantacoes_unidade_id_fkey"
             columns: ["unidade_id"]
             isOneToOne: false
             referencedRelation: "unidades"
@@ -2179,6 +2517,19 @@ export type Database = {
           p_quantidade: number
           p_unidade: string
         }
+        Returns: number
+      }
+      fn_implantacao_criar: {
+        Args: {
+          p_data_prevista?: string
+          p_observacoes?: string
+          p_responsavel_nome?: string
+          p_unidade_id: string
+        }
+        Returns: string
+      }
+      fn_implantacao_recalcular_progresso: {
+        Args: { p_id: string }
         Returns: number
       }
       fn_proximo_numero_transferencia: { Args: never; Returns: string }

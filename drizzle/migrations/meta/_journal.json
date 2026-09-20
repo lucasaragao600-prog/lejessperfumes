@@ -36,6 +36,20 @@
       "when": 1789936126757,
       "tag": "0004_fase4_transferencias",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789936469952,
+      "tag": "0005_fase5_implantacao_unidades",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789936532391,
+      "tag": "0006_fase5_politicas_anexos_implantacao",
+      "breakpoints": true
     }
   ]
 }
