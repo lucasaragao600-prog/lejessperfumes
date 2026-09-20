@@ -4,10 +4,11 @@ import { useReposicao, STATUS_META, type Reposicao, type ReposicaoStatus } from 
 import { formatarDataHora } from "@/lib/reposicaoUtils";
 import ReposicaoDetalhe from "./ReposicaoDetalhe";
 import type { Deposito } from "@/data/mockData";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const DEPOSITOS: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function ListaReposicoes({ filtroStatus }: { filtroStatus?: ReposicaoStatus[] }) {
+  const { todosNomes: DEPOSITOS } = useUnidades({ contexto: "historico" });
   const { reposicoes, itens } = useReposicao();
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState<string>("todos");

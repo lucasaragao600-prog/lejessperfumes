@@ -12,11 +12,12 @@ import HistoricoItem from "@/components/HistoricoItem";
 import { useCasas } from "@/hooks/useCasas";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { useUnidades } from "@/hooks/useUnidades";
 
 
-const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
+  const { todosNomes: depositos, rotulo: rotuloUnidade } = useUnidades({ contexto: "historico" });
   const { perfumes, testers, movimentacoes, vendas, tiposPerfumeConfig, concentracoesConfig, excluirPerfume } = useApp();
   const { casas } = useCasas();
   const { profile } = useAuth();

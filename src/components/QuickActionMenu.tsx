@@ -5,8 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import { type Perfume, type Deposito, type Movimentacao } from "@/data/mockData";
 import { getHojeManaus } from "@/lib/dateUtils";
 import { toast } from "sonner";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 type Acao = "Entrada" | "Saída" | "Ajuste" | "Transferência" | "Saída Tester" | "Transferência Tester";
 
@@ -15,6 +15,7 @@ interface Props {
 }
 
 export default function QuickActionMenu({ perfume }: Props) {
+  const { nomes: depositos } = useUnidades({ contexto: "operacional" });
   const {
     baixarEstoque,
     adicionarEstoque,

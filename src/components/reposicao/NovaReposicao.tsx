@@ -8,8 +8,8 @@ import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import ProdutoFoto from "@/components/ProdutoFoto";
 import { agruparPorCategoria, calcularReservas, categoriaLabel, produtoLabel } from "@/lib/reposicaoUtils";
 import type { Deposito, Perfume } from "@/data/mockData";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const DEPOSITOS: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 interface LinhaItem {
   produto_id: string;
@@ -19,6 +19,8 @@ interface LinhaItem {
 }
 
 export default function NovaReposicao({ onCriada }: { onCriada: () => void }) {
+  const { unidadesTransferencia } = useUnidades({ contexto: "operacional" });
+  const DEPOSITOS = unidadesTransferencia.map((u) => u.codigoLegado || u.codigo);
   const { perfumes, tiposPerfumeConfig, concentracoesConfig } = useApp();
   const { profile, user } = useAuth();
   const { reposicoes, itens: todosItens, criar } = useReposicao();

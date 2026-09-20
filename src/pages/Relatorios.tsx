@@ -44,8 +44,8 @@ import {
 } from "recharts";
 import * as XLSX from "xlsx";
 import type { Deposito, Perfume } from "@/data/mockData";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const DEPOSITOS: ("todos" | Deposito)[] = ["todos", "Casa", "Sumaúma", "Amazonas"];
 const TIPOS = ["todos", "Árabe", "Importado", "Nicho", "Nacional", "Kit"];
 
 const fmtBRL = (v: number) =>
@@ -75,6 +75,8 @@ function exportXlsx(rows: any[], filename: string) {
 }
 
 export default function Relatorios() {
+  const { todosNomes, rotulo: rotuloUnidade } = useUnidades({ contexto: "historico" });
+  const DEPOSITOS: string[] = ["todos", ...todosNomes];
   const { perfumes, vendas, concentracoesConfig, tiposPerfumeConfig } = useApp();
   const hoje = todayStr();
   const [dataInicio, setDataInicio] = useState(daysAgoStr(30));

@@ -18,8 +18,8 @@ import { getHojeManaus } from "@/lib/dateUtils";
 import { ComprovantePreview, type ComprovanteData } from "@/components/ComprovantePrint";
 import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
 import { useCaixa } from "@/hooks/useCaixa";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada"];
 const bandeiras: Bandeira[] = ["Visa", "Mastercard", "Elo", "Amex", "Hipercard"];
 
@@ -51,6 +51,8 @@ type TipoDocumento = "comprovante" | "nfce";
 type FiscalAction = "none" | "nfce";
 
 export default function PDV({ onBack }: { onBack?: () => void }) {
+  const { unidadesVenda, emTeste: unidadeEmTeste } = useUnidades({ contexto: "operacional" });
+  const depositos = unidadesVenda.map((u) => u.codigoLegado || u.codigo);
   const {
     perfumes, baixarEstoque, adicionarVendaMulti,
     vendedoras: vendedorasCtx, concentracoesConfig

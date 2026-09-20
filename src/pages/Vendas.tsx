@@ -13,8 +13,8 @@ import { useAuth } from "@/context/AuthContext";
 import type { VendaPagamento } from "@/hooks/useVendas";
 import { getHojeManaus } from "@/lib/dateUtils";
 import { calcularParcelamento, TAXAS_MDR, PARCELAS_SEM_JUROS_LIMITE } from "@/lib/parcelamento";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const hoje = getHojeManaus();
 const vendedorasFixas = ["Outra"];
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada"];
@@ -41,6 +41,7 @@ interface PagamentoItem {
 }
 
 export default function Vendas() {
+  const { todosNomes: depositos, nomes: depositosOperacionais, rotulo: rotuloUnidade } = useUnidades({ contexto: "historico" });
   const {
     vendas, pagamentos, perfumes, baixarEstoque, adicionarEstoque,
     vendedoras: vendedorasCtx, adicionarVendaMulti, excluirVenda,

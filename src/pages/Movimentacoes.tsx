@@ -22,8 +22,8 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const tipos = ["Entrada", "Ajuste", "Transferência", "Saída Tester"] as const;
 
 const tipoConfig: Record<string, { icon: any; color: string; bg: string }> = {
@@ -37,6 +37,7 @@ const tipoConfig: Record<string, { icon: any; color: string; bg: string }> = {
 const tipoConfigDefault = { icon: RefreshCw, color: "text-muted-foreground", bg: "bg-muted/10 border-border" };
 
 export default function Movimentacoes() {
+  const { nomes: depositos, todosNomes: depositosHistorico, rotulo: rotuloUnidade } = useUnidades({ contexto: "operacional" });
   const { movimentacoes, perfumes, baixarEstoque, adicionarEstoque, ajustarEstoque, transferirEstoque, adicionarTester, adicionarMovimentacao, concentracoesConfig } = useApp();
   const { profile, role } = useAuth();
   const isMaster = role === "master";

@@ -4,10 +4,11 @@ import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
 import { formatCurrency, type Deposito } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
+  const { todosNomes: depositos, nomes: depositosOperacionais, rotulo: rotuloUnidade } = useUnidades({ contexto: "historico" });
   const { testers, perfumes, baixarEstoque, adicionarTesterDB, removerTesterDB, ajustarTesterDB, concentracoesConfig } = useApp();
   const { profile } = useAuth();
   const [busca, setBusca] = useState("");

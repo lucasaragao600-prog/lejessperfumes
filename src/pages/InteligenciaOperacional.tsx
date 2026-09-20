@@ -36,8 +36,8 @@ import {
 import * as XLSX from "xlsx";
 import type { Deposito, Perfume } from "@/data/mockData";
 import { toast } from "sonner";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const DEPOSITOS: ("todos" | Deposito)[] = ["todos", "Casa", "Sumaúma", "Amazonas"];
 const TIPOS_BASE = ["todos", "Árabe", "Importado", "Nicho", "Nacional", "Kit"];
 
 /* ====== Taxas padrão (editáveis pelo usuário) ====== */
@@ -91,6 +91,8 @@ function taxaSobreVenda(tipoPagamento: string, taxas: typeof TAXAS_PADRAO): numb
 }
 
 export default function InteligenciaOperacional() {
+  const { todosNomes, rotulo: rotuloUnidade } = useUnidades({ contexto: "historico" });
+  const DEPOSITOS: string[] = ["todos", ...todosNomes];
   const { perfumes, vendas, tiposPerfumeConfig } = useApp();
   const hoje = todayStr();
   const [dataInicio, setDataInicio] = useState(daysAgoStr(30));

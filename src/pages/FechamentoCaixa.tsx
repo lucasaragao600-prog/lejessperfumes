@@ -9,10 +9,11 @@ import { useCaixa, type CaixaSessao } from "@/hooks/useCaixa";
 import { useVendas } from "@/hooks/useVendas";
 import { formatCurrency, type Deposito } from "@/data/mockData";
 import { useNfce } from "@/hooks/useNfce";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function FechamentoCaixa() {
+  const { nomes: depositos } = useUnidades({ contexto: "operacional" });
   const { profile, user, role } = useAuth();
   const isMaster = role === "master";
   const userLoja = (role === "vendedor" && profile?.loja) ? profile.loja : null;
