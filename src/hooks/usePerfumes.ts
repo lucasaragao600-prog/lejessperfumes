@@ -318,6 +318,7 @@ export function usePerfumes() {
     excluirPerfume: excluirPerfume.mutateAsync,
     atualizarPrecos: atualizarPrecos.mutateAsync,
     baixarEstoque,
+    baixarVenda,
     adicionarEstoque,
     ajustarEstoque,
     transferirEstoque,
