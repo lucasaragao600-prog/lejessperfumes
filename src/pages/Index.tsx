@@ -134,6 +134,7 @@ function IndexContent({
       case "configuracoes": return isMaster ? <Configuracoes /> : <Estoque isMaster={false} />;
       case "usuarios": return isMaster ? <GerenciarUsuarios /> : <Estoque isMaster={false} />;
       case "unidades": return isMaster ? <Unidades /> : <Estoque isMaster={false} />;
+      case "implantacoes": return isMaster ? <Implantacoes /> : <Estoque isMaster={false} />;
       default: return <Estoque isMaster={isMaster} />;
     }
   };

@@ -29,6 +29,7 @@ const allTabs = [
   { id: "configuracoes", label: "Configurações", icon: Settings, masterOnly: true },
   { id: "usuarios", label: "Usuários", icon: Users, masterOnly: true },
   { id: "unidades", label: "Unidades", icon: Building2, masterOnly: true },
+  { id: "implantacoes", label: "Implantação", icon: ClipboardList, masterOnly: true },
 ];
 
 export default function SidebarNav({ activeTab, onTabChange, isMaster = true }: SidebarNavProps) {
