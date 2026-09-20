@@ -682,6 +682,136 @@ export type Database = {
         }
         Relationships: []
       }
+      implantacao_estoque_itens: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          aprovado_por_nome: string
+          categoria: string
+          created_at: string
+          custo_unitario: number
+          fornecedor: string
+          id: string
+          implantacao_id: string
+          lote: string
+          motivo: string
+          nota_data: string | null
+          nota_numero: string
+          observacao: string
+          origem_unidade_id: string | null
+          produto_id: string
+          produto_nome: string
+          quantidade_recebida: number
+          quantidade_solicitada: number
+          solicitado_por: string | null
+          solicitado_por_nome: string
+          status: string
+          tipo: string
+          transferencia_id: string | null
+          unidade_id: string
+          updated_at: string
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          aprovado_por_nome?: string
+          categoria?: string
+          created_at?: string
+          custo_unitario?: number
+          fornecedor?: string
+          id?: string
+          implantacao_id: string
+          lote?: string
+          motivo?: string
+          nota_data?: string | null
+          nota_numero?: string
+          observacao?: string
+          origem_unidade_id?: string | null
+          produto_id: string
+          produto_nome?: string
+          quantidade_recebida?: number
+          quantidade_solicitada?: number
+          solicitado_por?: string | null
+          solicitado_por_nome?: string
+          status?: string
+          tipo?: string
+          transferencia_id?: string | null
+          unidade_id: string
+          updated_at?: string
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          aprovado_por_nome?: string
+          categoria?: string
+          created_at?: string
+          custo_unitario?: number
+          fornecedor?: string
+          id?: string
+          implantacao_id?: string
+          lote?: string
+          motivo?: string
+          nota_data?: string | null
+          nota_numero?: string
+          observacao?: string
+          origem_unidade_id?: string | null
+          produto_id?: string
+          produto_nome?: string
+          quantidade_recebida?: number
+          quantidade_solicitada?: number
+          solicitado_por?: string | null
+          solicitado_por_nome?: string
+          status?: string
+          tipo?: string
+          transferencia_id?: string | null
+          unidade_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "implantacao_estoque_itens_implantacao_id_fkey"
+            columns: ["implantacao_id"]
+            isOneToOne: false
+            referencedRelation: "implantacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implantacao_estoque_itens_origem_unidade_id_fkey"
+            columns: ["origem_unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implantacao_estoque_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implantacao_estoque_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "implantacao_estoque_itens_transferencia_id_fkey"
+            columns: ["transferencia_id"]
+            isOneToOne: false
+            referencedRelation: "transferencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "implantacao_estoque_itens_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       implantacao_etapas: {
         Row: {
           aplicavel: boolean
@@ -2519,6 +2649,10 @@ export type Database = {
         }
         Returns: number
       }
+      fn_implantacao_carga_manual_aprovar: {
+        Args: { p_item_id: string }
+        Returns: undefined
+      }
       fn_implantacao_criar: {
         Args: {
           p_data_prevista?: string
@@ -2527,6 +2661,18 @@ export type Database = {
           p_unidade_id: string
         }
         Returns: string
+      }
+      fn_implantacao_entrada_fornecedor: {
+        Args: { p_item_id: string }
+        Returns: undefined
+      }
+      fn_implantacao_estoque_sincronizar: {
+        Args: { p_implantacao_id: string }
+        Returns: Json
+      }
+      fn_implantacao_gerar_transferencias: {
+        Args: { p_implantacao_id: string }
+        Returns: number
       }
       fn_implantacao_recalcular_progresso: {
         Args: { p_id: string }
