@@ -31,6 +31,7 @@ interface AppContextType {
   testers: Tester[];
   setTesters: any;
   adicionarTesterDB: (t: { perfumeId: string; perfumeNome: string; marca: string; deposito: Deposito; quantidade: number; custo: number; registradoPor?: string }) => Promise<void>;
+  registrarSaidaTester: (params: { perfumeId: string; deposito: Deposito; quantidade: number; registradoPor?: string; observacao?: string; baixarEstoque?: boolean }) => Promise<void>;
   ajustarTesterDB: (params: { id: string; novaQuantidade: number }) => Promise<void>;
   removerTesterDB: (id: string) => Promise<void>;
   casas: Casa[];
@@ -82,7 +83,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { casas, isLoading: casasLoading, adicionarCasa: adicionarCasaDB, removerCasa: removerCasaDB } = useCasas();
   const { vendas, pagamentos, adicionarVenda, adicionarVendaMulti, excluirVenda } = useVendas();
   const { movimentacoes, adicionarMovimentacao } = useMovimentacoes();
-  const { testers, adicionarTester: adicionarTesterDB, removerTester: removerTesterDB, ajustarTester: ajustarTesterDB } = useTesters();
+  const { testers, adicionarTester: adicionarTesterDB, registrarSaidaTester, removerTester: removerTesterDB, ajustarTester: ajustarTesterDB } = useTesters();
   const { vendedoras, adicionarVendedora: adicionarVendedoraDB, removerVendedora: removerVendedoraDB } = useVendedoras();
   const { tiposPerfumeConfig, concentracoesConfig, volumesPadrao, setTiposPerfumeConfig, setConcentracoesConfig, setVolumesPadrao } = useConfiguracoes();
 
@@ -102,15 +103,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     transferirEstoqueDB(perfumeId, origem, destino, quantidade);
 
   const adicionarTester = async (perfumeId: string, deposito: Deposito, quantidade: number) => {
-    const p = perfumes.find((x) => x.id === perfumeId);
-    if (!p) return;
-    await adicionarTesterDB({
-      perfumeId: p.id,
-      perfumeNome: p.nome,
-      marca: p.marca,
+    await registrarSaidaTester({
+      perfumeId,
       deposito,
       quantidade,
-      custo: p.custo,
     });
   };
 
@@ -142,6 +138,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         testers,
         setTesters: noop,
         adicionarTesterDB,
+        registrarSaidaTester,
         ajustarTesterDB,
         removerTesterDB,
         casas,

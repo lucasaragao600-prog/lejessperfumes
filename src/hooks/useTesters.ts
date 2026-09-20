@@ -63,6 +63,34 @@ export function useTesters() {
     onSuccess: invalidate,
   });
 
+  const registrarSaidaTester = useMutation({
+    mutationFn: async (params: {
+      perfumeId: string;
+      deposito: Deposito;
+      quantidade: number;
+      registradoPor?: string;
+      observacao?: string;
+      baixarEstoque?: boolean;
+    }) => {
+      const { error } = await supabase.rpc("fn_saida_tester", {
+        p_produto_id: params.perfumeId,
+        p_unidade: params.deposito,
+        p_quantidade: Math.abs(params.quantidade),
+        p_registrado_por: params.registradoPor || "",
+        p_observacao: params.observacao || "",
+        p_baixar_estoque: params.baixarEstoque ?? true,
+      });
+      if (error) throw new Error(error.message);
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["testers"] }),
+        queryClient.invalidateQueries({ queryKey: ["perfumes"] }),
+        queryClient.invalidateQueries({ queryKey: ["movimentacoes"] }),
+      ]);
+    },
+  });
+
   const removerTester = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("testers").delete().eq("id", id);
@@ -86,6 +114,7 @@ export function useTesters() {
     testers,
     isLoading,
     adicionarTester: adicionarTester.mutateAsync,
+    registrarSaidaTester: registrarSaidaTester.mutateAsync,
     removerTester: removerTester.mutateAsync,
     ajustarTester: ajustarTester.mutateAsync,
     setTesters: () => {},
