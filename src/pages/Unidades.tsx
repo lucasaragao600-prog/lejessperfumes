@@ -130,7 +130,7 @@ export default function Unidades() {
       } else {
         const { error } = await supabase
           .from("unidades")
-          .insert({ ...payload, ordem: todas.length + 1 });
+          .insert({ ...payload, ordem: todas.length + 1 } as any);
         if (error) throw error;
       }
       toast.success(form.id ? "Unidade atualizada" : "Unidade criada");
@@ -179,7 +179,7 @@ export default function Unidades() {
                     )}
                   </p>
                   <p className="text-[10px] text-muted-foreground">
-                    {u.codigo} · {u.tipo.replaceAll("_", " ")} · {rotuloStatus(u.status)}
+                    {u.codigo} · {u.tipo.split("_").join(" ")} · {rotuloStatus(u.status)}
                   </p>
                   <p className="text-[10px] text-muted-foreground mt-1">
                     Estoque: {saldos[u.id] || 0} un.
@@ -237,7 +237,7 @@ export default function Unidades() {
                 >
                   {TIPOS.map((t) => (
                     <option key={t} value={t}>
-                      {t.replaceAll("_", " ")}
+                      {t.split("_").join(" ")}
                     </option>
                   ))}
                 </select>
