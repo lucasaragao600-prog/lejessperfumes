@@ -173,6 +173,26 @@ export default function WizardImplantacao({ implantacao, onVoltar }: Props) {
           return;
         }
       }
+
+      if (
+        (etapa.chave === "testes" || etapa.chave === "checklist") &&
+        status === "CONCLUIDA"
+      ) {
+        const lista = etapa.chave === "testes" ? itensTestes : itensChecklist;
+        const pend = lista.filter((i) => !["CONCLUIDO", "NAO_APLICAVEL"].includes(i.status));
+        if (pend.length) {
+          toast.error("Ainda há itens pendentes nesta etapa", {
+            description: `${pend.length} item(ns) sem conclusão.`,
+          });
+          return;
+        }
+      }
+
+      if (etapa.chave === "liberacao" && status === "CONCLUIDA") {
+        toast.error("Use o botão “Liberar unidade para operação” nesta etapa");
+        return;
+      }
+
       await salvarEtapa(etapa.id, { status });
       toast.success("Etapa atualizada");
     } catch (e: unknown) {
@@ -317,6 +337,33 @@ export default function WizardImplantacao({ implantacao, onVoltar }: Props) {
         {etapaAtiva === "equipamentos" && unidade && (
           <EtapaEquipamentos unidadeId={unidade.id} implantacaoId={implantacao.id} />
         )}
+
+        {etapaAtiva === "testes" && (
+          <EtapaTestes
+            implantacaoId={implantacao.id}
+            unidadeStatus={unidade?.status}
+            itens={itensTestes}
+            onSalvar={salvarItem}
+            onAtualizar={atualizarTudo}
+          />
+        )}
+
+        {etapaAtiva === "checklist" && (
+          <EtapaEstrutura
+            implantacaoId={implantacao.id}
+            itens={itensChecklist}
+            onSalvar={salvarItem}
+          />
+        )}
+
+        {etapaAtiva === "liberacao" && (
+          <EtapaLiberacao
+            implantacaoId={implantacao.id}
+            jaLiberada={implantacao.status === "CONCLUIDA"}
+            onAtualizar={atualizarTudo}
+          />
+        )}
+
 
         {!ETAPAS_IMPLEMENTADAS.includes(etapaAtiva) && (
           <p className="text-sm text-muted-foreground">
