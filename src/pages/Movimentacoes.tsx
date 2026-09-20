@@ -94,7 +94,8 @@ export default function Movimentacoes() {
   }, [movimentacoes, filtroTipo, busca, ordenacao]);
 
   const executarSalvar = async (motivoAjusteConfirmado?: string) => {
-    const p = perfumes.find((x) => x.id === form.perfumeId)!;
+    const p = perfumes.find((x) => x.id === form.perfumeId);
+    if (!p) throw new Error("Produto não encontrado.");
     const hoje = getHojeManaus();
     const estoqueAtual = form.tipo === "Ajuste" ? p.estoques[form.deposito as Deposito] : 0;
     const diferencaAjuste = form.tipo === "Ajuste" ? form.quantidade - estoqueAtual : 0;
@@ -158,7 +159,11 @@ export default function Movimentacoes() {
     if (form.tipo === "Transferência" && (!form.depositoOrigem || !form.depositoDestino)) return;
     if (form.tipo !== "Transferência" && form.tipo !== "Saída Tester" && !form.deposito) return;
 
-    const p = perfumes.find((x) => x.id === form.perfumeId)!;
+    const p = perfumes.find((x) => x.id === form.perfumeId);
+    if (!p) {
+      toast.error("Produto não encontrado.");
+      return;
+    }
 
     if (form.tipo === "Saída Tester") {
       const est = p.estoques[form.depositoOrigem as Deposito];
