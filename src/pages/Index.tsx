@@ -130,6 +130,7 @@ function IndexContent({
       case "pedidos": return <PedidosVenda />;
       case "nfce-pendentes": return <NfcePendentes />;
       case "reposicao": return <Reposicao />
+      case "transferencias": return <Transferencias />;
       case "configuracoes": return isMaster ? <Configuracoes /> : <Estoque isMaster={false} />;
       case "usuarios": return isMaster ? <GerenciarUsuarios /> : <Estoque isMaster={false} />;
       case "unidades": return isMaster ? <Unidades /> : <Estoque isMaster={false} />;
