@@ -5,10 +5,11 @@ import { formatCurrency, type Deposito } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useUnidades } from "@/hooks/useUnidades";
+import { toast } from "sonner";
 
 
 export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
-  const { todosNomes: depositos, nomes: depositosOperacionais, rotulo: rotuloUnidade } = useUnidades({ contexto: "historico" });
+  const { todosNomes: depositos, nomes: depositosOperacionais, rotulo: rotuloUnidade, isLoading: unidadesLoading } = useUnidades({ contexto: "historico" });
   const { testers, perfumes, baixarEstoque, adicionarTesterDB, removerTesterDB, ajustarTesterDB, concentracoesConfig } = useApp();
   const { profile } = useAuth();
   const [busca, setBusca] = useState("");
@@ -18,6 +19,7 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
   const [inventariar, setInventariar] = useState(false);
   const [ajusteId, setAjusteId] = useState<string | null>(null);
   const [ajusteQtd, setAjusteQtd] = useState(0);
+  const [salvando, setSalvando] = useState(false);
 
   const filtrados = useMemo(() => {
     const q = busca.toLowerCase();
@@ -48,27 +50,43 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
   const handleAdicionar = async () => {
     if (!form.perfumeId || !form.deposito || form.quantidade < 1) return;
     const deposito = form.deposito as Deposito;
-    const p = perfumes.find((x) => x.id === form.perfumeId)!;
-    if (!inventariar) {
-      const estoqueAtual = p.estoques[deposito];
-      if (estoqueAtual < form.quantidade) {
-        alert(`Estoque insuficiente em ${deposito}. Disponível: ${estoqueAtual}`);
-        return;
-      }
-      baixarEstoque(form.perfumeId, deposito, form.quantidade);
+    if (unidadesLoading || !depositosOperacionais.includes(deposito)) {
+      toast.error(unidadesLoading ? "Aguarde o carregamento das unidades." : "Selecione uma unidade válida.");
+      return;
     }
-    await adicionarTesterDB({
-      perfumeId: p.id,
-      perfumeNome: p.nome,
-      marca: p.marca,
-      deposito,
-      quantidade: form.quantidade,
-      custo: p.custo,
-      registradoPor: profile?.nome || "Desconhecido",
-    });
-    setForm({ perfumeId: "", deposito: "", quantidade: 1 });
-    setInventariar(false);
-    setShowForm(false);
+    const p = perfumes.find((x) => x.id === form.perfumeId);
+    if (!p) {
+      toast.error("Produto não encontrado.");
+      return;
+    }
+    setSalvando(true);
+    try {
+      if (!inventariar) {
+        const estoqueAtual = p.estoques[deposito] ?? 0;
+        if (estoqueAtual < form.quantidade) {
+          toast.error(`Estoque insuficiente em ${deposito}. Disponível: ${estoqueAtual}`);
+          return;
+        }
+        await baixarEstoque(form.perfumeId, deposito, form.quantidade);
+      }
+      await adicionarTesterDB({
+        perfumeId: p.id,
+        perfumeNome: p.nome,
+        marca: p.marca,
+        deposito,
+        quantidade: form.quantidade,
+        custo: p.custo,
+        registradoPor: profile?.nome || "Desconhecido",
+      });
+      setForm({ perfumeId: "", deposito: "", quantidade: 1 });
+      setInventariar(false);
+      setShowForm(false);
+      toast.success("Tester registrado com sucesso.");
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao registrar tester.");
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const handleRemover = async (id: string) => { await removerTesterDB(id); };
@@ -186,8 +204,8 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
             </div>
             <div className="flex gap-3 pt-1">
               <button onClick={() => { setShowForm(false); setInventariar(false); }} className="btn-secondary flex-1 py-2.5">Cancelar</button>
-              <button onClick={handleAdicionar} disabled={!form.perfumeId || !form.deposito} className="btn-primary flex-1 py-2.5">
-                Salvar
+              <button onClick={handleAdicionar} disabled={!form.perfumeId || !form.deposito || salvando || unidadesLoading} className="btn-primary flex-1 py-2.5">
+                {unidadesLoading ? "Carregando unidades..." : salvando ? "Salvando..." : "Salvar"}
               </button>
             </div>
           </div>

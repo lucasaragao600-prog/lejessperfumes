@@ -51,10 +51,10 @@ interface AppContextType {
   proximaLinhaPorCasa: (casaSigla: string) => number;
   baixarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => Promise<void>;
   baixarVenda: (perfumeId: string, deposito: Deposito, quantidade: number, isTeste?: boolean) => Promise<void>;
-  ajustarEstoque: (perfumeId: string, deposito: Deposito, novaQuantidade: number) => void;
-  adicionarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
-  transferirEstoque: (perfumeId: string, origem: Deposito, destino: Deposito, quantidade: number) => void;
-  adicionarTester: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
+  ajustarEstoque: (perfumeId: string, deposito: Deposito, novaQuantidade: number) => Promise<void>;
+  adicionarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => Promise<void>;
+  transferirEstoque: (perfumeId: string, origem: Deposito, destino: Deposito, quantidade: number) => Promise<void>;
+  adicionarTester: (perfumeId: string, deposito: Deposito, quantidade: number) => Promise<void>;
   adicionarPerfume: (perfume: Perfume) => Promise<void>;
   editarPerfume: (perfume: Partial<Perfume> & { id: string }) => Promise<void>;
   excluirPerfume: (perfumeId: string) => Promise<void>;
@@ -92,22 +92,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const baixarVenda = (perfumeId: string, deposito: Deposito, quantidade: number, isTeste = false) =>
     baixarVendaDB(perfumeId, deposito, quantidade, isTeste);
 
-  const ajustarEstoque = (perfumeId: string, deposito: Deposito, novaQuantidade: number) => {
+  const ajustarEstoque = (perfumeId: string, deposito: Deposito, novaQuantidade: number) =>
     ajustarEstoqueDB(perfumeId, deposito, novaQuantidade);
-  };
 
-  const adicionarEstoque = (perfumeId: string, deposito: Deposito, quantidade: number) => {
+  const adicionarEstoque = (perfumeId: string, deposito: Deposito, quantidade: number) =>
     adicionarEstoqueDB(perfumeId, deposito, quantidade);
-  };
 
-  const transferirEstoque = (perfumeId: string, origem: Deposito, destino: Deposito, quantidade: number) => {
+  const transferirEstoque = (perfumeId: string, origem: Deposito, destino: Deposito, quantidade: number) =>
     transferirEstoqueDB(perfumeId, origem, destino, quantidade);
-  };
 
-  const adicionarTester = (perfumeId: string, deposito: Deposito, quantidade: number) => {
+  const adicionarTester = async (perfumeId: string, deposito: Deposito, quantidade: number) => {
     const p = perfumes.find((x) => x.id === perfumeId);
     if (!p) return;
-    adicionarTesterDB({
+    await adicionarTesterDB({
       perfumeId: p.id,
       perfumeNome: p.nome,
       marca: p.marca,
