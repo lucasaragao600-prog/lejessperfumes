@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
-import { Building2, Plus, Pencil, Power, X, Loader2 } from "lucide-react";
+import { Building2, Plus, Pencil, Power, X, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUnidades, type Unidade, type StatusUnidade } from "@/hooks/useUnidades";
+import AcessosUnidade from "@/components/admin/AcessosUnidade";
+import { registrarAuditoria } from "@/lib/audit";
 
 const STATUS: { valor: StatusUnidade; rotulo: string }[] = [
   { valor: "EM_IMPLANTACAO", rotulo: "Em implantação" },
@@ -55,6 +57,7 @@ export default function Unidades() {
   const { todas, isLoading } = useUnidades({ contexto: "historico" });
   const [form, setForm] = useState<FormState | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [acessos, setAcessos] = useState<{ id: string; nome: string } | null>(null);
 
   const { data: saldos = {} } = useQuery({
     queryKey: ["unidades-saldos"],
@@ -125,13 +128,31 @@ export default function Unidades() {
       };
 
       if (form.id) {
+        const anterior = todas.find((u) => u.id === form.id) ?? null;
         const { error } = await supabase.from("unidades").update(payload).eq("id", form.id);
         if (error) throw error;
+        await registrarAuditoria({
+          acao: "UNIDADE_ALTERADA",
+          entidade: "unidades",
+          entidadeId: form.id,
+          unidadeId: form.id,
+          dadosAnteriores: anterior,
+          dadosNovos: payload,
+        });
       } else {
-        const { error } = await supabase
+        const { data: criada, error } = await supabase
           .from("unidades")
-          .insert({ ...payload, ordem: todas.length + 1 } as any);
+          .insert({ ...payload, ordem: todas.length + 1 } as any)
+          .select("id")
+          .single();
         if (error) throw error;
+        await registrarAuditoria({
+          acao: "UNIDADE_CRIADA",
+          entidade: "unidades",
+          entidadeId: criada?.id ?? null,
+          unidadeId: criada?.id ?? null,
+          dadosNovos: payload,
+        });
       }
       toast.success(form.id ? "Unidade atualizada" : "Unidade criada");
       setForm(null);
@@ -190,6 +211,12 @@ export default function Unidades() {
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <button
+                    onClick={() => setAcessos({ id: u.id, nome: u.nomeExibicao })}
+                    className="flex items-center gap-1 text-[11px] text-foreground px-2 py-1 rounded-lg border border-border"
+                  >
+                    <ShieldCheck size={12} /> Acessos
+                  </button>
+                  <button
                     onClick={() => abrirEdicao(u)}
                     className="flex items-center gap-1 text-[11px] text-gold px-2 py-1 rounded-lg border border-border"
                   >
@@ -207,6 +234,14 @@ export default function Unidades() {
             </div>
           ))}
         </div>
+      )}
+
+      {acessos && (
+        <AcessosUnidade
+          unidadeId={acessos.id}
+          unidadeNome={acessos.nome}
+          onClose={() => setAcessos(null)}
+        />
       )}
 
       {form && (
