@@ -45,9 +45,7 @@ export default function SimilarProductsDialog({ candidates, onRevisar, onContinu
               </p>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 {c.perfume.concentracao} · {c.perfume.volume}ml · Estoque{" "}
-                {(c.perfume.estoques?.Casa || 0) +
-                  (c.perfume.estoques?.Sumaúma || 0) +
-                  (c.perfume.estoques?.Amazonas || 0)}
+                {Object.values(c.perfume.estoques || {}).reduce((a, b) => a + b, 0)}
               </p>
               {c.reasons.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">

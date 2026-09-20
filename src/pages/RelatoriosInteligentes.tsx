@@ -147,7 +147,7 @@ export default function RelatoriosInteligentes() {
       if (marcas.length && !marcas.includes(p.marca)) return false;
       if (tipos.length && !tipos.includes(p.tipo)) return false;
       if (somenteEstoqueBaixo) {
-        const total = (p.estoques.Casa || 0) + (p.estoques.Sumaúma || 0) + (p.estoques.Amazonas || 0);
+        const total = Object.values(p.estoques || {}).reduce((a, b) => a + b, 0);
         if (total > p.estoqueMinimo) return false;
       }
       const q = produtoSearch.toLowerCase();
@@ -641,7 +641,7 @@ export default function RelatoriosInteligentes() {
                     </thead>
                     <tbody>
                       {parados.map((p) => {
-                        const total = (p.estoques.Casa || 0) + (p.estoques.Sumaúma || 0) + (p.estoques.Amazonas || 0);
+                        const total = Object.values(p.estoques || {}).reduce((a, b) => a + b, 0);
                         return (
                           <tr key={p.id} className="border-b border-border/50">
                             <td className="py-2">{p.codigo} — {p.marca} — {p.nome}</td>

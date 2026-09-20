@@ -143,7 +143,7 @@ export default function InteligenciaOperacional() {
   );
 
   const estoqueAtualPerfume = (p: Perfume) => {
-    if (deposito === "todos") return p.estoques.Casa + p.estoques.Sumaúma + p.estoques.Amazonas;
+    if (deposito === "todos") return Object.values(p.estoques || {}).reduce((a, b) => a + b, 0);
     return p.estoques[deposito];
   };
 
@@ -238,7 +238,7 @@ export default function InteligenciaOperacional() {
       (s, p) =>
         s +
         (deposito === "todos"
-          ? p.estoques.Casa + p.estoques.Sumaúma + p.estoques.Amazonas
+          ? Object.values(p.estoques || {}).reduce((a, b) => a + b, 0)
           : p.estoques[deposito]) *
           (p.custoMedio || p.custo || 0),
       0,
@@ -247,7 +247,7 @@ export default function InteligenciaOperacional() {
       (s, p) =>
         s +
         (deposito === "todos"
-          ? p.estoques.Casa + p.estoques.Sumaúma + p.estoques.Amazonas
+          ? Object.values(p.estoques || {}).reduce((a, b) => a + b, 0)
           : p.estoques[deposito]) *
           (p.precoVenda || 0),
       0,

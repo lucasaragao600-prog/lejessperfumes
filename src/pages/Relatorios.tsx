@@ -105,7 +105,7 @@ export default function Relatorios() {
 
   // Helpers de estoque
   const estoqueAtualPerfume = (p: Perfume) => {
-    if (deposito === "todos") return p.estoques.Casa + p.estoques.Sumaúma + p.estoques.Amazonas;
+    if (deposito === "todos") return Object.values(p.estoques || {}).reduce((a, b) => a + b, 0);
     return p.estoques[deposito];
   };
 
@@ -1276,13 +1276,16 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
   const { role, profile } = useAuth();
   const { configFiscal } = useConfiguracoesFiscais();
 
-  const lojasDisponiveis: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
+  const { nomes: lojasDisponiveis, rotulo: rotuloLoja } = useUnidades({ contexto: "operacional" });
   const lojaInicial: Deposito =
-    role === "vendedor" && profile?.loja && (lojasDisponiveis as string[]).includes(profile.loja)
+    role === "vendedor" && profile?.loja && lojasDisponiveis.includes(profile.loja)
       ? (profile.loja as Deposito)
-      : "Casa";
+      : lojasDisponiveis[0] || "";
 
   const [loja, setLoja] = useState<Deposito>(lojaInicial);
+  useEffect(() => {
+    if (!loja && lojasDisponiveis.length > 0) setLoja(lojaInicial);
+  }, [lojasDisponiveis.length]);
   const hoje = todayStr();
   const [periodo, setPeriodo] = useState<"diario" | "quinzenal" | "mensal" | "personalizado">("diario");
   const [dataDiario, setDataDiario] = useState(hoje);
