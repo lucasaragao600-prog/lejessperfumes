@@ -1,4 +1,5 @@
-export type Deposito = "Casa" | "Sumaúma" | "Amazonas";
+/** Unidade/depósito identificado pelo texto da tabela `unidades` (codigo_legado ou codigo). */
+export type Deposito = string;
 export type TipoPerfume = "AR" | "NI" | "NA" | "KI";
 export type Concentracao = "EDP" | "EDT" | "PAR" | "OUT";
 
@@ -37,7 +38,7 @@ export interface Perfume {
   volume: number; // ml
   custo: number;
   precoVenda: number;
-  estoques: Record<Deposito, number>;
+  estoques: Record<string, number>;
   estoqueMinimo: number;
   imageUrl?: string;
   custoMedio?: number;
