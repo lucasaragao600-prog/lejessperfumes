@@ -13,6 +13,7 @@ import {
 import AcessosUnidade from "@/components/admin/AcessosUnidade";
 import EtapaEstrutura from "./EtapaEstrutura";
 import EtapaEquipamentos from "./EtapaEquipamentos";
+import EtapaEstoqueInicial from "./EtapaEstoqueInicial";
 import { registrarAuditoria } from "@/lib/audit";
 
 interface Props {
