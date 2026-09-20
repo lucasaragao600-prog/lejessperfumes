@@ -205,6 +205,68 @@ export type Database = {
         }
         Relationships: []
       }
+      caixa_config_unidade: {
+        Row: {
+          configurado_por: string | null
+          configurado_por_nome: string
+          created_at: string
+          diferenca_tolerada: number
+          exige_motivo_sangria: boolean
+          exige_valor_abertura: boolean
+          id: string
+          impressora_nome: string
+          limite_sangria: number
+          observacao: string
+          permite_sangria: boolean
+          permite_suprimento: boolean
+          unidade_id: string
+          updated_at: string
+          valor_abertura_padrao: number
+        }
+        Insert: {
+          configurado_por?: string | null
+          configurado_por_nome?: string
+          created_at?: string
+          diferenca_tolerada?: number
+          exige_motivo_sangria?: boolean
+          exige_valor_abertura?: boolean
+          id?: string
+          impressora_nome?: string
+          limite_sangria?: number
+          observacao?: string
+          permite_sangria?: boolean
+          permite_suprimento?: boolean
+          unidade_id: string
+          updated_at?: string
+          valor_abertura_padrao?: number
+        }
+        Update: {
+          configurado_por?: string | null
+          configurado_por_nome?: string
+          created_at?: string
+          diferenca_tolerada?: number
+          exige_motivo_sangria?: boolean
+          exige_valor_abertura?: boolean
+          id?: string
+          impressora_nome?: string
+          limite_sangria?: number
+          observacao?: string
+          permite_sangria?: boolean
+          permite_suprimento?: boolean
+          unidade_id?: string
+          updated_at?: string
+          valor_abertura_padrao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "caixa_config_unidade_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: true
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       caixa_movimentacoes: {
         Row: {
           created_at: string
@@ -2648,6 +2710,36 @@ export type Database = {
           p_unidade: string
         }
         Returns: number
+      }
+      fn_config_fiscal_unidade_ler: {
+        Args: { p_unidade_id: string }
+        Returns: Json
+      }
+      fn_config_fiscal_unidade_salvar: {
+        Args: {
+          p_ambiente: string
+          p_bairro: string
+          p_cep: string
+          p_certificado_digital_url?: string
+          p_certificado_senha?: string
+          p_cidade: string
+          p_cnpj: string
+          p_complemento: string
+          p_csc_id: string
+          p_csc_token?: string
+          p_endereco: string
+          p_inscricao_estadual: string
+          p_nome_fantasia: string
+          p_numero: string
+          p_proximo_numero_nfce: number
+          p_razao_social: string
+          p_regime_tributario: string
+          p_serie_nfce: number
+          p_telefone: string
+          p_uf: string
+          p_unidade_id: string
+        }
+        Returns: string
       }
       fn_implantacao_carga_manual_aprovar: {
         Args: { p_item_id: string }
