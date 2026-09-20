@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, Check, Loader2, AlertTriangle, Plus, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUnidades, type Unidade } from "@/hooks/useUnidades";
+
 import {
   useImplantacaoDetalhe,
   ETAPAS_IMPLEMENTADAS,
@@ -16,7 +18,10 @@ import EtapaEquipamentos from "./EtapaEquipamentos";
 import EtapaEstoqueInicial from "./EtapaEstoqueInicial";
 import EtapaFiscal from "./EtapaFiscal";
 import EtapaCaixa from "./EtapaCaixa";
+import EtapaTestes from "./EtapaTestes";
+import EtapaLiberacao from "./EtapaLiberacao";
 import { registrarAuditoria } from "@/lib/audit";
+
 
 interface Props {
   implantacao: Implantacao;
@@ -44,7 +49,14 @@ export default function WizardImplantacao({ implantacao, onVoltar }: Props) {
     salvarItem,
     criarPendencia,
     resolverPendencia,
+    recarregar,
   } = useImplantacaoDetalhe(implantacao.id);
+  const qc = useQueryClient();
+
+  const atualizarTudo = () => {
+    recarregar();
+    qc.invalidateQueries({ queryKey: ["unidades"] });
+  };
 
   const [etapaAtiva, setEtapaAtiva] = useState("cadastro");
   const [mostrarAcessos, setMostrarAcessos] = useState(false);
@@ -68,7 +80,10 @@ export default function WizardImplantacao({ implantacao, onVoltar }: Props) {
 
   const etapa = etapas.find((e) => e.chave === etapaAtiva);
   const itensEstrutura = checklist.filter((i) => i.etapa_chave === "estrutura");
+  const itensTestes = checklist.filter((i) => i.etapa_chave === "testes");
+  const itensChecklist = checklist.filter((i) => i.etapa_chave === "checklist");
   const abertas = pendencias.filter((p) => p.status === "ABERTA");
+
 
   const salvarCadastro = async () => {
     if (!unidade) return;
@@ -158,6 +173,26 @@ export default function WizardImplantacao({ implantacao, onVoltar }: Props) {
           return;
         }
       }
+
+      if (
+        (etapa.chave === "testes" || etapa.chave === "checklist") &&
+        status === "CONCLUIDA"
+      ) {
+        const lista = etapa.chave === "testes" ? itensTestes : itensChecklist;
+        const pend = lista.filter((i) => !["CONCLUIDO", "NAO_APLICAVEL"].includes(i.status));
+        if (pend.length) {
+          toast.error("Ainda há itens pendentes nesta etapa", {
+            description: `${pend.length} item(ns) sem conclusão.`,
+          });
+          return;
+        }
+      }
+
+      if (etapa.chave === "liberacao" && status === "CONCLUIDA") {
+        toast.error("Use o botão “Liberar unidade para operação” nesta etapa");
+        return;
+      }
+
       await salvarEtapa(etapa.id, { status });
       toast.success("Etapa atualizada");
     } catch (e: unknown) {
@@ -302,6 +337,33 @@ export default function WizardImplantacao({ implantacao, onVoltar }: Props) {
         {etapaAtiva === "equipamentos" && unidade && (
           <EtapaEquipamentos unidadeId={unidade.id} implantacaoId={implantacao.id} />
         )}
+
+        {etapaAtiva === "testes" && (
+          <EtapaTestes
+            implantacaoId={implantacao.id}
+            unidadeStatus={unidade?.status}
+            itens={itensTestes}
+            onSalvar={salvarItem}
+            onAtualizar={atualizarTudo}
+          />
+        )}
+
+        {etapaAtiva === "checklist" && (
+          <EtapaEstrutura
+            implantacaoId={implantacao.id}
+            itens={itensChecklist}
+            onSalvar={salvarItem}
+          />
+        )}
+
+        {etapaAtiva === "liberacao" && (
+          <EtapaLiberacao
+            implantacaoId={implantacao.id}
+            jaLiberada={implantacao.status === "CONCLUIDA"}
+            onAtualizar={atualizarTudo}
+          />
+        )}
+
 
         {!ETAPAS_IMPLEMENTADAS.includes(etapaAtiva) && (
           <p className="text-sm text-muted-foreground">

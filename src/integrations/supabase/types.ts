@@ -2766,6 +2766,18 @@ export type Database = {
         Args: { p_implantacao_id: string }
         Returns: number
       }
+      fn_implantacao_iniciar_testes: {
+        Args: { p_implantacao_id: string }
+        Returns: undefined
+      }
+      fn_implantacao_liberar: {
+        Args: { p_data_inauguracao?: string; p_implantacao_id: string }
+        Returns: undefined
+      }
+      fn_implantacao_prontidao: {
+        Args: { p_implantacao_id: string }
+        Returns: Json
+      }
       fn_implantacao_recalcular_progresso: {
         Args: { p_id: string }
         Returns: number
