@@ -14,6 +14,8 @@ import AcessosUnidade from "@/components/admin/AcessosUnidade";
 import EtapaEstrutura from "./EtapaEstrutura";
 import EtapaEquipamentos from "./EtapaEquipamentos";
 import EtapaEstoqueInicial from "./EtapaEstoqueInicial";
+import EtapaFiscal from "./EtapaFiscal";
+import EtapaCaixa from "./EtapaCaixa";
 import { registrarAuditoria } from "@/lib/audit";
 
 interface Props {
@@ -235,6 +237,10 @@ export default function WizardImplantacao({ implantacao, onVoltar }: Props) {
             </button>
           </div>
         )}
+
+        {etapaAtiva === "fiscal" && unidade && <EtapaFiscal unidadeId={unidade.id} />}
+
+        {etapaAtiva === "caixa" && unidade && <EtapaCaixa unidadeId={unidade.id} />}
 
         {etapaAtiva === "estrutura" && (
           <EtapaEstrutura
