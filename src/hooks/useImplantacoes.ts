@@ -72,7 +72,13 @@ export interface Equipamento {
   observacao: string;
 }
 
-export const ETAPAS_IMPLEMENTADAS = ["cadastro", "estrutura", "usuarios", "equipamentos"];
+export const ETAPAS_IMPLEMENTADAS = [
+  "cadastro",
+  "estrutura",
+  "usuarios",
+  "estoque",
+  "equipamentos",
+];
 
 export function useImplantacoes() {
   const qc = useQueryClient();

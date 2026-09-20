@@ -50,6 +50,13 @@
       "when": 1789936532391,
       "tag": "0006_fase5_politicas_anexos_implantacao",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789936916834,
+      "tag": "0007_fase6_estoque_inicial_implantacao",
+      "breakpoints": true
     }
   ]
 }

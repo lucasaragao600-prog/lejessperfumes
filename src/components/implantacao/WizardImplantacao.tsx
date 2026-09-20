@@ -13,6 +13,7 @@ import {
 import AcessosUnidade from "@/components/admin/AcessosUnidade";
 import EtapaEstrutura from "./EtapaEstrutura";
 import EtapaEquipamentos from "./EtapaEquipamentos";
+import EtapaEstoqueInicial from "./EtapaEstoqueInicial";
 import { registrarAuditoria } from "@/lib/audit";
 
 interface Props {
@@ -111,6 +112,19 @@ export default function WizardImplantacao({ implantacao, onVoltar }: Props) {
   const marcarEtapa = async (status: StatusEtapa) => {
     if (!etapa) return;
     try {
+      if (etapa.chave === "estoque" && status === "CONCLUIDA") {
+        const { data, error } = await supabase.rpc("fn_implantacao_estoque_sincronizar", {
+          p_implantacao_id: implantacao.id,
+        });
+        if (error) throw error;
+        const r = data as { pendentes: number; divergencias: number; pode_concluir: boolean };
+        if (!r?.pode_concluir) {
+          toast.error("Ainda há carga pendente ou divergência aberta", {
+            description: `${r?.pendentes ?? 0} item(ns) pendente(s) e ${r?.divergencias ?? 0} divergência(s).`,
+          });
+          return;
+        }
+      }
       await salvarEtapa(etapa.id, { status });
       toast.success("Etapa atualizada");
     } catch (e: unknown) {
@@ -242,6 +256,10 @@ export default function WizardImplantacao({ implantacao, onVoltar }: Props) {
               <ShieldCheck className="w-4 h-4" /> Gerenciar acessos
             </button>
           </div>
+        )}
+
+        {etapaAtiva === "estoque" && unidade && (
+          <EtapaEstoqueInicial implantacaoId={implantacao.id} unidadeId={unidade.id} />
         )}
 
         {etapaAtiva === "equipamentos" && unidade && (
