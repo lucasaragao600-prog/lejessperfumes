@@ -8,6 +8,7 @@ import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
 import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalCostCalculator";
 import { formatCurrency, formatDate, type Deposito } from "@/data/mockData";
 import { processarXmlNFe } from "@/lib/nfeXmlParser";
+import { useUnidades } from "@/hooks/useUnidades";
 
 type SubTab = "pendentes" | "conciliadas" | "canceladas";
 
@@ -22,7 +23,8 @@ export default function NotasFiscais() {
   const { atualizarCustoMedio } = useProdutoCustos();
   const [subTab, setSubTab] = useState<SubTab>("pendentes");
   const [notaSelecionada, setNotaSelecionada] = useState<NotaFiscal | null>(null);
-  const [depositoDestino, setDepositoDestino] = useState<string>("Casa");
+  const { nomes: unidadesEstoqueNomes } = useUnidades({ contexto: "operacional" });
+  const [depositoDestino, setDepositoDestino] = useState<string>("");
   const [editableQtds, setEditableQtds] = useState<EditableQty>({});
   const [showManual, setShowManual] = useState(false);
   const [manualFiscal, setManualFiscal] = useState<FiscalBreakdown | null>(null);
@@ -35,7 +37,7 @@ export default function NotasFiscais() {
     fornecedor: "",
     data: new Date().toISOString().split("T")[0],
     observacao: "",
-    deposito: "Casa" as Deposito,
+    deposito: "" as Deposito,
   });
 
   // Itens da entrada manual (vários produtos por nota)
@@ -269,7 +271,7 @@ export default function NotasFiscais() {
         );
       }
 
-      setManualForm({ fornecedor: "", data: new Date().toISOString().split("T")[0], observacao: "", deposito: "Casa" });
+      setManualForm({ fornecedor: "", data: new Date().toISOString().split("T")[0], observacao: "", deposito: unidadesEstoqueNomes[0] || "" });
       setManualItens([novoItem()]);
       setManualFiscal(null);
       setShowManual(false);
@@ -331,9 +333,9 @@ export default function NotasFiscais() {
                 <select value={manualForm.deposito}
                   onChange={(e) => setManualForm({ ...manualForm, deposito: e.target.value as Deposito })}
                   className="input-premium px-3 py-2.5 text-sm">
-                  <option value="Casa">Casa</option>
-                  <option value="Sumaúma">Sumaúma</option>
-                  <option value="Amazonas">Amazonas</option>
+                  {unidadesEstoqueNomes.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
                 </select>
               </div>
               <div>
@@ -455,9 +457,9 @@ export default function NotasFiscais() {
                 <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Depósito de Destino</label>
                 <select value={depositoDestino} onChange={(e) => setDepositoDestino(e.target.value)}
                   className="input-premium px-3 py-2.5 text-sm">
-                  <option value="Casa">Casa</option>
-                  <option value="Sumaúma">Sumaúma</option>
-                  <option value="Amazonas">Amazonas</option>
+                  {unidadesEstoqueNomes.map((d) => (
+                    <option key={d} value={d}>{d}</option>
+                  ))}
                 </select>
               </div>
             )}

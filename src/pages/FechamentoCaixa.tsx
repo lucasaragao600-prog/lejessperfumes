@@ -21,7 +21,10 @@ export default function FechamentoCaixa() {
   const { vendas, pagamentos: vendaPagamentos } = useVendas();
   const { configFiscal } = useNfce();
 
-  const [loja, setLoja] = useState<string>(userLoja || "Casa");
+  const [loja, setLoja] = useState<string>(userLoja || "");
+  useEffect(() => {
+    if (!loja && depositos.length > 0) setLoja(userLoja || depositos[0]);
+  }, [depositos.length]);
   const [valorAbertura, setValorAbertura] = useState(0);
   const [valorFechamento, setValorFechamento] = useState(0);
   const [obsFechamento, setObsFechamento] = useState("");

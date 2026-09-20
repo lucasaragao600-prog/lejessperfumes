@@ -4,8 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import PermissoesCargo from "@/components/reposicao/PermissoesCargo";
-
-const LOJAS = ["Casa", "Sumaúma", "Amazonas"] as const;
+import { useUnidades } from "@/hooks/useUnidades";
 
 interface UserItem {
   id: string;
@@ -16,6 +15,7 @@ interface UserItem {
 }
 
 export default function GerenciarUsuarios() {
+  const { nomes: LOJAS } = useUnidades({ contexto: "operacional" });
   const auth = useAuth();
   const { toast } = useToast();
   const [users, setUsers] = useState<UserItem[]>([]);

@@ -25,8 +25,13 @@ export default function NovaReposicao({ onCriada }: { onCriada: () => void }) {
   const { profile, user } = useAuth();
   const { reposicoes, itens: todosItens, criar } = useReposicao();
 
-  const [origem, setOrigem] = useState<Deposito>("Casa");
-  const [destino, setDestino] = useState<Deposito>("Sumaúma");
+  const [origem, setOrigem] = useState<Deposito>("");
+  const [destino, setDestino] = useState<Deposito>("");
+  useEffect(() => {
+    if (DEPOSITOS.length === 0) return;
+    if (!origem) setOrigem(DEPOSITOS[0]);
+    if (!destino) setDestino(DEPOSITOS.find((d) => d !== DEPOSITOS[0]) || "");
+  }, [DEPOSITOS.length]);
   const [observacoes, setObservacoes] = useState("");
   const [busca, setBusca] = useState("");
   const [linhas, setLinhas] = useState<LinhaItem[]>([]);

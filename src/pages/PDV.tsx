@@ -73,7 +73,10 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
 
   // Cart
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [deposito, setDeposito] = useState<Deposito>(userLoja || "Casa");
+  const [deposito, setDeposito] = useState<Deposito>(userLoja || "");
+  useEffect(() => {
+    if (!deposito && depositos.length > 0) setDeposito(userLoja || depositos[0]);
+  }, [depositos.length]);
   const [vendedora, setVendedora] = useState("");
   const [observacao, setObservacao] = useState("");
 
