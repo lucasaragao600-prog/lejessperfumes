@@ -2783,6 +2783,17 @@ export type Database = {
         Returns: number
       }
       fn_proximo_numero_transferencia: { Args: never; Returns: string }
+      fn_saida_tester: {
+        Args: {
+          p_baixar_estoque?: boolean
+          p_observacao?: string
+          p_produto_id: string
+          p_quantidade: number
+          p_registrado_por?: string
+          p_unidade: string
+        }
+        Returns: Json
+      }
       fn_sync_estoque_legado: {
         Args: { _produto_id: string; _unidade_id: string }
         Returns: undefined

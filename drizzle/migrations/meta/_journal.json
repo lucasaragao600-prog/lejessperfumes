@@ -92,6 +92,13 @@
       "when": 1789940135386,
       "tag": "0012_fix_trg_set_unidade_id",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789940890782,
+      "tag": "0013_atomic_tester_output",
+      "breakpoints": true
     }
   ]
 }
