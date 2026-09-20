@@ -36,8 +36,8 @@ import {
 import * as XLSX from "xlsx";
 import type { Deposito, Perfume } from "@/data/mockData";
 import { toast } from "sonner";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const DEPOSITOS: ("todos" | Deposito)[] = ["todos", "Casa", "Sumaúma", "Amazonas"];
 const TIPOS_BASE = ["todos", "Árabe", "Importado", "Nicho", "Nacional", "Kit"];
 
 /* ====== Taxas padrão (editáveis pelo usuário) ====== */
@@ -91,6 +91,8 @@ function taxaSobreVenda(tipoPagamento: string, taxas: typeof TAXAS_PADRAO): numb
 }
 
 export default function InteligenciaOperacional() {
+  const { todosNomes, rotulo: rotuloUnidade } = useUnidades({ contexto: "historico" });
+  const DEPOSITOS: string[] = ["todos", ...todosNomes];
   const { perfumes, vendas, tiposPerfumeConfig } = useApp();
   const hoje = todayStr();
   const [dataInicio, setDataInicio] = useState(daysAgoStr(30));
@@ -141,7 +143,7 @@ export default function InteligenciaOperacional() {
   );
 
   const estoqueAtualPerfume = (p: Perfume) => {
-    if (deposito === "todos") return p.estoques.Casa + p.estoques.Sumaúma + p.estoques.Amazonas;
+    if (deposito === "todos") return Object.values(p.estoques || {}).reduce((a, b) => a + b, 0);
     return p.estoques[deposito];
   };
 
@@ -236,7 +238,7 @@ export default function InteligenciaOperacional() {
       (s, p) =>
         s +
         (deposito === "todos"
-          ? p.estoques.Casa + p.estoques.Sumaúma + p.estoques.Amazonas
+          ? Object.values(p.estoques || {}).reduce((a, b) => a + b, 0)
           : p.estoques[deposito]) *
           (p.custoMedio || p.custo || 0),
       0,
@@ -245,7 +247,7 @@ export default function InteligenciaOperacional() {
       (s, p) =>
         s +
         (deposito === "todos"
-          ? p.estoques.Casa + p.estoques.Sumaúma + p.estoques.Amazonas
+          ? Object.values(p.estoques || {}).reduce((a, b) => a + b, 0)
           : p.estoques[deposito]) *
           (p.precoVenda || 0),
       0,
@@ -329,7 +331,7 @@ export default function InteligenciaOperacional() {
               <SelectTrigger className="bg-surface"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {DEPOSITOS.map((d) => (
-                  <SelectItem key={d} value={d}>{d === "todos" ? "Todos" : d}</SelectItem>
+                  <SelectItem key={d} value={d}>{d === "todos" ? "Todos" : rotuloUnidade(d)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

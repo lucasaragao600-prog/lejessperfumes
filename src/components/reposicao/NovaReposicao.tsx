@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Plus, Minus, Trash2, Camera, Search, Loader2, PackagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/context/AppContext";
@@ -8,8 +8,8 @@ import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import ProdutoFoto from "@/components/ProdutoFoto";
 import { agruparPorCategoria, calcularReservas, categoriaLabel, produtoLabel } from "@/lib/reposicaoUtils";
 import type { Deposito, Perfume } from "@/data/mockData";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const DEPOSITOS: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 interface LinhaItem {
   produto_id: string;
@@ -19,12 +19,19 @@ interface LinhaItem {
 }
 
 export default function NovaReposicao({ onCriada }: { onCriada: () => void }) {
+  const { unidadesTransferencia } = useUnidades({ contexto: "operacional" });
+  const DEPOSITOS = unidadesTransferencia.map((u) => u.codigoLegado || u.codigo);
   const { perfumes, tiposPerfumeConfig, concentracoesConfig } = useApp();
   const { profile, user } = useAuth();
   const { reposicoes, itens: todosItens, criar } = useReposicao();
 
-  const [origem, setOrigem] = useState<Deposito>("Casa");
-  const [destino, setDestino] = useState<Deposito>("Sumaúma");
+  const [origem, setOrigem] = useState<Deposito>("");
+  const [destino, setDestino] = useState<Deposito>("");
+  useEffect(() => {
+    if (DEPOSITOS.length === 0) return;
+    if (!origem) setOrigem(DEPOSITOS[0]);
+    if (!destino) setDestino(DEPOSITOS.find((d) => d !== DEPOSITOS[0]) || "");
+  }, [DEPOSITOS.length]);
   const [observacoes, setObservacoes] = useState("");
   const [busca, setBusca] = useState("");
   const [linhas, setLinhas] = useState<LinhaItem[]>([]);

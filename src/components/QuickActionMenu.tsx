@@ -5,8 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import { type Perfume, type Deposito, type Movimentacao } from "@/data/mockData";
 import { getHojeManaus } from "@/lib/dateUtils";
 import { toast } from "sonner";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 type Acao = "Entrada" | "Saída" | "Ajuste" | "Transferência" | "Saída Tester" | "Transferência Tester";
 
@@ -15,6 +15,7 @@ interface Props {
 }
 
 export default function QuickActionMenu({ perfume }: Props) {
+  const { nomes: depositos } = useUnidades({ contexto: "operacional" });
   const {
     baixarEstoque,
     adicionarEstoque,
@@ -32,9 +33,9 @@ export default function QuickActionMenu({ perfume }: Props) {
 
   const [open, setOpen] = useState(false);
   const [acao, setAcao] = useState<Acao | null>(null);
-  const [deposito, setDeposito] = useState<Deposito>(userLoja || "Casa");
-  const [origem, setOrigem] = useState<Deposito>(userLoja || "Casa");
-  const [destino, setDestino] = useState<Deposito>("Sumaúma");
+  const [deposito, setDeposito] = useState<Deposito>(userLoja || "");
+  const [origem, setOrigem] = useState<Deposito>(userLoja || "");
+  const [destino, setDestino] = useState<Deposito>("");
   const [quantidade, setQuantidade] = useState<string>("");
   const [obs, setObs] = useState("");
   const [saving, setSaving] = useState(false);
@@ -59,9 +60,9 @@ export default function QuickActionMenu({ perfume }: Props) {
     setAcao(null);
     setQuantidade("");
     setObs("");
-    setDeposito(userLoja || "Casa");
-    setOrigem(userLoja || "Casa");
-    setDestino("Sumaúma");
+    setDeposito(userLoja || depositos[0] || "");
+    setOrigem(userLoja || depositos[0] || "");
+    setDestino(depositos.find((d) => d !== (userLoja || depositos[0])) || "");
   };
 
   const closeAll = () => {

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Perfume, Deposito } from "@/data/mockData";
@@ -51,9 +52,9 @@ function perfumeToRow(p: Perfume) {
     volume: p.volume,
     custo: p.custo,
     preco_venda: p.precoVenda,
-    estoque_casa: p.estoques.Casa,
-    estoque_sumauma: p.estoques["Sumaúma"],
-    estoque_amazonas: p.estoques.Amazonas,
+    estoque_casa: p.estoques?.["Casa"] ?? 0,
+    estoque_sumauma: p.estoques?.["Sumaúma"] ?? 0,
+    estoque_amazonas: p.estoques?.["Amazonas"] ?? 0,
     estoque_minimo: p.estoqueMinimo,
     classificacao: (p as any).classificacao || "Compartilhável",
     perfil_olfativo: p.perfilOlfativo || "",
@@ -63,16 +64,10 @@ function perfumeToRow(p: Perfume) {
   };
 }
 
-const depositoColumn: Record<Deposito, string> = {
-  Casa: "estoque_casa",
-  Sumaúma: "estoque_sumauma",
-  Amazonas: "estoque_amazonas",
-};
-
 export function usePerfumes() {
   const queryClient = useQueryClient();
 
-  const { data: perfumes = [], isLoading } = useQuery({
+  const { data: perfumesBase = [], isLoading } = useQuery({
     queryKey: ["perfumes"],
     queryFn: async () => {
       const PAGE_SIZE = 1000;
@@ -95,7 +90,60 @@ export function usePerfumes() {
     },
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["perfumes"] });
+  // Saldos por unidade (fonte de verdade: estoque_unidades)
+  const { data: estoquePorProduto } = useQuery({
+    queryKey: ["estoque_unidades"],
+    queryFn: async () => {
+      const { data: unidades, error: uErr } = await supabase
+        .from("unidades")
+        .select("id, codigo, codigo_legado")
+        .order("ordem");
+      if (uErr) throw uErr;
+      const chavePorId = new Map<string, string>(
+        (unidades || []).map((u: any) => [u.id, u.codigo_legado || u.codigo])
+      );
+
+      const PAGE_SIZE = 1000;
+      let from = 0;
+      const mapa = new Map<string, Record<string, number>>();
+      while (true) {
+        const { data, error } = await supabase
+          .from("estoque_unidades")
+          .select("produto_id, unidade_id, quantidade")
+          .range(from, from + PAGE_SIZE - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        for (const row of data as any[]) {
+          const chave = chavePorId.get(row.unidade_id);
+          if (!chave) continue;
+          const atual = mapa.get(row.produto_id) || {};
+          atual[chave] = row.quantidade ?? 0;
+          mapa.set(row.produto_id, atual);
+        }
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+      // garante que toda unidade apareça com 0 quando não há linha
+      return { mapa, chaves: Array.from(chavePorId.values()) };
+    },
+    staleTime: 30 * 1000,
+  });
+
+  const perfumes = useMemo(() => {
+    if (!estoquePorProduto) return perfumesBase;
+    const { mapa, chaves } = estoquePorProduto;
+    return perfumesBase.map((p) => {
+      const porUnidade = mapa.get(p.id) || {};
+      const estoques: Record<string, number> = {};
+      for (const c of chaves) estoques[c] = porUnidade[c] ?? 0;
+      return { ...p, estoques };
+    });
+  }, [perfumesBase, estoquePorProduto]);
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["perfumes"] });
+    queryClient.invalidateQueries({ queryKey: ["estoque_unidades"] });
+  };
 
   const atualizarPrecos = useMutation({
     mutationFn: async ({
@@ -152,8 +200,23 @@ export function usePerfumes() {
 
   const adicionarPerfume = useMutation({
     mutationFn: async (p: Perfume) => {
-      const { error } = await supabase.from("perfumes").insert(perfumeToRow(p));
+      const { data, error } = await supabase
+        .from("perfumes")
+        .insert(perfumeToRow(p))
+        .select("id")
+        .single();
       if (error) throw error;
+      // estoque inicial por unidade (via RPC transacional)
+      for (const [unidade, qtd] of Object.entries(p.estoques || {})) {
+        if (!qtd || qtd <= 0) continue;
+        const { error: rpcErr } = await supabase.rpc("fn_ajustar_saldo", {
+          p_produto_id: data.id,
+          p_unidade: unidade,
+          p_quantidade: qtd,
+          p_modo: "set",
+        });
+        if (rpcErr) throw rpcErr;
+      }
     },
     onSuccess: invalidate,
   });
@@ -166,55 +229,50 @@ export function usePerfumes() {
     onSuccess: invalidate,
   });
 
-  const atualizarEstoque = useMutation({
-    mutationFn: async ({
-      perfumeId,
-      deposito,
-      novaQuantidade,
-    }: {
-      perfumeId: string;
-      deposito: Deposito;
-      novaQuantidade: number;
-    }) => {
-      const col = depositoColumn[deposito];
-      const { error } = await supabase
-        .from("perfumes")
-        .update({ [col]: novaQuantidade })
-        .eq("id", perfumeId);
-      if (error) throw error;
-    },
-    onSuccess: invalidate,
-  });
-
-  // Set stock to an exact value (for Ajuste)
-  const ajustarEstoque = async (perfumeId: string, deposito: Deposito, novaQuantidade: number) => {
-    await atualizarEstoque.mutateAsync({
-      perfumeId,
-      deposito,
-      novaQuantidade: Math.max(0, novaQuantidade),
+  const ajustarSaldoRpc = async (
+    perfumeId: string,
+    deposito: Deposito,
+    quantidade: number,
+    modo: "set" | "delta"
+  ) => {
+    const { error } = await supabase.rpc("fn_ajustar_saldo", {
+      p_produto_id: perfumeId,
+      p_unidade: deposito,
+      p_quantidade: quantidade,
+      p_modo: modo,
     });
+    if (error) throw new Error(error.message);
+    invalidate();
   };
 
-  // Helper functions matching AppContext API
+  // Define o saldo exato (Ajuste)
+  const ajustarEstoque = async (perfumeId: string, deposito: Deposito, novaQuantidade: number) => {
+    await ajustarSaldoRpc(perfumeId, deposito, Math.max(0, novaQuantidade), "set");
+  };
+
   const baixarEstoque = async (perfumeId: string, deposito: Deposito, quantidade: number) => {
-    const p = perfumes.find((x) => x.id === perfumeId);
-    if (!p) return;
-    const atual = p.estoques[deposito];
-    await atualizarEstoque.mutateAsync({
-      perfumeId,
-      deposito,
-      novaQuantidade: Math.max(0, atual - quantidade),
-    });
+    await ajustarSaldoRpc(perfumeId, deposito, -Math.abs(quantidade), "delta");
   };
 
   const adicionarEstoque = async (perfumeId: string, deposito: Deposito, quantidade: number) => {
-    const p = perfumes.find((x) => x.id === perfumeId);
-    if (!p) return;
-    await atualizarEstoque.mutateAsync({
-      perfumeId,
-      deposito,
-      novaQuantidade: p.estoques[deposito] + quantidade,
+    await ajustarSaldoRpc(perfumeId, deposito, Math.abs(quantidade), "delta");
+  };
+
+  /** Baixa de venda: atômica e protegida contra concorrência (UPDATE condicional na RPC). */
+  const baixarVenda = async (
+    perfumeId: string,
+    deposito: Deposito,
+    quantidade: number,
+    isTeste = false
+  ) => {
+    const { error } = await supabase.rpc("fn_baixar_venda", {
+      p_produto_id: perfumeId,
+      p_unidade: deposito,
+      p_quantidade: Math.abs(quantidade),
+      p_is_teste: isTeste,
     });
+    if (error) throw new Error(error.message);
+    invalidate();
   };
 
   const transferirEstoque = async (
@@ -223,18 +281,13 @@ export function usePerfumes() {
     destino: Deposito,
     quantidade: number
   ) => {
-    const p = perfumes.find((x) => x.id === perfumeId);
-    if (!p) return;
-    const colOrigem = depositoColumn[origem];
-    const colDestino = depositoColumn[destino];
-    const { error } = await supabase
-      .from("perfumes")
-      .update({
-        [colOrigem]: Math.max(0, p.estoques[origem] - quantidade),
-        [colDestino]: p.estoques[destino] + quantidade,
-      })
-      .eq("id", perfumeId);
-    if (error) throw error;
+    const { error } = await supabase.rpc("fn_transferir", {
+      p_produto_id: perfumeId,
+      p_origem: origem,
+      p_destino: destino,
+      p_quantidade: Math.abs(quantidade),
+    });
+    if (error) throw new Error(error.message);
     invalidate();
   };
 
@@ -265,6 +318,7 @@ export function usePerfumes() {
     excluirPerfume: excluirPerfume.mutateAsync,
     atualizarPrecos: atualizarPrecos.mutateAsync,
     baixarEstoque,
+    baixarVenda,
     adicionarEstoque,
     ajustarEstoque,
     transferirEstoque,

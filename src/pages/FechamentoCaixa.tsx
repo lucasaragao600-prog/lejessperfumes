@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   DollarSign, ArrowDownCircle, ArrowUpCircle, X, Plus,
   Clock, CheckCircle2, AlertTriangle, Loader2, Store, User,
@@ -9,10 +9,11 @@ import { useCaixa, type CaixaSessao } from "@/hooks/useCaixa";
 import { useVendas } from "@/hooks/useVendas";
 import { formatCurrency, type Deposito } from "@/data/mockData";
 import { useNfce } from "@/hooks/useNfce";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function FechamentoCaixa() {
+  const { nomes: depositos } = useUnidades({ contexto: "operacional" });
   const { profile, user, role } = useAuth();
   const isMaster = role === "master";
   const userLoja = (role === "vendedor" && profile?.loja) ? profile.loja : null;
@@ -20,7 +21,10 @@ export default function FechamentoCaixa() {
   const { vendas, pagamentos: vendaPagamentos } = useVendas();
   const { configFiscal } = useNfce();
 
-  const [loja, setLoja] = useState<string>(userLoja || "Casa");
+  const [loja, setLoja] = useState<string>(userLoja || "");
+  useEffect(() => {
+    if (!loja && depositos.length > 0) setLoja(userLoja || depositos[0]);
+  }, [depositos.length]);
   const [valorAbertura, setValorAbertura] = useState(0);
   const [valorFechamento, setValorFechamento] = useState(0);
   const [obsFechamento, setObsFechamento] = useState("");

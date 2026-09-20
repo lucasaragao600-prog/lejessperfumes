@@ -13,8 +13,8 @@ import { useAuth } from "@/context/AuthContext";
 import type { VendaPagamento } from "@/hooks/useVendas";
 import { getHojeManaus } from "@/lib/dateUtils";
 import { calcularParcelamento, TAXAS_MDR, PARCELAS_SEM_JUROS_LIMITE } from "@/lib/parcelamento";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const hoje = getHojeManaus();
 const vendedorasFixas = ["Outra"];
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada"];
@@ -41,8 +41,9 @@ interface PagamentoItem {
 }
 
 export default function Vendas() {
+  const { todosNomes: depositos, nomes: depositosOperacionais, rotulo: rotuloUnidade } = useUnidades({ contexto: "historico" });
   const {
-    vendas, pagamentos, perfumes, baixarEstoque, adicionarEstoque,
+    vendas, pagamentos, perfumes, baixarVenda, adicionarEstoque,
     vendedoras: vendedorasCtx, adicionarVendaMulti, excluirVenda,
     concentracoesConfig
   } = useApp();
@@ -230,7 +231,7 @@ export default function Vendas() {
 
       if (vaiDescontar) {
         for (const item of carrinho) {
-          baixarEstoque(item.perfumeId, item.deposito, item.quantidade);
+          await baixarVenda(item.perfumeId, item.deposito, item.quantidade);
         }
       }
 
@@ -461,7 +462,7 @@ export default function Vendas() {
                   <select value={filtroDeposito} onChange={(e) => setFiltroDeposito(e.target.value as Deposito | "Todos")}
                     className="input-premium px-3 py-2.5 text-xs">
                     <option value="Todos">Depósito</option>
-                    {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
+                    {depositos.map((d) => <option key={d} value={d}>{rotuloUnidade(d)}</option>)}
                   </select>
                 ) : (
                   <div className="flex items-center justify-center kpi-card px-3 py-2.5 text-xs text-muted-foreground">
@@ -723,10 +724,10 @@ export default function Vendas() {
                     <select value={itemForm.deposito} onChange={(e) => setItemForm({ ...itemForm, deposito: e.target.value as Deposito })}
                       className="input-premium px-3 py-2.5 text-xs">
                       <option value="">Selecione</option>
-                      {depositos.map((d) => {
+                      {depositosOperacionais.map((d) => {
                         const selectedPerfume = perfumes.find((p) => p.id === itemForm.perfumeId);
                         const qtd = selectedPerfume ? selectedPerfume.estoques[d as Deposito] ?? 0 : null;
-                        return <option key={d} value={d}>{d}{qtd !== null ? ` (${qtd})` : ""}</option>;
+                        return <option key={d} value={d}>{rotuloUnidade(d)}{qtd !== null ? ` (${qtd})` : ""}</option>;
                       })}
                     </select>
                   )}

@@ -18,8 +18,8 @@ import { getHojeManaus } from "@/lib/dateUtils";
 import { ComprovantePreview, type ComprovanteData } from "@/components/ComprovantePrint";
 import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
 import { useCaixa } from "@/hooks/useCaixa";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada"];
 const bandeiras: Bandeira[] = ["Visa", "Mastercard", "Elo", "Amex", "Hipercard"];
 
@@ -51,8 +51,10 @@ type TipoDocumento = "comprovante" | "nfce";
 type FiscalAction = "none" | "nfce";
 
 export default function PDV({ onBack }: { onBack?: () => void }) {
+  const { unidadesVenda, emTeste: unidadeEmTeste } = useUnidades({ contexto: "operacional" });
+  const depositos = unidadesVenda.map((u) => u.codigoLegado || u.codigo);
   const {
-    perfumes, baixarEstoque, adicionarVendaMulti,
+    perfumes, baixarVenda, adicionarVendaMulti,
     vendedoras: vendedorasCtx, concentracoesConfig
   } = useApp();
   const { role, profile, user } = useAuth();
@@ -71,7 +73,10 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
 
   // Cart
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [deposito, setDeposito] = useState<Deposito>(userLoja || "Casa");
+  const [deposito, setDeposito] = useState<Deposito>(userLoja || "");
+  useEffect(() => {
+    if (!deposito && depositos.length > 0) setDeposito(userLoja || depositos[0]);
+  }, [depositos.length]);
   const [vendedora, setVendedora] = useState("");
   const [observacao, setObservacao] = useState("");
 
@@ -370,7 +375,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
       await adicionarVendaMulti({ itens, pagamentosVenda });
 
       for (const item of cart) {
-        baixarEstoque(item.perfumeId, item.deposito, item.quantidade);
+        await baixarVenda(item.perfumeId, item.deposito, item.quantidade);
       }
 
       // Generate comprovante data

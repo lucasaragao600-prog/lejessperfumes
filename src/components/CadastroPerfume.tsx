@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useUnidades } from "@/hooks/useUnidades";
 import { Plus, Settings, X, ChevronDown, ChevronUp, Calculator, Camera } from "lucide-react";
 import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import {
@@ -43,9 +44,10 @@ export default function CadastroPerfume({ onClose }: Props) {
   const [codigoBarras, setCodigoBarras] = useState("");
   const [scannerOpen, setScannerOpen] = useState(false);
   const [estoqueMinimo, setEstoqueMinimo] = useState("2");
-  const [estCasa, setEstCasa] = useState("0");
-  const [estSumauma, setEstSumauma] = useState("0");
-  const [estAmazonas, setEstAmazonas] = useState("0");
+  const { nomes: unidadesEstoque } = useUnidades({ contexto: "operacional" });
+  const [estoqueInicial, setEstoqueInicial] = useState<Record<string, string>>({});
+  const setEstoqueUnidade = (unidade: string, valor: string) =>
+    setEstoqueInicial((prev) => ({ ...prev, [unidade]: valor }));
   const [classificacao, setClassificacao] = useState<ClassificacaoPerfume>("Compartilhável");
   const [perfilOlfativo, setPerfilOlfativo] = useState("");
   const [notasSaida, setNotasSaida] = useState("");
@@ -160,11 +162,9 @@ export default function CadastroPerfume({ onClose }: Props) {
       volume,
       custo: custoFinal,
       precoVenda: parseFloat(precoVenda),
-      estoques: {
-        Casa: parseInt(estCasa) || 0,
-        Sumaúma: parseInt(estSumauma) || 0,
-        Amazonas: parseInt(estAmazonas) || 0,
-      },
+      estoques: Object.fromEntries(
+        unidadesEstoque.map((u) => [u, parseInt(estoqueInicial[u] || "0") || 0])
+      ),
       estoqueMinimo: parseInt(estoqueMinimo) || 2,
       classificacao,
       perfilOlfativo,
@@ -194,7 +194,7 @@ export default function CadastroPerfume({ onClose }: Props) {
     }
     // Registra histórico de custo discriminado se houve cálculo fiscal
     if (fiscalBreakdown) {
-      const qtdInicial = (parseInt(estCasa) || 0) + (parseInt(estSumauma) || 0) + (parseInt(estAmazonas) || 0);
+      const qtdInicial = unidadesEstoque.reduce((a, u) => a + (parseInt(estoqueInicial[u] || "0") || 0), 0);
       try {
         await registrarCusto({
           produtoId: novoId,
@@ -657,14 +657,14 @@ export default function CadastroPerfume({ onClose }: Props) {
             <div>
               <label className="text-xs text-muted-foreground mb-2 block">Estoque inicial por depósito</label>
               <div className="grid grid-cols-3 gap-2">
-                {[["Casa", estCasa, setEstCasa], ["Sumaúma", estSumauma, setEstSumauma], ["Amazonas", estAmazonas, setEstAmazonas]] .map(([label, val, setter]) => (
-                  <div key={label as string}>
-                    <p className="text-[10px] text-muted-foreground mb-1">{label as string}</p>
+                {unidadesEstoque.map((unidade) => (
+                  <div key={unidade}>
+                    <p className="text-[10px] text-muted-foreground mb-1">{unidade}</p>
                     <input
                       type="number"
                       min="0"
-                      value={val as string}
-                      onChange={(e) => (setter as (v: string) => void)(e.target.value)}
+                      value={estoqueInicial[unidade] ?? "0"}
+                      onChange={(e) => setEstoqueUnidade(unidade, e.target.value)}
                       className="w-full bg-surface border border-border rounded-xl px-2 py-2 text-sm text-foreground text-center focus:outline-none focus:border-gold-muted"
                     />
                   </div>

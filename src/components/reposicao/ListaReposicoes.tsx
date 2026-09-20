@@ -4,10 +4,11 @@ import { useReposicao, STATUS_META, type Reposicao, type ReposicaoStatus } from 
 import { formatarDataHora } from "@/lib/reposicaoUtils";
 import ReposicaoDetalhe from "./ReposicaoDetalhe";
 import type { Deposito } from "@/data/mockData";
+import { useUnidades } from "@/hooks/useUnidades";
 
-const DEPOSITOS: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function ListaReposicoes({ filtroStatus }: { filtroStatus?: ReposicaoStatus[] }) {
+  const { todosNomes: DEPOSITOS, rotulo: rotuloUnidade } = useUnidades({ contexto: "historico" });
   const { reposicoes, itens } = useReposicao();
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState<string>("todos");
@@ -58,11 +59,11 @@ export default function ListaReposicoes({ filtroStatus }: { filtroStatus?: Repos
           )}
           <select value={origem} onChange={(e) => setOrigem(e.target.value)} className="input-premium bg-surface text-foreground text-xs">
             <option value="todas">Toda origem</option>
-            {DEPOSITOS.map((d) => <option key={d} value={d}>{d}</option>)}
+            {DEPOSITOS.map((d) => <option key={d} value={d}>{rotuloUnidade(d)}</option>)}
           </select>
           <select value={destino} onChange={(e) => setDestino(e.target.value)} className="input-premium bg-surface text-foreground text-xs">
             <option value="todos">Todo destino</option>
-            {DEPOSITOS.map((d) => <option key={d} value={d}>{d}</option>)}
+            {DEPOSITOS.map((d) => <option key={d} value={d}>{rotuloUnidade(d)}</option>)}
           </select>
           <input type="date" value={de} onChange={(e) => setDe(e.target.value)} className="input-premium bg-surface text-foreground text-xs" />
           <input type="date" value={ate} onChange={(e) => setAte(e.target.value)} className="input-premium bg-surface text-foreground text-xs" />

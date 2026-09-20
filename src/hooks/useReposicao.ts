@@ -416,27 +416,19 @@ export function useReposicao() {
     }) => {
       if (p.reposicao.status === "finalizada") throw new Error("Reposição já finalizada.");
       const hoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Manaus" }).format(new Date());
-      const colunas: Record<string, string> = {
-        Casa: "estoque_casa",
-        "Sumaúma": "estoque_sumauma",
-        Amazonas: "estoque_amazonas",
-      };
-      const colOrigem = colunas[p.reposicao.origem];
-      const colDestino = colunas[p.reposicao.destino];
 
       for (const item of p.itensRep) {
         const qtd = item.quantidade_recebida ?? item.quantidade_enviada ?? item.quantidade_solicitada;
         if (!qtd || qtd <= 0) continue;
-        const est = p.estoques[item.produto_id] || {};
-        const atualOrigem = est[p.reposicao.origem] ?? 0;
-        const atualDestino = est[p.reposicao.destino] ?? 0;
-        const enviado = item.quantidade_enviada ?? item.quantidade_solicitada;
-        const baixa = Math.min(enviado, atualOrigem);
-        const { error } = await supabase
-          .from("perfumes")
-          .update({ [colOrigem]: Math.max(0, atualOrigem - baixa), [colDestino]: atualDestino + qtd })
-          .eq("id", item.produto_id);
-        if (error) throw error;
+        // Transferência transacional entre unidades (bloqueio e validação no banco)
+        const { error } = await supabase.rpc("fn_transferir", {
+          p_produto_id: item.produto_id,
+          p_origem: p.reposicao.origem,
+          p_destino: p.reposicao.destino,
+          p_quantidade: qtd,
+        });
+        if (error) throw new Error(error.message);
+
 
         const { error: movErr } = await supabase.from("movimentacoes").insert({
           data: hoje,

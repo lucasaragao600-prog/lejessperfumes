@@ -49,7 +49,8 @@ interface AppContextType {
   volumesPadrao: number[];
   setVolumesPadrao: (updater: React.SetStateAction<number[]>) => void;
   proximaLinhaPorCasa: (casaSigla: string) => number;
-  baixarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
+  baixarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => Promise<void>;
+  baixarVenda: (perfumeId: string, deposito: Deposito, quantidade: number, isTeste?: boolean) => Promise<void>;
   ajustarEstoque: (perfumeId: string, deposito: Deposito, novaQuantidade: number) => void;
   adicionarEstoque: (perfumeId: string, deposito: Deposito, quantidade: number) => void;
   transferirEstoque: (perfumeId: string, origem: Deposito, destino: Deposito, quantidade: number) => void;
@@ -71,6 +72,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     excluirPerfume: excluirPerfumeDB,
     atualizarPrecos: atualizarPrecosDB,
     baixarEstoque: baixarEstoqueDB,
+    baixarVenda: baixarVendaDB,
     adicionarEstoque: adicionarEstoqueDB,
     ajustarEstoque: ajustarEstoqueDB,
     transferirEstoque: transferirEstoqueDB,
@@ -84,9 +86,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const { vendedoras, adicionarVendedora: adicionarVendedoraDB, removerVendedora: removerVendedoraDB } = useVendedoras();
   const { tiposPerfumeConfig, concentracoesConfig, volumesPadrao, setTiposPerfumeConfig, setConcentracoesConfig, setVolumesPadrao } = useConfiguracoes();
 
-  const baixarEstoque = (perfumeId: string, deposito: Deposito, quantidade: number) => {
+  const baixarEstoque = (perfumeId: string, deposito: Deposito, quantidade: number) =>
     baixarEstoqueDB(perfumeId, deposito, quantidade);
-  };
+
+  const baixarVenda = (perfumeId: string, deposito: Deposito, quantidade: number, isTeste = false) =>
+    baixarVendaDB(perfumeId, deposito, quantidade, isTeste);
 
   const ajustarEstoque = (perfumeId: string, deposito: Deposito, novaQuantidade: number) => {
     ajustarEstoqueDB(perfumeId, deposito, novaQuantidade);
@@ -160,6 +164,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setVolumesPadrao,
         proximaLinhaPorCasa,
         baixarEstoque,
+        baixarVenda,
         ajustarEstoque,
         adicionarEstoque,
         transferirEstoque,

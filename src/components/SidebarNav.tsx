@@ -1,4 +1,4 @@
-import { Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon, Monitor, DollarSign, ClipboardList, LineChart, Sparkles, Truck } from "lucide-react";
+import { Building2, Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon, Monitor, DollarSign, ClipboardList, LineChart, Sparkles, Truck } from "lucide-react";
 import logoLeJess from "@/assets/logo-le-jess.png";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -27,6 +27,7 @@ const allTabs = [
   { id: "importar", label: "Importar", icon: FileSpreadsheet, masterOnly: true },
   { id: "configuracoes", label: "Configurações", icon: Settings, masterOnly: true },
   { id: "usuarios", label: "Usuários", icon: Users, masterOnly: true },
+  { id: "unidades", label: "Unidades", icon: Building2, masterOnly: true },
 ];
 
 export default function SidebarNav({ activeTab, onTabChange, isMaster = true }: SidebarNavProps) {

@@ -12,11 +12,12 @@ import HistoricoItem from "@/components/HistoricoItem";
 import { useCasas } from "@/hooks/useCasas";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { useUnidades } from "@/hooks/useUnidades";
 
 
-const depositos: Deposito[] = ["Casa", "Sumaúma", "Amazonas"];
 
 export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
+  const { todosNomes: depositos, rotulo: rotuloUnidade } = useUnidades({ contexto: "historico" });
   const { perfumes, testers, movimentacoes, vendas, tiposPerfumeConfig, concentracoesConfig, excluirPerfume } = useApp();
   const { casas } = useCasas();
   const { profile } = useAuth();
@@ -175,14 +176,12 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         acc.custo += qtd * p.custo;
         acc.venda += qtd * p.precoVenda;
         acc.unidades += qtd;
-        acc.casa += p.estoques.Casa;
-        acc.sumauma += p.estoques["Sumaúma"];
-        acc.amazonas += p.estoques.Amazonas;
+        for (const d of depositos) acc.porUnidade[d] = (acc.porUnidade[d] || 0) + (p.estoques[d] || 0);
         return acc;
       },
-      { custo: 0, venda: 0, unidades: 0, casa: 0, sumauma: 0, amazonas: 0 }
+      { custo: 0, venda: 0, unidades: 0, porUnidade: {} as Record<string, number> }
     );
-  }, [filtrados, effectiveDeposito, userLoja]);
+  }, [filtrados, effectiveDeposito, userLoja, depositos]);
 
   const alertas = perfumes.filter((p) => {
     if (userLoja) return p.estoques[userLoja] <= p.estoqueMinimo;
@@ -220,9 +219,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
       "Último Custo Em": p.ultimoCustoEm || "",
       "Preço Venda": p.precoVenda,
       "Estoque Total": Object.values(p.estoques).reduce((a, b) => a + b, 0),
-      "Estoque Casa": p.estoques.Casa,
-      "Estoque Sumaúma": p.estoques["Sumaúma"],
-      "Estoque Amazonas": p.estoques.Amazonas,
+      ...Object.fromEntries(depositos.map((d) => [`Estoque ${d}`, p.estoques[d] ?? 0])),
       "Estoque Mínimo": p.estoqueMinimo,
       NCM: p.ncm || "",
       CFOP: p.cfop || "",
@@ -429,9 +426,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         <div className="px-4 mb-3 grid grid-cols-4 gap-2">
           {[
             { label: "Total", value: totais.unidades },
-            { label: "Casa", value: totais.casa },
-            { label: "Sumaúma", value: totais.sumauma },
-            { label: "Amazonas", value: totais.amazonas },
+            ...depositos.map((d) => ({ label: rotuloUnidade(d).replace(" — Unidade Inativa", " (inativa)"), value: totais.porUnidade[d] || 0 })),
           ].map(({ label, value }) => (
             <div key={label} className="kpi-card p-3 text-center">
               <p className="text-[9px] text-muted-foreground mb-1">{label}</p>

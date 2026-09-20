@@ -1677,6 +1677,7 @@ export type Database = {
           desconto: number
           grupo_venda: string | null
           id: string
+          is_teste: boolean
           nfce_chave: string | null
           nfce_status: string | null
           observacao: string
@@ -1702,6 +1703,7 @@ export type Database = {
           desconto?: number
           grupo_venda?: string | null
           id?: string
+          is_teste?: boolean
           nfce_chave?: string | null
           nfce_status?: string | null
           observacao?: string
@@ -1727,6 +1729,7 @@ export type Database = {
           desconto?: number
           grupo_venda?: string | null
           id?: string
+          is_teste?: boolean
           nfce_chave?: string | null
           nfce_status?: string | null
           observacao?: string
@@ -1816,6 +1819,81 @@ export type Database = {
     Functions: {
       check_master_exists: { Args: never; Returns: boolean }
       claim_first_master: { Args: { p_user_id: string }; Returns: boolean }
+      fn_ajustar_saldo: {
+        Args: {
+          p_modo?: string
+          p_produto_id: string
+          p_quantidade: number
+          p_unidade: string
+        }
+        Returns: number
+      }
+      fn_baixar_venda: {
+        Args: {
+          p_is_teste?: boolean
+          p_produto_id: string
+          p_quantidade: number
+          p_unidade: string
+        }
+        Returns: number
+      }
+      fn_sync_estoque_legado: {
+        Args: { _produto_id: string; _unidade_id: string }
+        Returns: undefined
+      }
+      fn_transferir: {
+        Args: {
+          p_destino: string
+          p_origem: string
+          p_produto_id: string
+          p_quantidade: number
+        }
+        Returns: undefined
+      }
+      fn_unidade_por_texto: {
+        Args: { _txt: string }
+        Returns: {
+          bairro: string
+          cep: string
+          cidade: string
+          cnpj: string
+          codigo: string
+          codigo_legado: string | null
+          complemento: string
+          created_at: string
+          data_inauguracao: string | null
+          data_prevista_inauguracao: string | null
+          email: string
+          id: string
+          inativada_em: string | null
+          inscricao_estadual: string
+          logradouro: string
+          motivo_inativacao: string
+          nome: string
+          nome_exibicao: string
+          numero: string
+          ordem: number
+          permite_estoque: boolean
+          permite_transferencia: boolean
+          permite_venda: boolean
+          responsavel_id: string | null
+          status: string
+          telefone: string
+          tipo: string
+          uf: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "unidades"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      fn_validar_operacao_unidade: {
+        Args: { _operacao: string; _unidade_id: string }
+        Returns: undefined
+      }
       has_permission: {
         Args: { _permission: string; _user_id: string }
         Returns: boolean
