@@ -71,6 +71,13 @@
       "when": 1789939800704,
       "tag": "0009_fase8_testes_checklist_liberacao",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789939830025,
+      "tag": "0010_fase8_corrige_prontidao_status_estoque",
+      "breakpoints": true
     }
   ]
 }
