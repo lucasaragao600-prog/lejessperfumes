@@ -26,6 +26,7 @@ export type Database = {
           quantidade_anterior: number
           quantidade_nova: number
           registrado_por: string
+          unidade_id: string | null
           user_id: string | null
         }
         Insert: {
@@ -39,6 +40,7 @@ export type Database = {
           quantidade_anterior: number
           quantidade_nova: number
           registrado_por: string
+          unidade_id?: string | null
           user_id?: string | null
         }
         Update: {
@@ -52,9 +54,18 @@ export type Database = {
           quantidade_anterior?: number
           quantidade_nova?: number
           registrado_por?: string
+          unidade_id?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ajuste_auditoria_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       alertas_estoque: {
         Row: {
@@ -65,6 +76,7 @@ export type Database = {
           resolvido_em: string | null
           status: string
           tipo: string
+          unidade_id: string | null
         }
         Insert: {
           criado_em?: string
@@ -74,6 +86,7 @@ export type Database = {
           resolvido_em?: string | null
           status?: string
           tipo: string
+          unidade_id?: string | null
         }
         Update: {
           criado_em?: string
@@ -83,6 +96,7 @@ export type Database = {
           resolvido_em?: string | null
           status?: string
           tipo?: string
+          unidade_id?: string | null
         }
         Relationships: [
           {
@@ -90,6 +104,20 @@ export type Database = {
             columns: ["produto_id"]
             isOneToOne: false
             referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alertas_estoque_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "alertas_estoque_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
             referencedColumns: ["id"]
           },
         ]
@@ -176,6 +204,7 @@ export type Database = {
           operador_id: string
           operador_nome: string
           status: string
+          unidade_id: string | null
           valor_abertura: number
           valor_esperado: number | null
           valor_fechamento: number | null
@@ -190,6 +219,7 @@ export type Database = {
           operador_id: string
           operador_nome?: string
           status?: string
+          unidade_id?: string | null
           valor_abertura?: number
           valor_esperado?: number | null
           valor_fechamento?: number | null
@@ -204,11 +234,20 @@ export type Database = {
           operador_id?: string
           operador_nome?: string
           status?: string
+          unidade_id?: string | null
           valor_abertura?: number
           valor_esperado?: number | null
           valor_fechamento?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "caixa_sessoes_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       casas: {
         Row: {
@@ -312,6 +351,7 @@ export type Database = {
           serie_nfce: number
           telefone: string
           uf: string
+          unidade_id: string | null
           updated_at: string
         }
         Insert: {
@@ -337,6 +377,7 @@ export type Database = {
           serie_nfce?: number
           telefone?: string
           uf?: string
+          unidade_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -362,9 +403,82 @@ export type Database = {
           serie_nfce?: number
           telefone?: string
           uf?: string
+          unidade_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "configuracoes_fiscais_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      estoque_unidades: {
+        Row: {
+          created_at: string
+          data_ultima_entrada: string | null
+          data_ultima_saida: string | null
+          estoque_maximo: number | null
+          estoque_minimo: number
+          id: string
+          produto_id: string
+          quantidade: number
+          quantidade_reservada: number
+          unidade_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_ultima_entrada?: string | null
+          data_ultima_saida?: string | null
+          estoque_maximo?: number | null
+          estoque_minimo?: number
+          id?: string
+          produto_id: string
+          quantidade?: number
+          quantidade_reservada?: number
+          unidade_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_ultima_entrada?: string | null
+          data_ultima_saida?: string | null
+          estoque_maximo?: number | null
+          estoque_minimo?: number
+          id?: string
+          produto_id?: string
+          quantidade?: number
+          quantidade_reservada?: number
+          unidade_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_unidades_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_unidades_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "estoque_unidades_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       movimentacoes: {
         Row: {
@@ -380,6 +494,9 @@ export type Database = {
           quantidade: number
           registrado_por: string
           tipo: string
+          unidade_destino_id: string | null
+          unidade_id: string | null
+          unidade_origem_id: string | null
         }
         Insert: {
           created_at?: string
@@ -394,6 +511,9 @@ export type Database = {
           quantidade?: number
           registrado_por?: string
           tipo: string
+          unidade_destino_id?: string | null
+          unidade_id?: string | null
+          unidade_origem_id?: string | null
         }
         Update: {
           created_at?: string
@@ -408,6 +528,9 @@ export type Database = {
           quantidade?: number
           registrado_por?: string
           tipo?: string
+          unidade_destino_id?: string | null
+          unidade_id?: string | null
+          unidade_origem_id?: string | null
         }
         Relationships: [
           {
@@ -415,6 +538,34 @@ export type Database = {
             columns: ["perfume_id"]
             isOneToOne: false
             referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_perfume_id_fkey"
+            columns: ["perfume_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_unidade_destino_id_fkey"
+            columns: ["unidade_destino_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "movimentacoes_unidade_origem_id_fkey"
+            columns: ["unidade_origem_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
             referencedColumns: ["id"]
           },
         ]
@@ -434,6 +585,7 @@ export type Database = {
           protocolo_autorizacao: string | null
           serie: number | null
           status: string
+          unidade_id: string | null
           updated_at: string
           venda_grupo_venda: string
           xml_contingencia: string | null
@@ -453,6 +605,7 @@ export type Database = {
           protocolo_autorizacao?: string | null
           serie?: number | null
           status?: string
+          unidade_id?: string | null
           updated_at?: string
           venda_grupo_venda: string
           xml_contingencia?: string | null
@@ -472,12 +625,21 @@ export type Database = {
           protocolo_autorizacao?: string | null
           serie?: number | null
           status?: string
+          unidade_id?: string | null
           updated_at?: string
           venda_grupo_venda?: string
           xml_contingencia?: string | null
           xml_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "nfce_emissoes_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notas_fiscais: {
         Row: {
@@ -491,6 +653,7 @@ export type Database = {
           id: string
           numero: string
           status: string
+          unidade_destino_id: string | null
           xml_url: string | null
         }
         Insert: {
@@ -504,6 +667,7 @@ export type Database = {
           id?: string
           numero: string
           status?: string
+          unidade_destino_id?: string | null
           xml_url?: string | null
         }
         Update: {
@@ -517,9 +681,18 @@ export type Database = {
           id?: string
           numero?: string
           status?: string
+          unidade_destino_id?: string | null
           xml_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "notas_fiscais_unidade_destino_id_fkey"
+            columns: ["unidade_destino_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notas_fiscais_itens: {
         Row: {
@@ -590,6 +763,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "perfumes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_fiscais_itens_perfume_id_fkey"
+            columns: ["perfume_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
           },
         ]
       }
@@ -733,6 +913,13 @@ export type Database = {
             referencedRelation: "perfumes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "preco_historico_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
         ]
       }
       produto_custos: {
@@ -804,6 +991,13 @@ export type Database = {
             referencedRelation: "perfumes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "produto_custos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
         ]
       }
       produto_gtins: {
@@ -839,6 +1033,7 @@ export type Database = {
           id: string
           loja: string
           nome: string
+          unidade_id: string | null
           updated_at: string
           user_id: string
         }
@@ -847,6 +1042,7 @@ export type Database = {
           id?: string
           loja?: string
           nome?: string
+          unidade_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -855,10 +1051,19 @@ export type Database = {
           id?: string
           loja?: string
           nome?: string
+          unidade_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reposicao_conferencias: {
         Row: {
@@ -898,6 +1103,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "perfumes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reposicao_conferencias_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
           },
           {
             foreignKeyName: "reposicao_conferencias_reposicao_id_fkey"
@@ -967,6 +1179,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "perfumes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reposicao_divergencias_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
           },
           {
             foreignKeyName: "reposicao_divergencias_reposicao_id_fkey"
@@ -1067,6 +1286,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reposicao_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
             foreignKeyName: "reposicao_itens_reposicao_id_fkey"
             columns: ["reposicao_id"]
             isOneToOne: false
@@ -1099,6 +1325,8 @@ export type Database = {
           separado_por: string | null
           separado_por_nome: string | null
           status: string
+          unidade_destino_id: string | null
+          unidade_origem_id: string | null
           updated_at: string
         }
         Insert: {
@@ -1124,6 +1352,8 @@ export type Database = {
           separado_por?: string | null
           separado_por_nome?: string | null
           status?: string
+          unidade_destino_id?: string | null
+          unidade_origem_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -1149,9 +1379,26 @@ export type Database = {
           separado_por?: string | null
           separado_por_nome?: string | null
           status?: string
+          unidade_destino_id?: string | null
+          unidade_origem_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reposicoes_unidade_destino_id_fkey"
+            columns: ["unidade_destino_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reposicoes_unidade_origem_id_fkey"
+            columns: ["unidade_origem_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       role_permissions: {
         Row: {
@@ -1185,6 +1432,7 @@ export type Database = {
           perfume_nome: string
           quantidade: number
           registrado_por: string
+          unidade_id: string | null
         }
         Insert: {
           created_at?: string
@@ -1196,6 +1444,7 @@ export type Database = {
           perfume_nome: string
           quantidade?: number
           registrado_por?: string
+          unidade_id?: string | null
         }
         Update: {
           created_at?: string
@@ -1207,6 +1456,7 @@ export type Database = {
           perfume_nome?: string
           quantidade?: number
           registrado_por?: string
+          unidade_id?: string | null
         }
         Relationships: [
           {
@@ -1216,7 +1466,117 @@ export type Database = {
             referencedRelation: "perfumes"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "testers_perfume_id_fkey"
+            columns: ["perfume_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "testers_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      unidades: {
+        Row: {
+          bairro: string
+          cep: string
+          cidade: string
+          cnpj: string
+          codigo: string
+          codigo_legado: string | null
+          complemento: string
+          created_at: string
+          data_inauguracao: string | null
+          data_prevista_inauguracao: string | null
+          email: string
+          id: string
+          inativada_em: string | null
+          inscricao_estadual: string
+          logradouro: string
+          motivo_inativacao: string
+          nome: string
+          nome_exibicao: string
+          numero: string
+          ordem: number
+          permite_estoque: boolean
+          permite_transferencia: boolean
+          permite_venda: boolean
+          responsavel_id: string | null
+          status: string
+          telefone: string
+          tipo: string
+          uf: string
+          updated_at: string
+        }
+        Insert: {
+          bairro?: string
+          cep?: string
+          cidade?: string
+          cnpj?: string
+          codigo: string
+          codigo_legado?: string | null
+          complemento?: string
+          created_at?: string
+          data_inauguracao?: string | null
+          data_prevista_inauguracao?: string | null
+          email?: string
+          id?: string
+          inativada_em?: string | null
+          inscricao_estadual?: string
+          logradouro?: string
+          motivo_inativacao?: string
+          nome: string
+          nome_exibicao?: string
+          numero?: string
+          ordem?: number
+          permite_estoque?: boolean
+          permite_transferencia?: boolean
+          permite_venda?: boolean
+          responsavel_id?: string | null
+          status?: string
+          telefone?: string
+          tipo?: string
+          uf?: string
+          updated_at?: string
+        }
+        Update: {
+          bairro?: string
+          cep?: string
+          cidade?: string
+          cnpj?: string
+          codigo?: string
+          codigo_legado?: string | null
+          complemento?: string
+          created_at?: string
+          data_inauguracao?: string | null
+          data_prevista_inauguracao?: string | null
+          email?: string
+          id?: string
+          inativada_em?: string | null
+          inscricao_estadual?: string
+          logradouro?: string
+          motivo_inativacao?: string
+          nome?: string
+          nome_exibicao?: string
+          numero?: string
+          ordem?: number
+          permite_estoque?: boolean
+          permite_transferencia?: boolean
+          permite_venda?: boolean
+          responsavel_id?: string | null
+          status?: string
+          telefone?: string
+          tipo?: string
+          uf?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -1238,6 +1598,41 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      usuario_unidades: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          id: string
+          perfil_id: string | null
+          unidade_id: string
+          usuario_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          perfil_id?: string | null
+          unidade_id: string
+          usuario_id: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          perfil_id?: string | null
+          unidade_id?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_unidades_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       venda_pagamentos: {
         Row: {
@@ -1295,6 +1690,7 @@ export type Database = {
           tipo_documento: string
           tipo_pagamento: string
           total: number
+          unidade_id: string | null
           vendedora: string
         }
         Insert: {
@@ -1319,6 +1715,7 @@ export type Database = {
           tipo_documento?: string
           tipo_pagamento?: string
           total?: number
+          unidade_id?: string | null
           vendedora?: string
         }
         Update: {
@@ -1343,6 +1740,7 @@ export type Database = {
           tipo_documento?: string
           tipo_pagamento?: string
           total?: number
+          unidade_id?: string | null
           vendedora?: string
         }
         Relationships: [
@@ -1361,10 +1759,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "vendas_perfume_id_fkey"
+            columns: ["perfume_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
             foreignKeyName: "vendas_sessao_caixa_id_fkey"
             columns: ["sessao_caixa_id"]
             isOneToOne: false
             referencedRelation: "caixa_sessoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendas_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
             referencedColumns: ["id"]
           },
         ]
@@ -1389,7 +1801,17 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      perfumes_estoque_compat: {
+        Row: {
+          disponivel_total: number | null
+          estoque_amazonas: number | null
+          estoque_casa: number | null
+          estoque_sumauma: number | null
+          estoque_total: number | null
+          produto_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_master_exists: { Args: never; Returns: boolean }
@@ -1403,6 +1825,10 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      user_tem_unidade: {
+        Args: { _unidade_id: string; _user_id: string }
         Returns: boolean
       }
     }
