@@ -538,12 +538,14 @@ export type Database = {
           deposito_destino: string | null
           deposito_origem: string | null
           id: string
+          implantacao_id: string | null
           observacao: string | null
           perfume_id: string
           perfume_nome: string
           quantidade: number
           registrado_por: string
           tipo: string
+          transferencia_id: string | null
           unidade_destino_id: string | null
           unidade_id: string | null
           unidade_origem_id: string | null
@@ -555,12 +557,14 @@ export type Database = {
           deposito_destino?: string | null
           deposito_origem?: string | null
           id?: string
+          implantacao_id?: string | null
           observacao?: string | null
           perfume_id: string
           perfume_nome: string
           quantidade?: number
           registrado_por?: string
           tipo: string
+          transferencia_id?: string | null
           unidade_destino_id?: string | null
           unidade_id?: string | null
           unidade_origem_id?: string | null
@@ -572,12 +576,14 @@ export type Database = {
           deposito_destino?: string | null
           deposito_origem?: string | null
           id?: string
+          implantacao_id?: string | null
           observacao?: string | null
           perfume_id?: string
           perfume_nome?: string
           quantidade?: number
           registrado_por?: string
           tipo?: string
+          transferencia_id?: string | null
           unidade_destino_id?: string | null
           unidade_id?: string | null
           unidade_origem_id?: string | null
@@ -1553,6 +1559,219 @@ export type Database = {
           },
         ]
       }
+      transferencia_eventos: {
+        Row: {
+          created_at: string
+          dados: Json | null
+          detalhes: string
+          evento: string
+          id: string
+          transferencia_id: string
+          usuario_id: string | null
+          usuario_nome: string
+        }
+        Insert: {
+          created_at?: string
+          dados?: Json | null
+          detalhes?: string
+          evento: string
+          id?: string
+          transferencia_id: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Update: {
+          created_at?: string
+          dados?: Json | null
+          detalhes?: string
+          evento?: string
+          id?: string
+          transferencia_id?: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transferencia_eventos_transferencia_id_fkey"
+            columns: ["transferencia_id"]
+            isOneToOne: false
+            referencedRelation: "transferencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transferencia_itens: {
+        Row: {
+          created_at: string
+          id: string
+          produto_id: string
+          produto_nome: string
+          quantidade_enviada: number | null
+          quantidade_recebida: number | null
+          quantidade_separada: number | null
+          quantidade_solicitada: number
+          status: string
+          transferencia_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          produto_id: string
+          produto_nome?: string
+          quantidade_enviada?: number | null
+          quantidade_recebida?: number | null
+          quantidade_separada?: number | null
+          quantidade_solicitada: number
+          status?: string
+          transferencia_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          produto_id?: string
+          produto_nome?: string
+          quantidade_enviada?: number | null
+          quantidade_recebida?: number | null
+          quantidade_separada?: number | null
+          quantidade_solicitada?: number
+          status?: string
+          transferencia_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transferencia_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencia_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "transferencia_itens_transferencia_id_fkey"
+            columns: ["transferencia_id"]
+            isOneToOne: false
+            referencedRelation: "transferencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transferencia_sequencias: {
+        Row: {
+          ano: number
+          ultimo: number
+        }
+        Insert: {
+          ano: number
+          ultimo?: number
+        }
+        Update: {
+          ano?: number
+          ultimo?: number
+        }
+        Relationships: []
+      }
+      transferencias: {
+        Row: {
+          ano: number
+          cancelado_motivo: string
+          created_at: string
+          criado_por: string | null
+          criado_por_nome: string
+          destino_unidade_id: string
+          enviado_em: string | null
+          enviado_por: string | null
+          enviado_por_nome: string | null
+          id: string
+          implantacao_id: string | null
+          numero: string
+          observacao: string
+          origem_unidade_id: string
+          recebido_em: string | null
+          recebido_por: string | null
+          recebido_por_nome: string | null
+          separado_em: string | null
+          separado_por: string | null
+          separado_por_nome: string | null
+          status: string
+          transportador: string
+          updated_at: string
+        }
+        Insert: {
+          ano?: number
+          cancelado_motivo?: string
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string
+          destino_unidade_id: string
+          enviado_em?: string | null
+          enviado_por?: string | null
+          enviado_por_nome?: string | null
+          id?: string
+          implantacao_id?: string | null
+          numero: string
+          observacao?: string
+          origem_unidade_id: string
+          recebido_em?: string | null
+          recebido_por?: string | null
+          recebido_por_nome?: string | null
+          separado_em?: string | null
+          separado_por?: string | null
+          separado_por_nome?: string | null
+          status?: string
+          transportador?: string
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          cancelado_motivo?: string
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string
+          destino_unidade_id?: string
+          enviado_em?: string | null
+          enviado_por?: string | null
+          enviado_por_nome?: string | null
+          id?: string
+          implantacao_id?: string | null
+          numero?: string
+          observacao?: string
+          origem_unidade_id?: string
+          recebido_em?: string | null
+          recebido_por?: string | null
+          recebido_por_nome?: string | null
+          separado_em?: string | null
+          separado_por?: string | null
+          separado_por_nome?: string | null
+          status?: string
+          transportador?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transferencias_destino_unidade_id_fkey"
+            columns: ["destino_unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transferencias_origem_unidade_id_fkey"
+            columns: ["origem_unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       unidades: {
         Row: {
           bairro: string
@@ -1962,8 +2181,69 @@ export type Database = {
         }
         Returns: number
       }
+      fn_proximo_numero_transferencia: { Args: never; Returns: string }
       fn_sync_estoque_legado: {
         Args: { _produto_id: string; _unidade_id: string }
+        Returns: undefined
+      }
+      fn_transf_concluir_interna: {
+        Args: { p_id: string; p_modo: string }
+        Returns: undefined
+      }
+      fn_transf_evento: {
+        Args: {
+          p_dados?: Json
+          p_detalhes?: string
+          p_evento: string
+          p_transferencia_id: string
+        }
+        Returns: undefined
+      }
+      fn_transf_validar_rota: {
+        Args: { p_destino: string; p_origem: string }
+        Returns: undefined
+      }
+      fn_transferencia_cancelar: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: undefined
+      }
+      fn_transferencia_confirmar: { Args: { p_id: string }; Returns: undefined }
+      fn_transferencia_criar: {
+        Args: {
+          p_destino: string
+          p_implantacao_id?: string
+          p_itens: Json
+          p_observacao?: string
+          p_origem: string
+        }
+        Returns: string
+      }
+      fn_transferencia_enviar: {
+        Args: { p_id: string; p_observacao?: string; p_transportador?: string }
+        Returns: undefined
+      }
+      fn_transferencia_finalizar_separacao: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      fn_transferencia_iniciar_conferencia: {
+        Args: { p_id: string }
+        Returns: undefined
+      }
+      fn_transferencia_receber: {
+        Args: { p_conferencias: Json; p_id: string }
+        Returns: string
+      }
+      fn_transferencia_resolver_divergencia: {
+        Args: { p_id: string; p_justificativa: string; p_resolucao: string }
+        Returns: string
+      }
+      fn_transferencia_separar_item: {
+        Args: {
+          p_autorizado?: boolean
+          p_item_id: string
+          p_quantidade: number
+        }
         Returns: undefined
       }
       fn_transferir: {
