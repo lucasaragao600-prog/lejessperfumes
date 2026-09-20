@@ -51,9 +51,9 @@ function perfumeToRow(p: Perfume) {
     volume: p.volume,
     custo: p.custo,
     preco_venda: p.precoVenda,
-    estoque_casa: p.estoques.Casa,
-    estoque_sumauma: p.estoques["Sumaúma"],
-    estoque_amazonas: p.estoques.Amazonas,
+    estoque_casa: p.estoques?.["Casa"] ?? 0,
+    estoque_sumauma: p.estoques?.["Sumaúma"] ?? 0,
+    estoque_amazonas: p.estoques?.["Amazonas"] ?? 0,
     estoque_minimo: p.estoqueMinimo,
     classificacao: (p as any).classificacao || "Compartilhável",
     perfil_olfativo: p.perfilOlfativo || "",
@@ -63,16 +63,10 @@ function perfumeToRow(p: Perfume) {
   };
 }
 
-const depositoColumn: Record<Deposito, string> = {
-  Casa: "estoque_casa",
-  Sumaúma: "estoque_sumauma",
-  Amazonas: "estoque_amazonas",
-};
-
 export function usePerfumes() {
   const queryClient = useQueryClient();
 
-  const { data: perfumes = [], isLoading } = useQuery({
+  const { data: perfumesBase = [], isLoading } = useQuery({
     queryKey: ["perfumes"],
     queryFn: async () => {
       const PAGE_SIZE = 1000;
@@ -95,7 +89,60 @@ export function usePerfumes() {
     },
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["perfumes"] });
+  // Saldos por unidade (fonte de verdade: estoque_unidades)
+  const { data: estoquePorProduto } = useQuery({
+    queryKey: ["estoque_unidades"],
+    queryFn: async () => {
+      const { data: unidades, error: uErr } = await supabase
+        .from("unidades")
+        .select("id, codigo, codigo_legado")
+        .order("ordem");
+      if (uErr) throw uErr;
+      const chavePorId = new Map<string, string>(
+        (unidades || []).map((u: any) => [u.id, u.codigo_legado || u.codigo])
+      );
+
+      const PAGE_SIZE = 1000;
+      let from = 0;
+      const mapa = new Map<string, Record<string, number>>();
+      while (true) {
+        const { data, error } = await supabase
+          .from("estoque_unidades")
+          .select("produto_id, unidade_id, quantidade")
+          .range(from, from + PAGE_SIZE - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        for (const row of data as any[]) {
+          const chave = chavePorId.get(row.unidade_id);
+          if (!chave) continue;
+          const atual = mapa.get(row.produto_id) || {};
+          atual[chave] = row.quantidade ?? 0;
+          mapa.set(row.produto_id, atual);
+        }
+        if (data.length < PAGE_SIZE) break;
+        from += PAGE_SIZE;
+      }
+      // garante que toda unidade apareça com 0 quando não há linha
+      return { mapa, chaves: Array.from(chavePorId.values()) };
+    },
+    staleTime: 30 * 1000,
+  });
+
+  const perfumes = useMemo(() => {
+    if (!estoquePorProduto) return perfumesBase;
+    const { mapa, chaves } = estoquePorProduto;
+    return perfumesBase.map((p) => {
+      const porUnidade = mapa.get(p.id) || {};
+      const estoques: Record<string, number> = {};
+      for (const c of chaves) estoques[c] = porUnidade[c] ?? 0;
+      return { ...p, estoques };
+    });
+  }, [perfumesBase, estoquePorProduto]);
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["perfumes"] });
+    queryClient.invalidateQueries({ queryKey: ["estoque_unidades"] });
+  };
 
   const atualizarPrecos = useMutation({
     mutationFn: async ({
