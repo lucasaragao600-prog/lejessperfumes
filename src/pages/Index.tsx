@@ -12,6 +12,7 @@ import Configuracoes from "@/pages/Configuracoes";
 import Login from "@/pages/Login";
 import GerenciarUsuarios from "@/pages/GerenciarUsuarios";
 import Unidades from "@/pages/Unidades";
+import Implantacoes from "@/pages/Implantacoes";
 import ImportarPlanilha from "@/pages/ImportarPlanilha";
 import NotasFiscais from "@/pages/NotasFiscais";
 import Alertas from "@/pages/Alertas";
