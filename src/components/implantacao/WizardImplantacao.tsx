@@ -127,6 +127,37 @@ export default function WizardImplantacao({ implantacao, onVoltar }: Props) {
           return;
         }
       }
+
+      if (etapa.chave === "fiscal" && status === "CONCLUIDA" && unidade) {
+        const { data, error } = await supabase.rpc("fn_config_fiscal_unidade_ler", {
+          p_unidade_id: unidade.id,
+        });
+        if (error) throw error;
+        const c = data as {
+          cnpj?: string;
+          razao_social?: string;
+          csc_token_configurado?: boolean;
+        } | null;
+        if (!c?.cnpj || !c?.razao_social || !c?.csc_token_configurado) {
+          toast.error("Configuração fiscal incompleta", {
+            description: "Preencha CNPJ, razão social e o token do CSC desta unidade.",
+          });
+          return;
+        }
+      }
+
+      if (etapa.chave === "caixa" && status === "CONCLUIDA" && unidade) {
+        const { data, error } = await supabase
+          .from("caixa_config_unidade")
+          .select("id")
+          .eq("unidade_id", unidade.id)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) {
+          toast.error("Configure o caixa antes de concluir esta etapa");
+          return;
+        }
+      }
       await salvarEtapa(etapa.id, { status });
       toast.success("Etapa atualizada");
     } catch (e: unknown) {
