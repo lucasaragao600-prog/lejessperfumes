@@ -245,6 +245,10 @@ export default function WizardImplantacao({ implantacao, onVoltar }: Props) {
           </div>
         )}
 
+        {etapaAtiva === "estoque" && unidade && (
+          <EtapaEstoqueInicial implantacaoId={implantacao.id} unidadeId={unidade.id} />
+        )}
+
         {etapaAtiva === "equipamentos" && unidade && (
           <EtapaEquipamentos unidadeId={unidade.id} implantacaoId={implantacao.id} />
         )}
