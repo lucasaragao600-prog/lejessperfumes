@@ -122,6 +122,56 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          acao: string
+          created_at: string
+          dados_anteriores: Json | null
+          dados_novos: Json | null
+          entidade: string
+          entidade_id: string | null
+          id: string
+          ip: string
+          unidade_id: string | null
+          usuario_id: string | null
+          usuario_nome: string
+        }
+        Insert: {
+          acao: string
+          created_at?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          entidade?: string
+          entidade_id?: string | null
+          id?: string
+          ip?: string
+          unidade_id?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Update: {
+          acao?: string
+          created_at?: string
+          dados_anteriores?: Json | null
+          dados_novos?: Json | null
+          entidade?: string
+          entidade_id?: string | null
+          id?: string
+          ip?: string
+          unidade_id?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       auditoria_importacao: {
         Row: {
           arquivo_nome: string
@@ -880,6 +930,27 @@ export type Database = {
           },
         ]
       }
+      permissoes_catalogo: {
+        Row: {
+          chave: string
+          created_at: string
+          descricao: string
+          modulo: string
+        }
+        Insert: {
+          chave: string
+          created_at?: string
+          descricao?: string
+          modulo: string
+        }
+        Update: {
+          chave?: string
+          created_at?: string
+          descricao?: string
+          modulo?: string
+        }
+        Relationships: []
+      }
       preco_historico: {
         Row: {
           alterado_por: string
@@ -1599,6 +1670,48 @@ export type Database = {
         }
         Relationships: []
       }
+      usuario_unidade_permissoes: {
+        Row: {
+          concedido_por: string | null
+          created_at: string
+          id: string
+          permissao: string
+          unidade_id: string
+          usuario_id: string
+        }
+        Insert: {
+          concedido_por?: string | null
+          created_at?: string
+          id?: string
+          permissao: string
+          unidade_id: string
+          usuario_id: string
+        }
+        Update: {
+          concedido_por?: string | null
+          created_at?: string
+          id?: string
+          permissao?: string
+          unidade_id?: string
+          usuario_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usuario_unidade_permissoes_permissao_fkey"
+            columns: ["permissao"]
+            isOneToOne: false
+            referencedRelation: "permissoes_catalogo"
+            referencedColumns: ["chave"]
+          },
+          {
+            foreignKeyName: "usuario_unidade_permissoes_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       usuario_unidades: {
         Row: {
           ativo: boolean
@@ -1828,6 +1941,18 @@ export type Database = {
         }
         Returns: number
       }
+      fn_audit: {
+        Args: {
+          p_acao: string
+          p_dados_anteriores?: Json
+          p_dados_novos?: Json
+          p_entidade?: string
+          p_entidade_id?: string
+          p_ip?: string
+          p_unidade_id?: string
+        }
+        Returns: string
+      }
       fn_baixar_venda: {
         Args: {
           p_is_teste?: boolean
@@ -1907,6 +2032,14 @@ export type Database = {
       }
       user_tem_unidade: {
         Args: { _unidade_id: string; _user_id: string }
+        Returns: boolean
+      }
+      usuario_tem_acesso_unidade: {
+        Args: { _unidade_id: string }
+        Returns: boolean
+      }
+      usuario_tem_permissao: {
+        Args: { _permissao: string; _unidade_id: string }
         Returns: boolean
       }
     }

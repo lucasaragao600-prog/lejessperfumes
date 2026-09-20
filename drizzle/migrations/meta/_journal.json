@@ -15,6 +15,13 @@
       "when": 1789935180548,
       "tag": "0001_fase2_rpcs_estoque_unidades",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789935726984,
+      "tag": "0002_fase3_permissoes_rls_auditoria",
+      "breakpoints": true
     }
   ]
 }
