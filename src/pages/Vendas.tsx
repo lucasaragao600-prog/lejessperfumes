@@ -43,7 +43,7 @@ interface PagamentoItem {
 export default function Vendas() {
   const { todosNomes: depositos, nomes: depositosOperacionais, rotulo: rotuloUnidade } = useUnidades({ contexto: "historico" });
   const {
-    vendas, pagamentos, perfumes, baixarEstoque, adicionarEstoque,
+    vendas, pagamentos, perfumes, baixarVenda, adicionarEstoque,
     vendedoras: vendedorasCtx, adicionarVendaMulti, excluirVenda,
     concentracoesConfig
   } = useApp();
@@ -231,7 +231,7 @@ export default function Vendas() {
 
       if (vaiDescontar) {
         for (const item of carrinho) {
-          baixarEstoque(item.perfumeId, item.deposito, item.quantidade);
+          await baixarVenda(item.perfumeId, item.deposito, item.quantidade);
         }
       }
 

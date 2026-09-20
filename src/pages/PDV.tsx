@@ -54,7 +54,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   const { unidadesVenda, emTeste: unidadeEmTeste } = useUnidades({ contexto: "operacional" });
   const depositos = unidadesVenda.map((u) => u.codigoLegado || u.codigo);
   const {
-    perfumes, baixarEstoque, adicionarVendaMulti,
+    perfumes, baixarVenda, adicionarVendaMulti,
     vendedoras: vendedorasCtx, concentracoesConfig
   } = useApp();
   const { role, profile, user } = useAuth();
@@ -375,7 +375,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
       await adicionarVendaMulti({ itens, pagamentosVenda });
 
       for (const item of cart) {
-        baixarEstoque(item.perfumeId, item.deposito, item.quantidade);
+        await baixarVenda(item.perfumeId, item.deposito, item.quantidade);
       }
 
       // Generate comprovante data
