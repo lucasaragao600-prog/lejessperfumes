@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function QuickActionMenu({ perfume }: Props) {
-  const { nomes: depositos } = useUnidades({ contexto: "operacional" });
+  const { nomes: depositos, isLoading: unidadesLoading } = useUnidades({ contexto: "operacional" });
   const {
     baixarEstoque,
     adicionarEstoque,
@@ -52,6 +52,19 @@ export default function QuickActionMenu({ perfume }: Props) {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
+  useEffect(() => {
+    if (depositos.length === 0) return;
+    const primeiraUnidade = depositos[0] as Deposito;
+    const unidadeDoUsuario = userLoja && depositos.includes(userLoja) ? userLoja : null;
+    const unidadeInicial = unidadeDoUsuario || primeiraUnidade;
+
+    if (!depositos.includes(deposito)) setDeposito(unidadeInicial);
+    if (!depositos.includes(origem)) setOrigem(unidadeInicial);
+    if (!depositos.includes(destino) || destino === unidadeInicial) {
+      setDestino((depositos.find((d) => d !== unidadeInicial) || "") as Deposito);
+    }
+  }, [depositos, deposito, destino, origem, userLoja]);
+
   const getTesterQtd = (dep: Deposito) =>
     testers.filter(t => t.perfumeId === perfume.id && t.deposito === dep)
       .reduce((a, t) => a + t.quantidade, 0);
@@ -83,6 +96,17 @@ export default function QuickActionMenu({ perfume }: Props) {
 
   const handleSalvar = async () => {
     if (!acao) return;
+    const unidadePrincipal = acao === "Saída Tester" || acao === "Transferência" || acao === "Transferência Tester"
+      ? origem
+      : deposito;
+    if (unidadesLoading || !unidadePrincipal || !depositos.includes(unidadePrincipal)) {
+      toast.error(unidadesLoading ? "Aguarde o carregamento das unidades." : "Selecione uma unidade válida.");
+      return;
+    }
+    if ((acao === "Transferência" || acao === "Transferência Tester") && (!destino || !depositos.includes(destino))) {
+      toast.error("Selecione uma unidade de destino válida.");
+      return;
+    }
     const qtdNum = quantidade === "" ? NaN : Number(quantidade);
     if (isNaN(qtdNum) || qtdNum < 0 || (acao !== "Ajuste" && qtdNum < 1)) {
       toast.error("Quantidade inválida");
@@ -155,7 +179,7 @@ export default function QuickActionMenu({ perfume }: Props) {
           return;
         }
         await baixarEstoque(perfume.id, origem, qtdNum);
-        adicionarTester(perfume.id, origem, qtdNum);
+        await adicionarTester(perfume.id, origem, qtdNum);
         await adicionarMovimentacao({
           id: `m${Date.now()}`, data: hoje, tipo: "Saída Tester",
           perfumeId: perfume.id, perfumeNome: perfume.nome,
@@ -342,8 +366,8 @@ export default function QuickActionMenu({ perfume }: Props) {
 
             <div className="flex gap-2 mt-5">
               <button onClick={closeAll} className="btn-secondary flex-1 py-2 text-xs">Cancelar</button>
-              <button onClick={handleSalvar} disabled={saving} className="btn-primary flex-1 py-2 text-xs disabled:opacity-60">
-                {saving ? "Salvando..." : "Confirmar"}
+              <button onClick={handleSalvar} disabled={saving || unidadesLoading || depositos.length === 0} className="btn-primary flex-1 py-2 text-xs disabled:opacity-60">
+                {unidadesLoading ? "Carregando unidades..." : saving ? "Salvando..." : "Confirmar"}
               </button>
             </div>
           </div>

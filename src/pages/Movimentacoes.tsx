@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { getHojeManaus } from "@/lib/dateUtils";
 
 function formatHoraManaus(iso?: string): string {
@@ -37,7 +37,7 @@ const tipoConfig: Record<string, { icon: any; color: string; bg: string }> = {
 const tipoConfigDefault = { icon: RefreshCw, color: "text-muted-foreground", bg: "bg-muted/10 border-border" };
 
 export default function Movimentacoes() {
-  const { nomes: depositos, todosNomes: depositosHistorico, rotulo: rotuloUnidade } = useUnidades({ contexto: "operacional" });
+  const { nomes: depositos, todosNomes: depositosHistorico, rotulo: rotuloUnidade, isLoading: unidadesLoading } = useUnidades({ contexto: "operacional" });
   const { movimentacoes, perfumes, baixarEstoque, adicionarEstoque, ajustarEstoque, transferirEstoque, adicionarTester, adicionarMovimentacao, concentracoesConfig } = useApp();
   const { profile, role } = useAuth();
   const isMaster = role === "master";
@@ -65,6 +65,21 @@ export default function Movimentacoes() {
   } | null>(null);
   const [motivoAjuste, setMotivoAjuste] = useState("");
   const [salvandoAjuste, setSalvandoAjuste] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    if (depositos.length === 0) return;
+    const unidadeDoUsuario = userLoja && depositos.includes(userLoja) ? userLoja : null;
+    const unidadeInicial = (unidadeDoUsuario || depositos[0]) as Deposito;
+    setForm((atual) => ({
+      ...atual,
+      deposito: depositos.includes(atual.deposito) ? atual.deposito : unidadeInicial,
+      depositoOrigem: depositos.includes(atual.depositoOrigem) ? atual.depositoOrigem : unidadeInicial,
+      depositoDestino: depositos.includes(atual.depositoDestino)
+        ? atual.depositoDestino
+        : (depositos.find((d) => d !== unidadeInicial) || "") as Deposito | "",
+    }));
+  }, [depositos, userLoja]);
 
   const filtradas = useMemo(() => {
     let result = movimentacoes.filter((m) => {
@@ -79,7 +94,8 @@ export default function Movimentacoes() {
   }, [movimentacoes, filtroTipo, busca, ordenacao]);
 
   const executarSalvar = async (motivoAjusteConfirmado?: string) => {
-    const p = perfumes.find((x) => x.id === form.perfumeId)!;
+    const p = perfumes.find((x) => x.id === form.perfumeId);
+    if (!p) throw new Error("Produto não encontrado.");
     const hoje = getHojeManaus();
     const estoqueAtual = form.tipo === "Ajuste" ? p.estoques[form.deposito as Deposito] : 0;
     const diferencaAjuste = form.tipo === "Ajuste" ? form.quantidade - estoqueAtual : 0;
@@ -104,14 +120,14 @@ export default function Movimentacoes() {
     };
 
     if (form.tipo === "Saída Tester") {
-      baixarEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
-      adicionarTester(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
+      await baixarEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
+      await adicionarTester(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
     } else if (form.tipo === "Transferência") {
-      transferirEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.depositoDestino as Deposito, form.quantidade);
+      await transferirEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.depositoDestino as Deposito, form.quantidade);
     } else if (form.tipo === "Entrada") {
-      adicionarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
+      await adicionarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
     } else if (form.tipo === "Ajuste") {
-      ajustarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
+      await ajustarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
       // Registra auditoria
       const { data: userData } = await supabase.auth.getUser();
       await supabase.from("ajuste_auditoria").insert({
@@ -133,13 +149,21 @@ export default function Movimentacoes() {
   };
 
   const handleSalvar = async () => {
+    if (unidadesLoading) {
+      toast.error("Aguarde o carregamento das unidades.");
+      return;
+    }
     if (!form.perfumeId) return;
     if (form.tipo !== "Ajuste" && form.quantidade < 1) return;
     if (form.tipo === "Saída Tester" && !form.depositoOrigem) return;
     if (form.tipo === "Transferência" && (!form.depositoOrigem || !form.depositoDestino)) return;
     if (form.tipo !== "Transferência" && form.tipo !== "Saída Tester" && !form.deposito) return;
 
-    const p = perfumes.find((x) => x.id === form.perfumeId)!;
+    const p = perfumes.find((x) => x.id === form.perfumeId);
+    if (!p) {
+      toast.error("Produto não encontrado.");
+      return;
+    }
 
     if (form.tipo === "Saída Tester") {
       const est = p.estoques[form.depositoOrigem as Deposito];
@@ -173,7 +197,15 @@ export default function Movimentacoes() {
       return;
     }
 
-    await executarSalvar();
+    setSalvando(true);
+    try {
+      await executarSalvar();
+      toast.success("Movimentação registrada com sucesso.");
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao registrar movimentação.");
+    } finally {
+      setSalvando(false);
+    }
   };
 
   const confirmarAjuste = async () => {
@@ -372,8 +404,8 @@ export default function Movimentacoes() {
               <button onClick={() => setShowForm(false)} className="btn-secondary flex-1 py-2.5">
                 Cancelar
               </button>
-              <button onClick={handleSalvar} disabled={!form.perfumeId} className="btn-primary flex-1 py-2.5">
-                Salvar
+              <button onClick={handleSalvar} disabled={!form.perfumeId || salvando || unidadesLoading || depositos.length === 0} className="btn-primary flex-1 py-2.5">
+                {unidadesLoading ? "Carregando unidades..." : salvando ? "Salvando..." : "Salvar"}
               </button>
             </div>
           </div>
