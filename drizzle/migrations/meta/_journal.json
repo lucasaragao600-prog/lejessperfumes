@@ -85,6 +85,13 @@
       "when": 1789939930446,
       "tag": "0011_fase8_modo_teste_permite_venda",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789940135386,
+      "tag": "0012_fix_trg_set_unidade_id",
+      "breakpoints": true
     }
   ]
 }
