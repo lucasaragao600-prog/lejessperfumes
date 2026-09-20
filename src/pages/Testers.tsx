@@ -101,7 +101,7 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
               className={`kpi-card p-3 text-left transition-all duration-150 ${
                 filtroDeposito === d ? "!border-gold-muted" : ""
               }`}>
-              <p className={`text-[9px] mb-1 ${filtroDeposito === d ? "text-gold" : "text-muted-foreground"}`}>{d}</p>
+              <p className={`text-[9px] mb-1 ${filtroDeposito === d ? "text-gold" : "text-muted-foreground"}`}>{rotuloUnidade(d)}</p>
               <p className={`text-sm font-bold ${filtroDeposito === d ? "text-gold" : "text-foreground"}`}>
                 {resumoPorDeposito[d]?.qtd ?? 0} <span className="text-[9px] font-normal">un.</span>
               </p>
@@ -148,7 +148,7 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
             <div>
               <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Depósito de origem</label>
               <div className="grid grid-cols-3 gap-2">
-                {depositos.map((d) => (
+                {depositosOperacionais.map((d) => (
                   <button key={d}
                     onClick={() => setForm({ ...form, deposito: d })}
                     className={`py-2.5 rounded-xl text-xs font-medium border transition-all duration-150 ${

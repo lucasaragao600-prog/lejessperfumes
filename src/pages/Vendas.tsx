@@ -462,7 +462,7 @@ export default function Vendas() {
                   <select value={filtroDeposito} onChange={(e) => setFiltroDeposito(e.target.value as Deposito | "Todos")}
                     className="input-premium px-3 py-2.5 text-xs">
                     <option value="Todos">Depósito</option>
-                    {depositos.map((d) => <option key={d} value={d}>{d}</option>)}
+                    {depositos.map((d) => <option key={d} value={d}>{rotuloUnidade(d)}</option>)}
                   </select>
                 ) : (
                   <div className="flex items-center justify-center kpi-card px-3 py-2.5 text-xs text-muted-foreground">
@@ -724,10 +724,10 @@ export default function Vendas() {
                     <select value={itemForm.deposito} onChange={(e) => setItemForm({ ...itemForm, deposito: e.target.value as Deposito })}
                       className="input-premium px-3 py-2.5 text-xs">
                       <option value="">Selecione</option>
-                      {depositos.map((d) => {
+                      {depositosOperacionais.map((d) => {
                         const selectedPerfume = perfumes.find((p) => p.id === itemForm.perfumeId);
                         const qtd = selectedPerfume ? selectedPerfume.estoques[d as Deposito] ?? 0 : null;
-                        return <option key={d} value={d}>{d}{qtd !== null ? ` (${qtd})` : ""}</option>;
+                        return <option key={d} value={d}>{rotuloUnidade(d)}{qtd !== null ? ` (${qtd})` : ""}</option>;
                       })}
                     </select>
                   )}

@@ -189,7 +189,7 @@ export default function Relatorios() {
               <SelectTrigger className="bg-surface"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {DEPOSITOS.map((d) => (
-                  <SelectItem key={d} value={d}>{d === "todos" ? "Todos" : d}</SelectItem>
+                  <SelectItem key={d} value={d}>{d === "todos" ? "Todos" : rotuloUnidade(d)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
