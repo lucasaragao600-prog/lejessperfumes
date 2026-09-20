@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
   DollarSign, ArrowDownCircle, ArrowUpCircle, X, Plus,
   Clock, CheckCircle2, AlertTriangle, Loader2, Store, User,

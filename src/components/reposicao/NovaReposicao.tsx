@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Plus, Minus, Trash2, Camera, Search, Loader2, PackagePlus } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/context/AppContext";
