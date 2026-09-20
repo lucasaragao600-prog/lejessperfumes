@@ -74,9 +74,11 @@ export interface Equipamento {
 
 export const ETAPAS_IMPLEMENTADAS = [
   "cadastro",
+  "fiscal",
   "estrutura",
   "usuarios",
   "estoque",
+  "caixa",
   "equipamentos",
 ];
 

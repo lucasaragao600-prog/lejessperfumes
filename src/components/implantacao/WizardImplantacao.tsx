@@ -14,6 +14,8 @@ import AcessosUnidade from "@/components/admin/AcessosUnidade";
 import EtapaEstrutura from "./EtapaEstrutura";
 import EtapaEquipamentos from "./EtapaEquipamentos";
 import EtapaEstoqueInicial from "./EtapaEstoqueInicial";
+import EtapaFiscal from "./EtapaFiscal";
+import EtapaCaixa from "./EtapaCaixa";
 import { registrarAuditoria } from "@/lib/audit";
 
 interface Props {
@@ -122,6 +124,37 @@ export default function WizardImplantacao({ implantacao, onVoltar }: Props) {
           toast.error("Ainda há carga pendente ou divergência aberta", {
             description: `${r?.pendentes ?? 0} item(ns) pendente(s) e ${r?.divergencias ?? 0} divergência(s).`,
           });
+          return;
+        }
+      }
+
+      if (etapa.chave === "fiscal" && status === "CONCLUIDA" && unidade) {
+        const { data, error } = await supabase.rpc("fn_config_fiscal_unidade_ler", {
+          p_unidade_id: unidade.id,
+        });
+        if (error) throw error;
+        const c = data as {
+          cnpj?: string;
+          razao_social?: string;
+          csc_token_configurado?: boolean;
+        } | null;
+        if (!c?.cnpj || !c?.razao_social || !c?.csc_token_configurado) {
+          toast.error("Configuração fiscal incompleta", {
+            description: "Preencha CNPJ, razão social e o token do CSC desta unidade.",
+          });
+          return;
+        }
+      }
+
+      if (etapa.chave === "caixa" && status === "CONCLUIDA" && unidade) {
+        const { data, error } = await supabase
+          .from("caixa_config_unidade")
+          .select("id")
+          .eq("unidade_id", unidade.id)
+          .maybeSingle();
+        if (error) throw error;
+        if (!data) {
+          toast.error("Configure o caixa antes de concluir esta etapa");
           return;
         }
       }
@@ -235,6 +268,10 @@ export default function WizardImplantacao({ implantacao, onVoltar }: Props) {
             </button>
           </div>
         )}
+
+        {etapaAtiva === "fiscal" && unidade && <EtapaFiscal unidadeId={unidade.id} />}
+
+        {etapaAtiva === "caixa" && unidade && <EtapaCaixa unidadeId={unidade.id} />}
 
         {etapaAtiva === "estrutura" && (
           <EtapaEstrutura
