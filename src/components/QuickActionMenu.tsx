@@ -21,7 +21,7 @@ export default function QuickActionMenu({ perfume }: Props) {
     adicionarEstoque,
     ajustarEstoque,
     transferirEstoque,
-    adicionarTester,
+    registrarSaidaTester,
     adicionarTesterDB,
     ajustarTesterDB,
     adicionarMovimentacao,
@@ -178,14 +178,13 @@ export default function QuickActionMenu({ perfume }: Props) {
           setSaving(false);
           return;
         }
-        await baixarEstoque(perfume.id, origem, qtdNum);
-        await adicionarTester(perfume.id, origem, qtdNum);
-        await adicionarMovimentacao({
-          id: `m${Date.now()}`, data: hoje, tipo: "Saída Tester",
-          perfumeId: perfume.id, perfumeNome: perfume.nome,
-          quantidade: qtdNum, deposito: origem, depositoOrigem: origem,
-          observacao: obs || undefined, registradoPor,
-        } as any);
+        await registrarSaidaTester({
+          perfumeId: perfume.id,
+          deposito: origem,
+          quantidade: qtdNum,
+          registradoPor,
+          observacao: obs,
+        });
         toast.success(`${qtdNum} un. movidas p/ Tester (${origem})`);
       } else if (acao === "Transferência Tester") {
         const qtdOrigem = getTesterQtd(origem);

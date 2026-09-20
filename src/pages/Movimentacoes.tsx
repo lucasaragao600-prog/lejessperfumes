@@ -38,7 +38,7 @@ const tipoConfigDefault = { icon: RefreshCw, color: "text-muted-foreground", bg:
 
 export default function Movimentacoes() {
   const { nomes: depositos, todosNomes: depositosHistorico, rotulo: rotuloUnidade, isLoading: unidadesLoading } = useUnidades({ contexto: "operacional" });
-  const { movimentacoes, perfumes, baixarEstoque, adicionarEstoque, ajustarEstoque, transferirEstoque, adicionarTester, adicionarMovimentacao, concentracoesConfig } = useApp();
+  const { movimentacoes, perfumes, adicionarEstoque, ajustarEstoque, transferirEstoque, registrarSaidaTester, adicionarMovimentacao, concentracoesConfig } = useApp();
   const { profile, role } = useAuth();
   const isMaster = role === "master";
   const userLoja = (!isMaster && profile?.loja) ? profile.loja as Deposito : null;
@@ -120,8 +120,13 @@ export default function Movimentacoes() {
     };
 
     if (form.tipo === "Saída Tester") {
-      await baixarEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
-      await adicionarTester(form.perfumeId, form.depositoOrigem as Deposito, form.quantidade);
+      await registrarSaidaTester({
+        perfumeId: form.perfumeId,
+        deposito: form.depositoOrigem as Deposito,
+        quantidade: form.quantidade,
+        registradoPor: profile?.nome || "Desconhecido",
+        observacao: form.observacao,
+      });
     } else if (form.tipo === "Transferência") {
       await transferirEstoque(form.perfumeId, form.depositoOrigem as Deposito, form.depositoDestino as Deposito, form.quantidade);
     } else if (form.tipo === "Entrada") {
@@ -143,7 +148,7 @@ export default function Movimentacoes() {
       });
     }
 
-    await adicionarMovimentacao(nova);
+    if (form.tipo !== "Saída Tester") await adicionarMovimentacao(nova);
     setForm({ tipo: "Entrada", perfumeId: "", deposito: userLoja || "", depositoOrigem: userLoja || "", depositoDestino: "", quantidade: 1, observacao: "" });
     setShowForm(false);
   };

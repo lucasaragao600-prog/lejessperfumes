@@ -11,7 +11,7 @@ import { toast } from "sonner";
 export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
   const { todosNomes: depositos, unidadesEstoque, rotulo: rotuloUnidade, isLoading: unidadesLoading } = useUnidades({ contexto: "historico" });
   const depositosOperacionais = useMemo(() => unidadesEstoque.map(chaveUnidade), [unidadesEstoque]);
-  const { testers, perfumes, baixarEstoque, adicionarTesterDB, removerTesterDB, ajustarTesterDB, concentracoesConfig } = useApp();
+  const { testers, perfumes, registrarSaidaTester, removerTesterDB, ajustarTesterDB, concentracoesConfig } = useApp();
   const { profile } = useAuth();
   const [busca, setBusca] = useState("");
   const [filtroDeposito, setFiltroDeposito] = useState<Deposito | "Todos">("Todos");
@@ -62,22 +62,12 @@ export default function Testers({ isMaster = true }: { isMaster?: boolean }) {
     }
     setSalvando(true);
     try {
-      if (!inventariar) {
-        const estoqueAtual = p.estoques[deposito] ?? 0;
-        if (estoqueAtual < form.quantidade) {
-          toast.error(`Estoque insuficiente em ${deposito}. Disponível: ${estoqueAtual}`);
-          return;
-        }
-        await baixarEstoque(form.perfumeId, deposito, form.quantidade);
-      }
-      await adicionarTesterDB({
+      await registrarSaidaTester({
         perfumeId: p.id,
-        perfumeNome: p.nome,
-        marca: p.marca,
         deposito,
         quantidade: form.quantidade,
-        custo: p.custo,
         registradoPor: profile?.nome || "Desconhecido",
+        baixarEstoque: !inventariar,
       });
       setForm({ perfumeId: "", deposito: "", quantidade: 1 });
       setInventariar(false);
