@@ -16,6 +16,7 @@ const allTabs = [
   { id: "nfce-pendentes", label: "NFC-e", icon: FileText, masterOnly: false },
   { id: "movimentacoes", label: "Movimentações", icon: ArrowLeftRight, masterOnly: false },
   { id: "reposicao", label: "Reposição", icon: Truck, masterOnly: false },
+  { id: "transferencias", label: "Transferências", icon: ArrowLeftRight, masterOnly: false },
   
   { id: "testers", label: "Testers", icon: FlaskConical, masterOnly: false },
   { id: "caixa", label: "Caixa", icon: DollarSign, masterOnly: false },

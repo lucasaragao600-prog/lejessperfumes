@@ -20,6 +20,7 @@ import FechamentoCaixa from "@/pages/FechamentoCaixa";
 import PedidosVenda from "@/pages/PedidosVenda";
 import NfcePendentes from "@/pages/NfcePendentes";
 import Reposicao from "@/pages/Reposicao";
+import Transferencias from "@/pages/Transferencias";
 
 import Relatorios from "@/pages/Relatorios";
 import InteligenciaOperacional from "@/pages/InteligenciaOperacional";
@@ -129,6 +130,7 @@ function IndexContent({
       case "pedidos": return <PedidosVenda />;
       case "nfce-pendentes": return <NfcePendentes />;
       case "reposicao": return <Reposicao />
+      case "transferencias": return <Transferencias />;
       case "configuracoes": return isMaster ? <Configuracoes /> : <Estoque isMaster={false} />;
       case "usuarios": return isMaster ? <GerenciarUsuarios /> : <Estoque isMaster={false} />;
       case "unidades": return isMaster ? <Unidades /> : <Estoque isMaster={false} />;
