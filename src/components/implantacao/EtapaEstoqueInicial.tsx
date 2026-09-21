@@ -347,6 +347,22 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
             onChange={(e) => setMotivo(e.target.value)}
           />
         )}
+
+        {tipo === "TESTER" && (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Registre os frascos que ficarão abertos no balcão da nova unidade.
+            </p>
+            <label className="inline-flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={testerBaixarEstoque}
+                onChange={(e) => setTesterBaixarEstoque(e.target.checked)}
+              />
+              Descontar do estoque da unidade (desmarcado: apenas inventariar)
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Busca de produtos */}
