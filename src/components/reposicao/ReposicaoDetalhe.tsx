@@ -12,7 +12,7 @@ import ProdutoFoto from "@/components/ProdutoFoto";
 export default function ReposicaoDetalhe({ reposicao, onClose }: { reposicao: Reposicao; onClose: () => void }) {
   const { perfumes } = useApp();
   const { profile, user } = useAuth();
-  const { can } = usePermissoes();
+  const { can, isMaster } = usePermissoes();
   const {
     reposicoes,
     itens,
@@ -20,9 +20,11 @@ export default function ReposicaoDetalhe({ reposicao, onClose }: { reposicao: Re
     historico,
     salvarSeparacao,
     confirmarEnvio,
+    pularConferencia,
     finalizar,
     cancelar,
   } = useReposicao();
+
 
   const rep = reposicoes.find((r) => r.id === reposicao.id) || reposicao;
   const usuario = { id: user?.id, nome: profile?.nome || user?.email || "Sistema" };
