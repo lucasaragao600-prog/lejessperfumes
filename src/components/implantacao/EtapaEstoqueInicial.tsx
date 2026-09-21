@@ -68,6 +68,7 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
   const [fornecedor, setFornecedor] = useState({ nome: "", nota: "", data: "", lote: "", custo: "" });
   const [motivo, setMotivo] = useState("");
   const [ocupado, setOcupado] = useState(false);
+  const [testerBaixarEstoque, setTesterBaixarEstoque] = useState(false);
 
   const origens = useMemo(
     () =>
