@@ -155,6 +155,29 @@ export default function ReposicaoDetalhe({ reposicao, onClose }: { reposicao: Re
             </button>
           </div>
 
+          {isMaster && ["em_transito", "aguardando_conferencia", "em_conferencia", "com_divergencia"].includes(rep.status) && (
+            <div className="rounded-xl border border-gold/50 bg-gold/10 p-3 space-y-2">
+              <p className="text-xs font-semibold text-gold">Acesso Master</p>
+              <p className="text-[11px] text-muted-foreground">
+                Dispensa a conferência: tudo é considerado recebido conforme o enviado e as divergências pendentes são aprovadas.
+              </p>
+              <button
+                onClick={() => {
+                  if (!window.confirm("Dispensar a conferência desta reposição?")) return;
+                  acao(
+                    () => pularConferencia({ reposicao: rep, itensRep: meusItens, usuario }),
+                    "Conferência dispensada. Reposição pronta para finalizar."
+                  );
+                }}
+                disabled={carregando}
+                className="btn-primary w-full md:w-auto px-4 py-2.5 text-xs flex items-center justify-center gap-2"
+              >
+                {carregando ? <Loader2 size={14} className="animate-spin" /> : <FastForward size={14} />} Pular conferência
+              </button>
+            </div>
+          )}
+
+
           {grupos.map((g) => (
             <div key={g.categoria} className="space-y-2">
               <p className="text-xs font-semibold text-gold tracking-wide">{g.categoria}</p>
@@ -242,21 +265,6 @@ export default function ReposicaoDetalhe({ reposicao, onClose }: { reposicao: Re
             {rep.status === "pronta_envio" && can("reposicao_enviar") && (
               <button onClick={enviar} disabled={carregando} className="btn-primary px-4 py-2.5 text-xs flex items-center gap-2">
                 {carregando ? <Loader2 size={14} className="animate-spin" /> : <Truck size={14} />} Confirmar envio
-              </button>
-            )}
-            {isMaster && ["em_transito", "aguardando_conferencia", "em_conferencia"].includes(rep.status) && (
-              <button
-                onClick={() => {
-                  if (!window.confirm("Dispensar a conferência? Tudo será considerado recebido conforme o enviado.")) return;
-                  acao(
-                    () => pularConferencia({ reposicao: rep, itensRep: meusItens, usuario }),
-                    "Conferência dispensada. Reposição pronta para finalizar."
-                  );
-                }}
-                disabled={carregando}
-                className="btn-secondary px-4 py-2.5 text-xs flex items-center gap-2"
-              >
-                {carregando ? <Loader2 size={14} className="animate-spin" /> : <FastForward size={14} />} Pular conferência (Master)
               </button>
             )}
 
