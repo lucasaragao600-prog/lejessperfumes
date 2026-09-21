@@ -493,7 +493,13 @@ export function useReposicao() {
         if (movErr) throw movErr;
       }
 
+      await supabase
+        .from("reposicao_itens")
+        .update({ status: "recebido" })
+        .eq("reposicao_id", p.reposicao.id);
+
       const { error } = await supabase
+
         .from("reposicoes")
         .update({
           status: "finalizada",
