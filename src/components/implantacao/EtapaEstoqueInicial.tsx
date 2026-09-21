@@ -430,6 +430,42 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
         })}
       </div>
 
+      {/* Testers da unidade */}
+      {tipo === "TESTER" && (
+        <div className="rounded-lg border border-border bg-card p-3 space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <SprayCan className="w-4 h-4 text-primary" /> Testers já registrados nesta unidade
+          </div>
+          {testersUnidade.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum tester registrado ainda.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 text-muted-foreground">
+                  <tr>
+                    {["Produto", "Marca", "Quantidade", "Registrado por"].map((h) => (
+                      <th key={h} className="px-3 py-2 text-left font-medium whitespace-nowrap">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {testersUnidade.map((t) => (
+                    <tr key={t.id} className="border-t border-border text-foreground">
+                      <td className="px-3 py-2">{t.perfume_nome}</td>
+                      <td className="px-3 py-2">{t.marca}</td>
+                      <td className="px-3 py-2">{t.quantidade}</td>
+                      <td className="px-3 py-2">{t.registrado_por || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Resumo */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
