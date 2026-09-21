@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Loader2, Search, Truck, PackagePlus, ShieldAlert, RefreshCw } from "lucide-react";
+import { Plus, Loader2, Search, Truck, PackagePlus, ShieldAlert, RefreshCw, SprayCan } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,7 @@ import { useUnidades, type Unidade } from "@/hooks/useUnidades";
 import { useEstoqueUnidade } from "@/hooks/useTransferencias";
 import ProdutoFoto from "@/components/ProdutoFoto";
 
-type Tipo = "TRANSFERENCIA" | "FORNECEDOR" | "MANUAL";
+type Tipo = "TRANSFERENCIA" | "FORNECEDOR" | "MANUAL" | "TESTER";
 
 interface ItemCarga {
   id: string;
