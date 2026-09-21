@@ -141,6 +141,38 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
     const qtd = quantidades[produtoId] || 0;
     if (qtd <= 0) return toast.error("Informe a quantidade");
 
+    if (tipo === "TESTER") {
+      setOcupado(true);
+      try {
+        const { data: userRes } = await supabase.auth.getUser();
+        const { data: perfil } = await supabase
+          .from("profiles")
+          .select("nome")
+          .eq("user_id", userRes.user?.id || "")
+          .maybeSingle();
+
+        const { error } = await supabase.rpc("fn_saida_tester", {
+          p_produto_id: produtoId,
+          p_unidade: unidadeId,
+          p_quantidade: qtd,
+          p_registrado_por: perfil?.nome || "",
+          p_observacao: "Tester da carga inicial da unidade",
+          p_baixar_estoque: testerBaixarEstoque,
+        });
+        if (error) throw error;
+        setQuantidades({ ...quantidades, [produtoId]: 0 });
+        recarregar();
+        toast.success("Tester registrado para a unidade");
+      } catch (e: unknown) {
+        toast.error("Não foi possível registrar o tester", {
+          description: (e as Error)?.message,
+        });
+      } finally {
+        setOcupado(false);
+      }
+      return;
+    }
+
     if (tipo === "TRANSFERENCIA") {
       if (!origem) return toast.error("Escolha a unidade de origem");
       const disp = estoqueOrigem?.get(produtoId)?.disponivel ?? 0;
