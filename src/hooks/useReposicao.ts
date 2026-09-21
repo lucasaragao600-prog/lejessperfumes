@@ -378,7 +378,17 @@ export function useReposicao() {
           .eq("id", item.id);
         if (error) throw error;
       }
+      await supabase
+        .from("reposicao_divergencias")
+        .update({
+          aprovado_por: p.usuario.id ?? null,
+          aprovado_por_nome: p.usuario.nome,
+          aprovado_em: new Date().toISOString(),
+        })
+        .eq("reposicao_id", p.reposicao.id)
+        .is("aprovado_em", null);
       const { error } = await supabase
+
         .from("reposicoes")
         .update({
           status: "conferida",
