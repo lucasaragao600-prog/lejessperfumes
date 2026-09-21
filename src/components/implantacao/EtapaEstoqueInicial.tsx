@@ -97,11 +97,27 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
     },
   });
 
+  const { data: testersUnidade = [] } = useQuery({
+    queryKey: ["implantacao-testers", unidadeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("testers")
+        .select("id, perfume_nome, marca, quantidade, registrado_por")
+        .eq("unidade_id", unidadeId)
+        .order("perfume_nome");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const recarregar = () => {
     qc.invalidateQueries({ queryKey: ["implantacao-estoque", implantacaoId] });
     qc.invalidateQueries({ queryKey: ["estoque-unidades"] });
+    qc.invalidateQueries({ queryKey: ["estoque_unidades"] });
     qc.invalidateQueries({ queryKey: ["perfumes"] });
     qc.invalidateQueries({ queryKey: ["transferencias"] });
+    qc.invalidateQueries({ queryKey: ["testers"] });
+    qc.invalidateQueries({ queryKey: ["implantacao-testers", unidadeId] });
   };
 
   const resultados = useMemo(() => {
