@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Loader2, Search, Truck, PackagePlus, ShieldAlert, RefreshCw } from "lucide-react";
+import { Plus, Loader2, Search, Truck, PackagePlus, ShieldAlert, RefreshCw, SprayCan } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +8,7 @@ import { useUnidades, type Unidade } from "@/hooks/useUnidades";
 import { useEstoqueUnidade } from "@/hooks/useTransferencias";
 import ProdutoFoto from "@/components/ProdutoFoto";
 
-type Tipo = "TRANSFERENCIA" | "FORNECEDOR" | "MANUAL";
+type Tipo = "TRANSFERENCIA" | "FORNECEDOR" | "MANUAL" | "TESTER";
 
 interface ItemCarga {
   id: string;
@@ -68,6 +68,7 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
   const [fornecedor, setFornecedor] = useState({ nome: "", nota: "", data: "", lote: "", custo: "" });
   const [motivo, setMotivo] = useState("");
   const [ocupado, setOcupado] = useState(false);
+  const [testerBaixarEstoque, setTesterBaixarEstoque] = useState(false);
 
   const origens = useMemo(
     () =>
@@ -96,11 +97,27 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
     },
   });
 
+  const { data: testersUnidade = [] } = useQuery({
+    queryKey: ["implantacao-testers", unidadeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("testers")
+        .select("id, perfume_nome, marca, quantidade, registrado_por")
+        .eq("unidade_id", unidadeId)
+        .order("perfume_nome");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
   const recarregar = () => {
     qc.invalidateQueries({ queryKey: ["implantacao-estoque", implantacaoId] });
     qc.invalidateQueries({ queryKey: ["estoque-unidades"] });
+    qc.invalidateQueries({ queryKey: ["estoque_unidades"] });
     qc.invalidateQueries({ queryKey: ["perfumes"] });
     qc.invalidateQueries({ queryKey: ["transferencias"] });
+    qc.invalidateQueries({ queryKey: ["testers"] });
+    qc.invalidateQueries({ queryKey: ["implantacao-testers", unidadeId] });
   };
 
   const resultados = useMemo(() => {
@@ -123,6 +140,38 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
     if (!produto) return;
     const qtd = quantidades[produtoId] || 0;
     if (qtd <= 0) return toast.error("Informe a quantidade");
+
+    if (tipo === "TESTER") {
+      setOcupado(true);
+      try {
+        const { data: userRes } = await supabase.auth.getUser();
+        const { data: perfil } = await supabase
+          .from("profiles")
+          .select("nome")
+          .eq("user_id", userRes.user?.id || "")
+          .maybeSingle();
+
+        const { error } = await supabase.rpc("fn_saida_tester", {
+          p_produto_id: produtoId,
+          p_unidade: unidadeId,
+          p_quantidade: qtd,
+          p_registrado_por: perfil?.nome || "",
+          p_observacao: "Tester da carga inicial da unidade",
+          p_baixar_estoque: testerBaixarEstoque,
+        });
+        if (error) throw error;
+        setQuantidades({ ...quantidades, [produtoId]: 0 });
+        recarregar();
+        toast.success("Tester registrado para a unidade");
+      } catch (e: unknown) {
+        toast.error("Não foi possível registrar o tester", {
+          description: (e as Error)?.message,
+        });
+      } finally {
+        setOcupado(false);
+      }
+      return;
+    }
 
     if (tipo === "TRANSFERENCIA") {
       if (!origem) return toast.error("Escolha a unidade de origem");
@@ -225,6 +274,7 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
               ["TRANSFERENCIA", "Transferência de outra unidade", Truck],
               ["FORNECEDOR", "Entrada de fornecedor", PackagePlus],
               ["MANUAL", "Carga manual autorizada", ShieldAlert],
+              ["TESTER", "Testers da loja", SprayCan],
             ] as [Tipo, string, typeof Truck][]
           ).map(([valor, rotulo, Icone]) => (
             <button
@@ -297,6 +347,22 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
             onChange={(e) => setMotivo(e.target.value)}
           />
         )}
+
+        {tipo === "TESTER" && (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              Registre os frascos que ficarão abertos no balcão da nova unidade.
+            </p>
+            <label className="inline-flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={testerBaixarEstoque}
+                onChange={(e) => setTesterBaixarEstoque(e.target.checked)}
+              />
+              Descontar do estoque da unidade (desmarcado: apenas inventariar)
+            </label>
+          </div>
+        )}
       </div>
 
       {/* Busca de produtos */}
@@ -363,6 +429,42 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
           );
         })}
       </div>
+
+      {/* Testers da unidade */}
+      {tipo === "TESTER" && (
+        <div className="rounded-lg border border-border bg-card p-3 space-y-2">
+          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+            <SprayCan className="w-4 h-4 text-primary" /> Testers já registrados nesta unidade
+          </div>
+          {testersUnidade.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nenhum tester registrado ainda.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 text-muted-foreground">
+                  <tr>
+                    {["Produto", "Marca", "Quantidade", "Registrado por"].map((h) => (
+                      <th key={h} className="px-3 py-2 text-left font-medium whitespace-nowrap">
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {testersUnidade.map((t) => (
+                    <tr key={t.id} className="border-t border-border text-foreground">
+                      <td className="px-3 py-2">{t.perfume_nome}</td>
+                      <td className="px-3 py-2">{t.marca}</td>
+                      <td className="px-3 py-2">{t.quantidade}</td>
+                      <td className="px-3 py-2">{t.registrado_por || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Resumo */}
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
