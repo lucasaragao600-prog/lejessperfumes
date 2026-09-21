@@ -134,6 +134,7 @@ export function useReposicao() {
     qc.invalidateQueries({ queryKey: ["reposicao_divergencias"] });
     qc.invalidateQueries({ queryKey: ["reposicao_historico"] });
     qc.invalidateQueries({ queryKey: ["perfumes"] });
+    qc.invalidateQueries({ queryKey: ["estoque_unidades"] });
     qc.invalidateQueries({ queryKey: ["movimentacoes"] });
   };
 
