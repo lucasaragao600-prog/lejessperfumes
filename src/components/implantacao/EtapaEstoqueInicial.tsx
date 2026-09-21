@@ -274,6 +274,7 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
               ["TRANSFERENCIA", "Transferência de outra unidade", Truck],
               ["FORNECEDOR", "Entrada de fornecedor", PackagePlus],
               ["MANUAL", "Carga manual autorizada", ShieldAlert],
+              ["TESTER", "Testers da loja", SprayCan],
             ] as [Tipo, string, typeof Truck][]
           ).map(([valor, rotulo, Icone]) => (
             <button
