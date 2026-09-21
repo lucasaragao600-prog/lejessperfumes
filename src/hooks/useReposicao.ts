@@ -360,7 +360,46 @@ export function useReposicao() {
     onSuccess: invalidate,
   });
 
+  /** Master: dispensa a conferência cega e considera tudo recebido conforme enviado. */
+  const pularConferencia = useMutation({
+    mutationFn: async (p: {
+      reposicao: Reposicao;
+      itensRep: ReposicaoItem[];
+      usuario: { id?: string | null; nome: string };
+      motivo?: string;
+    }) => {
+      if (["finalizada", "cancelada"].includes(p.reposicao.status))
+        throw new Error("Esta reposição não pode mais ser conferida.");
+      for (const item of p.itensRep) {
+        const qtd = item.quantidade_enviada ?? item.quantidade_separada ?? item.quantidade_solicitada;
+        const { error } = await supabase
+          .from("reposicao_itens")
+          .update({ quantidade_recebida: qtd })
+          .eq("id", item.id);
+        if (error) throw error;
+      }
+      const { error } = await supabase
+        .from("reposicoes")
+        .update({
+          status: "conferida",
+          recebido_por: p.usuario.id ?? null,
+          recebido_por_nome: p.usuario.nome,
+          recebido_em: new Date().toISOString(),
+        })
+        .eq("id", p.reposicao.id);
+      if (error) throw error;
+      await log(
+        p.reposicao.id,
+        p.usuario,
+        "Conferência dispensada pelo Master",
+        p.motivo?.trim() || "Recebimento considerado conforme o enviado"
+      );
+    },
+    onSuccess: invalidate,
+  });
+
   const registrarDivergencia = useMutation({
+
     mutationFn: async (p: {
       reposicao_id: string;
       produto_id: string | null;
@@ -504,6 +543,8 @@ export function useReposicao() {
     registrarConferencia: registrarConferencia.mutateAsync,
     removerConferencia: removerConferencia.mutateAsync,
     finalizarConferencia: finalizarConferencia.mutateAsync,
+    pularConferencia: pularConferencia.mutateAsync,
+
     registrarDivergencia: registrarDivergencia.mutateAsync,
     aprovarDivergencia: aprovarDivergencia.mutateAsync,
     finalizar: finalizar.mutateAsync,

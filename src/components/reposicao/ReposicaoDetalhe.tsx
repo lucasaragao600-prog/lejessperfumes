@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { X, Copy, FileDown, Truck, PackageCheck, CheckCircle2, XCircle, Loader2, Clock } from "lucide-react";
+import { X, Copy, FileDown, Truck, PackageCheck, CheckCircle2, XCircle, Loader2, Clock, FastForward } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
@@ -12,7 +12,7 @@ import ProdutoFoto from "@/components/ProdutoFoto";
 export default function ReposicaoDetalhe({ reposicao, onClose }: { reposicao: Reposicao; onClose: () => void }) {
   const { perfumes } = useApp();
   const { profile, user } = useAuth();
-  const { can } = usePermissoes();
+  const { can, isMaster } = usePermissoes();
   const {
     reposicoes,
     itens,
@@ -20,9 +20,11 @@ export default function ReposicaoDetalhe({ reposicao, onClose }: { reposicao: Re
     historico,
     salvarSeparacao,
     confirmarEnvio,
+    pularConferencia,
     finalizar,
     cancelar,
   } = useReposicao();
+
 
   const rep = reposicoes.find((r) => r.id === reposicao.id) || reposicao;
   const usuario = { id: user?.id, nome: profile?.nome || user?.email || "Sistema" };
@@ -242,6 +244,22 @@ export default function ReposicaoDetalhe({ reposicao, onClose }: { reposicao: Re
                 {carregando ? <Loader2 size={14} className="animate-spin" /> : <Truck size={14} />} Confirmar envio
               </button>
             )}
+            {isMaster && ["em_transito", "aguardando_conferencia", "em_conferencia"].includes(rep.status) && (
+              <button
+                onClick={() => {
+                  if (!window.confirm("Dispensar a conferência? Tudo será considerado recebido conforme o enviado.")) return;
+                  acao(
+                    () => pularConferencia({ reposicao: rep, itensRep: meusItens, usuario }),
+                    "Conferência dispensada. Reposição pronta para finalizar."
+                  );
+                }}
+                disabled={carregando}
+                className="btn-secondary px-4 py-2.5 text-xs flex items-center gap-2"
+              >
+                {carregando ? <Loader2 size={14} className="animate-spin" /> : <FastForward size={14} />} Pular conferência (Master)
+              </button>
+            )}
+
             {podeFinalizar && (
               <button onClick={finalizarRep} disabled={carregando} className="btn-primary px-4 py-2.5 text-xs flex items-center gap-2">
                 {carregando ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />} Finalizar e movimentar estoque
