@@ -86,9 +86,12 @@ export function useTesters() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["testers"] }),
         queryClient.invalidateQueries({ queryKey: ["perfumes"] }),
+        queryClient.invalidateQueries({ queryKey: ["estoque_unidades"] }),
         queryClient.invalidateQueries({ queryKey: ["movimentacoes"] }),
+        queryClient.refetchQueries({ queryKey: ["estoque_unidades"], type: "active" }),
       ]);
     },
+
   });
 
   const removerTester = useMutation({
