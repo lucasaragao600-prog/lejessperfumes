@@ -60,8 +60,8 @@ export default function QuickActionMenu({ perfume }: Props) {
 
     if (!depositos.includes(deposito)) setDeposito(unidadeInicial);
     if (!depositos.includes(origem)) setOrigem(unidadeInicial);
-    if (!depositos.includes(destino) || destino === unidadeInicial) {
-      setDestino((depositos.find((d) => d !== unidadeInicial) || "") as Deposito);
+    if (!depositos.includes(destino) || destino === origem) {
+      setDestino((depositos.find((d) => d !== origem) || "") as Deposito);
     }
   }, [depositos, deposito, destino, origem, userLoja]);
 
