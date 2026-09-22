@@ -106,6 +106,13 @@
       "when": 1790120961601,
       "tag": "0014_permitir_ajuste_estoque_em_implantacao",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1790120991315,
+      "tag": "0015_permitir_transferencia_origem_implantacao_master",
+      "breakpoints": true
     }
   ]
 }
