@@ -3,6 +3,7 @@ import { Camera, Loader2, Minus, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/context/AppContext";
 import { useUnidades } from "@/hooks/useUnidades";
+import { usePermissoes } from "@/hooks/usePermissoes";
 import { useEstoqueUnidade, useTransferencias, type NovoItemTransferencia } from "@/hooks/useTransferencias";
 import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import ProdutoFoto from "@/components/ProdutoFoto";
