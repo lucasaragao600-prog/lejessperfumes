@@ -3,6 +3,7 @@ import { Camera, Loader2, Minus, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/context/AppContext";
 import { useUnidades } from "@/hooks/useUnidades";
+import { usePermissoes } from "@/hooks/usePermissoes";
 import { useEstoqueUnidade, useTransferencias, type NovoItemTransferencia } from "@/hooks/useTransferencias";
 import { BarcodeScannerDialog } from "@/components/BarcodeScannerDialog";
 import ProdutoFoto from "@/components/ProdutoFoto";
@@ -16,9 +17,13 @@ interface Props {
 
 export default function NovaTransferencia({ onCriada, implantacaoId = null }: Props) {
   const { unidadesTransferencia } = useUnidades({ contexto: "operacional" });
-  const elegiveis = unidadesTransferencia.filter(
-    (u) => u.status !== "EM_IMPLANTACAO" && u.status !== "EM_CONFIGURACAO"
-  );
+  const { isMaster } = usePermissoes();
+  // Master pode enviar de unidade em implantação (correção de carga inicial).
+  const elegiveis = isMaster
+    ? unidadesTransferencia
+    : unidadesTransferencia.filter(
+        (u) => u.status !== "EM_IMPLANTACAO" && u.status !== "EM_CONFIGURACAO"
+      );
   const { perfumes, tiposPerfumeConfig, concentracoesConfig } = useApp();
   const { criar } = useTransferencias();
 
