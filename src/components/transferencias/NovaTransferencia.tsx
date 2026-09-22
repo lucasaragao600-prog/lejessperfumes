@@ -16,9 +16,13 @@ interface Props {
 
 export default function NovaTransferencia({ onCriada, implantacaoId = null }: Props) {
   const { unidadesTransferencia } = useUnidades({ contexto: "operacional" });
-  const elegiveis = unidadesTransferencia.filter(
-    (u) => u.status !== "EM_IMPLANTACAO" && u.status !== "EM_CONFIGURACAO"
-  );
+  const { isMaster } = usePermissoes();
+  // Master pode enviar de unidade em implantação (correção de carga inicial).
+  const elegiveis = isMaster
+    ? unidadesTransferencia
+    : unidadesTransferencia.filter(
+        (u) => u.status !== "EM_IMPLANTACAO" && u.status !== "EM_CONFIGURACAO"
+      );
   const { perfumes, tiposPerfumeConfig, concentracoesConfig } = useApp();
   const { criar } = useTransferencias();
 
