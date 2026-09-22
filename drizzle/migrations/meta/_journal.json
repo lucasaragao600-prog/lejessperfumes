@@ -99,6 +99,13 @@
       "when": 1789940890782,
       "tag": "0013_atomic_tester_output",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790120961601,
+      "tag": "0014_permitir_ajuste_estoque_em_implantacao",
+      "breakpoints": true
     }
   ]
 }
