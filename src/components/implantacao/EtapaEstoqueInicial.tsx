@@ -113,10 +113,17 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
     qc.invalidateQueries({ queryKey: ["implantacao-testers", unidadeId] });
   };
 
+  const categorias = useMemo(() => {
+    const set = new Set<string>(CATEGORIAS_FIXAS);
+    perfumes.forEach((p) => set.add(tipoNome(p.tipo)));
+    return Array.from(set);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [perfumes, tiposPerfumeConfig]);
+
   const resultados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return perfumes
-      .filter((p) => (categoria === "Todas" ? true : (p.classificacao || "Outros") === categoria))
+      .filter((p) => (categoria === "Todas" ? true : tipoNome(p.tipo) === categoria))
       .filter((p) =>
         !termo
           ? false
