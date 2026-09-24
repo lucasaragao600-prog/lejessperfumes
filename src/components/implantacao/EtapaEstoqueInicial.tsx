@@ -261,7 +261,8 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
         categoria,
         itens: [...lista].sort((x, y) => x.produto_nome.localeCompare(y.produto_nome)),
       }));
-  }, [itensVisiveis]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itensVisiveis, perfumes, tiposPerfumeConfig]);
 
   const situacao = (i: ItemCarga): "ok" | "divergencia" | "pendente" => {
     if (i.status === "DIVERGENCIA") return "divergencia";
