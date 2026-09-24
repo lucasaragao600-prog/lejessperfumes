@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePerfumes } from "@/hooks/usePerfumes";
+import { useConfiguracoes } from "@/hooks/useConfiguracoes";
 import { useUnidades, type Unidade } from "@/hooks/useUnidades";
 import { useEstoqueUnidade } from "@/hooks/useTransferencias";
 import ProdutoFoto from "@/components/ProdutoFoto";
