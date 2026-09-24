@@ -198,7 +198,7 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
         unidade_id: unidadeId,
         produto_id: produtoId,
         produto_nome: `${produto.codigo} - ${produto.marca} - ${produto.nome}`,
-        categoria: produto.classificacao || "Outros",
+        categoria: tipoNome(produto.tipo),
         tipo,
         origem_unidade_id: tipo === "TRANSFERENCIA" ? origem : null,
         fornecedor: tipo === "FORNECEDOR" ? fornecedor.nome : "",
@@ -456,7 +456,7 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
       {/* Busca de produtos */}
       <div className="rounded-lg border border-border bg-card p-3 space-y-3">
         <div className="flex flex-wrap gap-2">
-          {CATEGORIAS.map((c) => (
+          {categorias.map((c) => (
             <button
               key={c}
               onClick={() => setCategoria(c)}
