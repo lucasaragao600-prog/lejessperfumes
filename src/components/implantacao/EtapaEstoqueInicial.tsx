@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Loader2, Search, Truck, PackagePlus, ShieldAlert, RefreshCw, SprayCan } from "lucide-react";
+import { Plus, Loader2, Search, Truck, PackagePlus, ShieldAlert, RefreshCw, SprayCan, Printer, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -239,6 +239,94 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
     } finally {
       setOcupado(false);
     }
+  };
+
+  const itensVisiveis = useMemo(() => itens.filter((i) => i.status !== "CANCELADO"), [itens]);
+
+  const grupos = useMemo(() => {
+    const ordem = ["Árabe", "Importado", "Nicho"];
+    const mapa = new Map<string, ItemCarga[]>();
+    itensVisiveis.forEach((i) => {
+      const c = i.categoria || "Outros";
+      mapa.set(c, [...(mapa.get(c) || []), i]);
+    });
+    return Array.from(mapa.entries())
+      .sort(([a], [b]) => {
+        const ia = ordem.indexOf(a) === -1 ? 99 : ordem.indexOf(a);
+        const ib = ordem.indexOf(b) === -1 ? 99 : ordem.indexOf(b);
+        return ia - ib || a.localeCompare(b);
+      })
+      .map(([categoria, lista]) => ({
+        categoria,
+        itens: [...lista].sort((x, y) => x.produto_nome.localeCompare(y.produto_nome)),
+      }));
+  }, [itensVisiveis]);
+
+  const situacao = (i: ItemCarga): "ok" | "divergencia" | "pendente" => {
+    if (i.status === "DIVERGENCIA") return "divergencia";
+    if (i.status === "CONCLUIDO" || i.quantidade_recebida > 0) {
+      return i.quantidade_recebida === i.quantidade_solicitada ? "ok" : "divergencia";
+    }
+    return "pendente";
+  };
+
+  const alterarQuantidade = async (i: ItemCarga, nova: number) => {
+    if (!Number.isFinite(nova) || nova === i.quantidade_solicitada) return;
+    if (nova < 1) return toast.error("A quantidade deve ser pelo menos 1. Para retirar, use excluir.");
+    const { error } = await supabase
+      .from("implantacao_estoque_itens")
+      .update({ quantidade_solicitada: Math.floor(nova) })
+      .eq("id", i.id)
+      .in("status", ["PLANEJADO", "AGUARDANDO_APROVACAO"]);
+    if (error) return toast.error("Não foi possível alterar", { description: error.message });
+    recarregar();
+    toast.success("Quantidade alterada");
+  };
+
+  const excluirItem = async (i: ItemCarga) => {
+    if (!window.confirm(`Excluir "${i.produto_nome}" da carga inicial?`)) return;
+    const { error } = await supabase
+      .from("implantacao_estoque_itens")
+      .update({ status: "CANCELADO", observacao: "Excluído da lista pelo usuário" })
+      .eq("id", i.id)
+      .in("status", ["PLANEJADO", "AGUARDANDO_APROVACAO"]);
+    if (error) return toast.error("Não foi possível excluir", { description: error.message });
+    recarregar();
+    toast.success("Produto retirado da lista");
+  };
+
+  const imprimirLista = () => {
+    const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+    const unidadeNome = nomeUnidade(unidadeId);
+    const corpo = grupos
+      .map(
+        (g) => `<h2>${esc(g.categoria)} <small>(${g.itens.length} produtos · ${g.itens.reduce((s, i) => s + i.quantidade_solicitada, 0)} un.)</small></h2>
+        <table><thead><tr><th>Foto</th><th>Produto</th><th>Origem</th><th>Solicitada</th><th>Conferido</th><th>OK</th><th>Obs.</th></tr></thead><tbody>
+        ${g.itens
+          .map((i) => {
+            const img = perfumes.find((p) => p.id === i.produto_id)?.imageUrl;
+            const sit = situacao(i);
+            return `<tr class="${sit}"><td>${img ? `<img src="${esc(img)}"/>` : ""}</td><td>${esc(i.produto_nome)}</td><td>${esc(
+              i.tipo === "TRANSFERENCIA" ? nomeUnidade(i.origem_unidade_id) : i.fornecedor || i.motivo || "—",
+            )}</td><td class="c">${i.quantidade_solicitada}</td><td class="c">${i.quantidade_recebida > 0 ? i.quantidade_recebida : ""}</td><td class="c">☐</td><td></td></tr>`;
+          })
+          .join("")}</tbody></table>`,
+      )
+      .join("");
+    const w = window.open("", "_blank");
+    if (!w) return toast.error("Permita pop-ups para imprimir.");
+    w.document.write(`<html><head><title>Conferência - ${esc(unidadeNome)}</title><style>
+      body{font-family:Arial,sans-serif;padding:16px;color:#111}h1{font-size:18px;margin:0}
+      h2{font-size:14px;margin:18px 0 6px;color:#9a7a2c}small{color:#666;font-weight:normal}
+      table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #ccc;padding:4px 6px;text-align:left}
+      th{background:#eee}.c{text-align:center;width:60px}img{width:34px;height:34px;object-fit:cover}
+      tr.ok td{background:#d9f5df}tr.divergencia td{background:#fadada}
+      .ass{display:flex;justify-content:space-between;margin-top:40px}.ass div{border-top:1px solid #333;width:40%;text-align:center;padding-top:4px;font-size:11px}
+      *{-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>
+      <h1>Lista de conferência — Carga inicial</h1><p style="font-size:12px">Unidade: ${esc(unidadeNome)} · ${new Date().toLocaleString("pt-BR", { timeZone: "America/Manaus" })} · Total: ${itensVisiveis.length} produtos / ${resumo.planejada} un.</p>
+      ${corpo}<div class="ass"><div>Responsável pelo envio</div><div>Responsável pela conferência</div></div>
+      <script>window.onload=()=>setTimeout(()=>window.print(),600)</script></body></html>`);
+    w.document.close();
   };
 
   const resumo = useMemo(() => {
@@ -513,102 +601,139 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
         </button>
       </div>
 
-      {/* Tabela da carga */}
-      <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-muted-foreground">
-            <tr>
-              {[
-                "Produto",
-                "Tipo",
-                "Origem",
-                "Solicitada",
-                "Recebida",
-                "Diferença",
-                "Status",
-                "Ação",
-              ].map((h) => (
-                <th key={h} className="px-3 py-2 text-left font-medium whitespace-nowrap">
-                  {h}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {isLoading ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-6 text-center text-muted-foreground">
-                  <Loader2 className="inline w-4 h-4 animate-spin" /> Carregando…
-                </td>
-              </tr>
-            ) : itens.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-3 py-6 text-center text-muted-foreground">
-                  Nenhum produto na carga inicial.
-                </td>
-              </tr>
-            ) : (
-              itens.map((i) => (
-                <tr key={i.id} className="border-t border-border text-foreground">
-                  <td className="px-3 py-2">{i.produto_nome}</td>
-                  <td className="px-3 py-2">
-                    {i.tipo === "TRANSFERENCIA"
-                      ? "Transferência"
-                      : i.tipo === "FORNECEDOR"
-                        ? "Fornecedor"
-                        : "Manual"}
-                  </td>
-                  <td className="px-3 py-2">
-                    {i.tipo === "TRANSFERENCIA"
-                      ? nomeUnidade(i.origem_unidade_id)
-                      : i.tipo === "FORNECEDOR"
-                        ? i.fornecedor || "—"
-                        : i.motivo || "—"}
-                  </td>
-                  <td className="px-3 py-2">{i.quantidade_solicitada}</td>
-                  <td className="px-3 py-2">{i.quantidade_recebida}</td>
-                  <td className="px-3 py-2">
-                    {i.quantidade_recebida - i.quantidade_solicitada || "—"}
-                  </td>
-                  <td className="px-3 py-2">{rotuloStatus[i.status] || i.status}</td>
-                  <td className="px-3 py-2">
-                    {i.tipo === "FORNECEDOR" && i.status !== "CONCLUIDO" && (
-                      <button
-                        onClick={() =>
-                          executar(
-                            "fn_implantacao_entrada_fornecedor",
-                            { p_item_id: i.id },
-                            "Entrada registrada no estoque",
-                          )
-                        }
-                        disabled={ocupado}
-                        className="rounded-md border border-border px-2 py-1 text-xs text-primary"
-                      >
-                        Dar entrada
-                      </button>
-                    )}
-                    {i.tipo === "MANUAL" && i.status !== "CONCLUIDO" && (
-                      <button
-                        onClick={() =>
-                          executar(
-                            "fn_implantacao_carga_manual_aprovar",
-                            { p_item_id: i.id },
-                            "Carga manual aprovada",
-                          )
-                        }
-                        disabled={ocupado}
-                        className="rounded-md border border-border px-2 py-1 text-xs text-primary"
-                      >
-                        Aprovar
-                      </button>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+      {/* Tabela da carga agrupada por tipo */}
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-foreground">Lista da carga inicial</p>
+        <button
+          onClick={imprimirLista}
+          disabled={itensVisiveis.length === 0}
+          className="inline-flex items-center gap-2 rounded-md border border-border px-3 py-2 text-sm text-foreground disabled:opacity-50"
+        >
+          <Printer className="w-4 h-4" /> Imprimir lista de conferência
+        </button>
       </div>
+      <p className="text-[11px] text-muted-foreground">
+        Verde: conferido sem diferença · Vermelho: divergência. Alterar e excluir só vale para itens ainda não enviados.
+      </p>
+
+      {isLoading ? (
+        <div className="px-3 py-6 text-center text-muted-foreground text-sm">
+          <Loader2 className="inline w-4 h-4 animate-spin" /> Carregando…
+        </div>
+      ) : itensVisiveis.length === 0 ? (
+        <div className="rounded-lg border border-border px-3 py-6 text-center text-muted-foreground text-sm">
+          Nenhum produto na carga inicial.
+        </div>
+      ) : (
+        grupos.map((g) => (
+          <div key={g.categoria} className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-semibold uppercase tracking-wide text-primary">{g.categoria}</p>
+              <p className="text-[11px] text-muted-foreground">
+                {g.itens.length} produto(s) · {g.itens.reduce((s, i) => s + i.quantidade_solicitada, 0)} un.
+              </p>
+            </div>
+            <div className="overflow-x-auto rounded-lg border border-border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 text-muted-foreground">
+                  <tr>
+                    {["Produto", "Tipo", "Origem", "Solicitada", "Recebida", "Diferença", "Status", "Ação"].map((h) => (
+                      <th key={h} className="px-3 py-2 text-left font-medium whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {g.itens.map((i) => {
+                    const sit = situacao(i);
+                    const editavel = ["PLANEJADO", "AGUARDANDO_APROVACAO"].includes(i.status);
+                    const cor =
+                      sit === "ok"
+                        ? "bg-success/15"
+                        : sit === "divergencia"
+                          ? "bg-destructive/15"
+                          : "";
+                    return (
+                      <tr key={i.id} className={`border-t border-border text-foreground ${cor}`}>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-2 min-w-[200px]">
+                            <ProdutoFoto
+                              url={perfumes.find((p) => p.id === i.produto_id)?.imageUrl}
+                              nome={i.produto_nome}
+                              size={40}
+                            />
+                            <span className="break-words">{i.produto_nome}</span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2">
+                          {i.tipo === "TRANSFERENCIA" ? "Transferência" : i.tipo === "FORNECEDOR" ? "Fornecedor" : "Manual"}
+                        </td>
+                        <td className="px-3 py-2">
+                          {i.tipo === "TRANSFERENCIA"
+                            ? nomeUnidade(i.origem_unidade_id)
+                            : i.tipo === "FORNECEDOR"
+                              ? i.fornecedor || "—"
+                              : i.motivo || "—"}
+                        </td>
+                        <td className="px-3 py-2">
+                          {editavel ? (
+                            <input
+                              type="number"
+                              min={1}
+                              defaultValue={i.quantidade_solicitada}
+                              onWheel={(e) => (e.target as HTMLInputElement).blur()}
+                              onBlur={(e) => alterarQuantidade(i, Number(e.target.value))}
+                              className="w-16 rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                          ) : (
+                            i.quantidade_solicitada
+                          )}
+                        </td>
+                        <td className="px-3 py-2">{i.quantidade_recebida}</td>
+                        <td className="px-3 py-2">{i.quantidade_recebida - i.quantidade_solicitada || "—"}</td>
+                        <td className={`px-3 py-2 font-medium ${sit === "ok" ? "text-success" : sit === "divergencia" ? "text-destructive" : ""}`}>
+                          {rotuloStatus[i.status] || i.status}
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-2">
+                            {i.tipo === "FORNECEDOR" && i.status !== "CONCLUIDO" && (
+                              <button
+                                onClick={() => executar("fn_implantacao_entrada_fornecedor", { p_item_id: i.id }, "Entrada registrada no estoque")}
+                                disabled={ocupado}
+                                className="rounded-md border border-border px-2 py-1 text-xs text-primary whitespace-nowrap"
+                              >
+                                Dar entrada
+                              </button>
+                            )}
+                            {i.tipo === "MANUAL" && i.status !== "CONCLUIDO" && (
+                              <button
+                                onClick={() => executar("fn_implantacao_carga_manual_aprovar", { p_item_id: i.id }, "Carga manual aprovada")}
+                                disabled={ocupado}
+                                className="rounded-md border border-border px-2 py-1 text-xs text-primary"
+                              >
+                                Aprovar
+                              </button>
+                            )}
+                            {editavel && (
+                              <button
+                                onClick={() => excluirItem(i)}
+                                disabled={ocupado}
+                                title="Excluir da lista"
+                                className="rounded-md border border-border p-1.5 text-muted-foreground hover:text-destructive"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 }
