@@ -60,7 +60,9 @@ interface Props {
 export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props) {
   const qc = useQueryClient();
   const { perfumes } = usePerfumes();
+  const { tiposPerfumeConfig } = useConfiguracoes();
   const { unidades } = useUnidades({ contexto: "operacional" });
+  const tipoNome = (s: string) => tiposPerfumeConfig?.[s] || s || "Outros";
   const [tipo, setTipo] = useState<Tipo>("TRANSFERENCIA");
   const [origem, setOrigem] = useState("");
   const [busca, setBusca] = useState("");
