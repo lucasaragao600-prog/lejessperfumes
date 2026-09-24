@@ -247,7 +247,8 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
     const ordem = ["Árabe", "Importado", "Nicho"];
     const mapa = new Map<string, ItemCarga[]>();
     itensVisiveis.forEach((i) => {
-      const c = i.categoria || "Outros";
+      const p = perfumes.find((x) => x.id === i.produto_id);
+      const c = (p ? tipoNome(p.tipo) : i.categoria) || "Outros";
       mapa.set(c, [...(mapa.get(c) || []), i]);
     });
     return Array.from(mapa.entries())
