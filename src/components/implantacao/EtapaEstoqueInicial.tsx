@@ -31,17 +31,7 @@ interface ItemCarga {
   solicitado_por_nome: string;
 }
 
-const CATEGORIAS = [
-  "Todas",
-  "Árabe",
-  "Importado",
-  "Nicho",
-  "Nacional",
-  "Kits",
-  "Body Splash",
-  "Body Spray",
-  "Outros",
-];
+const CATEGORIAS_FIXAS = ["Todas", "Árabe", "Importado", "Nicho"];
 
 const rotuloStatus: Record<string, string> = {
   PLANEJADO: "Planejado",
