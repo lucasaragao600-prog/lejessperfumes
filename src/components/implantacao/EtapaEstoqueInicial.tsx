@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { usePerfumes } from "@/hooks/usePerfumes";
+import { useConfiguracoes } from "@/hooks/useConfiguracoes";
 import { useUnidades, type Unidade } from "@/hooks/useUnidades";
 import { useEstoqueUnidade } from "@/hooks/useTransferencias";
 import ProdutoFoto from "@/components/ProdutoFoto";
@@ -30,17 +31,7 @@ interface ItemCarga {
   solicitado_por_nome: string;
 }
 
-const CATEGORIAS = [
-  "Todas",
-  "Árabe",
-  "Importado",
-  "Nicho",
-  "Nacional",
-  "Kits",
-  "Body Splash",
-  "Body Spray",
-  "Outros",
-];
+const CATEGORIAS_FIXAS = ["Todas", "Árabe", "Importado", "Nicho"];
 
 const rotuloStatus: Record<string, string> = {
   PLANEJADO: "Planejado",
@@ -59,7 +50,9 @@ interface Props {
 export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props) {
   const qc = useQueryClient();
   const { perfumes } = usePerfumes();
+  const { tiposPerfumeConfig } = useConfiguracoes();
   const { unidades } = useUnidades({ contexto: "operacional" });
+  const tipoNome = (s: string) => tiposPerfumeConfig?.[s] || s || "Outros";
   const [tipo, setTipo] = useState<Tipo>("TRANSFERENCIA");
   const [origem, setOrigem] = useState("");
   const [busca, setBusca] = useState("");
@@ -120,10 +113,17 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
     qc.invalidateQueries({ queryKey: ["implantacao-testers", unidadeId] });
   };
 
+  const categorias = useMemo(() => {
+    const set = new Set<string>(CATEGORIAS_FIXAS);
+    perfumes.forEach((p) => set.add(tipoNome(p.tipo)));
+    return Array.from(set);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [perfumes, tiposPerfumeConfig]);
+
   const resultados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return perfumes
-      .filter((p) => (categoria === "Todas" ? true : (p.classificacao || "Outros") === categoria))
+      .filter((p) => (categoria === "Todas" ? true : tipoNome(p.tipo) === categoria))
       .filter((p) =>
         !termo
           ? false
@@ -198,7 +198,7 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
         unidade_id: unidadeId,
         produto_id: produtoId,
         produto_nome: `${produto.codigo} - ${produto.marca} - ${produto.nome}`,
-        categoria: produto.classificacao || "Outros",
+        categoria: tipoNome(produto.tipo),
         tipo,
         origem_unidade_id: tipo === "TRANSFERENCIA" ? origem : null,
         fornecedor: tipo === "FORNECEDOR" ? fornecedor.nome : "",
@@ -247,7 +247,8 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
     const ordem = ["Árabe", "Importado", "Nicho"];
     const mapa = new Map<string, ItemCarga[]>();
     itensVisiveis.forEach((i) => {
-      const c = i.categoria || "Outros";
+      const p = perfumes.find((x) => x.id === i.produto_id);
+      const c = (p ? tipoNome(p.tipo) : i.categoria) || "Outros";
       mapa.set(c, [...(mapa.get(c) || []), i]);
     });
     return Array.from(mapa.entries())
@@ -260,7 +261,8 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
         categoria,
         itens: [...lista].sort((x, y) => x.produto_nome.localeCompare(y.produto_nome)),
       }));
-  }, [itensVisiveis]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itensVisiveis, perfumes, tiposPerfumeConfig]);
 
   const situacao = (i: ItemCarga): "ok" | "divergencia" | "pendente" => {
     if (i.status === "DIVERGENCIA") return "divergencia";
@@ -456,7 +458,7 @@ export default function EtapaEstoqueInicial({ implantacaoId, unidadeId }: Props)
       {/* Busca de produtos */}
       <div className="rounded-lg border border-border bg-card p-3 space-y-3">
         <div className="flex flex-wrap gap-2">
-          {CATEGORIAS.map((c) => (
+          {categorias.map((c) => (
             <button
               key={c}
               onClick={() => setCategoria(c)}
