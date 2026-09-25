@@ -48,6 +48,47 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [showSemTester, setShowSemTester] = useState(false);
   const [parcelamentoPerfume, setParcelamentoPerfume] = useState<Perfume | null>(null);
   const [historicoPerfume, setHistoricoPerfume] = useState<Perfume | null>(null);
+  const [selecaoAtiva, setSelecaoAtiva] = useState(false);
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const [gerandoPdf, setGerandoPdf] = useState(false);
+
+  const toggleSelecionado = (id: string) => {
+    setSelecionados((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const gerarPdfLista = async () => {
+    const itens = filtrados.filter((p) => selecionados.has(p.id));
+    if (itens.length === 0) {
+      toast.error("Selecione pelo menos um produto.");
+      return;
+    }
+    setGerandoPdf(true);
+    try {
+      const casaMap = new Map(casas.map((c) => [c.sigla, c.nome]));
+      const doc = await gerarListaProdutosPdf({
+        itens,
+        subtitulo: userLoja ? `Loja: ${userLoja}` : effectiveDeposito !== "Todos" ? `Loja: ${effectiveDeposito}` : undefined,
+        depositos,
+        tiposConfig: tiposPerfumeConfig as Record<string, string>,
+        concentracoesConfig: concentracoesConfig as Record<string, string>,
+        casasMap: casaMap,
+      });
+      doc.save(`lista_produtos_${new Date().toISOString().split("T")[0]}.pdf`);
+      toast.success(`PDF gerado com ${itens.length} produto(s).`);
+      setSelecaoAtiva(false);
+      setSelecionados(new Set());
+    } catch (e) {
+      console.error(e);
+      toast.error("Não foi possível gerar o PDF.");
+    } finally {
+      setGerandoPdf(false);
+    }
+  };
 
   const touchStartY = useRef<number | null>(null);
   const handleTouchStart = (e: React.TouchEvent) => { touchStartY.current = e.touches[0].clientY; };
