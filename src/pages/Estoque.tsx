@@ -875,6 +875,36 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         </div>
       )}
 
+      {/* Barra de ação da lista para PDF */}
+      {selecaoAtiva && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[70] w-[calc(100%-2rem)] max-w-md">
+          <div className="card-premium p-3 shadow-elevated border-gold/40 flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-foreground">
+                {selecionados.size} selecionado{selecionados.size === 1 ? "" : "s"}
+              </p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                {filtrados.length} produto(s) no filtro atual
+              </p>
+            </div>
+            <button
+              onClick={() => setSelecionados(new Set(filtrados.map((p) => p.id)))}
+              className="btn-secondary px-2.5 py-2 text-[11px]"
+            >
+              Todos do filtro
+            </button>
+            <button
+              onClick={gerarPdfLista}
+              disabled={gerandoPdf || selecionados.size === 0}
+              className="btn-primary px-3 py-2 text-[11px] flex items-center gap-1.5 disabled:opacity-50"
+            >
+              {gerandoPdf ? <Loader2 size={13} className="animate-spin" /> : <FileDown size={13} />}
+              PDF
+            </button>
+          </div>
+        </div>
+      )}
+
       <ParcelamentoModal
         open={!!parcelamentoPerfume}
         onOpenChange={(o) => { if (!o) setParcelamentoPerfume(null); }}
