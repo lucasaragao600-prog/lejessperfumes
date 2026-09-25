@@ -548,7 +548,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
               )}
               <div className="flex items-start gap-3 mb-3">
                 <div
-                  onClick={() => p.imageUrl ? setImagemExpandida({ url: p.imageUrl, nome: p.nome }) : null}
+                  onClick={selecaoAtiva ? undefined : () => p.imageUrl ? setImagemExpandida({ url: p.imageUrl, nome: p.nome }) : null}
                   className={`w-14 h-14 rounded-xl border border-border bg-surface-overlay flex items-center justify-center flex-shrink-0 overflow-hidden ${p.imageUrl ? "cursor-pointer hover:border-gold-muted" : ""} transition-colors`}
                 >
                   {p.imageUrl ? (
