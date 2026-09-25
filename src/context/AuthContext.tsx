@@ -38,8 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [hasMaster, setHasMaster] = useState<boolean | null>(null);
 
   const checkHasMaster = async () => {
-    const { data } = await supabase.rpc("check_master_exists");
-    setHasMaster(data === true);
+    const { data, error } = await supabase.rpc("check_master_exists");
+    // Em caso de erro, assume que já existe master (mostra login, nunca a tela de criação)
+    setHasMaster(error ? true : data === true);
   };
 
   const fetchUserData = async (userId: string) => {

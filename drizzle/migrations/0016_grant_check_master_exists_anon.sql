@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.check_master_exists() TO anon, authenticated;
