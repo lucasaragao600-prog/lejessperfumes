@@ -521,11 +521,31 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
             ? getTesterQtd(p.id)
             : getTesterQtd(p.id, effectiveDeposito as Deposito);
 
+          const marcado = selecionados.has(p.id);
           return (
             <div
               key={p.id}
-              className={baixo ? "card-alert p-4" : "card-premium p-4"}
+              onClick={selecaoAtiva ? () => toggleSelecionado(p.id) : undefined}
+              className={`${baixo ? "card-alert p-4" : "card-premium p-4"} ${
+                selecaoAtiva
+                  ? `cursor-pointer transition-all ${marcado ? "ring-2 ring-gold border-gold/60" : "opacity-90"}`
+                  : ""
+              }`}
             >
+              {selecaoAtiva && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span
+                    className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
+                      marcado ? "bg-gold border-gold text-primary-foreground" : "border-border bg-surface-overlay"
+                    }`}
+                  >
+                    {marcado && <Check size={12} strokeWidth={3} />}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {marcado ? "Selecionado para a lista" : "Toque para selecionar"}
+                  </span>
+                </div>
+              )}
               <div className="flex items-start gap-3 mb-3">
                 <div
                   onClick={() => p.imageUrl ? setImagemExpandida({ url: p.imageUrl, nome: p.nome }) : null}
