@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useRef } from "react";
-import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download, Trash2, ChevronUp, ChevronDown, Barcode, Beaker, Percent, History } from "lucide-react";
+import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download, Trash2, ChevronUp, ChevronDown, Barcode, Beaker, Percent, History, ListChecks, Check, FileDown, Loader2 } from "lucide-react";
+import { gerarListaProdutosPdf } from "@/lib/pdf/listaProdutos";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatCurrency, CLASSIFICACOES_PERFUME, type Deposito, type Perfume, type TipoPerfume, type ClassificacaoPerfume } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
@@ -47,6 +48,47 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [showSemTester, setShowSemTester] = useState(false);
   const [parcelamentoPerfume, setParcelamentoPerfume] = useState<Perfume | null>(null);
   const [historicoPerfume, setHistoricoPerfume] = useState<Perfume | null>(null);
+  const [selecaoAtiva, setSelecaoAtiva] = useState(false);
+  const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
+  const [gerandoPdf, setGerandoPdf] = useState(false);
+
+  const toggleSelecionado = (id: string) => {
+    setSelecionados((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const gerarPdfLista = async () => {
+    const itens = filtrados.filter((p) => selecionados.has(p.id));
+    if (itens.length === 0) {
+      toast.error("Selecione pelo menos um produto.");
+      return;
+    }
+    setGerandoPdf(true);
+    try {
+      const casaMap = new Map(casas.map((c) => [c.sigla, c.nome]));
+      const doc = await gerarListaProdutosPdf({
+        itens,
+        subtitulo: userLoja ? `Loja: ${userLoja}` : effectiveDeposito !== "Todos" ? `Loja: ${effectiveDeposito}` : undefined,
+        depositos,
+        tiposConfig: tiposPerfumeConfig as Record<string, string>,
+        concentracoesConfig: concentracoesConfig as Record<string, string>,
+        casasMap: casaMap,
+      });
+      doc.save(`lista_produtos_${new Date().toISOString().split("T")[0]}.pdf`);
+      toast.success(`PDF gerado com ${itens.length} produto(s).`);
+      setSelecaoAtiva(false);
+      setSelecionados(new Set());
+    } catch (e) {
+      console.error(e);
+      toast.error("Não foi possível gerar o PDF.");
+    } finally {
+      setGerandoPdf(false);
+    }
+  };
 
   const touchStartY = useRef<number | null>(null);
   const handleTouchStart = (e: React.TouchEvent) => { touchStartY.current = e.touches[0].clientY; };
@@ -298,6 +340,21 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                 <Download size={14} />
               </button>
             )}
+            <button
+              onClick={() => {
+                setSelecaoAtiva((v) => !v);
+                setSelecionados(new Set());
+              }}
+              title="Criar lista de produtos para PDF"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 ${
+                selecaoAtiva
+                  ? "bg-gold/15 border border-gold/50 text-gold"
+                  : "btn-secondary"
+              }`}
+            >
+              <ListChecks size={14} />
+              <span className="hidden sm:inline">Lista PDF</span>
+            </button>
             {isMaster && (
               <button onClick={() => setShowCadastro(true)} className="btn-primary px-4 py-2">
                 <Plus size={14} /> Novo
@@ -464,14 +521,34 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
             ? getTesterQtd(p.id)
             : getTesterQtd(p.id, effectiveDeposito as Deposito);
 
+          const marcado = selecionados.has(p.id);
           return (
             <div
               key={p.id}
-              className={baixo ? "card-alert p-4" : "card-premium p-4"}
+              onClick={selecaoAtiva ? () => toggleSelecionado(p.id) : undefined}
+              className={`${baixo ? "card-alert p-4" : "card-premium p-4"} ${
+                selecaoAtiva
+                  ? `cursor-pointer transition-all ${marcado ? "ring-2 ring-gold border-gold/60" : "opacity-90"}`
+                  : ""
+              }`}
             >
+              {selecaoAtiva && (
+                <div className="flex items-center gap-2 mb-2">
+                  <span
+                    className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
+                      marcado ? "bg-gold border-gold text-primary-foreground" : "border-border bg-surface-overlay"
+                    }`}
+                  >
+                    {marcado && <Check size={12} strokeWidth={3} />}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {marcado ? "Selecionado para a lista" : "Toque para selecionar"}
+                  </span>
+                </div>
+              )}
               <div className="flex items-start gap-3 mb-3">
                 <div
-                  onClick={() => p.imageUrl ? setImagemExpandida({ url: p.imageUrl, nome: p.nome }) : null}
+                  onClick={selecaoAtiva ? undefined : () => p.imageUrl ? setImagemExpandida({ url: p.imageUrl, nome: p.nome }) : null}
                   className={`w-14 h-14 rounded-xl border border-border bg-surface-overlay flex items-center justify-center flex-shrink-0 overflow-hidden ${p.imageUrl ? "cursor-pointer hover:border-gold-muted" : ""} transition-colors`}
                 >
                   {p.imageUrl ? (
@@ -794,6 +871,36 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
               className="max-w-[90vw] max-h-[80vh] rounded-2xl border border-border object-contain shadow-elevated"
             />
             <p className="text-center text-sm text-muted-foreground mt-3 font-display">{imagemExpandida.nome}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Barra de ação da lista para PDF */}
+      {selecaoAtiva && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[70] w-[calc(100%-2rem)] max-w-md">
+          <div className="card-premium p-3 shadow-elevated border-gold/40 flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-foreground">
+                {selecionados.size} selecionado{selecionados.size === 1 ? "" : "s"}
+              </p>
+              <p className="text-[10px] text-muted-foreground truncate">
+                {filtrados.length} produto(s) no filtro atual
+              </p>
+            </div>
+            <button
+              onClick={() => setSelecionados(new Set(filtrados.map((p) => p.id)))}
+              className="btn-secondary px-2.5 py-2 text-[11px]"
+            >
+              Todos do filtro
+            </button>
+            <button
+              onClick={gerarPdfLista}
+              disabled={gerandoPdf || selecionados.size === 0}
+              className="btn-primary px-3 py-2 text-[11px] flex items-center gap-1.5 disabled:opacity-50"
+            >
+              {gerandoPdf ? <Loader2 size={13} className="animate-spin" /> : <FileDown size={13} />}
+              PDF
+            </button>
           </div>
         </div>
       )}
