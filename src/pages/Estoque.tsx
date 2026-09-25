@@ -340,6 +340,21 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                 <Download size={14} />
               </button>
             )}
+            <button
+              onClick={() => {
+                setSelecaoAtiva((v) => !v);
+                setSelecionados(new Set());
+              }}
+              title="Criar lista de produtos para PDF"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 ${
+                selecaoAtiva
+                  ? "bg-gold/15 border border-gold/50 text-gold"
+                  : "btn-secondary"
+              }`}
+            >
+              <ListChecks size={14} />
+              <span className="hidden sm:inline">Lista PDF</span>
+            </button>
             {isMaster && (
               <button onClick={() => setShowCadastro(true)} className="btn-primary px-4 py-2">
                 <Plus size={14} /> Novo
