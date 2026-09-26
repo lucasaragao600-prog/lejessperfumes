@@ -483,7 +483,9 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         <div className="px-4 mb-3 grid grid-cols-4 gap-2">
           {[
             { label: "Total", value: totais.unidades },
-            ...depositos.map((d) => ({ label: rotuloUnidade(d).replace(" — Unidade Inativa", " (inativa)"), value: totais.porUnidade[d] || 0 })),
+            ...depositos
+              .filter((d) => !rotuloUnidade(d).includes("Unidade Inativa"))
+              .map((d) => ({ label: rotuloUnidade(d), value: totais.porUnidade[d] || 0 })),
           ].map(({ label, value }) => (
             <div key={label} className="kpi-card p-3 text-center">
               <p className="text-[9px] text-muted-foreground mb-1">{label}</p>
