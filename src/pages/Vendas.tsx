@@ -15,7 +15,6 @@ import { getHojeManaus } from "@/lib/dateUtils";
 import { calcularParcelamento, TAXAS_MDR, PARCELAS_SEM_JUROS_LIMITE } from "@/lib/parcelamento";
 import { useUnidades } from "@/hooks/useUnidades";
 
-const hoje = getHojeManaus();
 const vendedorasFixas = ["Outra"];
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada"];
 const bandeiras: Bandeira[] = ["Visa", "Mastercard", "Elo", "Amex", "Hipercard"];
@@ -41,6 +40,7 @@ interface PagamentoItem {
 }
 
 export default function Vendas() {
+  const hoje = getHojeManaus();
   const { todosNomes: depositos, nomes: depositosOperacionais, rotulo: rotuloUnidade } = useUnidades({ contexto: "historico" });
   const {
     vendas, pagamentos, perfumes, baixarVenda, adicionarEstoque,
@@ -418,7 +418,7 @@ export default function Vendas() {
             </button>
             <button onClick={() => {
               setShowForm(!showForm);
-              if (!showForm) { setCarrinho([]); setPagamentosForm([]); setVendedoraSelecionada(""); setDataVenda(hoje); setDescontarEstoque(true); }
+              if (!showForm) { setCarrinho([]); setPagamentosForm([]); setVendedoraSelecionada(""); setDataVenda(getHojeManaus()); setDescontarEstoque(true); }
             }} className="btn-primary px-4 py-2">
               <Plus size={16} /> Lançar
             </button>
