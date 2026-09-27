@@ -62,6 +62,8 @@ export function useVendas() {
           .from("vendas")
           .select("*")
           .order("data", { ascending: false })
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: true })
           .range(from, from + PAGE - 1);
         if (error) throw error;
         const rows = data || [];
@@ -83,6 +85,7 @@ export function useVendas() {
         const { data, error } = await supabase
           .from("venda_pagamentos")
           .select("*")
+          .order("id", { ascending: true })
           .range(from, from + PAGE - 1);
         if (error) throw error;
         const rows = data || [];
