@@ -1,4 +1,5 @@
-import { useState, useMemo, useCallback, useRef } from "react";
+import { useState, useMemo, useCallback, useRef, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download, Trash2, ChevronUp, ChevronDown, Barcode, Beaker, Percent, History, ListChecks, Check, FileDown, Loader2 } from "lucide-react";
 import { gerarListaProdutosPdf } from "@/lib/pdf/listaProdutos";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -28,7 +29,20 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     Object.entries(tiposPerfumeConfig).map(([key, label]) => ({ key: key as TipoPerfume, label: String(label) })),
     [tiposPerfumeConfig]
   );
-  const [busca, setBusca] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [buscaDigitada, setBuscaDigitada] = useState(searchParams.get("q") || "");
+  const [busca, setBusca] = useState(buscaDigitada);
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setBusca(buscaDigitada);
+      setSearchParams((prev) => {
+        const n = new URLSearchParams(prev);
+        if (buscaDigitada) n.set("q", buscaDigitada); else n.delete("q");
+        return n;
+      }, { replace: true });
+    }, 300);
+    return () => clearTimeout(t);
+  }, [buscaDigitada, setSearchParams]);
   const [depositoFiltro, setDepositoFiltro] = useState<Deposito | "Todos">(userLoja || "Todos");
   const [tipoFiltro, setTipoFiltro] = useState<TipoPerfume | "Todos">("Todos");
   const [classificacaoFiltro, setClassificacaoFiltro] = useState<ClassificacaoPerfume | "Todos">("Todos");
@@ -204,6 +218,20 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     return result;
   }, [perfumes, busca, effectiveDeposito, tipoFiltro, classificacaoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax, ordenacaoEstoque, userLoja, isMaster, getQtdForFilter, concentracoesConfig, historicoPorDeposito]);
 
+  // Renderização por páginas: só desenha os primeiros N cards; o resto entra ao rolar.
+  const PAGINA = 30;
+  const [visiveis, setVisiveis] = useState(PAGINA);
+  useEffect(() => { setVisiveis(PAGINA); }, [busca, effectiveDeposito, tipoFiltro, classificacaoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax, ordenacaoEstoque]);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const sentinelaRef = useCallback((el: HTMLDivElement | null) => {
+    observerRef.current?.disconnect();
+    if (!el) return;
+    observerRef.current = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting) setVisiveis((v) => v + PAGINA);
+    }, { rootMargin: "600px" });
+    observerRef.current.observe(el);
+  }, []);
+
   const totais = useMemo(() => {
     return filtrados.reduce(
       (acc, p) => {
@@ -369,8 +397,8 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
           <input
             type="text"
             placeholder="Nome, código ou marca..."
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
+            value={buscaDigitada}
+            onChange={(e) => setBuscaDigitada(e.target.value)}
             className="input-premium pl-10 pr-4 py-2.5"
           />
         </div>
@@ -514,7 +542,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
 
       {/* List */}
       <div className="px-4 space-y-3">
-        {filtrados.map((p) => {
+        {filtrados.slice(0, visiveis).map((p) => {
           const qtd = getQtd(p);
           const baixo = isBaixo(p);
           const testerTotal = userLoja
@@ -554,7 +582,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                   className={`w-14 h-14 rounded-xl border border-border bg-surface-overlay flex items-center justify-center flex-shrink-0 overflow-hidden ${p.imageUrl ? "cursor-pointer hover:border-gold-muted" : ""} transition-colors`}
                 >
                   {p.imageUrl ? (
-                    <img src={p.imageUrl} alt={p.nome} className="w-full h-full object-cover" />
+                    <img src={p.imageUrl} alt={p.nome} loading="lazy" decoding="async" width={56} height={56} className="w-full h-full object-cover" />
                   ) : (
                     <Image size={22} className="text-muted-foreground opacity-40" />
                   )}
@@ -727,6 +755,21 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
             </div>
           );
         })}
+
+        {filtrados.length > visiveis && (
+          <div ref={sentinelaRef} className="flex flex-col items-center gap-2 py-6">
+            <p className="text-[11px] text-muted-foreground">
+              Mostrando {visiveis} de {filtrados.length} produtos
+            </p>
+            <button
+              onClick={() => setVisiveis((v) => v + PAGINA)}
+              className="text-xs px-4 py-2 rounded-lg border border-gold/40 text-gold hover:bg-gold/10 transition-colors"
+            >
+              Carregar mais
+            </button>
+          </div>
+        )}
+
 
         {filtrados.length === 0 && (
           <div className="text-center py-20">
