@@ -1051,6 +1051,11 @@ export default function Vendas() {
                     )}
                   </div>
                 ))}
+                {grupoVenda && !grupoVenda.startsWith("0000") && itens[0]?.grupoVenda && (
+                  <div className="px-4 py-2 border-t border-border">
+                    <AcoesVendaBotoes grupoVenda={grupoVenda} compacto />
+                  </div>
+                )}
                 {isGroup && grupoPags.length > 0 && (
                   <div className="px-4 py-2 bg-surface-overlay border-t border-border">
                     <div className="flex flex-wrap gap-2">

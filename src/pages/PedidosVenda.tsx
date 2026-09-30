@@ -8,6 +8,7 @@ import { formatCurrency } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { toast } from "sonner";
 import type { NfceStatus } from "@/data/mockData";
+import AcoesVendaBotoes from "@/components/vendas/AcoesVendaBotoes";
 
 interface PedidoResumo {
   grupoVenda: string;
@@ -257,6 +258,7 @@ ${pedido.nfceStatus === "autorizada" && pedido.nfceChave ? `<div style="font-siz
               </button>
             </div>
           </div>
+          <AcoesVendaBotoes grupoVenda={selectedPedido.grupoVenda} onClose={() => setSelectedPedido(null)} />
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
