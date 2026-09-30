@@ -1,3 +1,5 @@
+import { useDevolucoesResumo } from "@/hooks/useDevolucoes";
+import { vendasLiquidas } from "@/lib/devolucao";
 import { useMemo, useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
@@ -75,7 +77,7 @@ function exportXlsx(rows: any[], filename: string) {
 }
 
 export default function Relatorios() {
-  const { todosNomes, rotulo: rotuloUnidade } = useUnidades({ contexto: "historico" });
+  const { todosNomes, rotulo: rotuloUnidade, get: getUnidade } = useUnidades({ contexto: "historico" });
   const DEPOSITOS: string[] = ["todos", ...todosNomes];
   const { perfumes, vendas, concentracoesConfig, tiposPerfumeConfig } = useApp();
   const hoje = todayStr();
@@ -102,6 +104,14 @@ export default function Relatorios() {
       return true;
     });
   }, [vendas, dInicio, dFim, deposito]);
+
+  // Devoluções/trocas do período (vendas líquidas). Canceladas já saem de "vendas".
+  const { data: devolucoesPeriodo = [] } = useDevolucoesResumo({ desde: dInicio, ate: dFim });
+  const brutoPeriodo = useMemo(() => vendasFiltradas.reduce((s, v) => s + v.total, 0), [vendasFiltradas]);
+  const devolvidoPeriodo = useMemo(() => {
+    const uid = deposito === "todos" ? null : getUnidade(deposito)?.id;
+    return devolucoesPeriodo.filter(d => !uid || d.unidade_id === uid).reduce((s, d) => s + d.valor_total, 0);
+  }, [devolucoesPeriodo, deposito, getUnidade]);
 
   // Helpers de estoque
   const estoqueAtualPerfume = (p: Perfume) => {
@@ -173,6 +183,11 @@ export default function Relatorios() {
       </div>
 
       {/* Filtros globais */}
+      <Card className="p-4 mb-4 bg-card border-border grid grid-cols-3 gap-3 text-center">
+        <div><p className="text-[10px] text-muted-foreground">Vendas brutas</p><p className="text-sm font-bold text-foreground">{formatCurrency(brutoPeriodo)}</p></div>
+        <div><p className="text-[10px] text-muted-foreground">Devoluções/trocas</p><p className="text-sm font-bold text-destructive">-{formatCurrency(devolvidoPeriodo)}</p></div>
+        <div><p className="text-[10px] text-muted-foreground">Vendas líquidas</p><p className="text-sm font-bold text-gold">{formatCurrency(vendasLiquidas(brutoPeriodo, devolvidoPeriodo))}</p></div>
+      </Card>
       <Card className="p-4 mb-6 bg-card border-border">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div>
