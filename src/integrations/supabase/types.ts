@@ -528,6 +528,302 @@ export type Database = {
           },
         ]
       }
+      credito_cliente: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          id: string
+          saldo: number
+          updated_at: string
+          validade: string | null
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          id?: string
+          saldo?: number
+          updated_at?: string
+          validade?: string | null
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          id?: string
+          saldo?: number
+          updated_at?: string
+          validade?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credito_cliente_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: true
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credito_movimentos: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          devolucao_id: string | null
+          grupo_venda: string | null
+          id: string
+          observacao: string
+          registrado_por: string | null
+          registrado_por_nome: string
+          saldo_apos: number
+          tipo: string
+          unidade_id: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          devolucao_id?: string | null
+          grupo_venda?: string | null
+          id?: string
+          observacao?: string
+          registrado_por?: string | null
+          registrado_por_nome?: string
+          saldo_apos: number
+          tipo: string
+          unidade_id?: string | null
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          devolucao_id?: string | null
+          grupo_venda?: string | null
+          id?: string
+          observacao?: string
+          registrado_por?: string | null
+          registrado_por_nome?: string
+          saldo_apos?: number
+          tipo?: string
+          unidade_id?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credito_movimentos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credito_movimentos_devolucao_id_fkey"
+            columns: ["devolucao_id"]
+            isOneToOne: false
+            referencedRelation: "devolucoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credito_movimentos_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devolucao_itens: {
+        Row: {
+          created_at: string
+          destino: string
+          devolucao_id: string
+          id: string
+          produto_id: string
+          produto_nome: string
+          quantidade: number
+          updated_at: string
+          valor_unitario: number
+          venda_id: string
+          volta_ao_estoque: boolean
+        }
+        Insert: {
+          created_at?: string
+          destino?: string
+          devolucao_id: string
+          id?: string
+          produto_id: string
+          produto_nome?: string
+          quantidade: number
+          updated_at?: string
+          valor_unitario?: number
+          venda_id: string
+          volta_ao_estoque?: boolean
+        }
+        Update: {
+          created_at?: string
+          destino?: string
+          devolucao_id?: string
+          id?: string
+          produto_id?: string
+          produto_nome?: string
+          quantidade?: number
+          updated_at?: string
+          valor_unitario?: number
+          venda_id?: string
+          volta_ao_estoque?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devolucao_itens_devolucao_id_fkey"
+            columns: ["devolucao_id"]
+            isOneToOne: false
+            referencedRelation: "devolucoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucao_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucao_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "devolucao_itens_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devolucao_sequencias: {
+        Row: {
+          ano: number
+          ultimo: number
+          unidade_id: string
+        }
+        Insert: {
+          ano: number
+          ultimo?: number
+          unidade_id: string
+        }
+        Update: {
+          ano?: number
+          ultimo?: number
+          unidade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devolucao_sequencias_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devolucoes: {
+        Row: {
+          ano: number
+          aprovado_por: string | null
+          cliente_id: string | null
+          created_at: string
+          diferenca: number
+          fora_do_prazo: boolean
+          forma_reembolso: string | null
+          grupo_venda_origem: string
+          grupo_venda_troca: string | null
+          id: string
+          motivo: string
+          numero: string
+          registrado_por: string | null
+          registrado_por_nome: string
+          sessao_caixa_id: string | null
+          status: string
+          tipo: string
+          unidade_id: string
+          updated_at: string
+          valor_total: number
+          valor_troca: number
+        }
+        Insert: {
+          ano: number
+          aprovado_por?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          diferenca?: number
+          fora_do_prazo?: boolean
+          forma_reembolso?: string | null
+          grupo_venda_origem: string
+          grupo_venda_troca?: string | null
+          id?: string
+          motivo: string
+          numero: string
+          registrado_por?: string | null
+          registrado_por_nome?: string
+          sessao_caixa_id?: string | null
+          status?: string
+          tipo: string
+          unidade_id: string
+          updated_at?: string
+          valor_total?: number
+          valor_troca?: number
+        }
+        Update: {
+          ano?: number
+          aprovado_por?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          diferenca?: number
+          fora_do_prazo?: boolean
+          forma_reembolso?: string | null
+          grupo_venda_origem?: string
+          grupo_venda_troca?: string | null
+          id?: string
+          motivo?: string
+          numero?: string
+          registrado_por?: string | null
+          registrado_por_nome?: string
+          sessao_caixa_id?: string | null
+          status?: string
+          tipo?: string
+          unidade_id?: string
+          updated_at?: string
+          valor_total?: number
+          valor_troca?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devolucoes_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucoes_sessao_caixa_id_fkey"
+            columns: ["sessao_caixa_id"]
+            isOneToOne: false
+            referencedRelation: "caixa_sessoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucoes_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipamentos_unidade: {
         Row: {
           created_at: string
@@ -2496,6 +2792,66 @@ export type Database = {
           },
         ]
       }
+      venda_cancelamentos: {
+        Row: {
+          aprovado_por: string | null
+          caixa_fechado: boolean
+          cancelado_por: string | null
+          cancelado_por_nome: string
+          created_at: string
+          grupo_venda: string
+          id: string
+          motivo: string
+          sessao_caixa_ajuste_id: string | null
+          unidade_id: string | null
+          updated_at: string
+          valor_total: number
+        }
+        Insert: {
+          aprovado_por?: string | null
+          caixa_fechado?: boolean
+          cancelado_por?: string | null
+          cancelado_por_nome?: string
+          created_at?: string
+          grupo_venda: string
+          id?: string
+          motivo: string
+          sessao_caixa_ajuste_id?: string | null
+          unidade_id?: string | null
+          updated_at?: string
+          valor_total?: number
+        }
+        Update: {
+          aprovado_por?: string | null
+          caixa_fechado?: boolean
+          cancelado_por?: string | null
+          cancelado_por_nome?: string
+          created_at?: string
+          grupo_venda?: string
+          id?: string
+          motivo?: string
+          sessao_caixa_ajuste_id?: string | null
+          unidade_id?: string | null
+          updated_at?: string
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "venda_cancelamentos_sessao_caixa_ajuste_id_fkey"
+            columns: ["sessao_caixa_ajuste_id"]
+            isOneToOne: false
+            referencedRelation: "caixa_sessoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "venda_cancelamentos_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       venda_pagamentos: {
         Row: {
           bandeira: string
@@ -2532,6 +2888,8 @@ export type Database = {
       vendas: {
         Row: {
           bandeira: string
+          cancelada: boolean
+          cancelada_em: string | null
           cliente_id: string | null
           created_at: string
           data: string
@@ -2558,6 +2916,8 @@ export type Database = {
         }
         Insert: {
           bandeira?: string
+          cancelada?: boolean
+          cancelada_em?: string | null
           cliente_id?: string | null
           created_at?: string
           data?: string
@@ -2584,6 +2944,8 @@ export type Database = {
         }
         Update: {
           bandeira?: string
+          cancelada?: boolean
+          cancelada_em?: string | null
           cliente_id?: string | null
           created_at?: string
           data?: string
@@ -2681,6 +3043,42 @@ export type Database = {
     Functions: {
       check_master_exists: { Args: never; Returns: boolean }
       claim_first_master: { Args: { p_user_id: string }; Returns: boolean }
+      fn__caixa_aberto: { Args: { _unidade: string }; Returns: string }
+      fn__credito_entrada: {
+        Args: {
+          _cliente: string
+          _devolucao: string
+          _obs: string
+          _unidade: string
+          _valor: number
+        }
+        Returns: undefined
+      }
+      fn__devolucao_core: {
+        Args: {
+          p_cliente: string
+          p_forma: string
+          p_grupo: string
+          p_itens: Json
+          p_motivo: string
+          p_tipo: string
+        }
+        Returns: Record<string, unknown>
+      }
+      fn__devolucao_reembolso: {
+        Args: { p_dev: string; p_forma: string; p_valor: number }
+        Returns: undefined
+      }
+      fn__estoque_entrada: {
+        Args: { _produto: string; _qtd: number; _unidade: string }
+        Returns: undefined
+      }
+      fn__hoje_manaus: { Args: never; Returns: string }
+      fn__nome_usuario: { Args: never; Returns: string }
+      fn__pode: {
+        Args: { _perm: string; _unidade_id: string }
+        Returns: boolean
+      }
       fn_ajustar_saldo: {
         Args: {
           p_modo?: string
@@ -2740,6 +3138,25 @@ export type Database = {
           p_unidade_id: string
         }
         Returns: string
+      }
+      fn_credito_usar: {
+        Args: {
+          p_cliente_id: string
+          p_grupo_venda?: string
+          p_unidade_id?: string
+          p_valor: number
+        }
+        Returns: number
+      }
+      fn_devolucao_registrar: {
+        Args: {
+          p_cliente_id?: string
+          p_forma_reembolso: string
+          p_grupo_venda: string
+          p_itens: Json
+          p_motivo: string
+        }
+        Returns: Json
       }
       fn_implantacao_carga_manual_aprovar: {
         Args: { p_item_id: string }
@@ -2867,6 +3284,19 @@ export type Database = {
         }
         Returns: undefined
       }
+      fn_troca_registrar: {
+        Args: {
+          p_cliente_id?: string
+          p_forma_diferenca?: string
+          p_grupo_venda: string
+          p_itens_devolvidos: Json
+          p_itens_novos: Json
+          p_motivo: string
+          p_pagamentos?: Json
+          p_vendedora?: string
+        }
+        Returns: Json
+      }
       fn_unidade_por_texto: {
         Args: { _txt: string }
         Returns: {
@@ -2910,6 +3340,10 @@ export type Database = {
       fn_validar_operacao_unidade: {
         Args: { _operacao: string; _unidade_id: string }
         Returns: undefined
+      }
+      fn_venda_cancelar: {
+        Args: { p_grupo_venda: string; p_motivo: string }
+        Returns: Json
       }
       has_permission: {
         Args: { _permission: string; _user_id: string }
