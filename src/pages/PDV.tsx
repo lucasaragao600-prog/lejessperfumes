@@ -1,3 +1,4 @@
+import { toast } from "sonner";
 import { useCreditoCliente, usarCredito } from "@/hooks/useDevolucoes";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import {
@@ -415,6 +416,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
       setVendaConcluida(true);
     } catch (err) {
       console.error("Erro ao finalizar venda:", err);
+      toast.error((err as any)?.message || "Não foi possível finalizar a venda");
     } finally {
       setIsFinalizando(false);
     }
