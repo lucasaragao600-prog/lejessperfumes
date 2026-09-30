@@ -4,6 +4,7 @@ import {
   Search, ArrowUpDown, Store, Trash2, X, Package, Minus, Loader2
 } from "lucide-react";
 import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
+import AcoesVendaBotoes from "@/components/vendas/AcoesVendaBotoes";
 import {
   formatCurrency, formatDate, type Deposito, type Venda,
   type TipoPagamento, type Bandeira, type TipoAjusteValor
@@ -1051,7 +1052,7 @@ export default function Vendas() {
                     )}
                   </div>
                 ))}
-                {grupoVenda && !grupoVenda.startsWith("0000") && itens[0]?.grupoVenda && (
+                {itens[0]?.grupoVenda && (
                   <div className="px-4 py-2 border-t border-border">
                     <AcoesVendaBotoes grupoVenda={grupoVenda} compacto />
                   </div>
