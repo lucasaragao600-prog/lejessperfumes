@@ -53,7 +53,7 @@ async function deploy() {
   steps.orgs = orgs.errors ? orgs.errors[0]?.message : nodes.map((n: any) => n.slug);
   const org = (nodes.find((n: any) => n.type === "PERSONAL") || nodes[0])?.slug || "personal";
   const app = await fly("/apps", { method: "POST", body: JSON.stringify({ app_name: APP, org_slug: org }) });
-  if (!app.ok && app.status === 401) {
+  if (!app.ok) { steps.app_http = app.status;
     const g = await flyGraphql(
       `mutation($input: CreateAppInput!){ createApp(input:$input){ app { name } } }`,
       { input: { name: APP, organizationId: (nodes.find((n: any) => n.slug === org) || {}).id, machines: true } },
