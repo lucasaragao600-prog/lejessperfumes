@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Venda, Deposito, TipoPagamento, Bandeira, TipoAjusteValor, NfceStatus } from "@/data/mockData";
@@ -61,6 +62,7 @@ export function useVendas() {
         const { data, error } = await supabase
           .from("vendas")
           .select("*")
+          .eq("cancelada", false)
           .order("data", { ascending: false })
           .order("created_at", { ascending: false })
           .order("id", { ascending: true })
@@ -75,7 +77,7 @@ export function useVendas() {
     },
   });
 
-  const { data: pagamentos = [] } = useQuery({
+  const { data: pagamentosTodos = [] } = useQuery({
     queryKey: ["venda_pagamentos"],
     queryFn: async () => {
       const PAGE = 1000;
@@ -97,6 +99,12 @@ export function useVendas() {
     },
   });
 
+
+  // Pagamentos de vendas canceladas ficam fora (vendas já vêm sem as canceladas)
+  const pagamentos = useMemo(() => {
+    const grupos = new Set(vendas.map((v) => v.grupoVenda));
+    return pagamentosTodos.filter((p) => grupos.has(p.grupoVenda));
+  }, [vendas, pagamentosTodos]);
 
   const adicionarVendaMulti = useMutation({
     mutationFn: async ({

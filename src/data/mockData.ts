@@ -60,7 +60,7 @@ export type ClassificacaoPerfume = "Masculino" | "Feminino" | "Compartilhável";
 export const CLASSIFICACOES_PERFUME: ClassificacaoPerfume[] = ["Masculino", "Feminino", "Compartilhável"];
 
 export type TipoAjusteValor = "desconto" | "acrescimo";
-export type TipoPagamento = "Dinheiro" | "Pix" | "Débito" | "Crédito" | "Conta Assinada";
+export type TipoPagamento = "Dinheiro" | "Pix" | "Débito" | "Crédito" | "Conta Assinada" | "Crédito Loja" | "Vale-Troca";
 export type Bandeira = "Visa" | "Mastercard" | "Elo" | "Amex" | "Hipercard" | "N/A";
 
 export type NfceStatus = "sem_certificado" | "pendente" | "processando" | "autorizada" | "rejeitada";

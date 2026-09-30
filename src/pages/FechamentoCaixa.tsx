@@ -1,3 +1,6 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { vendasLiquidas } from "@/lib/devolucao";
 import { useState, useMemo, useEffect } from "react";
 import {
   DollarSign, ArrowDownCircle, ArrowUpCircle, X, Plus,
@@ -55,6 +58,17 @@ export default function FechamentoCaixa() {
   }, [sessaoAberta, vendas]);
 
   const totalVendasSessao = useMemo(() => vendasSessao.reduce((s, v) => s + v.total, 0), [vendasSessao]);
+
+  const { data: devolucoesSessao = [] } = useQuery({
+    queryKey: ["devolucoes", "sessao", sessaoAberta?.id],
+    enabled: !!sessaoAberta,
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from("devolucoes").select("valor_total, tipo").eq("sessao_caixa_id", sessaoAberta!.id);
+      if (error) throw error;
+      return (data || []) as { valor_total: number; tipo: string }[];
+    },
+  });
+  const totalDevolucoesSessao = devolucoesSessao.reduce((s, d) => s + Number(d.valor_total), 0);
 
   const valorEsperado = useMemo(() => {
     if (!sessaoAberta) return 0;
@@ -322,7 +336,13 @@ ${sessao.observacao ? `<div style="font-size:12px;margin:3px 0">Obs: ${sessao.ob
             <div className="kpi-card">
               <p className="text-xs text-muted-foreground mb-1">Vendas da sessão</p>
               <p className="text-lg font-bold text-gold">{formatCurrency(totalVendasSessao)}</p>
-              <p className="text-[10px] text-muted-foreground mt-1">{vendasSessao.length} vendas</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{vendasSessao.length} vendas (brutas, canceladas já excluídas)</p>
+              {totalDevolucoesSessao > 0 && (
+                <div className="mt-2 space-y-0.5 text-[10px]">
+                  <div className="flex justify-between"><span className="text-muted-foreground">Devoluções/trocas ({devolucoesSessao.length})</span><span className="text-destructive">-{formatCurrency(totalDevolucoesSessao)}</span></div>
+                  <div className="flex justify-between font-semibold"><span>Vendas líquidas</span><span className="text-gold">{formatCurrency(vendasLiquidas(totalVendasSessao, totalDevolucoesSessao))}</span></div>
+                </div>
+              )}
             </div>
             <div className="kpi-card">
               <p className="text-xs text-muted-foreground mb-1">Saldo esperado</p>

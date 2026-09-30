@@ -4,6 +4,7 @@ import {
   Search, ArrowUpDown, Store, Trash2, X, Package, Minus, Loader2
 } from "lucide-react";
 import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
+import AcoesVendaBotoes from "@/components/vendas/AcoesVendaBotoes";
 import {
   formatCurrency, formatDate, type Deposito, type Venda,
   type TipoPagamento, type Bandeira, type TipoAjusteValor
@@ -1051,6 +1052,11 @@ export default function Vendas() {
                     )}
                   </div>
                 ))}
+                {itens[0]?.grupoVenda && (
+                  <div className="px-4 py-2 border-t border-border">
+                    <AcoesVendaBotoes grupoVenda={grupoVenda} compacto />
+                  </div>
+                )}
                 {isGroup && grupoPags.length > 0 && (
                   <div className="px-4 py-2 bg-surface-overlay border-t border-border">
                     <div className="flex flex-wrap gap-2">

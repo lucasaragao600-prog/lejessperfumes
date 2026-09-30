@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+import { useCreditoCliente, usarCredito } from "@/hooks/useDevolucoes";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import {
   Search, Plus, Minus, Trash2, ShoppingCart, X,
@@ -20,7 +22,7 @@ import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
 import { useCaixa } from "@/hooks/useCaixa";
 import { useUnidades } from "@/hooks/useUnidades";
 
-const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada"];
+const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada", "Crédito Loja"];
 const bandeiras: Bandeira[] = ["Visa", "Mastercard", "Elo", "Amex", "Hipercard"];
 
 interface CartItem {
@@ -107,6 +109,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   const [grupoVendaAtual, setGrupoVendaAtual] = useState("");
 
   const clienteSelecionado = clientes.find(c => c.id === clienteId) || null;
+  const { data: creditoCliente } = useCreditoCliente(clienteId);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -372,6 +375,12 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
         grupoVenda: "", tipoPagamento: p.tipoPagamento, bandeira: p.bandeira, valor: p.valor,
       }));
 
+      const valorCredito = Number(pagamentos.filter(p => p.tipoPagamento === "Crédito Loja").reduce((s, p) => s + p.valor, 0).toFixed(2));
+      if (valorCredito > 0) {
+        if (!clienteId) throw new Error("Selecione o cliente para usar crédito da loja / vale-troca");
+        await usarCredito(clienteId, valorCredito, null);
+      }
+
       await adicionarVendaMulti({ itens, pagamentosVenda });
 
       for (const item of cart) {
@@ -407,6 +416,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
       setVendaConcluida(true);
     } catch (err) {
       console.error("Erro ao finalizar venda:", err);
+      toast.error((err as any)?.message || "Não foi possível finalizar a venda");
     } finally {
       setIsFinalizando(false);
     }
@@ -1094,6 +1104,12 @@ ${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-s
                           ))}
                         </select>
                       </div>
+                    )}
+
+                    {pag.tipoPagamento === "Crédito Loja" && (
+                      <p className={`text-[10px] ${!clienteId || (creditoCliente?.saldo ?? 0) < pag.valor ? "text-destructive" : "text-muted-foreground"}`}>
+                        {!clienteId ? "Selecione o cliente para usar o crédito" : `Saldo disponível: ${formatCurrency(creditoCliente?.saldo ?? 0)}${creditoCliente?.validade ? ` · válido até ${creditoCliente.validade.split("-").reverse().join("/")}` : ""}`}
+                      </p>
                     )}
 
                     {/* Conta Assinada observation */}
