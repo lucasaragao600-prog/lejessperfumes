@@ -589,8 +589,8 @@ export default function Vendas() {
               <div>
                 <p className="text-[11px] font-semibold text-foreground mb-2">Produtos Vendidos</p>
                 <div className="space-y-1.5">
-                  {Object.values(relatorio.porProduto).sort((a, b) => b.qtd - a.qtd).map((item) => (
-                    <div key={item.nome} className="flex justify-between items-center bg-surface-overlay rounded-xl px-3 py-2">
+                  {Object.entries(relatorio.porProduto).sort(([, a], [, b]) => b.qtd - a.qtd).map(([pid, item]) => (
+                    <div key={pid} className="flex justify-between items-center bg-surface-overlay rounded-xl px-3 py-2">
                       <div className="flex-1 min-w-0 mr-2">
                         <p className="text-xs text-foreground truncate">{item.nome}</p>
                         {item.marca && <p className="text-[10px] text-muted-foreground">{item.marca}</p>}
