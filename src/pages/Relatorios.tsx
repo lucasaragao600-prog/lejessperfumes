@@ -1,3 +1,4 @@
+import { formatCurrency } from "@/data/mockData";
 import { useDevolucoesResumo } from "@/hooks/useDevolucoes";
 import { vendasLiquidas } from "@/lib/devolucao";
 import { useMemo, useState, useEffect } from "react";
