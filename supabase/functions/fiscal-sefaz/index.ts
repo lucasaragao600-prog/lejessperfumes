@@ -48,7 +48,11 @@ async function flyGraphql(query: string, variables: Record<string, unknown>) {
 
 async function deploy() {
   const steps: Record<string, unknown> = {};
-  const app = await fly("/apps", { method: "POST", body: JSON.stringify({ app_name: APP, org_slug: "personal" }) });
+  const orgs = await flyGraphql(`query { organizations { nodes { slug type } } }`, {});
+  const nodes = orgs?.data?.organizations?.nodes || [];
+  steps.orgs = orgs.errors ? orgs.errors[0]?.message : nodes.map((n: any) => n.slug);
+  const org = (nodes.find((n: any) => n.type === "PERSONAL") || nodes[0])?.slug || "personal";
+  const app = await fly("/apps", { method: "POST", body: JSON.stringify({ app_name: APP, org_slug: org }) });
   steps.app = app.ok ? "criado" : (app.status === 422 || app.status === 409 ? "já existia" : app.data);
   if (!app.ok && app.status !== 422 && app.status !== 409) return { ok: false, steps };
 
