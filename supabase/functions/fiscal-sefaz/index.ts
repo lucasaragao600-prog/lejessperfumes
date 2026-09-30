@@ -17,11 +17,18 @@ const Body = z.object({ action: z.enum(["deploy", "health", "status"]) });
 const json = (obj: unknown, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
+function flyAuth(raw: string) {
+  const t = raw.trim();
+  if (t.startsWith("FlyV1 ")) return t;
+  if (t.startsWith("fm")) return `FlyV1 ${t}`;
+  return `Bearer ${t.replace(/^Bearer\s+/, "")}`;
+}
+
 async function fly(path: string, init: RequestInit = {}) {
   const token = Deno.env.get("FLY_API_TOKEN")!;
   const r = await fetch(`${MACHINES}${path}`, {
     ...init,
-    headers: { Authorization: token.startsWith("FlyV1") ? token : `Bearer ${token}`, "Content-Type": "application/json" },
+    headers: { Authorization: flyAuth(token), "Content-Type": "application/json" },
   });
   const text = await r.text();
   let data: any = text;
@@ -33,7 +40,7 @@ async function flyGraphql(query: string, variables: Record<string, unknown>) {
   const token = Deno.env.get("FLY_API_TOKEN")!;
   const r = await fetch("https://api.fly.io/graphql", {
     method: "POST",
-    headers: { Authorization: token.startsWith("FlyV1") ? token : `Bearer ${token}`, "Content-Type": "application/json" },
+    headers: { Authorization: flyAuth(token), "Content-Type": "application/json" },
     body: JSON.stringify({ query, variables }),
   });
   return await r.json();
