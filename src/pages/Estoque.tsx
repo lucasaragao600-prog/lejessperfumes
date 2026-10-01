@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Package, Search, AlertTriangle, Plus, Pencil, FlaskConical, Image, X, Download, Trash2, ChevronUp, ChevronDown, Barcode, Beaker, Percent, History, ListChecks, Check, FileDown, Loader2 } from "lucide-react";
+import { Package, Search, AlertTriangle, Plus, Pencil, X, Download, ChevronUp, ChevronDown, Barcode, Beaker, ListChecks, FileDown, Loader2, RefreshCw } from "lucide-react";
 import { gerarListaProdutosPdf } from "@/lib/pdf/listaProdutos";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatCurrency, CLASSIFICACOES_PERFUME, type Deposito, type Perfume, type TipoPerfume, type ClassificacaoPerfume } from "@/data/mockData";
@@ -8,19 +8,21 @@ import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import CadastroPerfume from "@/components/CadastroPerfume";
 import EditarPerfume from "@/components/EditarPerfume";
-import QuickActionMenu from "@/components/QuickActionMenu";
 import ParcelamentoModal from "@/components/ParcelamentoModal";
 import HistoricoItem from "@/components/HistoricoItem";
+import ProdutoEstoqueCard from "@/components/estoque/ProdutoEstoqueCard";
 import { useCasas } from "@/hooks/useCasas";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { useUnidades } from "@/hooks/useUnidades";
+import { useQuery } from "@tanstack/react-query";
+import { buscarEstoque, useEstoqueLista, useEstoqueResumo, type FiltrosEstoque, type ItemEstoque } from "@/hooks/useEstoqueLista";
 
-
+const LIMITE_TODOS = 2000;
 
 export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const { todosNomes: depositos, rotulo: rotuloUnidade } = useUnidades({ contexto: "historico" });
-  const { perfumes, testers, movimentacoes, vendas, tiposPerfumeConfig, concentracoesConfig, excluirPerfume } = useApp();
+  const { tiposPerfumeConfig, concentracoesConfig, excluirPerfume } = useApp();
   const { casas } = useCasas();
   const { profile } = useAuth();
   const userLoja = (!isMaster && profile?.loja) ? profile.loja as Deposito : null;
@@ -43,9 +45,16 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     }, 300);
     return () => clearTimeout(t);
   }, [buscaDigitada, setSearchParams]);
-  const [depositoFiltro, setDepositoFiltro] = useState<Deposito | "Todos">(userLoja || "Todos");
-  const [tipoFiltro, setTipoFiltro] = useState<TipoPerfume | "Todos">("Todos");
-  const [classificacaoFiltro, setClassificacaoFiltro] = useState<ClassificacaoPerfume | "Todos">("Todos");
+  const setFiltroUrl = useCallback((chave: string, valor: string) => {
+    setSearchParams((prev) => {
+      const n = new URLSearchParams(prev);
+      if (!valor || valor === "Todos") n.delete(chave); else n.set(chave, valor);
+      return n;
+    }, { replace: true });
+  }, [setSearchParams]);
+  const depositoFiltro = (searchParams.get("loja") || "Todos") as Deposito | "Todos";
+  const tipoFiltro = (searchParams.get("tipo") || "Todos") as TipoPerfume | "Todos";
+  const classificacaoFiltro = (searchParams.get("cls") || "Todos") as ClassificacaoPerfume | "Todos";
   const [showAlertas, setShowAlertas] = useState(false);
   const [custoMin, setCustoMin] = useState("");
   const [custoMax, setCustoMax] = useState("");
@@ -65,19 +74,78 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [selecaoAtiva, setSelecaoAtiva] = useState(false);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
   const [gerandoPdf, setGerandoPdf] = useState(false);
+  const [carregandoTodos, setCarregandoTodos] = useState(false);
+  const cacheSelecao = useRef(new Map<string, ItemEstoque>());
 
-  const toggleSelecionado = (id: string) => {
+  // Force deposit filter for vendedores
+  const effectiveDeposito = userLoja || depositoFiltro;
+
+  // Valores numéricos com espera de 300 ms para não consultar a cada tecla
+  const numeros = useMemo(() => ({ custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax }), [custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax]);
+  const [numerosDeb, setNumerosDeb] = useState(numeros);
+  useEffect(() => { const t = setTimeout(() => setNumerosDeb(numeros), 300); return () => clearTimeout(t); }, [numeros]);
+
+  const filtros: FiltrosEstoque = useMemo(() => ({
+    busca,
+    unidade: effectiveDeposito === "Todos" ? undefined : effectiveDeposito,
+    tipo: tipoFiltro,
+    classificacao: classificacaoFiltro,
+    ...(isMaster ? { custo_min: numerosDeb.custoMin, custo_max: numerosDeb.custoMax, venda_min: numerosDeb.vendaMin, venda_max: numerosDeb.vendaMax } : {}),
+    estoque_min: numerosDeb.estoqueMin,
+    estoque_max: numerosDeb.estoqueMax,
+    alertas: showAlertas,
+    ordem: ordenacaoEstoque,
+  }), [busca, effectiveDeposito, tipoFiltro, classificacaoFiltro, isMaster, numerosDeb, showAlertas, ordenacaoEstoque]);
+
+  const lista = useEstoqueLista(filtros, depositos);
+  const resumoQ = useEstoqueResumo(filtros);
+  const resumo = resumoQ.data || { total: 0, unidades: 0, custo: 0, venda: 0, por_unidade: {}, alertas: 0, sem_barcode: 0, sem_tester: 0 };
+  const itens = useMemo(() => (lista.data?.pages || []).flatMap((pg) => pg.itens), [lista.data]);
+  const total = lista.data?.pages[0]?.total ?? resumo.total;
+
+  const semBarcodeQ = useQuery({
+    queryKey: ["estoque_lista", "sem_barcode", depositos],
+    enabled: showSemBarcode,
+    queryFn: () => buscarEstoque({ especial: "sem_barcode" }, LIMITE_TODOS, 0, depositos),
+  });
+  const semTesterQ = useQuery({
+    queryKey: ["estoque_lista", "sem_tester", depositos],
+    enabled: showSemTester,
+    queryFn: () => buscarEstoque({ especial: "sem_tester" }, LIMITE_TODOS, 0, depositos),
+  });
+
+  const buscarTodosFiltrados = useCallback(async () => {
+    const r = await buscarEstoque(filtros, LIMITE_TODOS, 0, depositos);
+    for (const it of r.itens) cacheSelecao.current.set(it.id, it);
+    return r.itens;
+  }, [filtros, depositos]);
+
+  const toggleSelecionado = useCallback((id: string) => {
     setSelecionados((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
+  }, []);
+
+  const selecionarTodosDoFiltro = async () => {
+    setCarregandoTodos(true);
+    try {
+      const todos = await buscarTodosFiltrados();
+      setSelecionados(new Set(todos.map((p) => p.id)));
+    } catch {
+      toast.error("Não foi possível carregar todos os produtos do filtro.");
+    } finally {
+      setCarregandoTodos(false);
+    }
   };
 
   const gerarPdfLista = async () => {
-    const itens = filtrados.filter((p) => selecionados.has(p.id));
-    if (itens.length === 0) {
+    for (const it of itens) cacheSelecao.current.set(it.id, it);
+    const lista = Array.from(selecionados).map((id) => cacheSelecao.current.get(id)).filter(Boolean) as ItemEstoque[];
+    const ordenados = lista.sort((a, b) => a.nome.localeCompare(b.nome));
+    if (ordenados.length === 0) {
       toast.error("Selecione pelo menos um produto.");
       return;
     }
@@ -85,7 +153,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     try {
       const casaMap = new Map(casas.map((c) => [c.sigla, c.nome]));
       const doc = await gerarListaProdutosPdf({
-        itens,
+        itens: ordenados,
         subtitulo: userLoja ? `Loja: ${userLoja}` : effectiveDeposito !== "Todos" ? `Loja: ${effectiveDeposito}` : undefined,
         depositos,
         tiposConfig: tiposPerfumeConfig as Record<string, string>,
@@ -93,7 +161,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
         casasMap: casaMap,
       });
       doc.save(`lista_produtos_${new Date().toISOString().split("T")[0]}.pdf`);
-      toast.success(`PDF gerado com ${itens.length} produto(s).`);
+      toast.success(`PDF gerado com ${ordenados.length} produto(s).`);
       setSelecaoAtiva(false);
       setSelecionados(new Set());
     } catch (e) {
@@ -114,165 +182,49 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     touchStartY.current = null;
   };
 
-  // Force deposit filter for vendedores
-  const effectiveDeposito = userLoja || depositoFiltro;
-
-  const testerMap = useMemo(() => {
-    const map = new Map<string, number>();
-    testers.forEach((t) => {
-      const key = `${t.perfumeId}-${t.deposito}`;
-      map.set(key, (map.get(key) || 0) + t.quantidade);
-    });
-    testers.forEach((t) => {
-      const key = `${t.perfumeId}-total`;
-      map.set(key, (map.get(key) || 0) + t.quantidade);
-    });
-    return map;
-  }, [testers]);
-
-  // Histórico real de movimentação por depósito (movimentações + vendas)
-  const historicoPorDeposito = useMemo(() => {
-    const map = new Map<string, Set<string>>();
-    const add = (dep: string | undefined | null, pid: string) => {
-      if (!dep || !pid) return;
-      if (!map.has(dep)) map.set(dep, new Set());
-      map.get(dep)!.add(pid);
-    };
-    for (const m of movimentacoes) {
-      add(m.deposito, m.perfumeId);
-      add(m.depositoOrigem, m.perfumeId);
-      add(m.depositoDestino, m.perfumeId);
-    }
-    for (const v of vendas) add(v.deposito, v.perfumeId);
-    return map;
-  }, [movimentacoes, vendas]);
-
-  // Produtos sem código de barras
-  const produtosSemBarcode = useMemo(
-    () => perfumes.filter((p) => !p.codigoBarras || !p.codigoBarras.trim()),
-    [perfumes]
-  );
-
-  // Produtos sem tester em nenhum depósito
-  const produtosSemTester = useMemo(
-    () => perfumes.filter((p) => (testerMap.get(`${p.id}-total`) || 0) === 0),
-    [perfumes, testerMap]
-  );
-
-  const getTesterQtd = (perfumeId: string, deposito?: Deposito) => {
-    if (deposito) return testerMap.get(`${perfumeId}-${deposito}`) || 0;
-    return testerMap.get(`${perfumeId}-total`) || 0;
-  };
-
-  const getQtdForFilter = useCallback((p: Perfume) => {
-    if (userLoja) return p.estoques[userLoja];
-    return effectiveDeposito === "Todos"
-      ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
-      : p.estoques[effectiveDeposito as Deposito];
-  }, [userLoja, effectiveDeposito]);
-
-  const filtrados = useMemo(() => {
-    const result = perfumes.filter((p) => {
-      const term = busca.toLowerCase();
-      const matchBusca =
-        p.nome.toLowerCase().includes(term) ||
-        p.codigo.toLowerCase().includes(term) ||
-        p.marca.toLowerCase().includes(term) ||
-        p.concentracao.toLowerCase().includes(term) ||
-        (concentracoesConfig[p.concentracao] || "").toString().toLowerCase().includes(term) ||
-        p.tamanho.toLowerCase().includes(term) ||
-        String(p.volume).includes(term);
-
-      const matchTipo = tipoFiltro === "Todos" || p.tipo === tipoFiltro;
-      const matchClassificacao = classificacaoFiltro === "Todos" || (p.classificacao || "Compartilhável") === classificacaoFiltro;
-      const matchCustoMin = custoMin === "" || p.custo >= Number(custoMin);
-      const matchCustoMax = custoMax === "" || p.custo <= Number(custoMax);
-      const matchVendaMin = vendaMin === "" || p.precoVenda >= Number(vendaMin);
-      const matchVendaMax = vendaMax === "" || p.precoVenda <= Number(vendaMax);
-      const matchPreco = isMaster ? (matchCustoMin && matchCustoMax && matchVendaMin && matchVendaMax) : true;
-
-      const qtd = getQtdForFilter(p);
-      const matchEstoqueMin = estoqueMin === "" || qtd >= Number(estoqueMin);
-      const matchEstoqueMax = estoqueMax === "" || qtd <= Number(estoqueMax);
-      const matchEstoque = matchEstoqueMin && matchEstoqueMax;
-
-      // Filtro por histórico real de movimentação no depósito selecionado
-      const depositoAlvo = userLoja || (effectiveDeposito !== "Todos" ? (effectiveDeposito as Deposito) : null);
-      const matchHistorico = !depositoAlvo || (historicoPorDeposito.get(depositoAlvo)?.has(p.id) ?? false);
-
-      if (userLoja) {
-        if (showAlertas) return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && matchHistorico && qtd <= p.estoqueMinimo;
-        return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && matchHistorico;
-      }
-
-      if (showAlertas) return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && matchHistorico && qtd <= p.estoqueMinimo;
-      return matchBusca && matchTipo && matchClassificacao && matchPreco && matchEstoque && matchHistorico;
-    });
-
-    if (ordenacaoEstoque === "asc") {
-      result.sort((a, b) => getQtdForFilter(a) - getQtdForFilter(b));
-    } else if (ordenacaoEstoque === "desc") {
-      result.sort((a, b) => getQtdForFilter(b) - getQtdForFilter(a));
-    }
-
-    return result;
-  }, [perfumes, busca, effectiveDeposito, tipoFiltro, classificacaoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax, ordenacaoEstoque, userLoja, isMaster, getQtdForFilter, concentracoesConfig, historicoPorDeposito]);
-
-  // Renderização por páginas: só desenha os primeiros N cards; o resto entra ao rolar.
-  const PAGINA = 30;
-  const [visiveis, setVisiveis] = useState(PAGINA);
-  useEffect(() => { setVisiveis(PAGINA); }, [busca, effectiveDeposito, tipoFiltro, classificacaoFiltro, showAlertas, custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax, ordenacaoEstoque]);
+  // Rolagem infinita: busca a próxima página de 30 ao chegar perto do fim
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = lista;
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelaRef = useCallback((el: HTMLDivElement | null) => {
     observerRef.current?.disconnect();
     if (!el) return;
     observerRef.current = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting) setVisiveis((v) => v + PAGINA);
+      if (entries[0]?.isIntersecting && hasNextPage && !isFetchingNextPage) fetchNextPage();
     }, { rootMargin: "600px" });
     observerRef.current.observe(el);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+  const excluirRef = useRef(excluirPerfume);
+  excluirRef.current = excluirPerfume;
+  const onImagem = useCallback((p: ItemEstoque) => setImagemExpandida({ url: p.imageUrl || "", nome: p.nome }), []);
+  const onParcelamento = useCallback((p: ItemEstoque) => setParcelamentoPerfume(p), []);
+  const onHistorico = useCallback((p: ItemEstoque) => setHistoricoPerfume(p), []);
+  const onEditar = useCallback((p: ItemEstoque) => setEditandoPerfume(p), []);
+  const onExcluir = useCallback(async (p: ItemEstoque) => {
+    const ok = window.confirm(`Excluir o perfume "${p.nome}"?\n\nEsta ação é permanente e não pode ser desfeita.`);
+    if (!ok) return;
+    try {
+      await excluirRef.current(p.id);
+      toast.success("Perfume excluído com sucesso");
+    } catch (e: any) {
+      toast.error(
+        e?.message?.includes("violates foreign key")
+          ? "Não é possível excluir: existem registros vinculados (vendas, movimentações ou notas)."
+          : "Erro ao excluir perfume"
+      );
+    }
   }, []);
 
-  const totais = useMemo(() => {
-    return filtrados.reduce(
-      (acc, p) => {
-        if (userLoja) {
-          const qtd = p.estoques[userLoja];
-          acc.venda += qtd * p.precoVenda;
-          acc.unidades += qtd;
-          return acc;
-        }
-        const qtdGeral = Object.values(p.estoques).reduce((a, b) => a + b, 0);
-        const qtd = effectiveDeposito === "Todos" ? qtdGeral : p.estoques[effectiveDeposito as Deposito];
-        acc.custo += qtd * p.custo;
-        acc.venda += qtd * p.precoVenda;
-        acc.unidades += qtd;
-        for (const d of depositos) acc.porUnidade[d] = (acc.porUnidade[d] || 0) + (p.estoques[d] || 0);
-        return acc;
-      },
-      { custo: 0, venda: 0, unidades: 0, porUnidade: {} as Record<string, number> }
-    );
-  }, [filtrados, effectiveDeposito, userLoja, depositos]);
-
-  const alertas = perfumes.filter((p) => {
-    if (userLoja) return p.estoques[userLoja] <= p.estoqueMinimo;
-    const qtd = effectiveDeposito === "Todos"
-      ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
-      : p.estoques[effectiveDeposito as Deposito];
-    return qtd <= p.estoqueMinimo;
-  }).length;
-
-  const getQtd = (p: Perfume) => {
-    if (userLoja) return p.estoques[userLoja];
-    return effectiveDeposito === "Todos"
-      ? Object.values(p.estoques).reduce((a, b) => a + b, 0)
-      : p.estoques[effectiveDeposito as Deposito];
-  };
-
-  const isBaixo = (p: Perfume) => getQtd(p) <= p.estoqueMinimo;
-
-  const exportarExcel = useCallback(() => {
+  const exportarExcel = useCallback(async () => {
+    let todos: ItemEstoque[];
+    try {
+      todos = await buscarTodosFiltrados();
+    } catch {
+      toast.error("Não foi possível exportar. Tente novamente.");
+      return;
+    }
     const casaMap = new Map(casas.map((c) => [c.sigla, c.nome]));
-    const dados = filtrados.map((p) => ({
+    const dados = todos.map((p) => ({
       SKU: p.codigo,
       "Código de Barras": p.codigoBarras || "",
       Nome: p.nome,
@@ -289,7 +241,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
       "Último Custo Em": p.ultimoCustoEm || "",
       "Preço Venda": p.precoVenda,
       "Estoque Total": Object.values(p.estoques).reduce((a, b) => a + b, 0),
-      ...Object.fromEntries(depositos.map((d) => [`Estoque ${d}`, p.estoques[d] ?? 0])),
+      ...Object.fromEntries(depositos.map((d) => [`Estoque ${d}`, (p.estoques as Record<string, number>)[d] ?? 0])),
       "Estoque Mínimo": p.estoqueMinimo,
       NCM: p.ncm || "",
       CFOP: p.cfop || "",
@@ -300,7 +252,39 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Produtos");
     XLSX.writeFile(wb, `produtos_${new Date().toISOString().split("T")[0]}.xlsx`);
-  }, [filtrados, casas, tiposPerfumeConfig, concentracoesConfig]);
+  }, [buscarTodosFiltrados, casas, tiposPerfumeConfig, concentracoesConfig, depositos]);
+
+  const renderListaSimples = (q: typeof semBarcodeQ, vazio: string, Icone: typeof Barcode, fechar: () => void, hover: string) => {
+    if (q.isLoading) return <div className="py-12 flex justify-center"><Loader2 className="animate-spin text-muted-foreground" /></div>;
+    if (q.isError) return <p className="text-sm text-destructive text-center py-8">Não foi possível carregar. Feche e abra de novo.</p>;
+    const lst = q.data?.itens || [];
+    if (lst.length === 0) return (
+      <div className="text-center py-12">
+        <Icone size={36} className="text-muted-foreground mx-auto mb-3 opacity-40" />
+        <p className="text-sm text-muted-foreground">{vazio}</p>
+      </div>
+    );
+    return lst.map((p) => {
+      const qtdTotal = Object.values(p.estoques).reduce((a, b) => a + b, 0);
+      return (
+        <div key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border border-border bg-surface-overlay/40 ${hover} transition-colors`}>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-[10px] text-gold font-mono bg-primary/10 px-2 py-0.5 rounded-md">{p.codigo}</span>
+              <span className="text-[10px] text-muted-foreground">{qtdTotal} un.</span>
+            </div>
+            <p className="text-sm font-medium text-foreground truncate">{p.nome}</p>
+            <p className="text-xs text-muted-foreground truncate">
+              {p.marca} · {(tiposPerfumeConfig[p.tipo] || p.tipo)} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}
+            </p>
+          </div>
+          <button onClick={() => { setEditandoPerfume(p); fechar(); }} className="btn-secondary px-3 py-1.5 text-xs flex items-center gap-1.5 flex-shrink-0">
+            <Pencil size={11} /> Editar
+          </button>
+        </div>
+      );
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -318,7 +302,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
           <div>
             <h1 className="page-title">Estoque</h1>
             <p className="page-subtitle mt-1">
-              {filtrados.length} produtos{userLoja ? ` · ${userLoja}` : ""}
+              {total} produtos{userLoja ? ` · ${userLoja}` : ""}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -327,26 +311,26 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 ${
                 showAlertas
                   ? "bg-destructive/15 border border-destructive/40 text-destructive"
-                  : alertas > 0
+                  : resumo.alertas > 0
                   ? "bg-destructive/8 border border-destructive/25 text-destructive"
                   : "btn-secondary"
               }`}
             >
               <AlertTriangle size={13} />
-              {alertas}
+              {resumo.alertas}
             </button>
             {isMaster && (
               <button
                 onClick={() => setShowSemBarcode(true)}
                 title="Produtos sem código de barras"
                 className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 ${
-                  produtosSemBarcode.length > 0
+                  resumo.sem_barcode > 0
                     ? "bg-amber-500/10 border border-amber-500/30 text-amber-400 hover:bg-amber-500/15"
                     : "btn-secondary"
                 }`}
               >
-                <Barcode size={13} className={produtosSemBarcode.length > 0 ? "animate-pulse" : ""} />
-                {produtosSemBarcode.length}
+                <Barcode size={13} className={resumo.sem_barcode > 0 ? "animate-pulse" : ""} />
+                {resumo.sem_barcode}
               </button>
             )}
             {isMaster && (
@@ -354,13 +338,13 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                 onClick={() => setShowSemTester(true)}
                 title="Produtos sem tester"
                 className={`relative flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 ${
-                  produtosSemTester.length > 0
+                  resumo.sem_tester > 0
                     ? "bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/15"
                     : "btn-secondary"
                 }`}
               >
-                <Beaker size={13} className={produtosSemTester.length > 0 ? "animate-pulse" : ""} />
-                {produtosSemTester.length}
+                <Beaker size={13} className={resumo.sem_tester > 0 ? "animate-pulse" : ""} />
+                {resumo.sem_tester}
               </button>
             )}
             {isMaster && (
@@ -415,7 +399,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
               {(["Todos", ...depositos] as const).map((d) => (
                 <button
                   key={d}
-                  onClick={() => setDepositoFiltro(d)}
+                  onClick={() => setFiltroUrl("loja", d)}
                   className={`pill ${depositoFiltro === d ? "pill-active" : "pill-inactive"}`}
                 >
                   {d}
@@ -429,7 +413,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
             {([{ key: "Todos" as const, label: "Todos os tipos" }, ...tipos]).map(({ key, label }) => (
               <button
                 key={key}
-                onClick={() => setTipoFiltro(key)}
+                onClick={() => setFiltroUrl("tipo", key)}
                 className={`pill text-[11px] ${tipoFiltro === key ? "pill-active" : "pill-inactive"}`}
               >
                 {label}
@@ -442,7 +426,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
             {(["Todos", ...CLASSIFICACOES_PERFUME] as const).map((c) => (
               <button
                 key={c}
-                onClick={() => setClassificacaoFiltro(c as any)}
+                onClick={() => setFiltroUrl("cls", c)}
                 className={`pill text-[11px] ${classificacaoFiltro === c ? "pill-active" : "pill-inactive"}`}
               >
                 {c}
@@ -510,14 +494,14 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
       {userLoja ? null : (
         <div className="px-4 mb-3 grid grid-cols-4 gap-2">
           {[
-            { label: "Total", value: totais.unidades },
+            { label: "Total", value: resumo.unidades },
             ...depositos
               .filter((d) => !rotuloUnidade(d).includes("Unidade Inativa"))
-              .map((d) => ({ label: rotuloUnidade(d), value: totais.porUnidade[d] || 0 })),
+              .map((d) => ({ label: rotuloUnidade(d), value: resumo.por_unidade[d] || 0 })),
           ].map(({ label, value }) => (
             <div key={label} className="kpi-card p-3 text-center">
               <p className="text-[9px] text-muted-foreground mb-1">{label}</p>
-              <p className="text-sm font-bold text-foreground">{value}</p>
+              {resumoQ.isLoading ? <div className="h-5 w-10 mx-auto rounded bg-muted animate-pulse" /> : <p className="text-sm font-bold text-foreground">{value}</p>}
               <p className="text-[8px] text-muted-foreground">un.</p>
             </div>
           ))}
@@ -528,250 +512,81 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
       {isMaster && (
         <div className="px-4 mb-5 grid grid-cols-3 gap-2">
           {[
-            { label: "Custo", value: totais.custo, cls: "text-muted-foreground" },
-            { label: "Venda", value: totais.venda, cls: "text-gold" },
-            { label: "Lucro pot.", value: totais.venda - totais.custo, cls: "text-success" },
+            { label: "Custo", value: resumo.custo, cls: "text-muted-foreground" },
+            { label: "Venda", value: resumo.venda, cls: "text-gold" },
+            { label: "Lucro pot.", value: resumo.venda - resumo.custo, cls: "text-success" },
           ].map(({ label, value, cls }) => (
             <div key={label} className="kpi-card p-3">
               <p className="text-[10px] text-muted-foreground mb-1.5">{label}</p>
-              <p className={`text-xs font-semibold ${cls}`}>{formatCurrency(value)}</p>
+              {resumoQ.isLoading ? <div className="h-4 w-20 rounded bg-muted animate-pulse" /> : <p className={`text-xs font-semibold ${cls}`}>{formatCurrency(value)}</p>}
             </div>
           ))}
         </div>
       )}
 
       {/* List */}
-      <div className="px-4 space-y-3">
-        {filtrados.slice(0, visiveis).map((p) => {
-          const qtd = getQtd(p);
-          const baixo = isBaixo(p);
-          const testerTotal = userLoja
-            ? getTesterQtd(p.id, userLoja)
-            : effectiveDeposito === "Todos"
-            ? getTesterQtd(p.id)
-            : getTesterQtd(p.id, effectiveDeposito as Deposito);
-
-          const marcado = selecionados.has(p.id);
-          return (
-            <div
-              key={p.id}
-              onClick={selecaoAtiva ? () => toggleSelecionado(p.id) : undefined}
-              className={`${baixo ? "card-alert p-4" : "card-premium p-4"} ${
-                selecaoAtiva
-                  ? `cursor-pointer transition-all ${marcado ? "ring-2 ring-gold border-gold/60" : "opacity-90"}`
-                  : ""
-              }`}
-            >
-              {selecaoAtiva && (
-                <div className="flex items-center gap-2 mb-2">
-                  <span
-                    className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${
-                      marcado ? "bg-gold border-gold text-primary-foreground" : "border-border bg-surface-overlay"
-                    }`}
-                  >
-                    {marcado && <Check size={12} strokeWidth={3} />}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    {marcado ? "Selecionado para a lista" : "Toque para selecionar"}
-                  </span>
-                </div>
-              )}
-              <div className="flex items-start gap-3 mb-3">
-                <div
-                  onClick={selecaoAtiva ? undefined : () => p.imageUrl ? setImagemExpandida({ url: p.imageUrl, nome: p.nome }) : null}
-                  className={`w-14 h-14 rounded-xl border border-border bg-surface-overlay flex items-center justify-center flex-shrink-0 overflow-hidden ${p.imageUrl ? "cursor-pointer hover:border-gold-muted" : ""} transition-colors`}
-                >
-                  {p.imageUrl ? (
-                    <img src={p.imageUrl} alt={p.nome} loading="lazy" decoding="async" width={56} height={56} className="w-full h-full object-cover" />
-                  ) : (
-                    <Image size={22} className="text-muted-foreground opacity-40" />
-                  )}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-gold font-mono bg-primary/10 px-2 py-0.5 rounded-md">
-                      {p.codigo}
-                    </span>
-                    {baixo && <AlertTriangle size={12} className="text-destructive flex-shrink-0" />}
-                  </div>
-                  <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                    <h3 className="font-display text-base text-foreground truncate">{p.nome}</h3>
-                    {p.classificacao && (
-                      <span
-                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md border ${
-                          p.classificacao === "Masculino"
-                            ? "bg-blue-500/15 text-blue-400 border-blue-500/30"
-                            : p.classificacao === "Feminino"
-                            ? "bg-pink-500/15 text-pink-400 border-pink-500/30"
-                            : "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
-                        }`}
-                      >
-                        {p.classificacao}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {p.marca} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}{p.codigoBarras ? ` · ${p.codigoBarras}` : ""}
-                  </p>
-                </div>
-
-                {/* Botão de ações rápidas no canto */}
-                <div className="ml-2 flex-shrink-0">
-                  <QuickActionMenu perfume={p} />
-                </div>
+      <div className={`px-4 space-y-3 ${lista.isPlaceholderData ? "opacity-60 transition-opacity" : ""}`}>
+        {lista.isLoading && Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="card-premium p-4 space-y-3">
+            <div className="flex gap-3">
+              <div className="w-14 h-14 rounded-xl bg-muted animate-pulse" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-24 rounded bg-muted animate-pulse" />
+                <div className="h-4 w-48 rounded bg-muted animate-pulse" />
+                <div className="h-3 w-32 rounded bg-muted animate-pulse" />
               </div>
-
-              {/* Total de unidades centralizado */}
-              <div className="flex items-baseline justify-center gap-2 mb-3 py-2 rounded-lg bg-surface-overlay/60">
-                <span className={`text-3xl font-bold tracking-tight ${baixo ? "text-destructive" : "text-foreground"}`}>{qtd}</span>
-                <span className="text-[11px] text-muted-foreground uppercase tracking-wider">unid.</span>
-              </div>
-
-
-              {/* Per-deposit breakdown - only for master/all deposits */}
-              {!userLoja && effectiveDeposito === "Todos" && (
-                <div className="flex gap-2 mb-3">
-                  {depositos.map((d) => {
-                    const testerDeposito = getTesterQtd(p.id, d);
-                    return (
-                      <div key={d} className="flex-1 bg-surface-overlay rounded-lg p-2 text-center">
-                        <p className="text-[9px] text-muted-foreground">{d}</p>
-                        <p className={`text-sm font-semibold ${p.estoques[d] <= 0 ? "text-destructive" : "text-foreground"}`}>
-                          {p.estoques[d]}
-                        </p>
-                        {testerDeposito > 0 && (
-                          <p className="text-[8px] text-purple-400 mt-0.5 flex items-center justify-center gap-0.5">
-                            <FlaskConical size={8} /> {testerDeposito}
-                          </p>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Tester indicator */}
-              <div className="mb-2">
-                {testerTotal > 0 ? (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-purple-500/8 border border-purple-500/20">
-                    <FlaskConical size={12} className="text-purple-400" />
-                    <span className="text-[11px] text-purple-400 font-medium">
-                      {testerTotal === 1 ? "Tester disponível" : `Testers: ${testerTotal} unidades`}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-surface-overlay">
-                    <FlaskConical size={12} className="text-muted-foreground opacity-40" />
-                    <span className="text-[11px] text-muted-foreground">
-                      {userLoja ? "Sem tester nesta loja" : effectiveDeposito === "Todos" ? "Sem tester" : `Sem tester neste depósito`}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* Price info - vendedor only sees sale price */}
-              {isMaster ? (
-                <div className="border-t border-border pt-3">
-                  {/* Custo Médio - destaque principal */}
-                  <div className="flex items-center justify-between mb-2.5 px-2.5 py-2 rounded-lg bg-amber-500/8 border border-amber-500/20">
-                    <p className="text-[10px] font-medium text-amber-400/80">Custo Médio</p>
-                    <p className="text-sm font-bold text-amber-400">{formatCurrency(p.custoMedio || 0)}</p>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 items-end">
-                    <div>
-                      <p className="text-[9px] text-muted-foreground">Custo unit.</p>
-                      <p className="text-xs text-foreground">{formatCurrency(p.custo)}</p>
-                    </div>
-                    <div>
-                      <p className="text-[9px] text-muted-foreground">Venda unit.</p>
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-xs text-gold font-medium">{formatCurrency(p.precoVenda)}</p>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setParcelamentoPerfume(p); }}
-                          className="flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-md border border-gold/30 text-gold/80 hover:bg-gold/10 hover:text-gold transition-colors"
-                          title="Ver opções de parcelamento"
-                        >
-                          <Percent size={9} />10x
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="text-right flex items-center justify-end gap-3">
-                      <button
-                        onClick={() => setHistoricoPerfume(p)}
-                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-gold transition-colors duration-150"
-                        title="Histórico do item"
-                      >
-                        <History size={11} /> Histórico
-                      </button>
-                      <button
-                        onClick={() => setEditandoPerfume(p)}
-                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-gold transition-colors duration-150"
-                      >
-                        <Pencil size={11} /> Editar
-                      </button>
-                      <button
-                        onClick={async () => {
-                          const ok = window.confirm(
-                            `Excluir o perfume "${p.nome}"?\n\nEsta ação é permanente e não pode ser desfeita.`
-                          );
-                          if (!ok) return;
-                          try {
-                            await excluirPerfume(p.id);
-                            toast.success("Perfume excluído com sucesso");
-                          } catch (e: any) {
-                            toast.error(
-                              e?.message?.includes("violates foreign key")
-                                ? "Não é possível excluir: existem registros vinculados (vendas, movimentações ou notas)."
-                                : "Erro ao excluir perfume"
-                            );
-                          }
-                        }}
-                        className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors duration-150"
-                      >
-                        <Trash2 size={11} /> Excluir
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="border-t border-border pt-3">
-                  <div>
-                    <p className="text-[9px] text-muted-foreground">Preço de Venda</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs text-gold font-medium">{formatCurrency(p.precoVenda)}</p>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setParcelamentoPerfume(p); }}
-                        className="flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-md border border-gold/30 text-gold/80 hover:bg-gold/10 hover:text-gold transition-colors"
-                        title="Ver opções de parcelamento"
-                      >
-                        <Percent size={10} />10x
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
-          );
-        })}
+            <div className="h-12 rounded-lg bg-muted animate-pulse" />
+          </div>
+        ))}
 
-        {filtrados.length > visiveis && (
+        {lista.isError && !lista.data && (
+          <div className="text-center py-16">
+            <AlertTriangle size={36} className="text-destructive mx-auto mb-3 opacity-70" />
+            <p className="text-sm text-muted-foreground mb-4">Não foi possível carregar o estoque.</p>
+            <button onClick={() => lista.refetch()} className="btn-secondary px-4 py-2 text-xs inline-flex items-center gap-1.5">
+              <RefreshCw size={12} /> Tentar novamente
+            </button>
+          </div>
+        )}
+
+        {itens.map((p) => (
+          <ProdutoEstoqueCard
+            key={p.id}
+            p={p}
+            isMaster={isMaster}
+            userLoja={userLoja}
+            todasLojas={effectiveDeposito === "Todos"}
+            depositos={depositos}
+            concentracaoLabel={String(concentracoesConfig[p.concentracao] || p.concentracao)}
+            selecaoAtiva={selecaoAtiva}
+            marcado={selecionados.has(p.id)}
+            onToggle={toggleSelecionado}
+            onImagem={onImagem}
+            onParcelamento={onParcelamento}
+            onHistorico={onHistorico}
+            onEditar={onEditar}
+            onExcluir={onExcluir}
+          />
+        ))}
+
+        {hasNextPage && (
           <div ref={sentinelaRef} className="flex flex-col items-center gap-2 py-6">
             <p className="text-[11px] text-muted-foreground">
-              Mostrando {visiveis} de {filtrados.length} produtos
+              Mostrando {itens.length} de {total} produtos
             </p>
             <button
-              onClick={() => setVisiveis((v) => v + PAGINA)}
-              className="text-xs px-4 py-2 rounded-lg border border-gold/40 text-gold hover:bg-gold/10 transition-colors"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+              className="text-xs px-4 py-2 rounded-lg border border-gold/40 text-gold hover:bg-gold/10 transition-colors inline-flex items-center gap-1.5 disabled:opacity-60"
             >
+              {isFetchingNextPage && <Loader2 size={12} className="animate-spin" />}
               Carregar mais
             </button>
           </div>
         )}
 
-
-        {filtrados.length === 0 && (
+        {!lista.isLoading && !lista.isError && itens.length === 0 && (
           <div className="text-center py-20">
             <Package size={40} className="text-muted-foreground mx-auto mb-4 opacity-40" />
             <p className="text-muted-foreground text-sm">
@@ -790,52 +605,11 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
             <DialogTitle className="flex items-center gap-2">
               <Barcode size={18} className="text-amber-400" />
               Produtos sem código de barras
-              <span className="text-xs text-muted-foreground font-normal">
-                ({produtosSemBarcode.length})
-              </span>
+              <span className="text-xs text-muted-foreground font-normal">({resumo.sem_barcode})</span>
             </DialogTitle>
           </DialogHeader>
           <div className="overflow-y-auto -mx-6 px-6 space-y-2">
-            {produtosSemBarcode.length === 0 ? (
-              <div className="text-center py-12">
-                <Barcode size={36} className="text-muted-foreground mx-auto mb-3 opacity-40" />
-                <p className="text-sm text-muted-foreground">
-                  Todos os produtos possuem código de barras cadastrado
-                </p>
-              </div>
-            ) : (
-              produtosSemBarcode.map((p) => {
-                const qtdTotal = Object.values(p.estoques).reduce((a, b) => a + b, 0);
-                return (
-                  <div
-                    key={p.id}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface-overlay/40 hover:border-gold-muted transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] text-gold font-mono bg-primary/10 px-2 py-0.5 rounded-md">
-                          {p.codigo}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">{qtdTotal} un.</span>
-                      </div>
-                      <p className="text-sm font-medium text-foreground truncate">{p.nome}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {p.marca} · {(tiposPerfumeConfig[p.tipo] || p.tipo)} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setEditandoPerfume(p);
-                        setShowSemBarcode(false);
-                      }}
-                      className="btn-secondary px-3 py-1.5 text-xs flex items-center gap-1.5 flex-shrink-0"
-                    >
-                      <Pencil size={11} /> Editar
-                    </button>
-                  </div>
-                );
-              })
-            )}
+            {renderListaSimples(semBarcodeQ, "Todos os produtos possuem código de barras cadastrado", Barcode, () => setShowSemBarcode(false), "hover:border-gold-muted")}
           </div>
         </DialogContent>
       </Dialog>
@@ -847,52 +621,11 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
             <DialogTitle className="flex items-center gap-2">
               <Beaker size={18} className="text-purple-400" />
               Produtos sem tester
-              <span className="text-xs text-muted-foreground font-normal">
-                ({produtosSemTester.length})
-              </span>
+              <span className="text-xs text-muted-foreground font-normal">({resumo.sem_tester})</span>
             </DialogTitle>
           </DialogHeader>
           <div className="overflow-y-auto -mx-6 px-6 space-y-2">
-            {produtosSemTester.length === 0 ? (
-              <div className="text-center py-12">
-                <Beaker size={36} className="text-muted-foreground mx-auto mb-3 opacity-40" />
-                <p className="text-sm text-muted-foreground">
-                  Todos os produtos possuem tester cadastrado
-                </p>
-              </div>
-            ) : (
-              produtosSemTester.map((p) => {
-                const qtdTotal = Object.values(p.estoques).reduce((a, b) => a + b, 0);
-                return (
-                  <div
-                    key={p.id}
-                    className="flex items-center gap-3 p-3 rounded-xl border border-border bg-surface-overlay/40 hover:border-purple-500/30 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] text-gold font-mono bg-primary/10 px-2 py-0.5 rounded-md">
-                          {p.codigo}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">{qtdTotal} un.</span>
-                      </div>
-                      <p className="text-sm font-medium text-foreground truncate">{p.nome}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {p.marca} · {(tiposPerfumeConfig[p.tipo] || p.tipo)} · {(concentracoesConfig[p.concentracao] || p.concentracao)} · {p.tamanho}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setEditandoPerfume(p);
-                        setShowSemTester(false);
-                      }}
-                      className="btn-secondary px-3 py-1.5 text-xs flex items-center gap-1.5 flex-shrink-0"
-                    >
-                      <Pencil size={11} /> Editar
-                    </button>
-                  </div>
-                );
-              })
-            )}
+            {renderListaSimples(semTesterQ, "Todos os produtos possuem tester cadastrado", Beaker, () => setShowSemTester(false), "hover:border-purple-500/30")}
           </div>
         </DialogContent>
       </Dialog>
@@ -929,13 +662,15 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
                 {selecionados.size} selecionado{selecionados.size === 1 ? "" : "s"}
               </p>
               <p className="text-[10px] text-muted-foreground truncate">
-                {filtrados.length} produto(s) no filtro atual
+                {total} produto(s) no filtro atual
               </p>
             </div>
             <button
-              onClick={() => setSelecionados(new Set(filtrados.map((p) => p.id)))}
-              className="btn-secondary px-2.5 py-2 text-[11px]"
+              onClick={selecionarTodosDoFiltro}
+              disabled={carregandoTodos}
+              className="btn-secondary px-2.5 py-2 text-[11px] inline-flex items-center gap-1 disabled:opacity-60"
             >
+              {carregandoTodos && <Loader2 size={11} className="animate-spin" />}
               Todos do filtro
             </button>
             <button
