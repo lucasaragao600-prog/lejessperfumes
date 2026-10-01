@@ -5,3 +5,5 @@
 - [ ] Fase 1C — Desempenho (✅ Estoque → ✅ Vendas aguardando validação → Pedidos → Movimentações → AppContext; PDV busca no servidor; medições antes/depois)
 - [ ] Fase 1D — Governança do PDV (limite de desconto + PIN gerente, preço mínimo, vendedora como entidade, comissão, venda suspensa, orçamento/reserva)
 - [x] Ajuste NFC-e/Clientes — descrição fiscal padronizada, CPF/CNPJ na nota e cadastro opcional ampliado
+- [x] Decants Fase 1 (frascos, ledger de ml, tamanhos, conferência) — aguardando aprovação
+- [ ] Decants Fases 2–7 — aguardando aprovação da Fase 1

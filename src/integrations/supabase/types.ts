@@ -666,6 +666,447 @@ export type Database = {
           },
         ]
       }
+      decant_conferencias: {
+        Row: {
+          acao: string
+          aprovado_em: string | null
+          aprovado_por: string | null
+          aprovado_por_nome: string
+          created_at: string
+          decisao_obs: string
+          diferenca: number
+          executado_por: string | null
+          executado_por_nome: string
+          frasco_id: string
+          id: string
+          justificativa: string
+          saldo_fisico: number
+          saldo_teorico: number
+          status: string
+          unidade_id: string
+          updated_at: string
+        }
+        Insert: {
+          acao?: string
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          aprovado_por_nome?: string
+          created_at?: string
+          decisao_obs?: string
+          diferenca: number
+          executado_por?: string | null
+          executado_por_nome?: string
+          frasco_id: string
+          id?: string
+          justificativa?: string
+          saldo_fisico: number
+          saldo_teorico: number
+          status: string
+          unidade_id: string
+          updated_at?: string
+        }
+        Update: {
+          acao?: string
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          aprovado_por_nome?: string
+          created_at?: string
+          decisao_obs?: string
+          diferenca?: number
+          executado_por?: string | null
+          executado_por_nome?: string
+          frasco_id?: string
+          id?: string
+          justificativa?: string
+          saldo_fisico?: number
+          saldo_teorico?: number
+          status?: string
+          unidade_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_conferencias_frasco_id_fkey"
+            columns: ["frasco_id"]
+            isOneToOne: false
+            referencedRelation: "decant_frascos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_conferencias_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_fechados_mov: {
+        Row: {
+          created_at: string
+          data_operacao: string
+          frasco_id: string | null
+          id: string
+          idempotency_key: string | null
+          observacao: string
+          produto_id: string
+          quantidade: number
+          responsavel: string
+          saldo_apos: number
+          tipo: string
+          unidade_id: string
+          usuario_id: string | null
+          usuario_nome: string
+        }
+        Insert: {
+          created_at?: string
+          data_operacao?: string
+          frasco_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          observacao?: string
+          produto_id: string
+          quantidade: number
+          responsavel?: string
+          saldo_apos: number
+          tipo: string
+          unidade_id: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Update: {
+          created_at?: string
+          data_operacao?: string
+          frasco_id?: string | null
+          id?: string
+          idempotency_key?: string | null
+          observacao?: string
+          produto_id?: string
+          quantidade?: number
+          responsavel?: string
+          saldo_apos?: number
+          tipo?: string
+          unidade_id?: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_fechados_mov_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_fechados_mov_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "decant_fechados_mov_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_fechados_saldo: {
+        Row: {
+          produto_id: string
+          quantidade: number
+          unidade_id: string
+          updated_at: string
+        }
+        Insert: {
+          produto_id: string
+          quantidade?: number
+          unidade_id: string
+          updated_at?: string
+        }
+        Update: {
+          produto_id?: string
+          quantidade?: number
+          unidade_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_fechados_saldo_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_fechados_saldo_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "decant_fechados_saldo_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_frascos: {
+        Row: {
+          aberto_em: string
+          aberto_por: string | null
+          aberto_por_nome: string
+          codigo: string
+          created_at: string
+          custo: number
+          custo_ml: number
+          id: string
+          idempotency_key: string | null
+          lote_fabricante: string
+          observacao: string
+          produto_id: string
+          rendimento_util: number
+          responsavel: string
+          status: string
+          unidade_id: string
+          updated_at: string
+          validade: string | null
+          volume_inicial_ml: number
+          volume_nominal_ml: number
+        }
+        Insert: {
+          aberto_em?: string
+          aberto_por?: string | null
+          aberto_por_nome?: string
+          codigo: string
+          created_at?: string
+          custo: number
+          custo_ml: number
+          id?: string
+          idempotency_key?: string | null
+          lote_fabricante?: string
+          observacao?: string
+          produto_id: string
+          rendimento_util?: number
+          responsavel?: string
+          status?: string
+          unidade_id: string
+          updated_at?: string
+          validade?: string | null
+          volume_inicial_ml: number
+          volume_nominal_ml: number
+        }
+        Update: {
+          aberto_em?: string
+          aberto_por?: string | null
+          aberto_por_nome?: string
+          codigo?: string
+          created_at?: string
+          custo?: number
+          custo_ml?: number
+          id?: string
+          idempotency_key?: string | null
+          lote_fabricante?: string
+          observacao?: string
+          produto_id?: string
+          rendimento_util?: number
+          responsavel?: string
+          status?: string
+          unidade_id?: string
+          updated_at?: string
+          validade?: string | null
+          volume_inicial_ml?: number
+          volume_nominal_ml?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_frascos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_frascos_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "decant_frascos_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_ml_ledger: {
+        Row: {
+          created_at: string
+          frasco_id: string
+          id: string
+          idempotency_key: string | null
+          ml: number
+          motivo: string
+          referencia_id: string | null
+          referencia_tipo: string
+          saldo_apos: number
+          tipo: string
+          unidade_id: string
+          usuario_id: string | null
+          usuario_nome: string
+        }
+        Insert: {
+          created_at?: string
+          frasco_id: string
+          id?: string
+          idempotency_key?: string | null
+          ml: number
+          motivo?: string
+          referencia_id?: string | null
+          referencia_tipo?: string
+          saldo_apos: number
+          tipo: string
+          unidade_id: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Update: {
+          created_at?: string
+          frasco_id?: string
+          id?: string
+          idempotency_key?: string | null
+          ml?: number
+          motivo?: string
+          referencia_id?: string | null
+          referencia_tipo?: string
+          saldo_apos?: number
+          tipo?: string
+          unidade_id?: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_ml_ledger_frasco_id_fkey"
+            columns: ["frasco_id"]
+            isOneToOne: false
+            referencedRelation: "decant_frascos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_ml_ledger_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_perfume_config: {
+        Row: {
+          ativo: boolean
+          atualizado_por: string | null
+          created_at: string
+          elegivel: boolean
+          estoque_minimo_ml: number
+          produto_id: string
+          rendimento_util: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          atualizado_por?: string | null
+          created_at?: string
+          elegivel?: boolean
+          estoque_minimo_ml?: number
+          produto_id: string
+          rendimento_util?: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          atualizado_por?: string | null
+          created_at?: string
+          elegivel?: boolean
+          estoque_minimo_ml?: number
+          produto_id?: string
+          rendimento_util?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_perfume_config_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: true
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_perfume_config_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: true
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+        ]
+      }
+      decant_tamanhos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          custo_adicional: number
+          custo_atomizador: number
+          custo_embalagem: number
+          custo_etiqueta: number
+          custo_frasco: number
+          custo_mao_obra: number
+          frasco_descricao: string
+          id: string
+          nome: string
+          updated_at: string
+          volume_ml: number
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          custo_adicional?: number
+          custo_atomizador?: number
+          custo_embalagem?: number
+          custo_etiqueta?: number
+          custo_frasco?: number
+          custo_mao_obra?: number
+          frasco_descricao?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+          volume_ml: number
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          custo_adicional?: number
+          custo_atomizador?: number
+          custo_embalagem?: number
+          custo_etiqueta?: number
+          custo_frasco?: number
+          custo_mao_obra?: number
+          frasco_descricao?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+          volume_ml?: number
+        }
+        Relationships: []
+      }
       devolucao_itens: {
         Row: {
           created_at: string
@@ -3087,6 +3528,11 @@ export type Database = {
         }
         Returns: undefined
       }
+      fn__decant_cfg: { Args: never; Returns: Json }
+      fn__decant_exigir: {
+        Args: { _perm: string; _unidade: string }
+        Returns: undefined
+      }
       fn__devolucao_core: {
         Args: {
           p_cliente: string
@@ -3228,6 +3674,68 @@ export type Database = {
         }
         Returns: number
       }
+      fn_decant_abrir_frasco: {
+        Args: {
+          p_idempotency_key: string
+          p_lote_fabricante: string
+          p_observacao: string
+          p_produto_id: string
+          p_responsavel: string
+          p_unidade_id: string
+          p_validade: string
+          p_volume_inicial: number
+        }
+        Returns: Json
+      }
+      fn_decant_conferir: {
+        Args: {
+          p_acao: string
+          p_frasco_id: string
+          p_justificativa: string
+          p_saldo_fisico: number
+        }
+        Returns: Json
+      }
+      fn_decant_custo_ml: {
+        Args: { _custo: number; _rendimento: number; _volume: number }
+        Returns: number
+      }
+      fn_decant_decidir_conferencia: {
+        Args: {
+          p_acao: string
+          p_aprovar: boolean
+          p_conferencia_id: string
+          p_obs: string
+        }
+        Returns: Json
+      }
+      fn_decant_destinar: {
+        Args: {
+          p_data: string
+          p_idempotency_key: string
+          p_observacao: string
+          p_produto_id: string
+          p_quantidade: number
+          p_responsavel: string
+          p_unidade_id: string
+        }
+        Returns: Json
+      }
+      fn_decant_frascos_listar: {
+        Args: { p_unidade_id: string }
+        Returns: Json
+      }
+      fn_decant_registrar_saida: {
+        Args: {
+          p_frasco_id: string
+          p_idempotency_key: string
+          p_ml: number
+          p_motivo: string
+          p_tipo: string
+        }
+        Returns: Json
+      }
+      fn_decant_saldo_frasco: { Args: { p_frasco_id: string }; Returns: number }
       fn_devolucao_registrar: {
         Args: {
           p_cliente_id?: string

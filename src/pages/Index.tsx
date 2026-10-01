@@ -22,6 +22,7 @@ import PedidosVenda from "@/pages/PedidosVenda";
 import NfcePendentes from "@/pages/NfcePendentes";
 import Reposicao from "@/pages/Reposicao";
 import Transferencias from "@/pages/Transferencias";
+import Decants from "@/pages/Decants";
 
 import Relatorios from "@/pages/Relatorios";
 import InteligenciaOperacional from "@/pages/InteligenciaOperacional";
@@ -129,6 +130,7 @@ function IndexContent({
       case "usuarios": return isMaster ? <GerenciarUsuarios /> : <Estoque isMaster={false} />;
       case "unidades": return isMaster ? <Unidades /> : <Estoque isMaster={false} />;
       case "implantacoes": return isMaster ? <Implantacoes /> : <Estoque isMaster={false} />;
+      case "decants": return isMaster ? <Decants /> : <Estoque isMaster={false} />;
       default: return <Estoque isMaster={isMaster} />;
     }
   };
