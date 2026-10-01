@@ -135,8 +135,8 @@ Deno.serve(async (req) => {
       if (!e) preenchidos++;
     }
     await admin.from("audit_logs").insert({
-      user_id: u.user.id, acao: "perfil_olfativo_ia", tabela: "perfumes",
-      detalhes: { modo, processados: rows.length, preenchidos },
+      usuario_id: u.user.id, acao: "perfil_olfativo_ia", entidade: "perfumes",
+      dados_novos: { modo, processados: rows.length, preenchidos, ids: rows.map((r) => r.id) },
     }).then(() => {}, () => {});
 
     const { count } = await admin.from("perfumes").select("id", { count: "exact", head: true })
