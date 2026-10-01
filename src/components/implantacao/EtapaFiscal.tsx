@@ -129,6 +129,7 @@ export default function EtapaFiscal({ unidadeId }: Props) {
             onChange={(e) => setForm({ ...form, regime_tributario: e.target.value })}
           >
             <option value="simples_nacional">Simples Nacional</option>
+                  <option value="simples_nacional_excesso">Simples Nacional — excesso de sublimite</option>
             <option value="lucro_presumido">Lucro Presumido</option>
             <option value="lucro_real">Lucro Real</option>
           </select>
