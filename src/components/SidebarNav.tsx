@@ -1,5 +1,5 @@
 import { Building2, Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon, Monitor, DollarSign, ClipboardList, LineChart, Sparkles, Truck, Droplets } from "lucide-react";
-import logoLeJess from "@/assets/logo-le-jess.png";
+import { useLogoEmpresa } from "@/hooks/useLogoEmpresa";
 import { useTheme } from "@/context/ThemeContext";
 
 interface SidebarNavProps {
@@ -34,6 +34,7 @@ const allTabs = [
 ];
 
 export default function SidebarNav({ activeTab, onTabChange, isMaster = true }: SidebarNavProps) {
+  const { src: logoLeJess, personalizada: logoCustom } = useLogoEmpresa();
   const tabs = allTabs.filter((t) => !t.masterOnly || isMaster);
   const { theme, toggleTheme } = useTheme();
 

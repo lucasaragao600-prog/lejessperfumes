@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Bell } from "lucide-react";
-import logoLeJess from "@/assets/logo-le-jess.png";
+import { useLogoEmpresa } from "@/hooks/useLogoEmpresa";
 import BottomNav from "@/components/BottomNav";
 import SidebarNav from "@/components/SidebarNav";
 import Estoque from "@/pages/Estoque";
@@ -39,7 +39,7 @@ const Index = () => {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <img src={logoLeJess} alt="Le Jess Perfumes" className="h-16 mx-auto mb-4 invert opacity-80" />
+          <img src={logoLeJess} alt="Le Jess Perfumes" className={`h-16 mx-auto mb-4 ${logoCustom ? "" : "invert"} opacity-80`} />
           <div className="w-6 h-6 border-2 border-gold/30 border-t-gold rounded-full animate-spin mx-auto" />
         </div>
       </div>
