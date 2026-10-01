@@ -455,3 +455,15 @@ export function useSalvarModeloEtiqueta() {
 }
 export const gerarEtiquetas = (loteId: string, itens: { item_id: string; quantidade: number }[], modeloId: string) =>
   rpc("fn_decant_etiquetas_imprimir", { p_lote_id: loteId, p_itens: itens, p_modelo_id: modeloId });
+
+/* ---------- Tester → frasco de decant ---------- */
+export function useTesterParaFrasco() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { testerId: string; mlAtual: number; responsavel: string; observacao: string; chave: string }) =>
+      rpc("fn_decant_tester_para_frasco", { p_tester_id: p.testerId, p_volume_atual: p.mlAtual, p_responsavel: p.responsavel,
+        p_observacao: p.observacao, p_idempotency_key: p.chave }),
+    onSuccess: () => ["decant-frascos", "decant-frascos-disp", "testers", "decant-alertas", "decant-reposicao"]
+      .forEach((k) => qc.invalidateQueries({ queryKey: [k] })),
+  });
+}
