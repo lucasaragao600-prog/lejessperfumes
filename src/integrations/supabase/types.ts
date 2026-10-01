@@ -3225,6 +3225,7 @@ export type Database = {
           recebido_por: string | null
           recebido_por_nome: string | null
           reimpressoes: number
+          retroativa: boolean
           revisao: number
           separado_por_nome: string
           status: string
@@ -3257,6 +3258,7 @@ export type Database = {
           recebido_por?: string | null
           recebido_por_nome?: string | null
           reimpressoes?: number
+          retroativa?: boolean
           revisao?: number
           separado_por_nome?: string
           status?: string
@@ -3289,6 +3291,7 @@ export type Database = {
           recebido_por?: string | null
           recebido_por_nome?: string | null
           reimpressoes?: number
+          retroativa?: boolean
           revisao?: number
           separado_por_nome?: string
           status?: string
@@ -5398,6 +5401,10 @@ export type Database = {
       fn_nt_config_salvar: { Args: { p_cfg: Json }; Returns: Json }
       fn_nt_detalhe: { Args: { p_id: string }; Returns: Json }
       fn_nt_detalhe_por_codigo: { Args: { p_codigo: string }; Returns: Json }
+      fn_nt_emitir_retroativa: {
+        Args: { p_motivo: string; p_origem_id: string; p_tipo: string }
+        Returns: Json
+      }
       fn_nt_filtrar: {
         Args: { p_filtros?: Json; p_limite?: number; p_offset?: number }
         Returns: Json
@@ -5421,6 +5428,10 @@ export type Database = {
         Returns: number
       }
       fn_nt_reimprimir: { Args: { p_id: string }; Returns: number }
+      fn_nt_retroativas_pendentes: {
+        Args: { p_limite?: number; p_offset?: number; p_tipo?: string }
+        Returns: Json
+      }
       fn_nt_scan_publico: { Args: { p_codigo: string }; Returns: Json }
       fn_proximo_numero_transferencia: { Args: never; Returns: string }
       fn_reposicao_cancelar: {
