@@ -6,7 +6,10 @@ const CHAVE = "lejess_logo_url";
 
 /** Logo atual da empresa (Configurações). Sem logo cadastrada, usa a logo padrão Le Jess. */
 export async function buscarLogoEmpresa(): Promise<string> {
-  const { data } = await supabase.from("configuracoes_fiscais").select("logo_url").limit(1).maybeSingle();
+  const { data: sess } = await supabase.auth.getSession();
+  if (!sess.session) return logoEmCache(); // tela de login: usa a última logo salva neste aparelho
+  const { data, error } = await supabase.from("configuracoes_fiscais").select("logo_url").limit(1).maybeSingle();
+  if (error) return logoEmCache();
   const url = (data as any)?.logo_url || "";
   try { url ? localStorage.setItem(CHAVE, url) : localStorage.removeItem(CHAVE); } catch { /* sem armazenamento */ }
   return url;
