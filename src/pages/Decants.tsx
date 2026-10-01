@@ -13,6 +13,7 @@ import {
 } from "@/hooks/useDecants";
 import { custoPorMl, fmtBRL, fmtMl, ROTULO_MOV_ML, TIPOS_SAIDA_ML } from "@/lib/decants";
 import { getHojeManaus as hojeManaus } from "@/lib/dateUtils";
+import { AbaProducao, AbaLotes } from "@/components/decants/DecantsProducao";
 
 const ABAS = [
   { id: "dashboard", label: "Dashboard" }, { id: "perfumes", label: "Perfumes" },
@@ -22,7 +23,7 @@ const ABAS = [
   { id: "reposicao", label: "Reposição" }, { id: "vendas", label: "Vendas" },
   { id: "relatorios", label: "Relatórios" }, { id: "configuracoes", label: "Configurações" },
 ];
-const PRONTAS = new Set(["perfumes", "frascos", "configuracoes"]);
+const PRONTAS = new Set(["perfumes", "frascos", "producao", "lotes", "configuracoes"]);
 
 const num = (v: string) => (v.trim() === "" ? NaN : Number(v.replace(",", ".")));
 const blurWheel = (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur();
@@ -54,6 +55,8 @@ export default function Decants() {
       </div>
       {aba === "frascos" && <AbaFrascos />}
       {aba === "perfumes" && <AbaPerfumes />}
+      {aba === "producao" && <AbaProducao />}
+      {aba === "lotes" && <AbaLotes />}
       {aba === "configuracoes" && <AbaConfiguracoes />}
       {!PRONTAS.has(aba) && (
         <div className="card-premium p-10 text-center text-muted-foreground">
@@ -465,6 +468,8 @@ function AbaConfiguracoes() {
             onBlur={(e) => { const v = num(e.target.value); if (v > 0 && v <= 100 && v !== cfg.rendimento_padrao) mudar({ rendimento_padrao: v }); }} /></Campo>
           <Campo label="Alerta de perfume aberto há (dias)"><input type="number" onWheel={blurWheel} className="input-premium" defaultValue={cfg.dias_aberto_alerta}
             onBlur={(e) => { const v = parseInt(e.target.value); if (v > 0 && v !== cfg.dias_aberto_alerta) mudar({ dias_aberto_alerta: v }); }} /></Campo>
+          <Campo label="Margem mínima dos decants (%)"><input type="number" onWheel={blurWheel} className="input-premium" defaultValue={cfg.margem_minima ?? 30}
+            onBlur={(e) => { const v = num(e.target.value); if (v >= 0 && v < 100 && v !== (cfg.margem_minima ?? 30)) mudar({ margem_minima: v }); }} /></Campo>
         </div>
       )}
       <div className="flex justify-between items-center">

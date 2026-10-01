@@ -23,3 +23,28 @@ describe("decants", () => {
     expect(custoPorMl(600, 0)).toBe(0);
   });
 });
+
+import { volumeNecessario, fichaTecnica, sugerirFifo } from "./decants";
+
+describe("decants fase 2", () => {
+  it("10×2 + 10×5 + 4×10 = 110 ml", () => {
+    expect(volumeNecessario([{ volumeMl: 2, quantidade: 10 }, { volumeMl: 5, quantidade: 10 }, { volumeMl: 10, quantidade: 4 }])).toBe(110);
+  });
+  it("ficha técnica: 5 ml a R$ 6/ml, insumos R$ 4, mão de obra R$ 1, preço R$ 70", () => {
+    const f = fichaTecnica({ volumeMl: 5, custoMl: 6, frasco: 2, atomizador: 0.5, etiqueta: 0.5, embalagem: 1, maoObra: 1, outros: 0, preco: 70 });
+    expect(f.custoLiquido).toBe(30);
+    expect(f.custoEmbalagem).toBe(4);
+    expect(f.custoTotal).toBe(35);
+    expect(f.lucroBruto).toBe(35);
+    expect(f.margemPct).toBe(50);   // (70 − 35) ÷ 70
+    expect(f.markupPct).toBe(100);  // (70 − 35) ÷ 35
+  });
+  it("FIFO: 20 ml do mais antigo + 40 ml do seguinte = 60 ml", () => {
+    const r = sugerirFifo([
+      { id: "B", aberto_em: "2026-09-02", disponivel_ml: 100 },
+      { id: "A", aberto_em: "2026-09-01", disponivel_ml: 20 },
+    ], 60);
+    expect(r.distribuicao).toEqual([{ frasco_id: "A", ml: 20 }, { frasco_id: "B", ml: 40 }]);
+    expect(r.falta).toBe(0);
+  });
+});
