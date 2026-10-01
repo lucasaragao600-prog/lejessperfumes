@@ -3,6 +3,7 @@ import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3";
 import { RELAY_SOURCE } from "./relay.ts";
 import { carregarPfx, montarNfce } from "./nfce.ts";
+import { emitirVenda } from "./emitir.ts";
 
 const APP = "lejess-fiscal-yrwsss";
 const RELAY_URL = `https://${APP}.fly.dev`;
@@ -14,9 +15,10 @@ const SEFAZ_AM = {
 };
 
 const Body = z.object({
-  action: z.enum(["deploy", "health", "status", "teste_emissao"]),
+  action: z.enum(["deploy", "health", "status", "teste_emissao", "emitir"]),
+  grupo_venda: z.string().uuid().optional(),
   unidade_id: z.string().uuid().optional(),
-  crt: z.enum(["1","2","3","4"]).optional(),
+  crt: z.enum(["1","2","3"]).optional(),
 });
 
 async function testeEmissao(admin: any, unidadeId: string, crtTeste?: string) {
@@ -181,11 +183,15 @@ Deno.serve(async (req) => {
     const { data: { user } } = await caller.auth.getUser();
     if (!user) return json({ error: "Não autorizado" }, 401);
     const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-    const { data: role } = await admin.from("user_roles").select("role").eq("user_id", user.id).eq("role", "master").maybeSingle();
-    if (!role) return json({ error: "Apenas Master" }, 403);
-
     const parsed = Body.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return json({ error: "Ação inválida" }, 400);
+    if (parsed.data.action === "emitir") {
+      if (!parsed.data.grupo_venda) return json({ error: "Informe a venda" }, 400);
+      try { return json(await emitirVenda(admin, caller, parsed.data.grupo_venda, RELAY_URL, carregarCertificado)); }
+      catch (e) { return json({ ok: false, motivo: e instanceof Error ? e.message : "Erro" }); }
+    }
+    const { data: role } = await admin.from("user_roles").select("role").eq("user_id", user.id).eq("role", "master").maybeSingle();
+    if (!role) return json({ error: "Apenas Master" }, 403);
 
     if (parsed.data.action === "deploy") return json(await deploy());
     if (parsed.data.action === "teste_emissao") {
