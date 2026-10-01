@@ -26,7 +26,6 @@ import Transferencias from "@/pages/Transferencias";
 import Relatorios from "@/pages/Relatorios";
 import InteligenciaOperacional from "@/pages/InteligenciaOperacional";
 import RelatoriosInteligentes from "@/pages/RelatoriosInteligentes";
-import { AppProvider } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
 import { useAlertas } from "@/hooks/useAlertas";
 import PrimeiroCadastro from "@/pages/PrimeiroCadastro";
@@ -74,16 +73,14 @@ const Index = () => {
   const isMaster = role === "master";
 
   return (
-    <AppProvider>
-      <IndexContent
-        isMaster={isMaster}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        profile={profile}
-        user={user}
-        signOut={signOut}
-      />
-    </AppProvider>
+    <IndexContent
+      isMaster={isMaster}
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      profile={profile}
+      user={user}
+      signOut={signOut}
+    />
   );
 };
 
@@ -107,11 +104,7 @@ function IndexContent({
   const alertCount = pendentes.length;
 
   if (activeTab === "pdv") {
-    return (
-      <AppProvider>
-        <PDV onBack={() => setActiveTab("estoque")} />
-      </AppProvider>
-    );
+    return <PDV onBack={() => setActiveTab("estoque")} />;
   }
 
   const renderTab = () => {
