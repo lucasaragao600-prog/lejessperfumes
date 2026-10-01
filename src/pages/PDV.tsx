@@ -19,7 +19,7 @@ import { useClientes, type Cliente } from "@/hooks/useClientes";
 import { getHojeManaus } from "@/lib/dateUtils";
 import { ComprovantePreview, type ComprovanteData } from "@/components/ComprovantePrint";
 import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
-import { emitirNfce, imprimirDanfe, type ResultadoNfce } from "@/lib/nfceEmitir";
+import { emitirNfce, imprimirDanfe, explicarRejeicao, type ResultadoNfce } from "@/lib/nfceEmitir";
 import { useCaixa } from "@/hooks/useCaixa";
 import { useUnidades } from "@/hooks/useUnidades";
 
@@ -553,7 +553,7 @@ ${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-s
                     </>
                   ) : (
                     <span className="px-4 py-2 rounded-xl inline-flex items-center gap-2 text-xs max-w-sm" style={{ background: "hsl(var(--destructive) / 0.15)", color: "hsl(var(--destructive))" }}>
-                      <AlertTriangle size={14} /> NFC-e não autorizada: {nfceResultado.motivo}. A venda foi salva; reenvie pela tela NFC-e.
+                      <AlertTriangle size={14} /> NFC-e não autorizada: {explicarRejeicao(nfceResultado.cStat ? `${nfceResultado.cStat} ${nfceResultado.motivo}` : nfceResultado.motivo)} A venda foi salva; reenvie pela tela NFC-e.
                     </span>
                   )}
                 </div>

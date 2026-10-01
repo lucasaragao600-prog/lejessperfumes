@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Search, FileText, AlertTriangle, CheckCircle2, Loader2, Calendar, User, CreditCard, ShieldAlert, Eye, Printer, Download, Key, Filter, X, ChevronLeft, XCircle } from "lucide-react";
 import { useVendas } from "@/hooks/useVendas";
 import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
-import { emitirNfce, imprimirDanfe, cancelarNfce } from "@/lib/nfceEmitir";
+import { emitirNfce, imprimirDanfe, cancelarNfce, explicarRejeicao } from "@/lib/nfceEmitir";
 import { useQueryClient } from "@tanstack/react-query";
 import { useClientes } from "@/hooks/useClientes";
 import { useApp } from "@/context/AppContext";
@@ -162,7 +162,7 @@ export default function NfcePendentes() {
       const res = await emitirNfce(reg.grupoVenda);
       queryClient.invalidateQueries({ queryKey: ["nfce_emissoes"] });
       queryClient.invalidateQueries({ queryKey: ["vendas"] });
-      if (!res.ok) { toast.error(`NFC-e não autorizada: ${res.motivo}`); return; }
+      if (!res.ok) { toast.error(explicarRejeicao(res.cStat ? `${res.cStat} ${res.motivo}` : res.motivo)); return; }
       if (!soImprimir) toast.success(`NFC-e nº ${res.numero} autorizada`);
       if (selected?.grupoVenda === reg.grupoVenda) setSelected({ ...reg, nfceStatus: "autorizada", nfceChave: res.chave || "" });
       await imprimirDanfe(res,
@@ -331,7 +331,10 @@ ${nfceSection}
           {selected.nfceStatus === "rejeitada" && (
             <div className="rounded-xl p-3" style={{ background: "hsl(var(--destructive) / 0.08)", border: "1px solid hsl(var(--destructive) / 0.2)" }}>
               <p className="text-xs font-medium" style={{ color: "hsl(var(--destructive))" }}>NFC-e Rejeitada</p>
-              {emissao?.motivoRejeicao && <p className="text-[10px] text-muted-foreground mt-1">{emissao.motivoRejeicao}</p>}
+              {emissao?.motivoRejeicao && <>
+                <p className="text-sm text-foreground mt-1">{explicarRejeicao(emissao.motivoRejeicao)}</p>
+                <p className="text-[10px] text-muted-foreground mt-1">Mensagem técnica da SEFAZ: {emissao.motivoRejeicao}</p>
+              </>}
             </div>
           )}
 

@@ -47,7 +47,9 @@ export async function emitirVenda(
   const emAndamento = (existentes || []).find((e: any) => e.status === "processando" && Date.now() - new Date(e.updated_at).getTime() < 90_000);
   if (emAndamento) throw new Error("Esta NFC-e já está sendo enviada. Aguarde alguns segundos.");
   // Nota recusada não fica registrada na SEFAZ: reaproveita o mesmo número
-  const reaproveitar = (existentes || []).find((e: any) => e.status === "rejeitada" && e.numero_nfce)?.numero_nfce ?? 0;
+  // (exceto duplicidade: aquele número já existe na SEFAZ e não pode ser repetido)
+  const ultimaRej = (existentes || []).find((e: any) => e.status === "rejeitada" && e.numero_nfce);
+  const reaproveitar = ultimaRej && !/^(539|204)\b/.test(ultimaRej.motivo_rejeicao || "") ? ultimaRej.numero_nfce : 0;
 
   if (!cfg.inscricao_estadual || !cfg.csc_token || !cfg.csc_id) throw new Error("Inscrição Estadual ou CSC não cadastrados para esta loja");
   const amb = (cfg.ambiente === "producao" ? "producao" : "homologacao") as keyof typeof AUT;
