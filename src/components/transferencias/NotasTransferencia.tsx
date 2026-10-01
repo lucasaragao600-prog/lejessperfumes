@@ -5,7 +5,8 @@ import { useUnidades } from "@/hooks/useUnidades";
 import {
   NT_ORIGEM_LABEL, NT_STATUS_META, useNotaDetalhe, useNotasLista, useReimprimirNota, type NtStatus,
 } from "@/hooks/useNotasTransferencia";
-import { gerarPdfNota } from "@/lib/pdf/notaTransferencia";
+import { gerarPdfNota, imprimirTermicaNota } from "@/lib/pdf/notaTransferencia";
+import { VIA_LABEL, type NtVia } from "@/lib/notaTransferencia";
 
 const dataHora = (s?: string | null) =>
   s ? new Date(s).toLocaleString("pt-BR", { timeZone: "America/Manaus" }) : "—";
@@ -20,15 +21,18 @@ function Detalhe({ id, onVoltar }: { id: string; onVoltar: () => void }) {
   const { data: nt, isLoading, error } = useNotaDetalhe(id);
   const reimprimir = useReimprimirNota();
   const [imprimindo, setImprimindo] = useState(false);
+  const [via, setVia] = useState<NtVia | "todas">("todas");
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (error || !nt) return <p className="text-sm text-destructive">Não foi possível abrir a nota.</p>;
 
-  const imprimir = async () => {
+  const imprimir = async (formato: "a4" | "termica") => {
     setImprimindo(true);
     try {
-      const contador = await reimprimir.mutateAsync(nt.id);
-      await gerarPdfNota(nt, contador);
+      const vias: NtVia[] = via === "todas" ? ["origem", "destino", "transporte"] : [via];
+      const contador = await reimprimir.mutateAsync({ id: nt.id, via: vias.join(","), formato });
+      if (formato === "a4") await gerarPdfNota(nt, vias, contador);
+      else await imprimirTermicaNota(nt, vias[0], contador);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível imprimir.");
     } finally { setImprimindo(false); }
@@ -61,10 +65,20 @@ function Detalhe({ id, onVoltar }: { id: string; onVoltar: () => void }) {
             <span className="col-span-2 text-muted-foreground">Cancelada: <span className="text-foreground">{nt.cancelado_motivo}</span></span>
           )}
         </div>
-        <div className="flex items-center gap-2 pt-2">
-          <button onClick={imprimir} disabled={imprimindo}
+        <div className="flex items-center gap-2 pt-2 flex-wrap">
+          <select value={via} onChange={(e) => setVia(e.target.value as NtVia | "todas")}
+            className="bg-surface-raised text-foreground border border-border rounded-lg px-2 py-1.5 text-xs">
+            <option value="todas">Todas as vias (A4)</option>
+            {(Object.keys(VIA_LABEL) as NtVia[]).map((v) => <option key={v} value={v}>{VIA_LABEL[v]}</option>)}
+          </select>
+          <button onClick={() => imprimir("a4")} disabled={imprimindo}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-gold/40 text-gold bg-gold/5 disabled:opacity-50">
-            <Printer size={14} /> {nt.reimpressoes > 0 ? "Reimprimir (2ª via)" : "Imprimir"}
+            <Printer size={14} /> {nt.reimpressoes > 0 ? "Reimprimir PDF" : "PDF A4"}
+          </button>
+          <button onClick={() => imprimir("termica")} disabled={imprimindo || via === "todas"}
+            title={via === "todas" ? "Escolha uma via para a térmica" : ""}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-border text-muted-foreground disabled:opacity-50">
+            <Printer size={14} /> Térmica 72 mm
           </button>
           {nt.reimpressoes > 0 && <span className="text-[11px] text-muted-foreground">{nt.reimpressoes} impressão(ões)</span>}
         </div>
