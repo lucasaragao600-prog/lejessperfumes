@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Search, Eye, Printer, ShoppingCart, Calendar, User, CreditCard, ChevronLeft, FileText, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import { useVendas } from "@/hooks/useVendas";
 import { useAuth } from "@/context/AuthContext";
+import { useNfce } from "@/hooks/useNfce";
 import { emitirNfce, imprimirDanfe, explicarRejeicao } from "@/lib/nfceEmitir";
 import { useQueryClient } from "@tanstack/react-query";
 import { useClientes } from "@/hooks/useClientes";
@@ -53,6 +54,7 @@ export default function PedidosVenda() {
   const { vendas, pagamentos: vendaPagamentos, atualizarNfceStatus } = useVendas();
   useAuth();
   const queryClient = useQueryClient();
+  const { configFiscal } = useNfce();
   const { clientes } = useClientes();
   const { perfumes } = useApp();
   const [busca, setBusca] = useState("");
@@ -237,7 +239,7 @@ ${pedido.nfceStatus === "autorizada" && pedido.nfceChave ? `<div style="font-siz
                   className="px-4 py-2 text-xs font-bold rounded-xl flex items-center gap-2 disabled:opacity-50"
                   style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}
                 >
-                  {gerandoId === selectedPedido.grupoVenda ? <><Loader2 size={14} className="animate-spin" /> Gerando...</> : <><FileText size={14} /> Gerar NFC-e</>}
+                  {gerandoId === selectedPedido.grupoVenda ? <><Loader2 size={14} className="animate-spin" /> Gerando...</> : <><FileText size={14} /> {selectedPedido.nfceStatus === "autorizada" ? "Imprimir NFC-e" : "Gerar NFC-e"}</>}
                 </button>
               )}
               <button onClick={() => handleReprint(selectedPedido)} className="btn-secondary px-4 py-2 text-sm flex items-center gap-2">
