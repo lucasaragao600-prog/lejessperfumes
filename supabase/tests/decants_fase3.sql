@@ -8,12 +8,10 @@ DO $$
 DECLARE v_u uuid; v_u2 uuid; v_p uuid; r jsonb; v_a uuid; v_t5 uuid; v_l uuid; v_sku uuid; v_itens jsonb; v_err boolean;
   v_g uuid; v_vid uuid; v_q uuid; v_inv uuid; v_tr uuid; v_n int; v_saldo_disp numeric;
 BEGIN
-  SELECT id INTO v_u FROM public.unidades WHERE status <> 'INATIVA' ORDER BY ordem LIMIT 1;
+  -- Usa uma filial com caixa aberto (o teste não abre caixa).
+  SELECT unidade_id INTO v_u FROM public.caixa_sessoes WHERE status = 'aberto' AND unidade_id IS NOT NULL ORDER BY aberto_em DESC LIMIT 1;
+  IF v_u IS NULL THEN RAISE EXCEPTION 'Abra um caixa em qualquer filial para rodar este teste'; END IF;
   SELECT id INTO v_u2 FROM public.unidades WHERE status <> 'INATIVA' AND id <> v_u ORDER BY ordem LIMIT 1;
-  IF public.fn__caixa_aberto(v_u) IS NULL THEN
-    INSERT INTO public.caixa_sessoes (operador_id, operador_nome, loja, valor_abertura, unidade_id)
-    VALUES (auth.uid(), 'Teste', 'teste', 0, v_u);
-  END IF;
   INSERT INTO public.perfumes (codigo, nome, marca, casa_sigla, tipo, concentracao, tamanho, volume, custo, preco_venda,
     estoque_casa, estoque_sumauma, estoque_amazonas, estoque_minimo, custo_medio, ncm, cfop, cst_csosn, unidade_fiscal,
     codigo_barras, classificacao, perfil_olfativo, notas_saida, notas_coracao, notas_fundo)
