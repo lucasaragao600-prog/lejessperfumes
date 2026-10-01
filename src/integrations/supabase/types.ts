@@ -387,34 +387,67 @@ export type Database = {
       }
       clientes: {
         Row: {
+          bairro: string | null
+          cep: string | null
+          cidade: string | null
+          complemento: string | null
           cpf_cnpj: string | null
           created_at: string
           data_nascimento: string | null
           email: string | null
+          genero: string | null
           id: string
+          logradouro: string | null
           nome: string
+          nome_social: string | null
+          numero: string | null
+          observacoes: string | null
           telefone: string | null
+          uf: string | null
           updated_at: string
+          whatsapp: string | null
         }
         Insert: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           data_nascimento?: string | null
           email?: string | null
+          genero?: string | null
           id?: string
+          logradouro?: string | null
           nome: string
+          nome_social?: string | null
+          numero?: string | null
+          observacoes?: string | null
           telefone?: string | null
+          uf?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Update: {
+          bairro?: string | null
+          cep?: string | null
+          cidade?: string | null
+          complemento?: string | null
           cpf_cnpj?: string | null
           created_at?: string
           data_nascimento?: string | null
           email?: string | null
+          genero?: string | null
           id?: string
+          logradouro?: string | null
           nome?: string
+          nome_social?: string | null
+          numero?: string | null
+          observacoes?: string | null
           telefone?: string | null
+          uf?: string | null
           updated_at?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }
