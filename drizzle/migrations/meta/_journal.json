@@ -183,6 +183,13 @@
       "when": 1790873025380,
       "tag": "0025_decants_fase4_perdas",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790873197625,
+      "tag": "0026_decants_fase4_paineis",
+      "breakpoints": true
     }
   ]
 }

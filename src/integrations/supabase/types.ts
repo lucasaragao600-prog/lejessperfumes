@@ -4781,6 +4781,10 @@ export type Database = {
         Args: { _custo: number; _rendimento: number; _volume: number }
         Returns: number
       }
+      fn_decant_dashboard: {
+        Args: { p_fim: string; p_ini: string; p_unidade: string }
+        Returns: Json
+      }
       fn_decant_decidir_conferencia: {
         Args: {
           p_acao: string
@@ -4896,6 +4900,10 @@ export type Database = {
         Args: { p_fim: string; p_ini: string; p_unidade: string }
         Returns: Json
       }
+      fn_decant_perfume_360: {
+        Args: { p_produto_id: string; p_unidade: string }
+        Returns: Json
+      }
       fn_decant_quarentena_decidir: {
         Args: {
           p_acao: string
@@ -4922,6 +4930,24 @@ export type Database = {
           p_ml: number
           p_motivo: string
           p_tipo: string
+        }
+        Returns: Json
+      }
+      fn_decant_relatorio: {
+        Args: {
+          p_fim: string
+          p_ini: string
+          p_tipo: string
+          p_unidade: string
+        }
+        Returns: Json
+      }
+      fn_decant_rentabilidade: {
+        Args: {
+          p_agrupar: string
+          p_fim: string
+          p_ini: string
+          p_unidade: string
         }
         Returns: Json
       }
