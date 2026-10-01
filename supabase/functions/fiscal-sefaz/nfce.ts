@@ -77,7 +77,7 @@ export function montarNfce(em: Emitente, itens: Item[], pagamentoTipo: string, k
 
   const cId = String(Number(em.cscId));
   const pre = `${chave}|2|${em.tpAmb}|${cId}`;
-  const urlQr = homolog ? "https://sistemas.sefaz.am.gov.br/nfceweb-hom/consultarNFCe.jsp" : "https://sistemas.sefaz.am.gov.br/nfceweb/consultarNFCe.jsp";
+  const urlQr = homolog ? "http://homnfce.sefaz.am.gov.br/nfceweb/consultarNFCe.jsp" : "http://sistemas.sefaz.am.gov.br/nfceweb/consultarNFCe.jsp";
   const qr = `${urlQr}?p=${pre}|${sha1hex(pre + em.csc)}`;
   const urlChave = homolog ? "www.sefaz.am.gov.br/nfce/consulta" : "www.sefaz.am.gov.br/nfce/consulta";
   const supl = `<infNFeSupl><qrCode><![CDATA[${qr}]]></qrCode><urlChave>${urlChave}</urlChave></infNFeSupl>`;
