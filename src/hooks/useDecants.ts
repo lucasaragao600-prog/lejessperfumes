@@ -379,7 +379,7 @@ export function useRegistrarPerda() {
     mutationFn: (p: { frascoId: string; tipo: string; ml: number; justificativa: string; chave: string }) =>
       rpc("fn_decant_registrar_perda", { p_frasco_id: p.frascoId, p_tipo: p.tipo, p_ml: p.ml, p_justificativa: p.justificativa, p_idempotency_key: p.chave }),
     onSuccess: () => {
-      ["decant-perdas", "decant-dashboard", "decant-frascos", "decant-historico", "decant-movimentacoes"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+      ["decant-perdas", "decant-dashboard", "decant-frascos", "decant-historico", "decant-movs", "decant-frascos-disp"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
     },
   });
 }
