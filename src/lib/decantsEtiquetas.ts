@@ -61,6 +61,5 @@ export async function imprimirEtiquetas(etqs: Etiqueta[], m: ModeloEtiqueta) {
   if (!win) throw new Error("Permita janelas pop-up para imprimir as etiquetas.");
   win.document.write(await htmlEtiquetas(etqs, m));
   win.document.close();
-  win.onload = () => { win.focus(); win.print(); };
   setTimeout(() => { try { win.focus(); win.print(); } catch { /* já impresso */ } }, 800);
 }

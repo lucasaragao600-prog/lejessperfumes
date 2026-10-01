@@ -428,3 +428,30 @@ export function useAlertasDecant(unidadeId: string | null = null) {
     refetchInterval: 120_000,
   });
 }
+
+/* ---------- Fase 6: etiquetas e leitura de códigos ---------- */
+export function useModelosEtiqueta() {
+  return useQuery({
+    queryKey: ["decant-etq-modelos"],
+    queryFn: async () => {
+      const { data, error } = await db.from("decant_etiqueta_modelos").select("*").order("padrao", { ascending: false }).order("nome");
+      if (error) throw error;
+      return (data ?? []) as import("@/lib/decantsEtiquetas").ModeloEtiqueta[];
+    },
+  });
+}
+export function useSalvarModeloEtiqueta() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (m: Partial<import("@/lib/decantsEtiquetas").ModeloEtiqueta>) => {
+      const { id, ...rest } = m;
+      const q = id ? db.from("decant_etiqueta_modelos").update({ ...rest, updated_at: new Date().toISOString() }).eq("id", id)
+        : db.from("decant_etiqueta_modelos").insert(rest);
+      const { error } = await q;
+      if (error) throw new Error(msg(error));
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["decant-etq-modelos"] }),
+  });
+}
+export const gerarEtiquetas = (loteId: string, itens: { item_id: string; quantidade: number }[], modeloId: string) =>
+  rpc("fn_decant_etiquetas_imprimir", { p_lote_id: loteId, p_itens: itens, p_modelo_id: modeloId });
