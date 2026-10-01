@@ -134,6 +134,13 @@
       "when": 1790860452762,
       "tag": "0018_fase1c_estoque_servidor",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790860475691,
+      "tag": "0019_fase1c_estoque_listar_sem_temp",
+      "breakpoints": true
     }
   ]
 }
