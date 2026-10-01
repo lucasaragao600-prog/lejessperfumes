@@ -352,11 +352,6 @@ export const useAcaoTransfDecant = () => useOp3((p: { acao: "separar" | "enviar"
 });
 
 /* ---------- Fase 4: perdas, dashboard, 360°, rentabilidade, relatórios ---------- */
-const rpc = async (fn: string, args: Record<string, unknown>) => {
-  const { data, error } = await db.rpc(fn, args);
-  if (error) throw new Error(msg(error));
-  return data;
-};
 
 export function useDecantDashboard(unidadeId: string | null, ini: string, fim: string) {
   return useQuery({
