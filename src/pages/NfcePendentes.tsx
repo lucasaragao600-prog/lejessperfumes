@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, FileText, AlertTriangle, CheckCircle2, Loader2, Calendar, User, CreditCard, ShieldAlert, Eye, Printer, Download, Key, Filter, X, ChevronLeft } from "lucide-react";
+import { Search, FileText, AlertTriangle, CheckCircle2, Loader2, Calendar, User, CreditCard, ShieldAlert, Eye, Printer, Download, Key, Filter, X, ChevronLeft, XCircle } from "lucide-react";
 import { useVendas } from "@/hooks/useVendas";
 import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
 import { emitirNfce, imprimirDanfe, cancelarNfce } from "@/lib/nfceEmitir";
