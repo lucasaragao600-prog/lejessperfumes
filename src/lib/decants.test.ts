@@ -56,3 +56,26 @@ describe("decants fase 3", () => {
       { volumeMl: 2, quantidade: 30 }, { volumeMl: 5, quantidade: 12 }, { volumeMl: 10, quantidade: 6 }]);
   });
 });
+
+import { periodoPreset, rentabilidade, comparativoFechado } from "./decants";
+describe("Fase 4", () => {
+  it("rentabilidade do exemplo: 1.250 − 480 = 770", () => {
+    expect(rentabilidade(1250, 480)).toEqual({ lucro: 770, margemPct: 61.6 });
+    expect(rentabilidade(0, 0).margemPct).toBeNull();
+  });
+  it("períodos", () => {
+    expect(periodoPreset("ontem", "2026-10-01")).toEqual({ ini: "2026-09-30", fim: "2026-09-30" });
+    expect(periodoPreset("7d", "2026-10-01")).toEqual({ ini: "2026-09-25", fim: "2026-10-01" });
+    expect(periodoPreset("mes", "2026-10-15")).toEqual({ ini: "2026-10-01", fim: "2026-10-15" });
+  });
+  it("comparativo fechado × decants só calcula", () => {
+    const c = comparativoFechado({ precoFechado: 900, custoFrasco: 600, volumeMl: 100, rendimentoPct: 95, perdaPct: 5, tamanhoMl: 5, precoDecant: 70, insumosUnit: 4 });
+    expect(c.mlUtil).toBe(90.25);
+    expect(c.unidades).toBe(18);
+    expect(c.receitaDecants).toBe(1260);
+    expect(c.custoEmbalagens).toBe(72);
+    expect(c.margemDecants).toBe(588);
+    expect(c.margemFechado).toBe(300);
+    expect(c.diferenca).toBe(288);
+  });
+});
