@@ -225,6 +225,13 @@
       "when": 1790886192529,
       "tag": "0031_nt_etapa2_emissao",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790886418624,
+      "tag": "0032_nt_etapa3_impressao",
+      "breakpoints": true
     }
   ]
 }
