@@ -126,7 +126,7 @@ function ReceiptContent({ data, preview = false }: { data: ComprovanteData; prev
         </div>
         <div>Vendedor: {data.vendedor}</div>
         {data.operador && <div>Operador: {data.operador}</div>}
-        {data.cliente && <div>Cliente: {data.cliente.nome}</div>}
+        {data.cliente && <div>Cliente: {data.cliente.nome}{data.cliente.cpfCnpj ? ` · CPF/CNPJ: ${data.cliente.cpfCnpj}` : ""}</div>}
       </div>
 
       <div style={{ fontSize: "10px" }}>{dash}</div>

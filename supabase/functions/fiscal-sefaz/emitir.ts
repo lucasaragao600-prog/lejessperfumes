@@ -32,6 +32,15 @@ export async function emitirVenda(
   }
   if (!unidadeId) throw new Error("Não foi possível identificar a loja da venda");
 
+  const clienteId = vendas.find((v: any) => v.cliente_id)?.cliente_id ?? null;
+  const { data: cliente } = clienteId
+    ? await admin.from("clientes").select("nome,nome_social,cpf_cnpj").eq("id", clienteId).maybeSingle()
+    : { data: null };
+  const documentoCliente = String(cliente?.cpf_cnpj || "").replace(/\D/g, "");
+  const destinatario = documentoCliente.length === 11 || documentoCliente.length === 14
+    ? { nome: cliente?.nome_social || cliente?.nome || undefined, cpfCnpj: documentoCliente }
+    : undefined;
+
   const { data: acesso } = await caller.rpc("usuario_tem_acesso_unidade", { _unidade_id: unidadeId });
   if (!acesso) throw new Error("Sem acesso a esta loja");
 
@@ -43,7 +52,7 @@ export async function emitirVenda(
   const { data: existentes } = await admin.from("nfce_emissoes").select("*").eq("venda_grupo_venda", grupo).order("created_at", { ascending: false });
   const autorizada = (existentes || []).find((e: any) => e.status === "emitida");
   if (autorizada) return { ok: true, jaEmitida: true, numero: autorizada.numero_nfce, serie: autorizada.serie, chave: autorizada.chave_acesso,
-    protocolo: autorizada.protocolo_autorizacao, qr: autorizada.danfe_url, dhEmi: autorizada.data_emissao, ambiente: cfg.ambiente, emitente, avisos: [] };
+    protocolo: autorizada.protocolo_autorizacao, qr: autorizada.danfe_url, dhEmi: autorizada.data_emissao, ambiente: cfg.ambiente, emitente, destinatario, avisos: [] };
   const emAndamento = (existentes || []).find((e: any) => e.status === "processando" && Date.now() - new Date(e.updated_at).getTime() < 90_000);
   if (emAndamento) throw new Error("Esta NFC-e já está sendo enviada. Aguarde alguns segundos.");
   // Nota recusada não fica registrada na SEFAZ: reaproveita o mesmo número
@@ -65,7 +74,7 @@ export async function emitirVenda(
     const bruto = Number(v.preco_unitario) * Number(v.quantidade);
     return {
       codigo: p.codigo || String(v.perfume_id).slice(0, 8), gtin: String(p.codigo_barras || ""),
-      descricao: [p.marca, p.nome, p.concentracao, p.volume ? `${p.volume}ML` : ""].filter(Boolean).join(" ") || v.perfume_nome,
+      descricao: `${p.marca || ""} - ${[p.nome, p.concentracao, p.volume ? `${p.volume}ML` : ""].filter(Boolean).join(" ")}`.replace(/\s+/g, " ").trim() || v.perfume_nome,
       ncm, cfop: /^\d{4}$/.test(p.cfop || "") ? p.cfop : "5102", csosn: /^\d{3}$/.test(p.cst_csosn || "") ? p.cst_csosn : "102",
       un: p.unidade_fiscal || "UN", qtd: Number(v.quantidade), valor: Number(v.preco_unitario),
       desconto: Math.max(0, bruto - Number(v.total)),
@@ -105,7 +114,7 @@ export async function emitirVenda(
       endereco: cfg.endereco, numero: cfg.numero, bairro: cfg.bairro, cep: cfg.cep, fone: cfg.telefone,
       crt: crtDe(cfg.regime_tributario), serie: cfg.serie_nfce || 1, numeroNota: numero,
       cscId: cfg.csc_id, csc: cfg.csc_token, tpAmb: AUT[amb].tpAmb,
-    }, itens, pagamentos, key, certB64);
+    }, itens, pagamentos, key, certB64, destinatario);
 
     const envelope = `<?xml version="1.0" encoding="utf-8"?><soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope"><soap12:Body><nfeDadosMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeAutorizacao4"><enviNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><idLote>${Date.now().toString().slice(-15)}</idLote><indSinc>1</indSinc>${nfe}</enviNFe></nfeDadosMsg></soap12:Body></soap12:Envelope>`;
     const r = await fetch(`${relayUrl}/soap`, {
@@ -136,7 +145,7 @@ export async function emitirVenda(
     }, "autorizada", chave);
     return {
       ok: true, numero, serie: cfg.serie_nfce || 1, chave, protocolo: prot, qr, dhEmi, total, ambiente: amb, avisos,
-      emitente,
+      emitente, destinatario,
     };
   } catch (e) {
     await marcar({ status: "rejeitada", motivo_rejeicao: e instanceof Error ? e.message : "Erro no envio" }, "rejeitada");

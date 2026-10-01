@@ -148,6 +148,13 @@
       "when": 1790861017875,
       "tag": "0020_fase1c_vendas_servidor",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790868300178,
+      "tag": "0021_ampliar_cadastro_clientes_opcional",
+      "breakpoints": true
     }
   ]
 }

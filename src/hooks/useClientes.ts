@@ -8,6 +8,17 @@ export interface Cliente {
   telefone: string;
   email: string;
   dataNascimento: string | null;
+  nomeSocial: string;
+  genero: string;
+  whatsapp: string;
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento: string;
+  bairro: string;
+  cidade: string;
+  uf: string;
+  observacoes: string;
 }
 
 function rowToCliente(row: any): Cliente {
@@ -18,6 +29,17 @@ function rowToCliente(row: any): Cliente {
     telefone: row.telefone || "",
     email: row.email || "",
     dataNascimento: row.data_nascimento,
+    nomeSocial: row.nome_social || "",
+    genero: row.genero || "",
+    whatsapp: row.whatsapp || "",
+    cep: row.cep || "",
+    logradouro: row.logradouro || "",
+    numero: row.numero || "",
+    complemento: row.complemento || "",
+    bairro: row.bairro || "",
+    cidade: row.cidade || "",
+    uf: row.uf || "",
+    observacoes: row.observacoes || "",
   };
 }
 
@@ -47,6 +69,17 @@ export function useClientes() {
           telefone: c.telefone,
           email: c.email,
           data_nascimento: c.dataNascimento || null,
+          nome_social: c.nomeSocial || null,
+          genero: c.genero || null,
+          whatsapp: c.whatsapp || null,
+          cep: c.cep || null,
+          logradouro: c.logradouro || null,
+          numero: c.numero || null,
+          complemento: c.complemento || null,
+          bairro: c.bairro || null,
+          cidade: c.cidade || null,
+          uf: c.uf || null,
+          observacoes: c.observacoes || null,
         })
         .select()
         .single();

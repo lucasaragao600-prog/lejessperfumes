@@ -22,6 +22,7 @@ import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
 import { emitirNfce, imprimirDanfe, explicarRejeicao, type ResultadoNfce } from "@/lib/nfceEmitir";
 import { useCaixa } from "@/hooks/useCaixa";
 import { useUnidades } from "@/hooks/useUnidades";
+import { z } from "zod";
 
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada", "Crédito Loja"];
 const bandeiras: Bandeira[] = ["Visa", "Mastercard", "Elo", "Amex", "Hipercard"];
@@ -52,6 +53,40 @@ interface PagamentoItem {
 
 type TipoDocumento = "comprovante" | "nfce";
 type FiscalAction = "none" | "nfce";
+
+const clienteVazio: Omit<Cliente, "id"> = {
+  nome: "", cpfCnpj: "", telefone: "", email: "", dataNascimento: null,
+  nomeSocial: "", genero: "", whatsapp: "", cep: "", logradouro: "", numero: "",
+  complemento: "", bairro: "", cidade: "", uf: "", observacoes: "",
+};
+
+const documentoValido = (valor: string) => {
+  const numero = valor.replace(/\D/g, "");
+  if (![11, 14].includes(numero.length) || /^(\d)\1+$/.test(numero)) return false;
+  const calcular = (base: string, pesos: number[]) => {
+    const soma = base.split("").reduce((total, digito, indice) => total + Number(digito) * pesos[indice], 0);
+    const resto = soma % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+  if (numero.length === 11) {
+    const primeiro = calcular(numero.slice(0, 9), [10, 9, 8, 7, 6, 5, 4, 3, 2]);
+    const segundo = calcular(numero.slice(0, 10), [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]);
+    return numero.endsWith(`${primeiro}${segundo}`);
+  }
+  const primeiro = calcular(numero.slice(0, 12), [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  const segundo = calcular(numero.slice(0, 13), [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return numero.endsWith(`${primeiro}${segundo}`);
+};
+
+const clienteSchema = z.object({
+  nome: z.string().trim().max(120), nomeSocial: z.string().trim().max(120),
+  cpfCnpj: z.string().trim().max(18).refine(v => !v || documentoValido(v), "Informe um CPF ou CNPJ válido"),
+  telefone: z.string().trim().max(30), whatsapp: z.string().trim().max(30),
+  email: z.string().trim().max(255).refine(v => !v || z.string().email().safeParse(v).success, "E-mail inválido"),
+  dataNascimento: z.string().nullable(), genero: z.string().trim().max(40), cep: z.string().trim().max(10),
+  logradouro: z.string().trim().max(160), numero: z.string().trim().max(20), complemento: z.string().trim().max(80),
+  bairro: z.string().trim().max(80), cidade: z.string().trim().max(80), uf: z.string().trim().max(2), observacoes: z.string().trim().max(1000),
+});
 
 export default function PDV({ onBack }: { onBack?: () => void }) {
   const { unidadesVenda, emTeste: unidadeEmTeste } = useUnidades({ contexto: "operacional" });
@@ -100,7 +135,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   const [showClienteModal, setShowClienteModal] = useState(false);
   const [showNovoCliente, setShowNovoCliente] = useState(false);
   const [buscaCliente, setBuscaCliente] = useState("");
-  const [novoCliente, setNovoCliente] = useState({ nome: "", cpfCnpj: "", telefone: "", email: "", dataNascimento: "" });
+  const [novoCliente, setNovoCliente] = useState<Omit<Cliente, "id">>(clienteVazio);
 
   // Document type
   const [tipoDocumento, setTipoDocumento] = useState<TipoDocumento>("comprovante");
@@ -246,21 +281,15 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
 
   // Save new client
   const handleSalvarCliente = async () => {
-    if (!novoCliente.nome.trim()) return;
     try {
-      const created = await adicionarCliente({
-        nome: novoCliente.nome,
-        cpfCnpj: novoCliente.cpfCnpj,
-        telefone: novoCliente.telefone,
-        email: novoCliente.email,
-        dataNascimento: novoCliente.dataNascimento || null,
-      });
+      const validado = clienteSchema.parse(novoCliente);
+      const created = await adicionarCliente({ ...novoCliente, ...validado, nome: validado.nome || validado.nomeSocial || "Cliente não identificado" });
       setClienteId(created.id);
       setShowNovoCliente(false);
       setShowClienteModal(false);
-      setNovoCliente({ nome: "", cpfCnpj: "", telefone: "", email: "", dataNascimento: "" });
+      setNovoCliente(clienteVazio);
     } catch (err) {
-      console.error("Erro ao cadastrar cliente:", err);
+      toast.error(err instanceof z.ZodError ? err.issues[0]?.message || "Confira os dados do cliente" : "Não foi possível cadastrar o cliente");
     }
   };
 
@@ -370,6 +399,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
           vendedora, tipoPagamento: pagamentos[0]?.tipoPagamento || "Pix",
           bandeira: pagamentos[0]?.bandeira || ("N/A" as Bandeira),
           observacao, registradoPor, grupoVenda,
+          clienteId,
           nfceStatus: hasCertificadoConfigurado(configFiscal) ? "pendente" : "sem_certificado",
         };
       });
@@ -405,7 +435,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
           setTipoDocumento("nfce");
           setNfceResultado(null);
           const danfe = {
-            itens: itens.map(i => ({ nome: i.perfumeNome, quantidade: i.quantidade, precoUnitario: i.precoUnitario, total: i.total })),
+            itens: cart.map((item, index) => ({ nome: `${item.marca || item.casaSigla} - ${item.perfumeNome} ${item.concentracao} ${item.volume}ML`, quantidade: item.quantidade, precoUnitario: item.precoUnitario, total: itens[index]?.total || 0 })),
             pags: pagamentos.map(p => ({ tipo: p.tipoPagamento, valor: p.valor })),
             troco: trocoCalculado,
           };
@@ -483,7 +513,7 @@ ${comprovanteData.logoUrl ? `<div class="center" style="margin-bottom:6px"><img 
   <div class="flex"><span>Pedido: ${comprovanteData.pedido}</span><span>${comprovanteData.data}</span></div>
   <div>Vendedor: ${comprovanteData.vendedor}</div>
   ${comprovanteData.operador ? `<div>Operador: ${comprovanteData.operador}</div>` : ""}
-  ${comprovanteData.cliente ? `<div>Cliente: ${comprovanteData.cliente.nome}</div>` : ""}
+  ${comprovanteData.cliente ? `<div>Cliente: ${comprovanteData.cliente.nome}${comprovanteData.cliente.cpfCnpj ? ` · CPF/CNPJ: ${comprovanteData.cliente.cpfCnpj}` : ""}</div>` : ""}
 </div>
 <div class="sep">${dash}</div>
 ${comprovanteData.itens.map(item => `
@@ -751,13 +781,17 @@ ${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-s
 
           {showNovoCliente ? (
             <div className="p-5 space-y-3 overflow-y-auto">
-              <input type="text" placeholder="Nome *" value={novoCliente.nome} onChange={e => setNovoCliente(p => ({ ...p, nome: e.target.value }))}
+              <p className="text-xs font-semibold text-foreground">Identificação</p>
+              <input type="text" maxLength={120} placeholder="Nome completo (opcional)" value={novoCliente.nome} onChange={e => setNovoCliente(p => ({ ...p, nome: e.target.value }))}
                 className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none border border-transparent focus:border-gold/30"
                 style={{ background: "hsl(var(--surface-raised))" }} autoFocus />
-              <input type="text" placeholder="CPF / CNPJ" value={novoCliente.cpfCnpj} onChange={e => setNovoCliente(p => ({ ...p, cpfCnpj: e.target.value }))}
+              <input type="text" maxLength={18} inputMode="numeric" placeholder="CPF / CNPJ (para identificar a NFC-e)" value={novoCliente.cpfCnpj} onChange={e => setNovoCliente(p => ({ ...p, cpfCnpj: e.target.value }))}
                 className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none border border-transparent focus:border-gold/30"
                 style={{ background: "hsl(var(--surface-raised))" }} />
-              <input type="text" placeholder="Telefone" value={novoCliente.telefone} onChange={e => setNovoCliente(p => ({ ...p, telefone: e.target.value }))}
+              <input type="text" maxLength={120} placeholder="Nome social" value={novoCliente.nomeSocial} onChange={e => setNovoCliente(p => ({ ...p, nomeSocial: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none border border-transparent focus:border-gold/30" style={{ background: "hsl(var(--surface-raised))" }} />
+              <input type="text" maxLength={40} placeholder="Gênero" value={novoCliente.genero} onChange={e => setNovoCliente(p => ({ ...p, genero: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none border border-transparent focus:border-gold/30" style={{ background: "hsl(var(--surface-raised))" }} />
+              <p className="text-xs font-semibold text-foreground pt-2">Contato</p>
+              <input type="text" maxLength={30} placeholder="Telefone" value={novoCliente.telefone} onChange={e => setNovoCliente(p => ({ ...p, telefone: e.target.value }))}
                 className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none border border-transparent focus:border-gold/30"
                 style={{ background: "hsl(var(--surface-raised))" }} />
               <input type="email" placeholder="E-mail" value={novoCliente.email} onChange={e => setNovoCliente(p => ({ ...p, email: e.target.value }))}
@@ -765,13 +799,29 @@ ${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-s
                 style={{ background: "hsl(var(--surface-raised))" }} />
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Data de nascimento (opcional)</label>
-                <input type="date" value={novoCliente.dataNascimento} onChange={e => setNovoCliente(p => ({ ...p, dataNascimento: e.target.value }))}
+                <input type="date" value={novoCliente.dataNascimento || ""} onChange={e => setNovoCliente(p => ({ ...p, dataNascimento: e.target.value || null }))}
                   className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground outline-none border border-transparent focus:border-gold/30"
                   style={{ background: "hsl(var(--surface-raised))" }} />
               </div>
+              <input type="text" maxLength={30} placeholder="WhatsApp" value={novoCliente.whatsapp} onChange={e => setNovoCliente(p => ({ ...p, whatsapp: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none border border-transparent focus:border-gold/30" style={{ background: "hsl(var(--surface-raised))" }} />
+              <p className="text-xs font-semibold text-foreground pt-2">Endereço</p>
+              <div className="grid grid-cols-2 gap-2">
+                <input type="text" maxLength={10} placeholder="CEP" value={novoCliente.cep} onChange={e => setNovoCliente(p => ({ ...p, cep: e.target.value }))} className="px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none bg-surface-raised" />
+                <input type="text" maxLength={2} placeholder="UF" value={novoCliente.uf} onChange={e => setNovoCliente(p => ({ ...p, uf: e.target.value.toUpperCase() }))} className="px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none bg-surface-raised" />
+              </div>
+              <input type="text" maxLength={160} placeholder="Logradouro" value={novoCliente.logradouro} onChange={e => setNovoCliente(p => ({ ...p, logradouro: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none bg-surface-raised" />
+              <div className="grid grid-cols-2 gap-2">
+                <input type="text" maxLength={20} placeholder="Número" value={novoCliente.numero} onChange={e => setNovoCliente(p => ({ ...p, numero: e.target.value }))} className="px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none bg-surface-raised" />
+                <input type="text" maxLength={80} placeholder="Complemento" value={novoCliente.complemento} onChange={e => setNovoCliente(p => ({ ...p, complemento: e.target.value }))} className="px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none bg-surface-raised" />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <input type="text" maxLength={80} placeholder="Bairro" value={novoCliente.bairro} onChange={e => setNovoCliente(p => ({ ...p, bairro: e.target.value }))} className="px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none bg-surface-raised" />
+                <input type="text" maxLength={80} placeholder="Cidade" value={novoCliente.cidade} onChange={e => setNovoCliente(p => ({ ...p, cidade: e.target.value }))} className="px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none bg-surface-raised" />
+              </div>
+              <textarea maxLength={1000} rows={3} placeholder="Observações" value={novoCliente.observacoes} onChange={e => setNovoCliente(p => ({ ...p, observacoes: e.target.value }))} className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground placeholder:text-muted-foreground outline-none resize-none bg-surface-raised" />
               <div className="flex gap-2 pt-2">
                 <button onClick={() => setShowNovoCliente(false)} className="btn-secondary flex-1 py-2.5 text-xs">Voltar</button>
-                <button onClick={handleSalvarCliente} disabled={!novoCliente.nome.trim()} className="btn-primary flex-1 py-2.5 text-xs disabled:opacity-40">
+                <button onClick={handleSalvarCliente} className="btn-primary flex-1 py-2.5 text-xs">
                   Cadastrar e Selecionar
                 </button>
               </div>

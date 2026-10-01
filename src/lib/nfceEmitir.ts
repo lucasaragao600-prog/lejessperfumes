@@ -15,6 +15,7 @@ export interface ResultadoNfce {
   motivo?: string;
   avisos?: string[];
   emitente?: { razao: string; cnpj: string; ie: string; endereco: string };
+  destinatario?: { nome?: string; cpfCnpj: string };
 }
 
 /** Envia a venda à SEFAZ (idempotente: se já autorizada, devolve a mesma nota). */
@@ -93,7 +94,7 @@ ${homolog ? '<div class="c" style="margin-top:3px">EMITIDA EM AMBIENTE DE HOMOLO
 ${pagamentos.map((p) => `<tr><td>${esc(p.tipo)}</td><td class="r">${brl(p.valor)}</td></tr>`).join("")}
 ${troco > 0 ? `<tr><td>Troco</td><td class="r">${brl(troco)}</td></tr>` : ""}</table>
 <div class="hr"></div><div class="c">Consulte pela chave de acesso em<br>www.sefaz.am.gov.br/nfce/consulta<br><br>${chave}</div>
-<div class="hr"></div><div class="c">CONSUMIDOR NÃO IDENTIFICADO</div>
+<div class="hr"></div><div class="c">${nf.destinatario ? `${esc(nf.destinatario.nome || "CONSUMIDOR")}<br>${nf.destinatario.cpfCnpj.length === 11 ? "CPF" : "CNPJ"}: ${esc(nf.destinatario.cpfCnpj)}` : "CONSUMIDOR NÃO IDENTIFICADO"}</div>
 <div class="c">NFC-e nº ${nf.numero} Série ${nf.serie} ${esc(data)}<br>Protocolo de autorização: ${esc(nf.protocolo)}</div>
 <div class="c" style="margin-top:6px"><img src="${qrImg}" style="width:38mm;height:38mm"></div>
 <script>window.onload=()=>{setTimeout(()=>{window.print();},300)}</script></body></html>`);
