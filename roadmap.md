@@ -8,4 +8,5 @@
 - [x] Decants Fase 1 (frascos, ledger de ml, tamanhos, conferência) — aguardando aprovação
 - [x] Decants Fase 2 (SKUs, ficha técnica, lotes, reserva, conferência) — aguardando aprovação
 - [x] Decants Fase 3 (estoque, PDV, cancelamento, devolução, inventário, transferências) — aguardando aprovação
-- [ ] Decants Fases 4–7 — aguardando aprovação da Fase 3
+- [x] Decants Fase 4 (perdas, dashboard, 360°, rentabilidade, comparativo, relatórios) — aguardando aprovação
+- [ ] Decants Fases seguintes — aguardando aprovação da Fase 4
