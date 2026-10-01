@@ -110,11 +110,13 @@ export function useVendas() {
     mutationFn: async ({
       itens,
       pagamentosVenda,
+      grupoVenda: grupoInformado,
     }: {
       itens: Venda[];
       pagamentosVenda: Omit<VendaPagamento, "id">[];
+      grupoVenda?: string;
     }) => {
-      const grupoVenda = crypto.randomUUID();
+      const grupoVenda = grupoInformado || crypto.randomUUID();
 
       // Insert all items with same grupo_venda
       const rows = itens.map((v) => ({

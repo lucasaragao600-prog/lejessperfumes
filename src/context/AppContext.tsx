@@ -23,7 +23,7 @@ interface AppContextType {
   pagamentos: VendaPagamento[];
   setVendas: any;
   adicionarVenda: (v: Venda) => Promise<void>;
-  adicionarVendaMulti: (params: { itens: Venda[]; pagamentosVenda: Omit<VendaPagamento, "id">[] }) => Promise<void>;
+  adicionarVendaMulti: (params: { itens: Venda[]; pagamentosVenda: Omit<VendaPagamento, "id">[]; grupoVenda?: string }) => Promise<void>;
   excluirVenda: (id: string) => Promise<void>;
   movimentacoes: Movimentacao[];
   setMovimentacoes: any;
