@@ -993,13 +993,13 @@ export default function Vendas() {
         <div className="px-4 space-y-2.5">
           {temFiltroAtivo && (
             <div className="flex justify-between items-center mb-2 px-1">
-              <p className="text-[11px] text-muted-foreground">{filtradas.length} venda(s) encontrada(s)</p>
+              <p className="text-[11px] text-muted-foreground">{totalFiltrado.qtd} venda(s) encontrada(s)</p>
               {!isVendedor && <p className="text-[11px] font-semibold text-gold">{formatCurrency(totalFiltrado.valor)}</p>}
             </div>
           )}
 
           {filtradasAgrupadas.map(({ grupoVenda, itens }) => {
-            const grupoPags = pagamentos.filter((p) => p.grupoVenda === grupoVenda);
+            const grupoPags = pagamentosLista.get(grupoVenda) || [];
             const grupoTotal = itens.reduce((a, v) => a + v.total, 0);
             const isGroup = itens.length > 1;
 
@@ -1065,7 +1065,22 @@ export default function Vendas() {
             );
           })}
 
-          {filtradas.length === 0 && (
+          {lista.isLoading && Array.from({ length: 5 }).map((_, i) => (
+            <div key={`sk${i}`} className="card-premium h-20 animate-pulse" />
+          ))}
+          {lista.isError && (
+            <div className="text-center py-10">
+              <p className="text-sm text-destructive mb-2">Não foi possível carregar as vendas.</p>
+              <button onClick={() => lista.refetch()} className="btn-secondary px-4 py-2 text-xs">Tentar novamente</button>
+            </div>
+          )}
+          <div ref={fimRef} />
+          {lista.hasNextPage && (
+            <button onClick={() => lista.fetchNextPage()} disabled={lista.isFetchingNextPage} className="btn-secondary w-full py-2.5 text-xs">
+              {lista.isFetchingNextPage ? <><Loader2 size={12} className="inline mr-1 animate-spin" /> Carregando...</> : "Carregar mais"}
+            </button>
+          )}
+          {!lista.isLoading && !lista.isError && itensLista.length === 0 && (
             <div className="text-center py-20">
               <ShoppingCart size={40} className="text-muted-foreground mx-auto mb-4 opacity-40" />
               <p className="text-muted-foreground text-sm">Nenhuma venda encontrada</p>
