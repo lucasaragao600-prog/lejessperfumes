@@ -25,9 +25,10 @@ async function testeEmissao(admin: any, unidadeId: string) {
   if (cfg.ambiente !== "homologacao") throw new Error("Teste só é permitido em homologação");
   if (!cfg.inscricao_estadual || !cfg.csc_token) throw new Error("IE ou CSC não cadastrados");
   const { data: prods } = await admin.from("perfumes").select("codigo,nome,marca,ncm,cfop,cst_csosn,codigo_barras,preco_venda")
-    .not("ncm", "is", null).gt("preco_venda", 0).limit(20);
-  const p = (prods || []).find((x: any) => String(x.ncm || "").replace(/\D/g, "").length === 8);
-  if (!p) throw new Error("Nenhum produto com NCM de 8 dígitos");
+    .gt("preco_venda", 0).order("ncm", { ascending: false }).limit(1);
+  const p = (prods || [])[0];
+  if (!p) throw new Error("Nenhum produto com preço");
+  if (String(p.ncm || "").replace(/\D/g, "").length !== 8) p.ncm = "33030010"; // perfume
   const { key, certB64, validade } = carregarPfx(cert.pfx, cert.senha);
   const { chave, nfe, total } = montarNfce({
     cnpj: cfg.cnpj, ie: cfg.inscricao_estadual, razao: cfg.razao_social, fantasia: cfg.nome_fantasia,
