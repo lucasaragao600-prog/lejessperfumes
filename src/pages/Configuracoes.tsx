@@ -251,7 +251,7 @@ export default function Configuracoes() {
     </section>
   );
 
-  const isMasterIA = (useAuth() as any)?.isMaster;
+  const isMasterIA = useAuth().role === "master";
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="sticky top-0 z-10 px-4 pt-12 pb-4"
