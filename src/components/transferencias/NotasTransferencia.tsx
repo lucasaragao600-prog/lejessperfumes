@@ -6,7 +6,41 @@ import {
   NT_ORIGEM_LABEL, NT_STATUS_META, useNotaDetalhe, useNotasFiltradas, useReimprimirNota, useNtConfig, useNtAlertas,
   filtrarNotas, type NtStatus, type NtFiltros,
 } from "@/hooks/useNotasTransferencia";
-import { Download } from "lucide-react";
+import { Download, XCircle } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+function CancelarNota({ id }: { id: string }) {
+  const qc = useQueryClient();
+  const [aberto, setAberto] = useState(false);
+  const [motivo, setMotivo] = useState("");
+  const m = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.rpc("fn_nt_cancelar" as never, { p_id: id, p_motivo: motivo } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Nota cancelada."); setAberto(false);
+      qc.invalidateQueries({ queryKey: ["nota-transferencia", id] });
+      qc.invalidateQueries({ queryKey: ["notas-transferencia"] }); qc.invalidateQueries({ queryKey: ["notas-origem"] });
+    },
+    onError: (e) => toast.error(e instanceof Error ? e.message : "Não foi possível cancelar."),
+  });
+  if (!aberto) return (
+    <button onClick={() => setAberto(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-destructive/40 text-destructive">
+      <XCircle size={14} /> Cancelar nota
+    </button>
+  );
+  return (
+    <div className="w-full flex gap-2 pt-1">
+      <input autoFocus value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Motivo do cancelamento"
+        className="flex-1 bg-surface-raised text-foreground border border-border rounded-lg px-3 py-1.5 text-xs" />
+      <button disabled={m.isPending || motivo.trim().length < 5} onClick={() => m.mutate()}
+        className="px-3 py-1.5 rounded-lg text-xs bg-destructive text-destructive-foreground disabled:opacity-50">Confirmar</button>
+      <button onClick={() => setAberto(false)} className="px-2 text-xs text-muted-foreground">Voltar</button>
+    </div>
+  );
+}
 import { gerarPdfNota, imprimirTermicaNota } from "@/lib/pdf/notaTransferencia";
 import { VIA_LABEL, type NtVia } from "@/lib/notaTransferencia";
 
@@ -88,6 +122,7 @@ export function DetalheNota({ id, onVoltar }: { id: string; onVoltar?: () => voi
             <Printer size={14} /> Térmica 72 mm
           </button>
           {nt.reimpressoes > 0 && <span className="text-[11px] text-muted-foreground">{nt.reimpressoes} impressão(ões)</span>}
+          {nt.status !== "CANCELADA" && nt.status !== "SUBSTITUIDA" && <CancelarNota id={nt.id} />}
         </div>
       </div>
 
