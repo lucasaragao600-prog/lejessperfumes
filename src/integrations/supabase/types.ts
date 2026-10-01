@@ -741,6 +741,64 @@ export type Database = {
           },
         ]
       }
+      decant_estoque: {
+        Row: {
+          created_at: string
+          custo_unit: number
+          id: string
+          lote_chave: string | null
+          lote_id: string | null
+          quantidade: number
+          sku_id: string
+          unidade_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custo_unit?: number
+          id?: string
+          lote_chave?: string | null
+          lote_id?: string | null
+          quantidade?: number
+          sku_id: string
+          unidade_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custo_unit?: number
+          id?: string
+          lote_chave?: string | null
+          lote_id?: string | null
+          quantidade?: number
+          sku_id?: string
+          unidade_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_estoque_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "decant_lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_estoque_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "decant_skus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_estoque_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decant_fechados_mov: {
         Row: {
           created_at: string
@@ -941,6 +999,72 @@ export type Database = {
           },
           {
             foreignKeyName: "decant_frascos_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_inventarios: {
+        Row: {
+          aprovado_em: string | null
+          aprovado_por: string | null
+          aprovado_por_nome: string
+          contado: number
+          created_at: string
+          diferenca: number
+          executado_por: string | null
+          executado_por_nome: string
+          id: string
+          justificativa: string
+          saldo_sistema: number
+          sku_id: string
+          status: string
+          unidade_id: string
+        }
+        Insert: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          aprovado_por_nome?: string
+          contado: number
+          created_at?: string
+          diferenca: number
+          executado_por?: string | null
+          executado_por_nome?: string
+          id?: string
+          justificativa?: string
+          saldo_sistema: number
+          sku_id: string
+          status: string
+          unidade_id: string
+        }
+        Update: {
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          aprovado_por_nome?: string
+          contado?: number
+          created_at?: string
+          diferenca?: number
+          executado_por?: string | null
+          executado_por_nome?: string
+          id?: string
+          justificativa?: string
+          saldo_sistema?: number
+          sku_id?: string
+          status?: string
+          unidade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_inventarios_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "decant_skus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_inventarios_unidade_id_fkey"
             columns: ["unidade_id"]
             isOneToOne: false
             referencedRelation: "unidades"
@@ -1318,6 +1442,121 @@ export type Database = {
           },
         ]
       }
+      decant_quarentena: {
+        Row: {
+          created_at: string
+          decidido_em: string | null
+          decidido_por: string | null
+          decidido_por_nome: string
+          decisao_obs: string
+          id: string
+          lacrado: boolean | null
+          motivo: string
+          quantidade: number
+          registrado_por: string | null
+          registrado_por_nome: string
+          sku_id: string
+          status: string
+          unidade_id: string
+          venda_id: string
+        }
+        Insert: {
+          created_at?: string
+          decidido_em?: string | null
+          decidido_por?: string | null
+          decidido_por_nome?: string
+          decisao_obs?: string
+          id?: string
+          lacrado?: boolean | null
+          motivo?: string
+          quantidade: number
+          registrado_por?: string | null
+          registrado_por_nome?: string
+          sku_id: string
+          status?: string
+          unidade_id: string
+          venda_id: string
+        }
+        Update: {
+          created_at?: string
+          decidido_em?: string | null
+          decidido_por?: string | null
+          decidido_por_nome?: string
+          decisao_obs?: string
+          id?: string
+          lacrado?: boolean | null
+          motivo?: string
+          quantidade?: number
+          registrado_por?: string | null
+          registrado_por_nome?: string
+          sku_id?: string
+          status?: string
+          unidade_id?: string
+          venda_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_quarentena_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "decant_skus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_quarentena_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_quarentena_venda_id_fkey"
+            columns: ["venda_id"]
+            isOneToOne: false
+            referencedRelation: "decant_vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_sku_unidade: {
+        Row: {
+          estoque_ideal: number
+          estoque_minimo: number
+          sku_id: string
+          unidade_id: string
+          updated_at: string
+        }
+        Insert: {
+          estoque_ideal?: number
+          estoque_minimo?: number
+          sku_id: string
+          unidade_id: string
+          updated_at?: string
+        }
+        Update: {
+          estoque_ideal?: number
+          estoque_minimo?: number
+          sku_id?: string
+          unidade_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_sku_unidade_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "decant_skus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_sku_unidade_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decant_skus: {
         Row: {
           ativo: boolean
@@ -1423,6 +1662,373 @@ export type Database = {
           volume_ml?: number
         }
         Relationships: []
+      }
+      decant_transf_itens: {
+        Row: {
+          custo_unit: number
+          diferenca: number | null
+          frasco_id: string | null
+          id: string
+          produto_id: string | null
+          qtd_recebida: number | null
+          quantidade: number
+          sku_id: string | null
+          tipo: string
+          transferencia_id: string
+        }
+        Insert: {
+          custo_unit?: number
+          diferenca?: number | null
+          frasco_id?: string | null
+          id?: string
+          produto_id?: string | null
+          qtd_recebida?: number | null
+          quantidade: number
+          sku_id?: string | null
+          tipo: string
+          transferencia_id: string
+        }
+        Update: {
+          custo_unit?: number
+          diferenca?: number | null
+          frasco_id?: string | null
+          id?: string
+          produto_id?: string | null
+          qtd_recebida?: number | null
+          quantidade?: number
+          sku_id?: string | null
+          tipo?: string
+          transferencia_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_transf_itens_frasco_id_fkey"
+            columns: ["frasco_id"]
+            isOneToOne: false
+            referencedRelation: "decant_frascos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_transf_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_transf_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "decant_transf_itens_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "decant_skus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_transf_itens_transferencia_id_fkey"
+            columns: ["transferencia_id"]
+            isOneToOne: false
+            referencedRelation: "decant_transferencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_transferencias: {
+        Row: {
+          codigo: string
+          created_at: string
+          criado_por: string | null
+          criado_por_nome: string
+          destino_id: string
+          enviado_em: string | null
+          finalizado_em: string | null
+          id: string
+          idempotency_key: string | null
+          observacao: string
+          origem_id: string
+          recebido_em: string | null
+          recebido_por_nome: string
+          resolucao: string
+          separado_em: string | null
+          status: string
+          transportador: string
+          updated_at: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string
+          destino_id: string
+          enviado_em?: string | null
+          finalizado_em?: string | null
+          id?: string
+          idempotency_key?: string | null
+          observacao?: string
+          origem_id: string
+          recebido_em?: string | null
+          recebido_por_nome?: string
+          resolucao?: string
+          separado_em?: string | null
+          status?: string
+          transportador?: string
+          updated_at?: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string
+          destino_id?: string
+          enviado_em?: string | null
+          finalizado_em?: string | null
+          id?: string
+          idempotency_key?: string | null
+          observacao?: string
+          origem_id?: string
+          recebido_em?: string | null
+          recebido_por_nome?: string
+          resolucao?: string
+          separado_em?: string | null
+          status?: string
+          transportador?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_transferencias_destino_id_fkey"
+            columns: ["destino_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_transferencias_origem_id_fkey"
+            columns: ["origem_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_un_ledger: {
+        Row: {
+          canal: string
+          created_at: string
+          custo_unit: number
+          destino_unidade_id: string | null
+          id: string
+          lote_id: string | null
+          motivo: string
+          origem_unidade_id: string | null
+          preco_unit: number | null
+          quantidade: number
+          referencia_id: string | null
+          referencia_tipo: string
+          saldo_apos: number
+          sku_id: string
+          tipo: string
+          unidade_id: string
+          usuario_id: string | null
+          usuario_nome: string
+        }
+        Insert: {
+          canal?: string
+          created_at?: string
+          custo_unit?: number
+          destino_unidade_id?: string | null
+          id?: string
+          lote_id?: string | null
+          motivo?: string
+          origem_unidade_id?: string | null
+          preco_unit?: number | null
+          quantidade: number
+          referencia_id?: string | null
+          referencia_tipo?: string
+          saldo_apos: number
+          sku_id: string
+          tipo: string
+          unidade_id: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Update: {
+          canal?: string
+          created_at?: string
+          custo_unit?: number
+          destino_unidade_id?: string | null
+          id?: string
+          lote_id?: string | null
+          motivo?: string
+          origem_unidade_id?: string | null
+          preco_unit?: number | null
+          quantidade?: number
+          referencia_id?: string | null
+          referencia_tipo?: string
+          saldo_apos?: number
+          sku_id?: string
+          tipo?: string
+          unidade_id?: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_un_ledger_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "decant_lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_un_ledger_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "decant_skus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_un_ledger_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_venda_pagamentos: {
+        Row: {
+          created_at: string
+          forma: string
+          grupo_venda: string
+          id: string
+          unidade_id: string
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          forma: string
+          grupo_venda: string
+          id?: string
+          unidade_id: string
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          forma?: string
+          grupo_venda?: string
+          id?: string
+          unidade_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_venda_pagamentos_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_vendas: {
+        Row: {
+          canal: string
+          cancelada_em: string | null
+          cliente_id: string | null
+          created_at: string
+          custo_unit: number
+          grupo_venda: string
+          id: string
+          idempotency_key: string | null
+          lote_producao_id: string | null
+          motivo_cancelamento: string
+          preco_unit: number
+          qtd_devolvida: number
+          quantidade: number
+          sessao_caixa_id: string | null
+          sku_id: string
+          status: string
+          total: number
+          unidade_id: string
+          usuario_id: string | null
+          usuario_nome: string
+          vendedora: string
+        }
+        Insert: {
+          canal: string
+          cancelada_em?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          custo_unit?: number
+          grupo_venda: string
+          id?: string
+          idempotency_key?: string | null
+          lote_producao_id?: string | null
+          motivo_cancelamento?: string
+          preco_unit: number
+          qtd_devolvida?: number
+          quantidade: number
+          sessao_caixa_id?: string | null
+          sku_id: string
+          status: string
+          total: number
+          unidade_id: string
+          usuario_id?: string | null
+          usuario_nome?: string
+          vendedora?: string
+        }
+        Update: {
+          canal?: string
+          cancelada_em?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          custo_unit?: number
+          grupo_venda?: string
+          id?: string
+          idempotency_key?: string | null
+          lote_producao_id?: string | null
+          motivo_cancelamento?: string
+          preco_unit?: number
+          qtd_devolvida?: number
+          quantidade?: number
+          sessao_caixa_id?: string | null
+          sku_id?: string
+          status?: string
+          total?: number
+          unidade_id?: string
+          usuario_id?: string | null
+          usuario_nome?: string
+          vendedora?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_vendas_lote_producao_id_fkey"
+            columns: ["lote_producao_id"]
+            isOneToOne: false
+            referencedRelation: "decant_lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_vendas_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "decant_skus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_vendas_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       devolucao_itens: {
         Row: {
@@ -3854,6 +4460,24 @@ export type Database = {
         Args: { _dados: Json; _evento: string; _lote: string }
         Returns: undefined
       }
+      fn__decant_un_mov: {
+        Args: {
+          _canal: string
+          _custo: number
+          _destino: string
+          _lote: string
+          _motivo: string
+          _origem: string
+          _preco: number
+          _qtd: number
+          _ref: string
+          _ref_tipo: string
+          _sku: string
+          _tipo: string
+          _unidade: string
+        }
+        Returns: number
+      }
       fn__devolucao_core: {
         Args: {
           p_cliente: string
@@ -4043,9 +4667,22 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_decant_devolver: {
+        Args: {
+          p_estornar_dinheiro: boolean
+          p_motivo: string
+          p_quantidade: number
+          p_venda_id: string
+        }
+        Returns: Json
+      }
       fn_decant_disponivel_frasco: {
         Args: { p_frasco_id: string }
         Returns: number
+      }
+      fn_decant_estoque_listar: {
+        Args: { p_unidade_id: string }
+        Returns: Json
       }
       fn_decant_fichas_listar: {
         Args: { p_produto_id?: string }
@@ -4057,6 +4694,19 @@ export type Database = {
       }
       fn_decant_frascos_listar: {
         Args: { p_unidade_id: string }
+        Returns: Json
+      }
+      fn_decant_inventario_contar: {
+        Args: {
+          p_contado: number
+          p_justificativa: string
+          p_sku: string
+          p_unidade: string
+        }
+        Returns: Json
+      }
+      fn_decant_inventario_decidir: {
+        Args: { p_aprovar: boolean; p_id: string }
         Returns: Json
       }
       fn_decant_lote_cancelar: {
@@ -4102,6 +4752,20 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_decant_movimentacoes_listar: {
+        Args: { p: Json; p_limite?: number; p_offset?: number }
+        Returns: Json
+      }
+      fn_decant_pdv_catalogo: { Args: { p_unidade_id: string }; Returns: Json }
+      fn_decant_quarentena_decidir: {
+        Args: {
+          p_acao: string
+          p_id: string
+          p_lacrado: boolean
+          p_obs: string
+        }
+        Returns: Json
+      }
       fn_decant_registrar_saida: {
         Args: {
           p_frasco_id: string
@@ -4117,6 +4781,10 @@ export type Database = {
         Returns: number
       }
       fn_decant_saldo_frasco: { Args: { p_frasco_id: string }; Returns: number }
+      fn_decant_saldo_sku: {
+        Args: { p_sku: string; p_unidade: string }
+        Returns: number
+      }
       fn_decant_sku_codigo: {
         Args: { _codigo_perfume: string; _volume: number }
         Returns: string
@@ -4128,6 +4796,63 @@ export type Database = {
           p_produto_id: string
           p_sku: string
           p_tamanho_id: string
+        }
+        Returns: Json
+      }
+      fn_decant_sku_unidade_salvar: {
+        Args: {
+          p_ideal: number
+          p_minimo: number
+          p_sku: string
+          p_unidade: string
+        }
+        Returns: undefined
+      }
+      fn_decant_transf_cancelar: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: Json
+      }
+      fn_decant_transf_criar: {
+        Args: {
+          p_destino: string
+          p_idempotency_key: string
+          p_itens: Json
+          p_observacao: string
+          p_origem: string
+        }
+        Returns: Json
+      }
+      fn_decant_transf_enviar: {
+        Args: { p_id: string; p_transportador: string }
+        Returns: Json
+      }
+      fn_decant_transf_listar: { Args: { p_unidade_id: string }; Returns: Json }
+      fn_decant_transf_receber: {
+        Args: { p_conferencias: Json; p_id: string }
+        Returns: Json
+      }
+      fn_decant_transf_resolver: {
+        Args: { p_id: string; p_justificativa: string; p_resolucao: string }
+        Returns: Json
+      }
+      fn_decant_transf_separar: { Args: { p_id: string }; Returns: Json }
+      fn_decant_venda_cancelar: {
+        Args: { p_grupo: string; p_motivo: string }
+        Returns: Json
+      }
+      fn_decant_vendas_listar: {
+        Args: { p: Json; p_limite?: number; p_offset?: number }
+        Returns: Json
+      }
+      fn_decant_vender: {
+        Args: {
+          p_canal: string
+          p_cliente_id: string
+          p_idempotency_key: string
+          p_itens: Json
+          p_pagamentos: Json
+          p_unidade_id: string
+          p_vendedora: string
         }
         Returns: Json
       }
