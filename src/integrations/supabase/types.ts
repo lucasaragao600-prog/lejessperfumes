@@ -967,10 +967,12 @@ export type Database = {
           idempotency_key: string | null
           lote_fabricante: string
           observacao: string
+          origem: string
           produto_id: string
           rendimento_util: number
           responsavel: string
           status: string
+          tester_id: string | null
           unidade_id: string
           updated_at: string
           validade: string | null
@@ -989,10 +991,12 @@ export type Database = {
           idempotency_key?: string | null
           lote_fabricante?: string
           observacao?: string
+          origem?: string
           produto_id: string
           rendimento_util?: number
           responsavel?: string
           status?: string
+          tester_id?: string | null
           unidade_id: string
           updated_at?: string
           validade?: string | null
@@ -1011,10 +1015,12 @@ export type Database = {
           idempotency_key?: string | null
           lote_fabricante?: string
           observacao?: string
+          origem?: string
           produto_id?: string
           rendimento_util?: number
           responsavel?: string
           status?: string
+          tester_id?: string | null
           unidade_id?: string
           updated_at?: string
           validade?: string | null
@@ -5029,6 +5035,16 @@ export type Database = {
           p_unidade: string
         }
         Returns: undefined
+      }
+      fn_decant_tester_para_frasco: {
+        Args: {
+          p_idempotency_key: string
+          p_observacao: string
+          p_responsavel: string
+          p_tester_id: string
+          p_volume_atual: number
+        }
+        Returns: Json
       }
       fn_decant_transf_cancelar: {
         Args: { p_id: string; p_motivo: string }

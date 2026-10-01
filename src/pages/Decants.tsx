@@ -1,3 +1,4 @@
+import { DialogoTesterFrasco } from "@/components/decants/DecantTesterFrasco";
 import { ModelosEtiquetaConfig } from "@/components/decants/DecantsEtiquetas";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -94,7 +95,7 @@ function AbaFrascos() {
   const { data: frascos = [], isLoading, error } = useFrascosAbertos(unidade || null);
   const { data: fechados = [] } = useFechadosSaldo();
   const { perfumes } = useApp();
-  const [dialogo, setDialogo] = useState<null | "destinar" | "abrir">(null);
+  const [dialogo, setDialogo] = useState<null | "destinar" | "abrir" | "tester">(null);
   const [sel, setSel] = useState<FrascoAberto | null>(null);
   const nomeProd = (id: string) => { const p = perfumes.find((x) => x.id === id); return p ? `${p.marca} - ${p.nome} ${p.volume}ml` : id; };
   const nomeUn = (id: string) => unidadesEstoque.find((u) => u.id === id)?.nomeExibicao || "";
@@ -110,6 +111,8 @@ function AbaFrascos() {
         <div className="flex-1" />
         <button className="btn-secondary px-4 py-2 text-sm" onClick={() => setDialogo("destinar")}>
           <Plus className="w-4 h-4 inline mr-1" />Destinar para decants</button>
+        <button className="btn-secondary px-4 py-2 text-sm" onClick={() => setDialogo("tester")}>
+          <Droplets className="w-4 h-4 inline mr-1" />Usar tester</button>
         <button className="btn-primary px-4 py-2 text-sm" onClick={() => setDialogo("abrir")}>
           <PackageOpen className="w-4 h-4 inline mr-1" />Abrir frasco</button>
       </div>
@@ -161,6 +164,7 @@ function AbaFrascos() {
 
       {dialogo === "destinar" && <DialogoDestinar onClose={() => setDialogo(null)} />}
       {dialogo === "abrir" && <DialogoAbrir onClose={() => setDialogo(null)} fechados={fechados} nomeProd={nomeProd} nomeUn={nomeUn} />}
+      {dialogo === "tester" && <DialogoTesterFrasco onClose={() => setDialogo(null)} />}
       {sel && <DialogoFrasco frasco={frascos.find((x) => x.id === sel.id) || sel} onClose={() => setSel(null)} />}
     </div>
   );
