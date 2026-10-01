@@ -14,16 +14,17 @@ import {
 import { custoPorMl, fmtBRL, fmtMl, ROTULO_MOV_ML, TIPOS_SAIDA_ML } from "@/lib/decants";
 import { getHojeManaus as hojeManaus } from "@/lib/dateUtils";
 import { AbaProducao, AbaLotes } from "@/components/decants/DecantsProducao";
+import { AbaEstoqueDecants, AbaMovimentacoesDecant, AbaVendasDecant, AbaTransferenciasDecant } from "@/components/decants/DecantsOperacao";
 
 const ABAS = [
   { id: "dashboard", label: "Dashboard" }, { id: "perfumes", label: "Perfumes" },
   { id: "frascos", label: "Frascos Abertos" }, { id: "producao", label: "Produção" },
   { id: "lotes", label: "Lotes" }, { id: "estoque", label: "Estoque de Decants" },
-  { id: "movimentacoes", label: "Movimentações" }, { id: "perdas", label: "Perdas" },
+  { id: "movimentacoes", label: "Movimentações" }, { id: "transferencias", label: "Transferências" }, { id: "perdas", label: "Perdas" },
   { id: "reposicao", label: "Reposição" }, { id: "vendas", label: "Vendas" },
   { id: "relatorios", label: "Relatórios" }, { id: "configuracoes", label: "Configurações" },
 ];
-const PRONTAS = new Set(["perfumes", "frascos", "producao", "lotes", "configuracoes"]);
+const PRONTAS = new Set(["perfumes", "frascos", "producao", "lotes", "estoque", "movimentacoes", "vendas", "transferencias", "configuracoes"]);
 
 const num = (v: string) => (v.trim() === "" ? NaN : Number(v.replace(",", ".")));
 const blurWheel = (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur();
@@ -57,6 +58,10 @@ export default function Decants() {
       {aba === "perfumes" && <AbaPerfumes />}
       {aba === "producao" && <AbaProducao />}
       {aba === "lotes" && <AbaLotes />}
+      {aba === "estoque" && <AbaEstoqueDecants />}
+      {aba === "movimentacoes" && <AbaMovimentacoesDecant />}
+      {aba === "vendas" && <AbaVendasDecant />}
+      {aba === "transferencias" && <AbaTransferenciasDecant />}
       {aba === "configuracoes" && <AbaConfiguracoes />}
       {!PRONTAS.has(aba) && (
         <div className="card-premium p-10 text-center text-muted-foreground">
@@ -461,6 +466,8 @@ function AbaConfiguracoes() {
       {cfg && (
         <div className="card-premium p-4 grid gap-4 sm:grid-cols-2">
           <label className="flex items-center justify-between gap-2 text-sm">Módulo ligado para as lojas <Switch checked={cfg.ativo} onCheckedChange={(v) => mudar({ ativo: v })} /></label>
+          <label className="flex items-center justify-between gap-2 text-sm">Venda sob demanda (sem estoque pronto) <Switch checked={!!cfg.venda_sob_demanda} onCheckedChange={(v) => mudar({ venda_sob_demanda: v })} /></label>
+          <label className="flex items-center justify-between gap-2 text-sm">Permitir transferir frasco aberto <Switch checked={!!cfg.transferir_frasco_aberto} onCheckedChange={(v) => mudar({ transferir_frasco_aberto: v })} /></label>
           <label className="flex items-center justify-between gap-2 text-sm">Conferência de produção obrigatória <Switch checked={cfg.conferencia_obrigatoria} onCheckedChange={(v) => mudar({ conferencia_obrigatoria: v })} /></label>
           <Campo label="Tolerância de divergência (ml)"><input type="number" step="0.1" onWheel={blurWheel} className="input-premium" defaultValue={cfg.tolerancia_ml}
             onBlur={(e) => { const v = num(e.target.value); if (v >= 0 && v !== cfg.tolerancia_ml) mudar({ tolerancia_ml: v }); }} /></Campo>
