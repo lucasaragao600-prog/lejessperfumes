@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Perfume, Deposito } from "@/data/mockData";
 
 // Map DB row to app Perfume type
-function rowToPerfume(row: any): Perfume {
+export function rowToPerfume(row: any): Perfume {
   return {
     id: row.id,
     codigo: row.codigo,
