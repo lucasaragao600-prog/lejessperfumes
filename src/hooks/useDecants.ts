@@ -14,6 +14,7 @@ export interface DecantConfig {
   venda_sob_demanda?: boolean;
   transferir_frasco_aberto?: boolean;
   perda_max_pct?: number;
+  volume_critico_ml?: number;
 }
 
 export interface FrascoAberto {
@@ -401,5 +402,29 @@ export function useRelatorioDecant(tipo: string, unidadeId: string | null, ini: 
     queryKey: ["decant-relatorio", tipo, unidadeId, ini, fim],
     queryFn: async (): Promise<RelatorioDecant> => rpc("fn_decant_relatorio", { p_tipo: tipo, p_unidade: unidadeId, p_ini: ini, p_fim: fim }),
     enabled: !!tipo,
+  });
+}
+
+/* ---------- Fase 5: reposição e alertas ---------- */
+export interface ReposicaoLinha {
+  sku_id: string; unidade_id: string; produto_id: string; tamanho_id: string; sku: string; perfume: string; tamanho: string;
+  volume_ml: number; filial: string; minimo: number; ideal: number; atual: number; em_producao: number; sugerido: number;
+  ml_necessario: number; ml_disponivel: number; deficit_ml: number; produzivel: number;
+  frasco_sugerido: { id: string; codigo: string; disponivel_ml: number } | null; frascos_fechados: number;
+}
+export interface DecantAlerta { tipo: string; titulo: string; aba: string; qtd: number; itens: { ref: string; filial: string; detalhe: string }[] }
+
+export function useReposicaoDecant(unidadeId: string | null) {
+  return useQuery({
+    queryKey: ["decant-reposicao", unidadeId],
+    queryFn: async (): Promise<ReposicaoLinha[]> => (await rpc("fn_decant_reposicao", { p_unidade: unidadeId })) ?? [],
+  });
+}
+export function useAlertasDecant(unidadeId: string | null = null) {
+  return useQuery({
+    queryKey: ["decant-alertas", unidadeId],
+    queryFn: async (): Promise<{ alertas: DecantAlerta[]; total: number }> =>
+      (await rpc("fn_decant_alertas", { p_unidade: unidadeId })) ?? { alertas: [], total: 0 },
+    refetchInterval: 120_000,
   });
 }

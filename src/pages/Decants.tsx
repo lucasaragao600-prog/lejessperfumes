@@ -15,6 +15,8 @@ import { custoPorMl, fmtBRL, fmtMl, ROTULO_MOV_ML, TIPOS_SAIDA_ML } from "@/lib/
 import { getHojeManaus as hojeManaus } from "@/lib/dateUtils";
 import { AbaProducao, AbaLotes } from "@/components/decants/DecantsProducao";
 import { AbaEstoqueDecants, AbaMovimentacoesDecant, AbaVendasDecant, AbaTransferenciasDecant } from "@/components/decants/DecantsOperacao";
+import { AbaReposicaoDecant, PainelAlertasDecant } from "@/components/decants/DecantsReposicao";
+import { useAlertasDecant } from "@/hooks/useDecants";
 import { AbaDashboardDecants, AbaPerdasDecant, AbaRentabilidadeDecant, AbaRelatoriosDecant, Perfume360 } from "@/components/decants/DecantsAnalise";
 
 const ABAS = [
@@ -37,6 +39,8 @@ const Campo = ({ label, children }: { label: string; children: React.ReactNode }
 export default function Decants() {
   const [aba, setAba] = useState("dashboard");
   const { data: cfg } = useDecantConfig();
+  const { data: alertas } = useAlertasDecant(null);
+  const contagem = (id: string) => (alertas?.alertas ?? []).filter((a) => a.aba === id).reduce((s, a) => s + a.qtd, 0);
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -53,6 +57,8 @@ export default function Decants() {
           <button key={a.id} onClick={() => setAba(a.id)}
             className={`pill whitespace-nowrap ${aba === a.id ? "pill-active" : "pill-inactive"}`}>
             {a.label}{!PRONTAS.has(a.id) && <span className="ml-1 text-[10px] opacity-70">em breve</span>}
+            {a.id === "dashboard" && !!alertas?.total && <span className="ml-1.5 rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground">{alertas.total}</span>}
+            {a.id !== "dashboard" && contagem(a.id) > 0 && <span className="ml-1.5 rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground">{contagem(a.id)}</span>}
           </button>
         ))}
       </div>
@@ -65,11 +71,11 @@ export default function Decants() {
       {aba === "vendas" && <AbaVendasDecant />}
       {aba === "transferencias" && <AbaTransferenciasDecant />}
       {aba === "configuracoes" && <AbaConfiguracoes />}
-      {aba === "dashboard" && <AbaDashboardDecants />}
+      {aba === "dashboard" && <div className="space-y-4"><PainelAlertasDecant onIr={setAba} /><AbaDashboardDecants /></div>}
       {aba === "perdas" && <AbaPerdasDecant />}
       {aba === "rentabilidade" && <AbaRentabilidadeDecant />}
       {aba === "relatorios" && <AbaRelatoriosDecant />}
-      {aba === "reposicao" && <AbaRelatoriosDecant fixo="reposicao" />}
+      {aba === "reposicao" && <AbaReposicaoDecant />}
       {!PRONTAS.has(aba) && (
         <div className="card-premium p-10 text-center text-muted-foreground">
           <p className="font-medium text-foreground">Em breve</p>
@@ -483,6 +489,8 @@ function AbaConfiguracoes() {
             onBlur={(e) => { const v = num(e.target.value); if (v >= 0 && v !== cfg.tolerancia_ml) mudar({ tolerancia_ml: v }); }} /></Campo>
           <Campo label="Rendimento útil padrão (%)"><input type="number" onWheel={blurWheel} className="input-premium" defaultValue={cfg.rendimento_padrao}
             onBlur={(e) => { const v = num(e.target.value); if (v > 0 && v <= 100 && v !== cfg.rendimento_padrao) mudar({ rendimento_padrao: v }); }} /></Campo>
+          <Campo label="Volume crítico por perfume/filial (ml)"><input type="number" onWheel={blurWheel} className="input-premium" defaultValue={cfg.volume_critico_ml ?? 10}
+            onBlur={(e) => { const v = num(e.target.value); if (v > 0 && v !== cfg.volume_critico_ml) mudar({ volume_critico_ml: v }); }} /></Campo>
           <Campo label="Alerta de perfume aberto há (dias)"><input type="number" onWheel={blurWheel} className="input-premium" defaultValue={cfg.dias_aberto_alerta}
             onBlur={(e) => { const v = parseInt(e.target.value); if (v > 0 && v !== cfg.dias_aberto_alerta) mudar({ dias_aberto_alerta: v }); }} /></Campo>
           <Campo label="Margem mínima dos decants (%)"><input type="number" onWheel={blurWheel} className="input-premium" defaultValue={cfg.margem_minima ?? 30}

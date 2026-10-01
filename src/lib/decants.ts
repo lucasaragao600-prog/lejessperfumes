@@ -177,3 +177,13 @@ export const RELATORIOS = [
   { value: "rent_perfume", label: "Rentabilidade por perfume" }, { value: "rent_tamanho", label: "Rentabilidade por tamanho" },
   { value: "desempenho_filial", label: "Desempenho por filial" },
 ] as const;
+
+/** Fase 5: sugestão de reposição. Só sugere quando atual ≤ mínimo; nunca propõe mais que o ml disponível permite produzir. */
+export function sugestaoReposicao(p: { minimo: number; ideal: number; atual: number; emProducao?: number; volumeMl: number; disponivelMl: number }) {
+  const alvo = Math.max(p.ideal, p.minimo);
+  const sugerido = p.atual <= p.minimo ? Math.max(alvo - p.atual - (p.emProducao ?? 0), 0) : 0;
+  const necessario = Math.round(sugerido * p.volumeMl * 1000) / 1000;
+  const deficit = Math.max(Math.round((necessario - p.disponivelMl) * 1000) / 1000, 0);
+  const produzivel = p.volumeMl > 0 ? Math.min(sugerido, Math.floor(p.disponivelMl / p.volumeMl + 1e-9)) : 0;
+  return { sugerido, necessario, deficit, produzivel };
+}

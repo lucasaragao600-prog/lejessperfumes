@@ -4768,6 +4768,7 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_decant_alertas: { Args: { p_unidade?: string }; Returns: Json }
       fn_decant_conferir: {
         Args: {
           p_acao: string
@@ -4951,6 +4952,7 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_decant_reposicao: { Args: { p_unidade?: string }; Returns: Json }
       fn_decant_reservado_frasco: {
         Args: { p_excluir_lote?: string; p_frasco_id: string }
         Returns: number
