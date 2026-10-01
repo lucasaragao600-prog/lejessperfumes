@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useVendasLista, useVendasResumo, agruparVendas, type FiltrosVendas } from "@/hooks/useVendasLista";
 import {
   ShoppingCart, Plus, Calendar, User, FileText, CreditCard,
   Search, ArrowUpDown, Store, Trash2, X, Package, Minus, Loader2
@@ -274,51 +275,43 @@ export default function Vendas() {
     return grupos;
   }, [vendas]);
 
-  const filtradas = useMemo(() => {
-    let result = vendas.filter((v) => {
-      const matchData = isVendedor ? v.data === hoje : (filtroData ? v.data === filtroData : true);
-      const matchDeposito = userLoja ? v.deposito === userLoja : (filtroDeposito === "Todos" || v.deposito === filtroDeposito);
-      const matchVendedora = filtroVendedora === "Todas" || v.vendedora === filtroVendedora;
-      const matchBusca = busca.trim() === "" || v.perfumeNome.toLowerCase().includes(busca.toLowerCase()) || v.vendedora.toLowerCase().includes(busca.toLowerCase());
-      return matchData && matchDeposito && matchVendedora && matchBusca;
-    });
-    result = [...result].sort((a, b) =>
-      ordenacao === "recente" ? b.data.localeCompare(a.data) : a.data.localeCompare(b.data)
-    );
-    return result;
-  }, [vendas, filtroData, filtroDeposito, filtroVendedora, busca, ordenacao, userLoja]);
+  // Lista paginada no servidor (30 por vez) com busca em debounce de 300 ms
+  const [buscaDeb, setBuscaDeb] = useState("");
+  useEffect(() => { const t = setTimeout(() => setBuscaDeb(busca), 300); return () => clearTimeout(t); }, [busca]);
+  const filtrosLista: FiltrosVendas = {
+    deposito: userLoja || filtroDeposito,
+    vendedora: filtroVendedora,
+    busca: buscaDeb,
+    data_ini: isVendedor ? hoje : filtroData,
+    data_fim: isVendedor ? hoje : filtroData,
+    ordem: ordenacao,
+  };
+  const lista = useVendasLista(filtrosLista);
+  const resumoFiltro = useVendasResumo(filtrosLista);
+  const itensLista = useMemo(() => (lista.data?.pages || []).flatMap((p) => p.itens), [lista.data]);
+  const pagamentosLista = useMemo(() => {
+    const m = new Map<string, VendaPagamento[]>();
+    (lista.data?.pages || []).forEach((p) => p.pagamentos.forEach((pg) => {
+      const arr = m.get(pg.grupoVenda); if (arr) { if (!arr.some((x) => x.id === pg.id)) arr.push(pg); } else m.set(pg.grupoVenda, [pg]);
+    }));
+    return m;
+  }, [lista.data]);
+  const filtradasAgrupadas = useMemo(() => agruparVendas(itensLista), [itensLista]);
+  const fimRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = fimRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver((e) => {
+      if (e[0].isIntersecting && lista.hasNextPage && !lista.isFetchingNextPage) lista.fetchNextPage();
+    }, { rootMargin: "400px" });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [lista.hasNextPage, lista.isFetchingNextPage, lista.fetchNextPage]);
 
-  const filtradasAgrupadas = useMemo(() => {
-    const grupos: Record<string, Venda[]> = {};
-    const ordem: string[] = [];
-    filtradas.forEach((v) => {
-      const key = v.grupoVenda || v.id;
-      if (!grupos[key]) {
-        grupos[key] = [];
-        ordem.push(key);
-      }
-      grupos[key].push(v);
-    });
-    return ordem.map(key => ({ grupoVenda: key, itens: grupos[key] }));
-  }, [filtradas]);
+  const resumoHoje = useVendasResumo({ deposito: userLoja || undefined, data_ini: hoje, data_fim: hoje });
+  const totalHoje = resumoHoje.data || { valor: 0, itens: 0, qtd: 0 };
 
-  const totalHoje = useMemo(() => {
-    const vendasHoje = vendas.filter((v) => {
-      const matchHoje = v.data === hoje;
-      const matchLoja = userLoja ? v.deposito === userLoja : true;
-      return matchHoje && matchLoja;
-    });
-    return {
-      valor: vendasHoje.reduce((a, v) => a + v.total, 0),
-      itens: vendasHoje.reduce((a, v) => a + v.quantidade, 0),
-      qtd: vendasHoje.length,
-    };
-  }, [vendas, userLoja]);
-
-  const totalFiltrado = useMemo(() => ({
-    valor: filtradas.reduce((a, v) => a + v.total, 0),
-    itens: filtradas.reduce((a, v) => a + v.quantidade, 0),
-  }), [filtradas]);
+  const totalFiltrado = { valor: resumoFiltro.data?.valor ?? 0, qtd: resumoFiltro.data?.qtd ?? 0 };
 
   const vendasRelatorio = useMemo(() => {
     const modo = isVendedor ? "dia" : modoRelatorio;
