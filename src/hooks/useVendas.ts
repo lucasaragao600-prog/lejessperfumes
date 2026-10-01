@@ -11,7 +11,7 @@ export interface VendaPagamento {
   valor: number;
 }
 
-function rowToVenda(row: any): Venda {
+export function rowToVenda(row: any): Venda {
   return {
     id: row.id,
     data: typeof row.data === "string" ? row.data.slice(0, 10) : row.data,
@@ -35,7 +35,7 @@ function rowToVenda(row: any): Venda {
   };
 }
 
-function rowToPagamento(row: any): VendaPagamento {
+export function rowToPagamento(row: any): VendaPagamento {
   return {
     id: row.id,
     grupoVenda: row.grupo_venda,
