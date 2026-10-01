@@ -38,6 +38,7 @@ export interface NtDetalhe {
   separado_por_nome: string; emitido_por_nome: string; emitido_em: string;
   recebido_por_nome: string | null; recebido_em: string | null;
   cancelado_por_nome: string | null; cancelado_em: string | null; cancelado_motivo: string | null;
+  transportador: string; observacao: string;
   reimpressoes: number; mostrar_valores: boolean; conferencia_cega: boolean; itens: NtItem[];
 }
 
@@ -82,11 +83,11 @@ export function useNotaDetalhe(id?: string | null) {
 export function useReimprimirNota() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (id: string) => {
-      const { data, error } = await supabase.rpc("fn_nt_reimprimir" as never, { p_id: id } as never);
+    mutationFn: async (p: { id: string; via: string; formato: "a4" | "termica" }) => {
+      const { data, error } = await supabase.rpc("fn_nt_registrar_impressao" as never, { p_id: p.id, p_via: p.via, p_formato: p.formato } as never);
       if (error) throw error;
       return data as unknown as number;
     },
-    onSuccess: (_d, id) => qc.invalidateQueries({ queryKey: ["nota-transferencia", id] }),
+    onSuccess: (_d, p) => qc.invalidateQueries({ queryKey: ["nota-transferencia", p.id] }),
   });
 }

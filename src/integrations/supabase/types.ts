@@ -5395,6 +5395,7 @@ export type Database = {
         Returns: number
       }
       fn_nt_detalhe: { Args: { p_id: string }; Returns: Json }
+      fn_nt_detalhe_por_codigo: { Args: { p_codigo: string }; Returns: Json }
       fn_nt_listar: {
         Args: {
           p_busca?: string
@@ -5404,6 +5405,10 @@ export type Database = {
           p_unidade?: string
         }
         Returns: Json
+      }
+      fn_nt_registrar_impressao: {
+        Args: { p_formato?: string; p_id: string; p_via?: string }
+        Returns: number
       }
       fn_nt_reimprimir: { Args: { p_id: string }; Returns: number }
       fn_nt_scan_publico: { Args: { p_codigo: string }; Returns: Json }

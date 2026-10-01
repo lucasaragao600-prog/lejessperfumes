@@ -12,3 +12,4 @@
 - [ ] Decants Fases seguintes — aguardando aprovação da Fase 4
 - [x] NT Etapa 1 — base (tabelas, numeração NT-AAAA-NNNNNN, imutabilidade, aba Notas, PDF/QR /nt/:codigo) — aguardando aprovação
 - [x] NT Etapa 2 — emissão automática (Transferências, Decants, Reposição atômica, manual 1 por produto + envio direto) — aguardando aprovação
+- [x] NT Etapa 3 — PDF A4 com 3 vias e assinaturas, térmica 72 mm, registro de impressão, QR com detalhes para logado — aguardando aprovação
