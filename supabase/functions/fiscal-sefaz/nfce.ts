@@ -7,6 +7,24 @@ const esc = (s: unknown) =>
 const dig = (s: unknown) => String(s ?? "").replace(/\D/g, "");
 const n2 = (v: number) => v.toFixed(2);
 
+function documentoValido(valor: unknown) {
+  const numero = dig(valor);
+  if (![11, 14].includes(numero.length) || /^(\d)\1+$/.test(numero)) return false;
+  const calcular = (base: string, pesos: number[]) => {
+    const soma = base.split("").reduce((total, digito, indice) => total + Number(digito) * pesos[indice], 0);
+    const resto = soma % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+  if (numero.length === 11) {
+    const primeiro = calcular(numero.slice(0, 9), [10, 9, 8, 7, 6, 5, 4, 3, 2]);
+    const segundo = calcular(numero.slice(0, 10), [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]);
+    return numero.endsWith(`${primeiro}${segundo}`);
+  }
+  const primeiro = calcular(numero.slice(0, 12), [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  const segundo = calcular(numero.slice(0, 13), [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return numero.endsWith(`${primeiro}${segundo}`);
+}
+
 export function carregarPfx(pfxB64: string, senha: string) {
   const der = forge.util.decode64(pfxB64);
   const p12 = forge.pkcs12.pkcs12FromAsn1(forge.asn1.fromDer(der), senha);
@@ -83,7 +101,7 @@ export function montarNfce(em: Emitente, itens: Item[], pagamentos: string | Pag
   if (Math.abs(somaPag - vNF) > 0.001) pags[pags.length - 1].valor = Math.round((pags[pags.length - 1].valor + vNF - somaPag) * 100) / 100;
   const detPags = pags.map((p) => `<detPag><tPag>${p.tPag}</tPag>${p.tPag === "99" ? "<xPag>Outros</xPag>" : ""}<vPag>${n2(p.valor)}</vPag>${p.tPag === "03" || p.tPag === "04" ? "<card><tpIntegra>2</tpIntegra></card>" : ""}</detPag>`).join("");
   const id = `NFe${chave}`;
-  const documentoDest = dig(destinatario?.cpfCnpj);
+  const documentoDest = documentoValido(destinatario?.cpfCnpj) ? dig(destinatario?.cpfCnpj) : "";
   const dest = documentoDest.length === 11
     ? `<dest><CPF>${documentoDest}</CPF>${destinatario?.nome ? `<xNome>${esc(destinatario.nome).slice(0, 60)}</xNome>` : ""}<indIEDest>9</indIEDest></dest>`
     : documentoDest.length === 14

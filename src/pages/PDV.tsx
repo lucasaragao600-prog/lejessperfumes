@@ -60,9 +60,27 @@ const clienteVazio: Omit<Cliente, "id"> = {
   complemento: "", bairro: "", cidade: "", uf: "", observacoes: "",
 };
 
+const documentoValido = (valor: string) => {
+  const numero = valor.replace(/\D/g, "");
+  if (![11, 14].includes(numero.length) || /^(\d)\1+$/.test(numero)) return false;
+  const calcular = (base: string, pesos: number[]) => {
+    const soma = base.split("").reduce((total, digito, indice) => total + Number(digito) * pesos[indice], 0);
+    const resto = soma % 11;
+    return resto < 2 ? 0 : 11 - resto;
+  };
+  if (numero.length === 11) {
+    const primeiro = calcular(numero.slice(0, 9), [10, 9, 8, 7, 6, 5, 4, 3, 2]);
+    const segundo = calcular(numero.slice(0, 10), [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]);
+    return numero.endsWith(`${primeiro}${segundo}`);
+  }
+  const primeiro = calcular(numero.slice(0, 12), [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  const segundo = calcular(numero.slice(0, 13), [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+  return numero.endsWith(`${primeiro}${segundo}`);
+};
+
 const clienteSchema = z.object({
   nome: z.string().trim().max(120), nomeSocial: z.string().trim().max(120),
-  cpfCnpj: z.string().trim().max(18).refine(v => !v || [11, 14].includes(v.replace(/\D/g, "").length), "Informe um CPF ou CNPJ completo"),
+  cpfCnpj: z.string().trim().max(18).refine(v => !v || documentoValido(v), "Informe um CPF ou CNPJ válido"),
   telefone: z.string().trim().max(30), whatsapp: z.string().trim().max(30),
   email: z.string().trim().max(255).refine(v => !v || z.string().email().safeParse(v).success, "E-mail inválido"),
   dataNascimento: z.string().nullable(), genero: z.string().trim().max(40), cep: z.string().trim().max(10),
@@ -781,7 +799,7 @@ ${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-s
                 style={{ background: "hsl(var(--surface-raised))" }} />
               <div>
                 <label className="text-xs text-muted-foreground mb-1 block">Data de nascimento (opcional)</label>
-                <input type="date" value={novoCliente.dataNascimento} onChange={e => setNovoCliente(p => ({ ...p, dataNascimento: e.target.value }))}
+                <input type="date" value={novoCliente.dataNascimento || ""} onChange={e => setNovoCliente(p => ({ ...p, dataNascimento: e.target.value || null }))}
                   className="w-full px-3 py-2.5 rounded-lg text-sm text-foreground outline-none border border-transparent focus:border-gold/30"
                   style={{ background: "hsl(var(--surface-raised))" }} />
               </div>
