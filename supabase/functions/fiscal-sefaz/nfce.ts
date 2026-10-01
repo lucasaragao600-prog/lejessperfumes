@@ -22,6 +22,17 @@ export function carregarPfx(pfxB64: string, senha: string) {
 const sha1b64 = (s: string) => { const md = forge.md.sha1.create(); md.update(s, "utf8"); return forge.util.encode64(md.digest().getBytes()); };
 const sha1hex = (s: string) => { const md = forge.md.sha1.create(); md.update(s, "utf8"); return md.digest().toHex().toUpperCase(); };
 
+/** Assina um elemento (enveloped, c14n, rsa-sha1). canon = elemento com xmlns explícito; retorna <Signature>. */
+export function assinarXml(canon: string, id: string, key: any, certB64: string) {
+  const digest = sha1b64(canon);
+  const body = `<CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></CanonicalizationMethod><SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></SignatureMethod><Reference URI="#${id}"><Transforms><Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"></Transform><Transform Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></Transform></Transforms><DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></DigestMethod><DigestValue>${digest}</DigestValue></Reference>`;
+  const md = forge.md.sha1.create(); md.update(`<SignedInfo xmlns="http://www.w3.org/2000/09/xmldsig#">${body}</SignedInfo>`, "utf8");
+  const sig = forge.util.encode64(key.sign(md));
+  return `<Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo>${body}</SignedInfo><SignatureValue>${sig}</SignatureValue><KeyInfo><X509Data><X509Certificate>${certB64}</X509Certificate></X509Data></KeyInfo></Signature>`;
+}
+
+export function agora() { return agoraManaus(); }
+
 function dvChave(c: string) {
   let soma = 0, peso = 2;
   for (let i = c.length - 1; i >= 0; i--) { soma += Number(c[i]) * peso; peso = peso === 9 ? 2 : peso + 1; }

@@ -26,6 +26,15 @@ export async function emitirNfce(grupoVenda: string): Promise<ResultadoNfce> {
   return data as ResultadoNfce;
 }
 
+/** Cancela a NFC-e autorizada (até 30 minutos após a emissão). */
+export async function cancelarNfce(grupoVenda: string, justificativa: string): Promise<{ ok: boolean; motivo?: string; protocolo?: string }> {
+  const { data, error } = await supabase.functions.invoke("fiscal-sefaz", {
+    body: { action: "cancelar", grupo_venda: grupoVenda, justificativa },
+  });
+  if (error) return { ok: false, motivo: "Não foi possível falar com o servidor fiscal" };
+  return data;
+}
+
 const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const esc = (s: unknown) => String(s ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]!));
 
