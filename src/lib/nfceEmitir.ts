@@ -35,6 +35,32 @@ export async function cancelarNfce(grupoVenda: string, justificativa: string): P
   return data;
 }
 
+const EXPLICACOES: Record<string, string> = {
+  "539": "Este número de nota já foi usado antes para o mesmo CNPJ e série. A SEFAZ não aceita dois documentos com o mesmo número. Ao reenviar, o sistema usa o próximo número livre.",
+  "204": "Esta nota já tinha sido enviada e registrada na SEFAZ. Ao reenviar, o sistema usa o próximo número livre.",
+  "209": "A Inscrição Estadual da loja está errada ou não pertence a este CNPJ. Confira o cadastro fiscal da loja.",
+  "232": "A Inscrição Estadual da loja não está cadastrada na SEFAZ. Confira com o contador.",
+  "301": "A SEFAZ apontou problema na situação cadastral da empresa (Inscrição Estadual irregular). Fale com o contador.",
+  "778": "O código fiscal (NCM) de algum produto não existe ou está errado. Corrija o NCM no cadastro do produto.",
+  "225": "Algum dado da nota está fora do padrão exigido pela SEFAZ. Avise o suporte com a mensagem técnica.",
+  "297": "A assinatura digital não foi aceita. O certificado pode estar vencido ou ser de outra empresa.",
+  "280": "O certificado digital não foi aceito pela SEFAZ (vencido ou inválido). Providencie a renovação.",
+  "462": "O código de segurança (CSC) não foi aceito. Confira o ID e o CSC cadastrados na loja.",
+  "464": "O código de segurança (CSC) não foi aceito. Confira o ID e o CSC cadastrados na loja.",
+  "999": "A SEFAZ teve um erro interno. Tente reenviar em alguns minutos.",
+  "108": "A SEFAZ está fora do ar no momento. Tente reenviar em alguns minutos.",
+  "109": "A SEFAZ está fora do ar no momento. Tente reenviar em alguns minutos.",
+};
+
+/** Explica a recusa da SEFAZ em linguagem simples. */
+export function explicarRejeicao(motivo?: string | null): string {
+  const m = String(motivo || "");
+  const cod = m.match(/^\s*(\d{3})/)?.[1];
+  if (cod && EXPLICACOES[cod]) return EXPLICACOES[cod];
+  if (/servidor fiscal|SEFAZ/i.test(m) && !cod) return "Não foi possível falar com a SEFAZ. Verifique a internet e tente reenviar.";
+  return "A SEFAZ recusou a nota. Corrija o ponto indicado na mensagem técnica abaixo e reenvie.";
+}
+
 const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const esc = (s: unknown) => String(s ?? "").replace(/[<>&]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[c]!));
 
