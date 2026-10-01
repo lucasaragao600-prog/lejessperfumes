@@ -39,6 +39,7 @@ const EXPLICACOES: Record<string, string> = {
   "539": "Este número de nota já foi usado antes para o mesmo CNPJ e série. A SEFAZ não aceita dois documentos com o mesmo número. Ao reenviar, o sistema usa o próximo número livre.",
   "204": "Esta nota já tinha sido enviada e registrada na SEFAZ. Ao reenviar, o sistema usa o próximo número livre.",
   "209": "A Inscrição Estadual da loja está errada ou não pertence a este CNPJ. Confira o cadastro fiscal da loja.",
+  "231": "A Inscrição Estadual cadastrada na loja não pertence a este CNPJ na SEFAZ. Cada loja tem seu próprio CNPJ (matriz ou filial) e sua Inscrição Estadual: confira os dois no cadastro fiscal da loja.",
   "232": "A Inscrição Estadual da loja não está cadastrada na SEFAZ. Confira com o contador.",
   "301": "A SEFAZ apontou problema na situação cadastral da empresa (Inscrição Estadual irregular). Fale com o contador.",
   "778": "O código fiscal (NCM) de algum produto não existe ou está errado. Corrija o NCM no cadastro do produto.",
