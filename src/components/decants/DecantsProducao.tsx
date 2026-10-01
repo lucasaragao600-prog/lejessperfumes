@@ -1,3 +1,4 @@
+import { BotaoEtiquetasLote } from "@/components/decants/DecantsEtiquetas";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AlertTriangle, Factory, Pencil } from "lucide-react";
@@ -391,6 +392,7 @@ function DialogoLote({ lote, onClose }: { lote: LoteDecant; onClose: () => void 
             </div>
           )}
 
+          <BotaoEtiquetasLote lote={lote} />
           {lote.status === "planejado" && (
             <button className="btn-primary w-full py-2.5" disabled={iniciar.isPending} onClick={() => exec(iniciar.mutateAsync(lote.id), "Produção iniciada.")}>Iniciar produção</button>
           )}

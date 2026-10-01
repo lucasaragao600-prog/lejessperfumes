@@ -1,3 +1,4 @@
+import { ModelosEtiquetaConfig } from "@/components/decants/DecantsEtiquetas";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Droplets, PackageOpen, ClipboardCheck, History, Plus } from "lucide-react";
@@ -70,7 +71,7 @@ export default function Decants() {
       {aba === "movimentacoes" && <AbaMovimentacoesDecant />}
       {aba === "vendas" && <AbaVendasDecant />}
       {aba === "transferencias" && <AbaTransferenciasDecant />}
-      {aba === "configuracoes" && <AbaConfiguracoes />}
+      {aba === "configuracoes" && <div className="space-y-4"><AbaConfiguracoes /><ModelosEtiquetaConfig /></div>}
       {aba === "dashboard" && <div className="space-y-4"><PainelAlertasDecant onIr={setAba} /><AbaDashboardDecants /></div>}
       {aba === "perdas" && <AbaPerdasDecant />}
       {aba === "rentabilidade" && <AbaRentabilidadeDecant />}
