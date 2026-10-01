@@ -4904,6 +4904,10 @@ export type Database = {
         Returns: number
       }
       fn__nt_cfg: { Args: never; Returns: Json }
+      fn__nt_decant_itens: {
+        Args: { p_id: string; p_recebido: boolean }
+        Returns: Json
+      }
       fn__nt_emitir: {
         Args: {
           p_destino_un: string
@@ -4929,6 +4933,10 @@ export type Database = {
       fn__pode: {
         Args: { _perm: string; _unidade_id: string }
         Returns: boolean
+      }
+      fn__reposicao_unidades: {
+        Args: { r: Database["public"]["Tables"]["reposicoes"]["Row"] }
+        Returns: Record<string, unknown>
       }
       fn__vendas_filtradas: {
         Args: { p: Json }
@@ -5400,6 +5408,15 @@ export type Database = {
       fn_nt_reimprimir: { Args: { p_id: string }; Returns: number }
       fn_nt_scan_publico: { Args: { p_codigo: string }; Returns: Json }
       fn_proximo_numero_transferencia: { Args: never; Returns: string }
+      fn_reposicao_cancelar: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: Json
+      }
+      fn_reposicao_enviar: {
+        Args: { p_enviados: Json; p_id: string }
+        Returns: Json
+      }
+      fn_reposicao_finalizar: { Args: { p_id: string }; Returns: Json }
       fn_saida_tester: {
         Args: {
           p_baixar_estoque?: boolean
@@ -5458,6 +5475,16 @@ export type Database = {
       fn_transferencia_iniciar_conferencia: {
         Args: { p_id: string }
         Returns: undefined
+      }
+      fn_transferencia_manual: {
+        Args: {
+          p_destino: string
+          p_idempotency_key?: string
+          p_itens: Json
+          p_observacao?: string
+          p_origem: string
+        }
+        Returns: Json
       }
       fn_transferencia_receber: {
         Args: { p_conferencias: Json; p_id: string }

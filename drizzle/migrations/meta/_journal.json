@@ -218,6 +218,13 @@
       "when": 1790885833251,
       "tag": "0030_nt_etapa1_base",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790886192529,
+      "tag": "0031_nt_etapa2_emissao",
+      "breakpoints": true
     }
   ]
 }

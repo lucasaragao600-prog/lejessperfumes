@@ -136,6 +136,7 @@ export function useReposicao() {
     qc.invalidateQueries({ queryKey: ["perfumes"] });
     qc.invalidateQueries({ queryKey: ["estoque_unidades"] });
     qc.invalidateQueries({ queryKey: ["movimentacoes"] });
+    qc.invalidateQueries({ queryKey: ["notas-transferencia"] });
   };
 
   const { data: reposicoes = [], isLoading } = useQuery({
@@ -253,21 +254,9 @@ export function useReposicao() {
       enviados: Record<string, number>;
       usuario: { id?: string | null; nome: string };
     }) => {
-      for (const [itemId, qtd] of Object.entries(p.enviados)) {
-        const { error } = await supabase.from("reposicao_itens").update({ quantidade_enviada: qtd }).eq("id", itemId);
-        if (error) throw error;
-      }
-      const { error } = await supabase
-        .from("reposicoes")
-        .update({
-          status: "aguardando_conferencia",
-          enviado_por: p.usuario.id ?? null,
-          enviado_por_nome: p.usuario.nome,
-          enviado_em: new Date().toISOString(),
-        })
-        .eq("id", p.reposicao.id);
-      if (error) throw error;
-      await log(p.reposicao.id, p.usuario, "Envio confirmado", `${Object.values(p.enviados).reduce((s, q) => s + q, 0)} unidade(s) enviada(s) para ${p.reposicao.destino}`);
+      // Envio atômico no banco (itens, status, histórico e Nota de Transferência na mesma transação)
+      const { error } = await supabase.rpc("fn_reposicao_enviar" as never, { p_id: p.reposicao.id, p_enviados: p.enviados } as never);
+      if (error) throw new Error(error.message);
     },
     onSuccess: invalidate,
   });
@@ -465,52 +454,9 @@ export function useReposicao() {
       usuario: { id?: string | null; nome: string };
     }) => {
       if (p.reposicao.status === "finalizada") throw new Error("Reposição já finalizada.");
-      const hoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Manaus" }).format(new Date());
-
-      for (const item of p.itensRep) {
-        const qtd = item.quantidade_recebida ?? item.quantidade_enviada ?? item.quantidade_solicitada;
-        if (!qtd || qtd <= 0) continue;
-        // Transferência transacional entre unidades (bloqueio e validação no banco)
-        const { error } = await supabase.rpc("fn_transferir", {
-          p_produto_id: item.produto_id,
-          p_origem: p.reposicao.origem,
-          p_destino: p.reposicao.destino,
-          p_quantidade: qtd,
-        });
-        if (error) throw new Error(error.message);
-
-
-        const { error: movErr } = await supabase.from("movimentacoes").insert({
-          data: hoje,
-          tipo: "Transferência",
-          perfume_id: item.produto_id,
-          perfume_nome: item.produto_nome,
-          deposito_origem: p.reposicao.origem,
-          deposito_destino: p.reposicao.destino,
-          quantidade: qtd,
-          observacao: `Reposição ${p.reposicao.codigo}`,
-          registrado_por: p.usuario.nome,
-        });
-        if (movErr) throw movErr;
-      }
-
-      await supabase
-        .from("reposicao_itens")
-        .update({ status: "recebido" })
-        .eq("reposicao_id", p.reposicao.id);
-
-      const { error } = await supabase
-
-        .from("reposicoes")
-        .update({
-          status: "finalizada",
-          finalizado_por: p.usuario.id ?? null,
-          finalizado_por_nome: p.usuario.nome,
-          finalizado_em: new Date().toISOString(),
-        })
-        .eq("id", p.reposicao.id);
-      if (error) throw error;
-      await log(p.reposicao.id, p.usuario, "Movimentação de estoque realizada", `Reposição ${p.reposicao.codigo} finalizada`);
+      // Finalização atômica: estoque, movimentações, histórico e NT numa única transação
+      const { error } = await supabase.rpc("fn_reposicao_finalizar" as never, { p_id: p.reposicao.id } as never);
+      if (error) throw new Error(error.message);
     },
     onSuccess: invalidate,
   });
@@ -518,12 +464,8 @@ export function useReposicao() {
   const cancelar = useMutation({
     mutationFn: async (p: { reposicao: Reposicao; motivo: string; usuario: { id?: string | null; nome: string } }) => {
       if (p.reposicao.status === "finalizada") throw new Error("Reposição finalizada não pode ser cancelada.");
-      const { error } = await supabase
-        .from("reposicoes")
-        .update({ status: "cancelada", cancelado_motivo: p.motivo })
-        .eq("id", p.reposicao.id);
-      if (error) throw error;
-      await log(p.reposicao.id, p.usuario, "Reposição cancelada", p.motivo);
+      const { error } = await supabase.rpc("fn_reposicao_cancelar" as never, { p_id: p.reposicao.id, p_motivo: p.motivo } as never);
+      if (error) throw new Error(error.message);
     },
     onSuccess: invalidate,
   });

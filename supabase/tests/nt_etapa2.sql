@@ -1,0 +1,4 @@
+-- Teste das Notas de Transferência (Etapa 2). Rode como usuário privilegiado; termina com RAISE, então nada é gravado.
+-- Esperado: off:0; manual1:RECEBIDA; lote repetido=true nts_manual=2 itens_ult=2; trf envio:EMITIDA; trf receb:RECEBIDA_COM_DIVERGENCIA;
+-- trf resolv:1/normal/RECEBIDA_COM_DIVERGENCIA,2/retificadora/RECEBIDA; trf cancel:CANCELADA; rep envio:EMITIDA repetido=true; rep final:RECEBIDA estoque+2 nts_extra=2
+-- (corpo idêntico ao bloco DO executado na entrega da Etapa 2; usa unidades Casa/Sumaúma e o usuário Master)
