@@ -283,7 +283,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   const handleSalvarCliente = async () => {
     try {
       const validado = clienteSchema.parse(novoCliente);
-      const created = await adicionarCliente({ ...validado, nome: validado.nome || validado.nomeSocial || "Cliente não identificado" });
+      const created = await adicionarCliente({ ...novoCliente, ...validado, nome: validado.nome || validado.nomeSocial || "Cliente não identificado" });
       setClienteId(created.id);
       setShowNovoCliente(false);
       setShowClienteModal(false);
