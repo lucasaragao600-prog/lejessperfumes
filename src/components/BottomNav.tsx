@@ -1,4 +1,4 @@
-import { Building2, Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon, Monitor, DollarSign, ClipboardList, LineChart, Sparkles, Truck } from "lucide-react";
+import { Building2, Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon, Monitor, DollarSign, ClipboardList, LineChart, Sparkles, Truck, Droplets } from "lucide-react";
 import { useTheme } from "@/context/ThemeContext";
 
 interface BottomNavProps {
@@ -17,6 +17,7 @@ const allTabs = [
   { id: "reposicao", label: "Reposição", icon: Truck, masterOnly: false },
   
   { id: "testers", label: "Testers", icon: FlaskConical, masterOnly: false },
+  { id: "decants", label: "Decants", icon: Droplets, masterOnly: true },
   { id: "caixa", label: "Caixa", icon: DollarSign, masterOnly: false },
   { id: "notas", label: "Notas", icon: FileText, masterOnly: true },
   { id: "dashboards", label: "Dashboard", icon: BarChart3, masterOnly: true },

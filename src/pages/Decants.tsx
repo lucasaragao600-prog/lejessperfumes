@@ -12,7 +12,7 @@ import {
   useSaidaMl, useConferir, useDecidirConferencia, type FrascoAberto, type DecantTamanho, type DecantConfig,
 } from "@/hooks/useDecants";
 import { custoPorMl, fmtBRL, fmtMl, ROTULO_MOV_ML, TIPOS_SAIDA_ML } from "@/lib/decants";
-import { hojeManaus } from "@/lib/dateUtils";
+import { getHojeManaus as hojeManaus } from "@/lib/dateUtils";
 
 const ABAS = [
   { id: "dashboard", label: "Dashboard" }, { id: "perfumes", label: "Perfumes" },
