@@ -22,6 +22,8 @@ import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
 import { emitirNfce, imprimirDanfe, explicarRejeicao, type ResultadoNfce } from "@/lib/nfceEmitir";
 import { useCaixa } from "@/hooks/useCaixa";
 import { useUnidades } from "@/hooks/useUnidades";
+import { DecantVendaPdv } from "@/components/decants/DecantVendaPdv";
+import { useDecantConfig } from "@/hooks/useDecants";
 import { z } from "zod";
 
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada", "Crédito Loja"];
@@ -103,6 +105,9 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   const { clientes, adicionarCliente } = useClientes();
   const { configFiscal, criarEmissao, gerarXmlNfce } = useNfce();
   const { sessaoAberta } = useCaixa();
+  const { data: decantCfg } = useDecantConfig();
+  const [vendaDecant, setVendaDecant] = useState(false);
+  const mostrarDecants = isMaster || !!decantCfg?.ativo;
 
   // Search
   const [busca, setBusca] = useState("");
@@ -951,6 +956,12 @@ ${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-s
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Search bar */}
           <div className="px-4 md:px-6 py-4">
+            {mostrarDecants && (
+              <div className="flex justify-end mb-2">
+                <button onClick={() => setVendaDecant(true)} className="btn-secondary px-4 py-2 text-sm">Decants</button>
+              </div>
+            )}
+            {vendaDecant && <DecantVendaPdv open onClose={() => { setVendaDecant(false); searchRef.current?.focus(); }} vendedoras={vendedorasCtx} />}
             <div className="relative">
               <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
               <input

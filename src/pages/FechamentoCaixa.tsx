@@ -46,6 +46,9 @@ export default function FechamentoCaixa() {
 
   const totalSangrias = movsSessao.filter(m => m.tipo === "sangria").reduce((s, m) => s + m.valor, 0);
   const totalSuprimentos = movsSessao.filter(m => m.tipo === "suprimento").reduce((s, m) => s + m.valor, 0);
+  // Decants vendidos em dinheiro (e estornos) entram no caixa físico.
+  const totalDecantDinheiro = movsSessao.filter(m => m.tipo === "venda_decant").reduce((s, m) => s + m.valor, 0)
+    - movsSessao.filter(m => m.tipo === "estorno_decant").reduce((s, m) => s + m.valor, 0);
 
   // Calculate expected value from sales in this session period
   const vendasSessao = useMemo(() => {
@@ -72,8 +75,8 @@ export default function FechamentoCaixa() {
 
   const valorEsperado = useMemo(() => {
     if (!sessaoAberta) return 0;
-    return sessaoAberta.valorAbertura + totalVendasSessao + totalSuprimentos - totalSangrias;
-  }, [sessaoAberta, totalVendasSessao, totalSangrias, totalSuprimentos]);
+    return sessaoAberta.valorAbertura + totalVendasSessao + totalSuprimentos - totalSangrias + totalDecantDinheiro;
+  }, [sessaoAberta, totalVendasSessao, totalSangrias, totalSuprimentos, totalDecantDinheiro]);
 
   // Totals by payment type
   const totaisPorPagamento = useMemo(() => {
