@@ -109,7 +109,7 @@ ${nt.transportador ? `<div>Transportador: ${esc(nt.transportador)}</div>` : ""}
 <div>Itens: ${tot.itens}${tot.unidades != null ? ` · Unidades: ${tot.unidades}` : ""}${tot.ml ? ` · ml: ${tot.ml}` : ""}</div>
 ${nt.cnpjs_diferentes ? `<div>CNPJs diferentes: verificar necessidade de NF-e de transferência com o contador.</div>` : ""}
 <div class="c" style="margin-top:4px"><img src="${qrDataUrl}" style="width:26mm;height:26mm"></div>
-<div class="c">Documento de controle interno, sem valor fiscal.</div>
+<div class="c">Documento de controle interno, sem valor fiscal.</div>${nt.rodape ? `<div class="c">${String(nt.rodape).replace(/[<>&]/g, "")}</div>` : ""}
 <div class="sig">Enviado por</div>
 <div class="sig">Recebido por / data</div>
 <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),300)}</script>

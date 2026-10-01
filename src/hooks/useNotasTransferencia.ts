@@ -39,7 +39,7 @@ export interface NtDetalhe {
   recebido_por_nome: string | null; recebido_em: string | null;
   cancelado_por_nome: string | null; cancelado_em: string | null; cancelado_motivo: string | null;
   transportador: string; observacao: string;
-  reimpressoes: number; mostrar_valores: boolean; conferencia_cega: boolean; itens: NtItem[];
+  reimpressoes: number; rodape?: string; mostrar_valores: boolean; conferencia_cega: boolean; itens: NtItem[];
 }
 
 export function useNtAtiva() {
@@ -89,5 +89,76 @@ export function useReimprimirNota() {
       return data as unknown as number;
     },
     onSuccess: (_d, p) => qc.invalidateQueries({ queryKey: ["nota-transferencia", p.id] }),
+  });
+}
+
+export interface NtFiltros { origem: string; destino: string; de: string; ate: string; status: string; tipo_origem: string; busca: string }
+export interface NtLinha extends NtResumo {
+  recebido_em: string | null; recebido_por_nome: string | null;
+  qtd_enviada: number; qtd_recebida: number | null; valor_total: number | null;
+}
+
+export async function filtrarNotas(f: NtFiltros, limite: number, offset: number) {
+  const { data, error } = await supabase.rpc("fn_nt_filtrar" as never, { p_filtros: f, p_limite: limite, p_offset: offset } as never);
+  if (error) throw error;
+  return data as unknown as { total: number; itens: NtLinha[] };
+}
+
+export function useNotasFiltradas(f: NtFiltros, pagina: number) {
+  return useQuery({ queryKey: ["notas-transferencia", "filtro", f, pagina], queryFn: () => filtrarNotas(f, 30, pagina * 30) });
+}
+
+export interface NtDaOrigem { id: string; numero: string; revisao: number; tipo_nota: string; status: NtStatus; emitido_em: string; reimpressoes: number }
+export function useNotasDaOrigem(tipo: string, origemId?: string | null, enabled = true) {
+  return useQuery({
+    queryKey: ["notas-origem", tipo, origemId],
+    enabled: !!origemId && enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("fn_nt_por_origem" as never, { p_tipo_origem: tipo, p_origem_id: origemId } as never);
+      if (error) throw error;
+      return data as unknown as NtDaOrigem[];
+    },
+  });
+}
+
+export interface NtConfig {
+  ativo: boolean; mostrar_valores: boolean; nt_mesma_unidade: boolean;
+  via_padrao: "todas" | "origem" | "destino" | "transporte"; formato_padrao: "a4" | "termica";
+  rodape: string; dias_alerta_recebimento: number;
+}
+export function useNtConfig() {
+  return useQuery({
+    queryKey: ["nt-config-completa"],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("fn__nt_cfg" as never);
+      if (error) throw error;
+      const c = (data || {}) as Partial<NtConfig>;
+      return {
+        ativo: !!c.ativo, mostrar_valores: !!c.mostrar_valores, nt_mesma_unidade: !!c.nt_mesma_unidade,
+        via_padrao: c.via_padrao || "todas", formato_padrao: c.formato_padrao || "a4",
+        rodape: c.rodape || "", dias_alerta_recebimento: Number(c.dias_alerta_recebimento) || 3,
+      } as NtConfig;
+    },
+  });
+}
+export function useSalvarNtConfig() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (cfg: NtConfig) => {
+      const { error } = await supabase.rpc("fn_nt_config_salvar" as never, { p_cfg: cfg } as never);
+      if (error) throw error;
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["nt-config"] }); qc.invalidateQueries({ queryKey: ["nt-config-completa"] }); qc.invalidateQueries({ queryKey: ["nt-alertas"] }); },
+  });
+}
+
+export function useNtAlertas(enabled = true) {
+  return useQuery({
+    queryKey: ["nt-alertas"], enabled, refetchInterval: 120_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("fn_nt_alertas" as never);
+      if (error) throw error;
+      return data as unknown as { dias: number; itens: { id: string; numero: string; origem_nome: string; destino_nome: string; emitido_em: string; dias: number }[] };
+    },
   });
 }

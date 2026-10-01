@@ -1,4 +1,5 @@
 import { useState } from "react";
+import CartaoNotaTransferencia from "@/components/transferencias/CartaoNotaTransferencia";
 import { toast } from "sonner";
 import { AlertTriangle, Download, Truck } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -381,6 +382,7 @@ function DialogoTransf({ t, onClose }: { t: any; onClose: () => void }) {
         <DialogHeader><DialogTitle className="font-mono">{t.codigo} · {STATUS_TR[t.status]}</DialogTitle></DialogHeader>
         <div className="space-y-3 text-sm">
           <p>{t.origem_nome} → {t.destino_nome}{t.transportador && ` · ${t.transportador}`}</p>
+          <CartaoNotaTransferencia tipo="decant" origemId={t.id} />
           {t.itens.map((i: any) => (
             <div key={i.id} className="flex items-center gap-2">
               <span className="flex-1">{i.quantidade}× {i.descricao}{i.qtd_recebida != null && ` · recebido ${i.qtd_recebida}`}{i.diferenca < 0 && <span className="text-destructive"> ({i.diferenca})</span>}</span>

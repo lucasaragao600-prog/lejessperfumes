@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import NtConfiguracao from "@/components/transferencias/NtConfiguracao";
 import { Settings, Plus, Trash2, RotateCcw, Loader2, Upload, X, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { TipoPerfume, Concentracao } from "@/data/mockData";
@@ -270,6 +271,7 @@ export default function Configuracoes() {
 
       <div className="px-4 space-y-5">
         {isMasterIA && <PerfilOlfativoLote />}
+        {isMasterIA && <NtConfiguracao />}
         {/* Dados da Empresa */}
         <section className="card-premium p-5 space-y-4">
           <div>

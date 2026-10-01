@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { ArrowLeftRight, Plus, ListOrdered, AlertTriangle, FileText } from "lucide-react";
-import { useNtAtiva } from "@/hooks/useNotasTransferencia";
+import { useNtAtiva, useNtAlertas } from "@/hooks/useNotasTransferencia";
 import NotasTransferencia from "@/components/transferencias/NotasTransferencia";
 import { useUnidades } from "@/hooks/useUnidades";
 import { TRF_STATUS_META, useTransferencias, type Transferencia } from "@/hooks/useTransferencias";
@@ -18,6 +18,8 @@ export default function Transferencias() {
   const [filtroUnidade, setFiltroUnidade] = useState("");
   const [busca, setBusca] = useState("");
   const { data: ntAtiva } = useNtAtiva();
+  const { data: alertasNt } = useNtAlertas(!!ntAtiva);
+  const ntAlertas = alertasNt?.itens.length ?? 0;
 
   const aberta = transferencias.find((t) => t.id === abertaId) || null;
   const nomeUnidade = (id: string) => todas.find((u) => u.id === id)?.nomeExibicao || "—";
@@ -54,7 +56,7 @@ export default function Transferencias() {
           { id: "lista", label: "Todas", icon: ListOrdered },
           { id: "nova", label: "Nova", icon: Plus },
           { id: "divergencias", label: `Divergências${divergentes.length ? ` (${divergentes.length})` : ""}`, icon: AlertTriangle },
-          ...(ntAtiva ? [{ id: "notas", label: "Notas", icon: FileText }] : []),
+          ...(ntAtiva ? [{ id: "notas", label: `Notas${ntAlertas ? ` (${ntAlertas} atrasada${ntAlertas > 1 ? "s" : ""})` : ""}`, icon: FileText }] : []),
         ] as const).map(({ id, label, icon: Icon }) => (
           <button
             key={id}

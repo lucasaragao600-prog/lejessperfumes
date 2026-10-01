@@ -136,6 +136,10 @@ export async function montarPdfNota(nt: NtDetalhe, vias: NtVia[], impressao: num
       doc.setFontSize(7.5); doc.setTextColor(...MUTED); doc.text(l, x, y + 4);
       doc.setTextColor(...DARK); doc.text(doc.splitTextToSize(nome, larg).slice(0, 2), x, y + 8);
     });
+    if (nt.rodape) {
+      doc.setFontSize(7); doc.setTextColor(...MUTED);
+      doc.text(doc.splitTextToSize(nt.rodape, W - 28).slice(0, 2), W / 2, 288, { align: "center" });
+    }
   });
   return doc;
 }

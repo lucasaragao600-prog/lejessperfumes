@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import CartaoNotaTransferencia from "@/components/transferencias/CartaoNotaTransferencia";
 import { ArrowLeft, Camera, CheckCircle2, Loader2, Send, ShieldAlert, Truck, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/context/AppContext";
@@ -103,6 +104,8 @@ export default function TransferenciaDetalhe({ transferencia: t, onVoltar }: Pro
         </div>
         <span className={`ml-auto text-[11px] px-2.5 py-1 rounded-full border ${meta.className}`}>{meta.label}</span>
       </div>
+
+      <CartaoNotaTransferencia tipo="transferencia" origemId={t.id} />
 
       {/* Leitura por código (leitor USB/Bluetooth sempre focado, ou câmera) */}
       {(emSeparacao || emConferencia) && (
