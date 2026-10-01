@@ -51,8 +51,9 @@ export interface Emitente {
 }
 export interface Item { codigo: string; gtin: string; descricao: string; ncm: string; cfop: string; csosn: string; un: string; qtd: number; valor: number; desconto?: number }
 export interface Pag { tPag: string; valor: number }
+export interface Destinatario { nome?: string; cpfCnpj: string }
 
-export function montarNfce(em: Emitente, itens: Item[], pagamentos: string | Pag[], key: any, certB64: string) {
+export function montarNfce(em: Emitente, itens: Item[], pagamentos: string | Pag[], key: any, certB64: string, destinatario?: Destinatario) {
   const dh = agoraManaus();
   const aamm = dh.slice(2, 4) + dh.slice(5, 7);
   const cnpj = dig(em.cnpj);
@@ -82,8 +83,15 @@ export function montarNfce(em: Emitente, itens: Item[], pagamentos: string | Pag
   if (Math.abs(somaPag - vNF) > 0.001) pags[pags.length - 1].valor = Math.round((pags[pags.length - 1].valor + vNF - somaPag) * 100) / 100;
   const detPags = pags.map((p) => `<detPag><tPag>${p.tPag}</tPag>${p.tPag === "99" ? "<xPag>Outros</xPag>" : ""}<vPag>${n2(p.valor)}</vPag>${p.tPag === "03" || p.tPag === "04" ? "<card><tpIntegra>2</tpIntegra></card>" : ""}</detPag>`).join("");
   const id = `NFe${chave}`;
+  const documentoDest = dig(destinatario?.cpfCnpj);
+  const dest = documentoDest.length === 11
+    ? `<dest><CPF>${documentoDest}</CPF>${destinatario?.nome ? `<xNome>${esc(destinatario.nome).slice(0, 60)}</xNome>` : ""}<indIEDest>9</indIEDest></dest>`
+    : documentoDest.length === 14
+      ? `<dest><CNPJ>${documentoDest}</CNPJ>${destinatario?.nome ? `<xNome>${esc(destinatario.nome).slice(0, 60)}</xNome>` : ""}<indIEDest>9</indIEDest></dest>`
+      : "";
   const inner = `<ide><cUF>13</cUF><cNF>${cNF}</cNF><natOp>VENDA</natOp><mod>65</mod><serie>${em.serie}</serie><nNF>${em.numeroNota}</nNF><dhEmi>${dh}</dhEmi><tpNF>1</tpNF><idDest>1</idDest><cMunFG>1302603</cMunFG><tpImp>4</tpImp><tpEmis>1</tpEmis><cDV>${cDV}</cDV><tpAmb>${em.tpAmb}</tpAmb><finNFe>1</finNFe><indFinal>1</indFinal><indPres>1</indPres><procEmi>0</procEmi><verProc>LeJess1.0</verProc></ide>`
     + `<emit><CNPJ>${cnpj}</CNPJ><xNome>${esc(em.razao)}</xNome><xFant>${esc(em.fantasia)}</xFant><enderEmit><xLgr>${esc(em.endereco)}</xLgr><nro>${esc(em.numero)}</nro><xBairro>${esc(em.bairro)}</xBairro><cMun>1302603</cMun><xMun>MANAUS</xMun><UF>AM</UF><CEP>${dig(em.cep)}</CEP><cPais>1058</cPais><xPais>BRASIL</xPais><fone>${dig(em.fone).slice(0, 14)}</fone></enderEmit><IE>${dig(em.ie)}</IE><CRT>${em.crt}</CRT></emit>`
+    + dest
     + dets
     + `<total><ICMSTot><vBC>0.00</vBC><vICMS>0.00</vICMS><vICMSDeson>0.00</vICMSDeson><vFCP>0.00</vFCP><vBCST>0.00</vBCST><vST>0.00</vST><vFCPST>0.00</vFCPST><vFCPSTRet>0.00</vFCPSTRet><vProd>${n2(total)}</vProd><vFrete>0.00</vFrete><vSeg>0.00</vSeg><vDesc>${n2(tDesc)}</vDesc><vII>0.00</vII><vIPI>0.00</vIPI><vIPIDevol>0.00</vIPIDevol><vPIS>0.00</vPIS><vCOFINS>0.00</vCOFINS><vOutro>0.00</vOutro><vNF>${n2(total - tDesc)}</vNF></ICMSTot><IBSCBSTot><vBCIBSCBS>${n2(total - tDesc)}</vBCIBSCBS><gIBS><gIBSUF><vDif>0.00</vDif><vDevTrib>0.00</vDevTrib><vIBSUF>${n2(tIbs)}</vIBSUF></gIBSUF><gIBSMun><vDif>0.00</vDif><vDevTrib>0.00</vDevTrib><vIBSMun>0.00</vIBSMun></gIBSMun><vIBS>${n2(tIbs)}</vIBS><vCredPres>0.00</vCredPres><vCredPresCondSus>0.00</vCredPresCondSus></gIBS><gCBS><vDif>0.00</vDif><vDevTrib>0.00</vDevTrib><vCBS>${n2(tCbs)}</vCBS><vCredPres>0.00</vCredPres><vCredPresCondSus>0.00</vCredPresCondSus></gCBS></IBSCBSTot></total>`
     + `<transp><modFrete>9</modFrete></transp><pag>${detPags}</pag>`

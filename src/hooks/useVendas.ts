@@ -135,6 +135,7 @@ export function useVendas() {
         data: v.data,
         registrado_por: v.registradoPor || "",
         grupo_venda: grupoVenda,
+        cliente_id: v.clienteId || null,
       }));
 
       const { error: errV } = await supabase.from("vendas").insert(rows);
