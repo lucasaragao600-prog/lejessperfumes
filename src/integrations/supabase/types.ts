@@ -3089,6 +3089,43 @@ export type Database = {
         Args: { _perm: string; _unidade_id: string }
         Returns: boolean
       }
+      fn__vendas_filtradas: {
+        Args: { p: Json }
+        Returns: {
+          bandeira: string
+          cancelada: boolean
+          cancelada_em: string | null
+          cliente_id: string | null
+          created_at: string
+          data: string
+          deposito: string
+          desconto: number
+          grupo_venda: string | null
+          id: string
+          is_teste: boolean
+          nfce_chave: string | null
+          nfce_status: string | null
+          observacao: string
+          perfume_id: string
+          perfume_nome: string
+          preco_unitario: number
+          quantidade: number
+          registrado_por: string
+          sessao_caixa_id: string | null
+          tipo_ajuste: string
+          tipo_documento: string
+          tipo_pagamento: string
+          total: number
+          unidade_id: string | null
+          vendedora: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "vendas"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       fn_ajustar_saldo: {
         Args: {
           p_modo?: string
@@ -3359,6 +3396,52 @@ export type Database = {
       fn_venda_cancelar: {
         Args: { p_grupo_venda: string; p_motivo: string }
         Returns: Json
+      }
+      fn_vendas_listar: {
+        Args: { p: Json; p_limit?: number; p_offset?: number }
+        Returns: {
+          bandeira: string
+          cancelada: boolean
+          cancelada_em: string | null
+          cliente_id: string | null
+          created_at: string
+          data: string
+          deposito: string
+          desconto: number
+          grupo_venda: string | null
+          id: string
+          is_teste: boolean
+          nfce_chave: string | null
+          nfce_status: string | null
+          observacao: string
+          perfume_id: string
+          perfume_nome: string
+          preco_unitario: number
+          quantidade: number
+          registrado_por: string
+          sessao_caixa_id: string | null
+          tipo_ajuste: string
+          tipo_documento: string
+          tipo_pagamento: string
+          total: number
+          unidade_id: string | null
+          vendedora: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "vendas"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      fn_vendas_resumo: {
+        Args: { p: Json }
+        Returns: {
+          grupos: number
+          itens: number
+          qtd: number
+          valor: number
+        }[]
       }
       has_permission: {
         Args: { _permission: string; _user_id: string }
