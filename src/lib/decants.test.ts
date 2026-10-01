@@ -48,3 +48,11 @@ describe("decants fase 2", () => {
     expect(r.falta).toBe(0);
   });
 });
+
+import { estoquePotencial } from "./decants";
+describe("decants fase 3", () => {
+  it("60 ml → 30×2 ou 12×5 ou 6×10 (simulação, não soma)", () => {
+    expect(estoquePotencial(60, [2, 5, 10])).toEqual([
+      { volumeMl: 2, quantidade: 30 }, { volumeMl: 5, quantidade: 12 }, { volumeMl: 10, quantidade: 6 }]);
+  });
+});

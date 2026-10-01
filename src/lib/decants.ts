@@ -100,3 +100,23 @@ export const STATUS_LOTE: Record<string, string> = {
   planejado: "Planejado", em_producao: "Em produção", aguardando_conferencia: "Aguardando conferência",
   concluido: "Concluído", cancelado: "Cancelado",
 };
+
+/* ---------- Fase 3 ---------- */
+/** Estoque potencial: cada tamanho isolado (é "ou", nunca soma). */
+export function estoquePotencial(disponivelMl: number, tamanhos: number[]) {
+  const disp = Math.round(Math.max(0, disponivelMl) * 1000);
+  return tamanhos.map((v) => ({ volumeMl: v, quantidade: Math.floor(disp / Math.round(v * 1000)) }));
+}
+
+export const CANAIS = [
+  { value: "loja_fisica", label: "Loja física" }, { value: "site", label: "Site" }, { value: "whatsapp", label: "WhatsApp" },
+  { value: "instagram", label: "Instagram" }, { value: "marketplace", label: "Marketplace" }, { value: "outro", label: "Outro" },
+] as const;
+
+export const ROTULO_MOV: Record<string, string> = {
+  entrada: "Entrada", abertura: "Abertura", producao: "Produção", venda: "Venda", perda: "Perda", tester: "Tester",
+  ajuste: "Ajuste", inventario: "Inventário", cancelamento: "Cancelamento", devolucao: "Devolução",
+  devolucao_quarentena: "Devolução (quarentena)", entrada_producao: "Entrada de produção",
+  transferencia_saida: "Transferência (saída)", transferencia_entrada: "Transferência (entrada)",
+  uso_interno: "Uso interno", vazamento: "Vazamento", amostra: "Amostra", descarte: "Descarte",
+};
