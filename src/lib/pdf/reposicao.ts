@@ -3,7 +3,7 @@ import autoTable from "jspdf-autotable";
 import type { Reposicao, ReposicaoItem } from "@/hooks/useReposicao";
 import { STATUS_META } from "@/hooks/useReposicao";
 import { agruparPorCategoria, formatarDataHora } from "@/lib/reposicaoUtils";
-import logoLeJess from "@/assets/logo-le-jess.png";
+import { buscarLogoEmpresa, logoPadrao } from "@/hooks/useLogoEmpresa";
 
 const GOLD: [number, number, number] = [201, 162, 74];
 const DARK: [number, number, number] = [25, 25, 28];
@@ -11,7 +11,7 @@ const MUTED: [number, number, number] = [120, 120, 125];
 
 async function loadLogo(): Promise<string | null> {
   try {
-    const res = await fetch(logoLeJess);
+    const res = await fetch((await buscarLogoEmpresa().catch(() => "")) || logoPadrao);
     const blob = await res.blob();
     return await new Promise((resolve) => {
       const reader = new FileReader();
