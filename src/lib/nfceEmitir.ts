@@ -1,6 +1,6 @@
 import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
-import logoLeJess from "@/assets/logo-le-jess.png";
+import { logoEmCache, logoPadrao } from "@/hooks/useLogoEmpresa";
 
 export interface ResultadoNfce {
   ok: boolean;
@@ -85,7 +85,7 @@ export async function imprimirDanfe(nf: ResultadoNfce, itens: ItemDanfe[], pagam
   pw.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>DANFE NFC-e ${nf.numero}</title>
 <style>@page{size:80mm auto;margin:3mm}body{font-family:Arial,sans-serif;font-weight:900;font-size:11px;width:74mm;margin:0;color:#000}
 .c{text-align:center}.logo{display:block;width:42mm;max-height:17mm;object-fit:contain;margin:0 auto 3mm;filter:grayscale(1)}.hr{border-top:1px dashed #000;margin:4px 0}table{width:100%;border-collapse:collapse}td{vertical-align:top;padding:1px 0}.r{text-align:right}</style></head><body>
-<div class="c"><img class="logo" src="${logoLeJess}" alt="Le Jess Perfumes">${esc(e?.razao)}<br>CNPJ ${esc(e?.cnpj)} IE ${esc(e?.ie)}<br>${esc(e?.endereco)}</div>
+<div class="c"><img class="logo" src="${logoEmCache() || new URL(logoPadrao, location.href).href}" alt="Le Jess Perfumes">${esc(e?.razao)}<br>CNPJ ${esc(e?.cnpj)} IE ${esc(e?.ie)}<br>${esc(e?.endereco)}</div>
 <div class="hr"></div><div class="c">DANFE NFC-e - Documento Auxiliar da Nota Fiscal de Consumidor Eletrônica</div>
 ${homolog ? '<div class="c" style="margin-top:3px">EMITIDA EM AMBIENTE DE HOMOLOGAÇÃO - SEM VALOR FISCAL</div>' : ""}
 <div class="hr"></div><table>${itens.map((i) => `<tr><td colspan="2">${esc(i.nome)}</td></tr><tr><td>${i.quantidade} x ${brl(i.precoUnitario)}</td><td class="r">${brl(i.precoUnitario * i.quantidade)}</td></tr>`).join("")}</table>

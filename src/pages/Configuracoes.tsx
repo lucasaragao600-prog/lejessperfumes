@@ -5,6 +5,7 @@ import type { TipoPerfume, Concentracao } from "@/data/mockData";
 import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
 import { toast } from "sonner";
 import PerfilOlfativoLote from "@/components/PerfilOlfativoLote";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
 
 const UFS_LIST = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
@@ -20,6 +21,7 @@ export default function Configuracoes() {
 
   const { configFiscal, salvarConfigFiscal } = useConfiguracoesFiscais();
   const [isSaving, setIsSaving] = useState(false);
+  const queryClientLogo = useQueryClient();
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -129,7 +131,7 @@ export default function Configuracoes() {
         const { data: urlData } = supabase.storage
           .from("product-photos")
           .getPublicUrl(filePath);
-        logoUrl = urlData.publicUrl;
+        logoUrl = `${urlData.publicUrl}?v=${Date.now()}`;
       }
 
       let certificadoDigitalUrl = empresa.certificadoDigitalUrl;
@@ -145,6 +147,9 @@ export default function Configuracoes() {
       }
 
       await salvarConfigFiscal({ ...empresa, logoUrl, certificadoDigitalUrl });
+      try { logoUrl ? localStorage.setItem("lejess_logo_url", logoUrl) : localStorage.removeItem("lejess_logo_url"); } catch { /* ignora */ }
+      queryClientLogo.setQueryData(["logo_empresa"], logoUrl);
+      queryClientLogo.invalidateQueries({ queryKey: ["configuracoes_fiscais"] });
       toast.success("Dados da empresa salvos com sucesso!");
     } catch {
       toast.error("Erro ao salvar dados da empresa");
