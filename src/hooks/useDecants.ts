@@ -11,6 +11,8 @@ export interface DecantConfig {
   dias_aberto_alerta: number;
   conferencia_obrigatoria: boolean;
   margem_minima?: number;
+  venda_sob_demanda?: boolean;
+  transferir_frasco_aberto?: boolean;
 }
 
 export interface FrascoAberto {
@@ -246,3 +248,104 @@ export const useCancelarLote = () => useOpLote((p: { id: string; motivo: string 
   rpc("fn_decant_lote_cancelar", { p_lote_id: p.id, p_motivo: p.motivo }));
 export const useEditarLote = () => useOpLote((p: { id: string; observacao: string; responsavel: string; motivo: string }) =>
   rpc("fn_decant_lote_editar", { p_lote_id: p.id, p_observacao: p.observacao, p_responsavel_producao: p.responsavel, p_motivo: p.motivo }));
+
+/* ---------- Fase 3: estoque, vendas, movimentações, transferências ---------- */
+export interface EstoqueSku {
+  sku_id: string; sku: string; preco_venda: number; ativo: boolean; produto_id: string; marca: string; nome: string;
+  concentracao: string; volume_ml: number; unidade_id: string; unidade_nome: string; quantidade: number;
+  custo_medio: number | null; estoque_minimo: number; estoque_ideal: number; lotes: { lote: string | null; quantidade: number }[];
+  quarentena: number; sob_demanda_pendente: number;
+}
+export interface Potencial { produto_id: string; marca: string; nome: string; concentracao: string; unidade_id: string; unidade_nome: string; disponivel_ml: number }
+
+const INV3 = ["decant-estoque", "decant-movs", "decant-vendas", "decant-transf", "decant-quarentena", "decant-inventarios",
+  "decant-pdv", "decant-lotes", "decant-frascos", "decant-fechados", "caixa_movimentacoes"];
+function useOp3<T>(fn: (p: T) => Promise<any>) {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: fn, onSuccess: () => INV3.forEach((k) => qc.invalidateQueries({ queryKey: [k] })) });
+}
+
+export function useEstoqueDecants(unidadeId: string | null) {
+  return useQuery({
+    queryKey: ["decant-estoque", unidadeId],
+    queryFn: async (): Promise<{ skus: EstoqueSku[]; potencial: Potencial[]; tamanhos: number[] }> => {
+      const r = await rpc("fn_decant_estoque_listar", { p_unidade_id: unidadeId });
+      return { skus: r?.skus || [], potencial: (r?.potencial || []).map((p: any) => ({ ...p, disponivel_ml: Number(p.disponivel_ml) })), tamanhos: (r?.tamanhos || []).map(Number) };
+    },
+  });
+}
+
+export function useMovimentacoesDecant(filtros: Record<string, string>, limite = 30) {
+  return useQuery({
+    queryKey: ["decant-movs", filtros, limite],
+    queryFn: async (): Promise<any[]> => (await rpc("fn_decant_movimentacoes_listar", { p: filtros, p_limite: limite, p_offset: 0 })) || [],
+  });
+}
+export const exportarMovimentacoes = async (filtros: Record<string, string>) =>
+  ((await rpc("fn_decant_movimentacoes_listar", { p: filtros, p_limite: 5000, p_offset: 0 })) || []) as any[];
+
+export function useVendasDecant(filtros: Record<string, string>) {
+  return useQuery({
+    queryKey: ["decant-vendas", filtros],
+    queryFn: async (): Promise<any[]> => (await rpc("fn_decant_vendas_listar", { p: filtros, p_limite: 100, p_offset: 0 })) || [],
+  });
+}
+
+export function useQuarentena() {
+  return useQuery({
+    queryKey: ["decant-quarentena"],
+    queryFn: async () => {
+      const { data, error } = await db.from("decant_quarentena").select("*, decant_skus(sku)").eq("status", "pendente").order("created_at");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+export function useInventariosPendentes() {
+  return useQuery({
+    queryKey: ["decant-inventarios"],
+    queryFn: async () => {
+      const { data, error } = await db.from("decant_inventarios").select("*, decant_skus(sku)").eq("status", "pendente").order("created_at");
+      if (error) throw error;
+      return data || [];
+    },
+  });
+}
+
+export function usePdvCatalogoDecants(unidadeId: string) {
+  return useQuery({
+    queryKey: ["decant-pdv", unidadeId],
+    enabled: !!unidadeId,
+    queryFn: async (): Promise<{ sku_id: string; sku: string; preco_venda: number; marca: string; nome: string; concentracao: string; volume_ml: number; saldo: number }[]> =>
+      (await rpc("fn_decant_pdv_catalogo", { p_unidade_id: unidadeId })) || [],
+  });
+}
+
+export function useTransferenciasDecant(unidadeId: string | null) {
+  return useQuery({
+    queryKey: ["decant-transf", unidadeId],
+    queryFn: async (): Promise<any[]> => (await rpc("fn_decant_transf_listar", { p_unidade_id: unidadeId })) || [],
+  });
+}
+
+export const useVenderDecant = () => useOp3((p: { unidadeId: string; itens: { sku_id: string; quantidade: number }[]; pagamentos: { forma: string; valor: number }[]; canal: string; vendedora: string; chave: string }) =>
+  rpc("fn_decant_vender", { p_unidade_id: p.unidadeId, p_itens: p.itens, p_pagamentos: p.pagamentos, p_canal: p.canal, p_cliente_id: null, p_vendedora: p.vendedora, p_idempotency_key: p.chave }));
+export const useCancelarVendaDecant = () => useOp3((p: { grupo: string; motivo: string }) => rpc("fn_decant_venda_cancelar", { p_grupo: p.grupo, p_motivo: p.motivo }));
+export const useDevolverDecant = () => useOp3((p: { vendaId: string; quantidade: number; motivo: string; estornar: boolean }) =>
+  rpc("fn_decant_devolver", { p_venda_id: p.vendaId, p_quantidade: p.quantidade, p_motivo: p.motivo, p_estornar_dinheiro: p.estornar }));
+export const useDecidirQuarentena = () => useOp3((p: { id: string; acao: string; lacrado: boolean; obs: string }) =>
+  rpc("fn_decant_quarentena_decidir", { p_id: p.id, p_acao: p.acao, p_lacrado: p.lacrado, p_obs: p.obs }));
+export const useContarInventario = () => useOp3((p: { skuId: string; unidadeId: string; contado: number; justificativa: string }) =>
+  rpc("fn_decant_inventario_contar", { p_sku: p.skuId, p_unidade: p.unidadeId, p_contado: p.contado, p_justificativa: p.justificativa }));
+export const useDecidirInventario = () => useOp3((p: { id: string; aprovar: boolean }) => rpc("fn_decant_inventario_decidir", { p_id: p.id, p_aprovar: p.aprovar }));
+export const useSalvarMinIdeal = () => useOp3((p: { skuId: string; unidadeId: string; minimo: number; ideal: number }) =>
+  rpc("fn_decant_sku_unidade_salvar", { p_sku: p.skuId, p_unidade: p.unidadeId, p_minimo: p.minimo, p_ideal: p.ideal }));
+export const useCriarTransfDecant = () => useOp3((p: { origem: string; destino: string; itens: any[]; obs: string; chave: string }) =>
+  rpc("fn_decant_transf_criar", { p_origem: p.origem, p_destino: p.destino, p_itens: p.itens, p_observacao: p.obs, p_idempotency_key: p.chave }));
+export const useAcaoTransfDecant = () => useOp3((p: { acao: "separar" | "enviar" | "receber" | "resolver" | "cancelar"; id: string; extra?: any }) => {
+  if (p.acao === "separar") return rpc("fn_decant_transf_separar", { p_id: p.id });
+  if (p.acao === "enviar") return rpc("fn_decant_transf_enviar", { p_id: p.id, p_transportador: p.extra || "" });
+  if (p.acao === "receber") return rpc("fn_decant_transf_receber", { p_id: p.id, p_conferencias: p.extra });
+  if (p.acao === "resolver") return rpc("fn_decant_transf_resolver", { p_id: p.id, p_resolucao: p.extra.resolucao, p_justificativa: p.extra.justificativa });
+  return rpc("fn_decant_transf_cancelar", { p_id: p.id, p_motivo: p.extra || "" });
+});
