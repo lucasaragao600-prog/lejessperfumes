@@ -21,7 +21,6 @@ BEGIN
   SELECT id INTO v_t2 FROM public.decant_tamanhos WHERE volume_ml=2;
   SELECT id INTO v_t5 FROM public.decant_tamanhos WHERE volume_ml=5;
   SELECT id INTO v_t10 FROM public.decant_tamanhos WHERE volume_ml=10;
-  UPDATE public.decant_tamanhos SET ativo = true WHERE id IN (v_t2,v_t5,v_t10);
 
   -- SKU no padrão
   ASSERT public.fn_decant_sku_codigo('1051',5) = 'DEC-1051-005', 'SKU 5 ml';
