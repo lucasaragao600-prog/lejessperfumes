@@ -4,6 +4,8 @@ import { useApp } from "@/context/AppContext";
 import type { TipoPerfume, Concentracao } from "@/data/mockData";
 import { useConfiguracoesFiscais } from "@/hooks/useConfiguracoesFiscais";
 import { toast } from "sonner";
+import PerfilOlfativoLote from "@/components/PerfilOlfativoLote";
+import { useAuth } from "@/context/AuthContext";
 
 const UFS_LIST = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
@@ -249,6 +251,7 @@ export default function Configuracoes() {
     </section>
   );
 
+  const isMasterIA = useAuth().role === "master";
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="sticky top-0 z-10 px-4 pt-12 pb-4"
@@ -261,6 +264,7 @@ export default function Configuracoes() {
       </div>
 
       <div className="px-4 space-y-5">
+        {isMasterIA && <PerfilOlfativoLote />}
         {/* Dados da Empresa */}
         <section className="card-premium p-5 space-y-4">
           <div>

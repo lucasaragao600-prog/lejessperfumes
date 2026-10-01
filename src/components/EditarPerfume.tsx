@@ -392,6 +392,7 @@ export default function EditarPerfume({ perfume, onClose }: Props) {
             onSaidaChange={setNotasSaida}
             onCoracaoChange={setNotasCoracao}
             onFundoChange={setNotasFundo}
+            produto={{ marca: perfume.marca, nome, concentracao }}
           />
 
 
