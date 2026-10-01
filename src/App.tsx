@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { AppProvider } from "@/context/AppContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import ScanDecant from "./pages/ScanDecant";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +23,7 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/d/:codigo" element={<ScanDecant />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
