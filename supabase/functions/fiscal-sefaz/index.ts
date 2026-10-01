@@ -2,6 +2,7 @@ import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
 import { z } from "npm:zod@3";
 import { RELAY_SOURCE } from "./relay.ts";
+import { carregarPfx, montarNfce } from "./nfce.ts";
 
 const APP = "lejess-fiscal-yrwsss";
 const RELAY_URL = `https://${APP}.fly.dev`;
@@ -12,7 +13,50 @@ const SEFAZ_AM = {
   producao: { status: "https://nfce.sefaz.am.gov.br/nfce-services/services/NfeStatusServico4", tpAmb: 1 },
 };
 
-const Body = z.object({ action: z.enum(["deploy", "health", "status"]) });
+const Body = z.object({
+  action: z.enum(["deploy", "health", "status", "teste_emissao"]),
+  unidade_id: z.string().uuid().optional(),
+});
+
+async function testeEmissao(admin: any, unidadeId: string) {
+  const cert = await carregarCertificado(admin);
+  const { data: cfg } = await admin.from("configuracoes_fiscais").select("*").eq("unidade_id", unidadeId).maybeSingle();
+  if (!cfg) throw new Error("Unidade sem configuração fiscal");
+  if (cfg.ambiente !== "homologacao") throw new Error("Teste só é permitido em homologação");
+  if (!cfg.inscricao_estadual || !cfg.csc_token) throw new Error("IE ou CSC não cadastrados");
+  const { data: prods } = await admin.from("perfumes").select("codigo,nome,marca,ncm,cfop,cst_csosn,codigo_barras,preco_venda")
+    .not("ncm", "is", null).gt("preco_venda", 0).limit(20);
+  const p = (prods || []).find((x: any) => String(x.ncm || "").replace(/\D/g, "").length === 8);
+  if (!p) throw new Error("Nenhum produto com NCM de 8 dígitos");
+  const { key, certB64, validade } = carregarPfx(cert.pfx, cert.senha);
+  const { chave, nfe, total } = montarNfce({
+    cnpj: cfg.cnpj, ie: cfg.inscricao_estadual, razao: cfg.razao_social, fantasia: cfg.nome_fantasia,
+    endereco: cfg.endereco, numero: cfg.numero, bairro: cfg.bairro, cep: cfg.cep, fone: cfg.telefone,
+    crt: cfg.regime_tributario === "simples_nacional" ? "1" : "3", serie: cfg.serie_nfce || 1,
+    numeroNota: cfg.proximo_numero_nfce || 1, cscId: cfg.csc_id, csc: cfg.csc_token, tpAmb: 2,
+  }, [{
+    codigo: p.codigo, gtin: String(p.codigo_barras || ""), descricao: `${p.marca} ${p.nome}`, ncm: p.ncm,
+    cfop: p.cfop || "5102", csosn: p.cst_csosn || "102", un: "UN", qtd: 1, valor: Number(p.preco_venda),
+  }], "01", key, certB64);
+  const envelope = `<?xml version="1.0" encoding="utf-8"?><soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope"><soap12:Body><nfeDadosMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeAutorizacao4"><enviNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><idLote>${Date.now().toString().slice(-15)}</idLote><indSinc>1</indSinc>${nfe}</enviNFe></nfeDadosMsg></soap12:Body></soap12:Envelope>`;
+  const r = await fetch(`${RELAY_URL}/soap`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${Deno.env.get("FISCAL_RELAY_SECRET")}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      url: "https://homnfce.sefaz.am.gov.br/nfce-services/services/NfeAutorizacao4", envelope, pfx: cert.pfx, senha: cert.senha,
+      action: "http://www.portalfiscal.inf.br/nfe/wsdl/NFeAutorizacao4/nfeAutorizacaoLote",
+    }),
+  });
+  const out = await r.json();
+  const body: string = out.body || "";
+  const all = (tag: string) => [...body.matchAll(new RegExp(`<(?:\\w+:)?${tag}>([^<]*)<`, "g"))].map((m) => m[1]);
+  const cStats = all("cStat"), motivos = all("xMotivo");
+  const prot = all("nProt")[0] ?? null;
+  if (prot) await admin.from("configuracoes_fiscais").update({ proximo_numero_nfce: (cfg.proximo_numero_nfce || 1) + 1 }).eq("id", cfg.id);
+  return { chave, total, produto: p.codigo, certificado_valido_ate: validade, lote: { cStat: cStats[0], xMotivo: motivos[0] },
+    nota: { cStat: cStats[1] ?? null, xMotivo: motivos[1] ?? null, protocolo: prot }, http: out.status, erro: out.error ?? null,
+    corpo: cStats.length ? undefined : body.slice(0, 1500) };
+}
 
 const json = (obj: unknown, status = 200) =>
   new Response(JSON.stringify(obj), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -141,6 +185,10 @@ Deno.serve(async (req) => {
     if (!parsed.success) return json({ error: "Ação inválida" }, 400);
 
     if (parsed.data.action === "deploy") return json(await deploy());
+    if (parsed.data.action === "teste_emissao") {
+      if (!parsed.data.unidade_id) return json({ error: "Informe a unidade" }, 400);
+      return json(await testeEmissao(admin, parsed.data.unidade_id));
+    }
     if (parsed.data.action === "health") {
       const r = await fetch(`${RELAY_URL}/health`).catch((e) => ({ ok: false, status: 0, text: async () => String(e) }));
       return json({ ok: r.ok, status: r.status, body: await r.text() });
