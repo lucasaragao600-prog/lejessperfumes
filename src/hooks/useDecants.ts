@@ -349,3 +349,61 @@ export const useAcaoTransfDecant = () => useOp3((p: { acao: "separar" | "enviar"
   if (p.acao === "resolver") return rpc("fn_decant_transf_resolver", { p_id: p.id, p_resolucao: p.extra.resolucao, p_justificativa: p.extra.justificativa });
   return rpc("fn_decant_transf_cancelar", { p_id: p.id, p_motivo: p.extra || "" });
 });
+
+/* ---------- Fase 4: perdas, dashboard, 360°, rentabilidade, relatórios ---------- */
+const rpc = async (fn: string, args: Record<string, unknown>) => {
+  const { data, error } = await db.rpc(fn, args);
+  if (error) throw new Error(msg(error));
+  return data;
+};
+
+export function useDecantDashboard(unidadeId: string | null, ini: string, fim: string) {
+  return useQuery({
+    queryKey: ["decant-dashboard", unidadeId, ini, fim],
+    queryFn: () => rpc("fn_decant_dashboard", { p_unidade: unidadeId, p_ini: ini, p_fim: fim }),
+    enabled: !!ini && !!fim,
+  });
+}
+
+export function usePerdasPainel(unidadeId: string | null, ini: string, fim: string) {
+  return useQuery({
+    queryKey: ["decant-perdas", unidadeId, ini, fim],
+    queryFn: () => rpc("fn_decant_perdas_painel", { p_unidade: unidadeId, p_ini: ini, p_fim: fim }),
+    enabled: !!ini && !!fim,
+  });
+}
+
+export function useRegistrarPerda() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { frascoId: string; tipo: string; ml: number; justificativa: string; chave: string }) =>
+      rpc("fn_decant_registrar_perda", { p_frasco_id: p.frascoId, p_tipo: p.tipo, p_ml: p.ml, p_justificativa: p.justificativa, p_idempotency_key: p.chave }),
+    onSuccess: () => {
+      ["decant-perdas", "decant-dashboard", "decant-frascos", "decant-historico", "decant-movimentacoes"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+    },
+  });
+}
+
+export function useRentabilidadeDecant(agrupar: "perfume" | "tamanho" | "filial", unidadeId: string | null, ini: string, fim: string) {
+  return useQuery({
+    queryKey: ["decant-rentabilidade", agrupar, unidadeId, ini, fim],
+    queryFn: () => rpc("fn_decant_rentabilidade", { p_agrupar: agrupar, p_unidade: unidadeId, p_ini: ini, p_fim: fim }),
+  });
+}
+
+export function usePerfume360(produtoId: string | null, unidadeId: string | null) {
+  return useQuery({
+    queryKey: ["decant-360", produtoId, unidadeId],
+    queryFn: () => rpc("fn_decant_perfume_360", { p_produto_id: produtoId, p_unidade: unidadeId }),
+    enabled: !!produtoId,
+  });
+}
+
+export interface RelatorioDecant { colunas: { k: string; l: string }[]; linhas: Record<string, unknown>[]; ver_custos: boolean; ver_margem: boolean }
+export function useRelatorioDecant(tipo: string, unidadeId: string | null, ini: string, fim: string) {
+  return useQuery({
+    queryKey: ["decant-relatorio", tipo, unidadeId, ini, fim],
+    queryFn: async (): Promise<RelatorioDecant> => rpc("fn_decant_relatorio", { p_tipo: tipo, p_unidade: unidadeId, p_ini: ini, p_fim: fim }),
+    enabled: !!tipo,
+  });
+}
