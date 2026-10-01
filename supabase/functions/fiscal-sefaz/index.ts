@@ -16,9 +16,10 @@ const SEFAZ_AM = {
 const Body = z.object({
   action: z.enum(["deploy", "health", "status", "teste_emissao"]),
   unidade_id: z.string().uuid().optional(),
+  crt: z.enum(["1","2","3","4"]).optional(),
 });
 
-async function testeEmissao(admin: any, unidadeId: string) {
+async function testeEmissao(admin: any, unidadeId: string, crtTeste?: string) {
   const cert = await carregarCertificado(admin);
   const { data: cfg } = await admin.from("configuracoes_fiscais").select("*").eq("unidade_id", unidadeId).maybeSingle();
   if (!cfg) throw new Error("Unidade sem configuração fiscal");
@@ -33,7 +34,7 @@ async function testeEmissao(admin: any, unidadeId: string) {
   const { chave, nfe, total } = montarNfce({
     cnpj: cfg.cnpj, ie: cfg.inscricao_estadual, razao: cfg.razao_social, fantasia: cfg.nome_fantasia,
     endereco: cfg.endereco, numero: cfg.numero, bairro: cfg.bairro, cep: cfg.cep, fone: cfg.telefone,
-    crt: cfg.regime_tributario === "simples_nacional" ? "1" : "3", serie: cfg.serie_nfce || 1,
+    crt: (crtTeste || (cfg.regime_tributario === "simples_nacional" ? "1" : "3")) as any, serie: cfg.serie_nfce || 1,
     numeroNota: cfg.proximo_numero_nfce || 1, cscId: cfg.csc_id, csc: cfg.csc_token, tpAmb: 2,
   }, [{
     codigo: p.codigo, gtin: String(p.codigo_barras || ""), descricao: `${p.marca} ${p.nome}`, ncm: p.ncm,
@@ -188,7 +189,7 @@ Deno.serve(async (req) => {
     if (parsed.data.action === "deploy") return json(await deploy());
     if (parsed.data.action === "teste_emissao") {
       if (!parsed.data.unidade_id) return json({ error: "Informe a unidade" }, 400);
-      return json(await testeEmissao(admin, parsed.data.unidade_id));
+      return json(await testeEmissao(admin, parsed.data.unidade_id, parsed.data.crt));
     }
     if (parsed.data.action === "health") {
       const r = await fetch(`${RELAY_URL}/health`).catch((e) => ({ ok: false, status: 0, text: async () => String(e) }));
