@@ -10,3 +10,5 @@
 - [x] Decants Fase 3 (estoque, PDV, cancelamento, devolução, inventário, transferências) — aguardando aprovação
 - [x] Decants Fase 4 (perdas, dashboard, 360°, rentabilidade, comparativo, relatórios) — aguardando aprovação
 - [ ] Decants Fases seguintes — aguardando aprovação da Fase 4
+- [x] NT Etapa 1 — base (tabelas, numeração NT-AAAA-NNNNNN, imutabilidade, aba Notas, PDF/QR /nt/:codigo) — aguardando aprovação
+- [ ] NT Etapa 2 — emissão em Transferências, Decants, Reposição (com RPCs atômicas novas de envio/finalização) e manual (1 NT por produto e envio manual com vários itens)

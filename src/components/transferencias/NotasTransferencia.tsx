@@ -64,7 +64,7 @@ function Detalhe({ id, onVoltar }: { id: string; onVoltar: () => void }) {
         <div className="flex items-center gap-2 pt-2">
           <button onClick={imprimir} disabled={imprimindo}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs border border-gold/40 text-gold bg-gold/5 disabled:opacity-50">
-            <Printer size={14} /> {nt.reimprimiu ? "" : ""}{nt.reimpressoes > 0 ? "Reimprimir (2ª via)" : "Imprimir"}
+            <Printer size={14} /> {nt.reimpressoes > 0 ? "Reimprimir (2ª via)" : "Imprimir"}
           </button>
           {nt.reimpressoes > 0 && <span className="text-[11px] text-muted-foreground">{nt.reimpressoes} impressão(ões)</span>}
         </div>
