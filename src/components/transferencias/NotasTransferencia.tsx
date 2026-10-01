@@ -30,7 +30,7 @@ function Detalhe({ id, onVoltar }: { id: string; onVoltar: () => void }) {
     setImprimindo(true);
     try {
       const vias: NtVia[] = via === "todas" ? ["origem", "destino", "transporte"] : [via];
-      const contador = await reimprimir.mutateAsync({ id: nt.id, via: vias.join(","), formato });
+      const contador = await reimprimir.mutateAsync({ id: nt.id, via: via, formato });
       if (formato === "a4") await gerarPdfNota(nt, vias, contador);
       else await imprimirTermicaNota(nt, vias[0], contador);
     } catch (e) {
