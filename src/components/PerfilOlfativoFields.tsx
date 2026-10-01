@@ -1,4 +1,7 @@
-import { Sparkles } from "lucide-react";
+import { useState } from "react";
+import { Sparkles, Wand2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { sugerirPerfil } from "@/lib/perfilOlfativoIA";
 
 interface Props {
   perfilOlfativo: string;
@@ -9,6 +12,7 @@ interface Props {
   onSaidaChange: (v: string) => void;
   onCoracaoChange: (v: string) => void;
   onFundoChange: (v: string) => void;
+  produto?: { marca: string; nome: string; concentracao?: string };
 }
 
 export const FAMILIAS_OLFATIVAS = [
@@ -35,12 +39,36 @@ export default function PerfilOlfativoFields({
   onSaidaChange,
   onCoracaoChange,
   onFundoChange,
+  produto,
 }: Props) {
+  const [carregando, setCarregando] = useState(false);
+  const preencher = async () => {
+    if (!produto?.nome?.trim()) return toast.error("Informe a marca e o nome do perfume primeiro.");
+    setCarregando(true);
+    try {
+      const r = await sugerirPerfil(produto.marca, produto.nome, produto.concentracao);
+      if (!r || r.confianca === "baixa" || !(r.familia || r.saida || r.coracao || r.fundo)) {
+        toast.info("A IA não reconheceu este perfume com segurança. Preencha manualmente.");
+        return;
+      }
+      onPerfilChange(r.familia); onSaidaChange(r.saida); onCoracaoChange(r.coracao); onFundoChange(r.fundo);
+      toast.success("Perfil preenchido. Revise antes de salvar.");
+    } catch (e: any) {
+      toast.error(e.message);
+    } finally { setCarregando(false); }
+  };
   return (
     <div className="space-y-4 border border-gold-muted/40 rounded-xl p-4 bg-gold/5">
       <div className="flex items-center gap-2">
         <Sparkles size={14} className="text-gold" />
         <h3 className="text-xs font-semibold text-gold">Perfil Olfativo</h3>
+        {produto && (
+          <button type="button" onClick={preencher} disabled={carregando}
+            className="ml-auto flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-medium border border-gold-muted text-gold hover:bg-gold/10 disabled:opacity-50">
+            {carregando ? <Loader2 size={12} className="animate-spin" /> : <Wand2 size={12} />}
+            {carregando ? "Buscando…" : "Preencher com IA"}
+          </button>
+        )}
       </div>
 
       <div>
@@ -118,7 +146,7 @@ export default function PerfilOlfativoFields({
       </div>
 
       <p className="text-[9px] text-muted-foreground italic">
-        Separe as notas por vírgula. Estes campos são opcionais e usados apenas para consulta.
+        Separe as notas por vírgula. Estes campos são opcionais. Se ficarem vazios, a IA tenta preencher sozinha depois de salvar.
       </p>
     </div>
   );

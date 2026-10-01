@@ -17,6 +17,7 @@ import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalC
 import SimilarProductsDialog from "@/components/SimilarProductsDialog";
 import { findSimilarProducts, type SimilarityCandidate } from "@/lib/productSimilarity";
 import PerfilOlfativoFields from "@/components/PerfilOlfativoFields";
+import { preencherPorCodigos } from "@/lib/perfilOlfativoIA";
 import { toast } from "sonner";
 
 interface Props {
@@ -174,6 +175,9 @@ export default function CadastroPerfume({ onClose }: Props) {
     };
     try {
       await adicionarPerfume(novoPerfume);
+      if (!perfilOlfativo && !notasSaida && !notasCoracao && !notasFundo) {
+        preencherPorCodigos([codigoPreview]).catch((e) => console.warn("Perfil olfativo automático falhou:", e));
+      }
     } catch (error: any) {
       if (error?.code === "23505" && error?.message?.includes("codigo_barras")) {
         toast.error("Código de barras já cadastrado", {
@@ -490,6 +494,7 @@ export default function CadastroPerfume({ onClose }: Props) {
               onSaidaChange={setNotasSaida}
               onCoracaoChange={setNotasCoracao}
               onFundoChange={setNotasFundo}
+              produto={{ marca: casaSelecionada?.nome ?? "", nome, concentracao }}
             />
 
 
