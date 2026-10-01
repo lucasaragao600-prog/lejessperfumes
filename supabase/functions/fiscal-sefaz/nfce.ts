@@ -81,7 +81,7 @@ export function montarNfce(em: Emitente, itens: Item[], pagamentoTipo: string, k
   const cId = String(Number(em.cscId));
   const pre = `${chave}|2|${em.tpAmb}|${cId}`;
   const urlQr = homolog ? "http://homnfce.sefaz.am.gov.br/nfceweb/consultarNFCe.jsp" : "http://sistemas.sefaz.am.gov.br/nfceweb/consultarNFCe.jsp";
-  const qr = `${urlQr}?p=${pre}|${sha1hex(pre + em.csc)}`;
+  const qr = Deno.env.get("NFCE_QR_V2") ? `${urlQr}?p=${pre}|${sha1hex(pre + em.csc)}` : `${urlQr}?p=${chave}|3|${em.tpAmb}`;
   const urlChave = homolog ? "www.sefaz.am.gov.br/nfce/consulta" : "www.sefaz.am.gov.br/nfce/consulta";
   const supl = `<infNFeSupl><qrCode><![CDATA[${qr}]]></qrCode><urlChave>${urlChave}</urlChave></infNFeSupl>`;
   const sig = `<Signature xmlns="http://www.w3.org/2000/09/xmldsig#"><SignedInfo>${signedInfoBody}</SignedInfo><SignatureValue>${sigValue}</SignatureValue><KeyInfo><X509Data><X509Certificate>${certB64}</X509Certificate></X509Data></KeyInfo></Signature>`;
