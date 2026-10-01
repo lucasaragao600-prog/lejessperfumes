@@ -7,4 +7,5 @@
 - [x] Ajuste NFC-e/Clientes — descrição fiscal padronizada, CPF/CNPJ na nota e cadastro opcional ampliado
 - [x] Decants Fase 1 (frascos, ledger de ml, tamanhos, conferência) — aguardando aprovação
 - [x] Decants Fase 2 (SKUs, ficha técnica, lotes, reserva, conferência) — aguardando aprovação
-- [ ] Decants Fases 3–7 — aguardando aprovação da Fase 2
+- [x] Decants Fase 3 (estoque, PDV, cancelamento, devolução, inventário, transferências) — aguardando aprovação
+- [ ] Decants Fases 4–7 — aguardando aprovação da Fase 3

@@ -15,6 +15,6 @@ DROP TABLE IF EXISTS public.decant_transf_itens, public.decant_transferencias, p
   public.decant_venda_pagamentos, public.decant_vendas, public.decant_un_ledger, public.decant_sku_unidade, public.decant_estoque;
 DROP SEQUENCE IF EXISTS public.decant_transf_seq;
 DELETE FROM public.usuario_unidade_permissoes WHERE permissao = 'decant.vender';
-DELETE FROM public.role_permissions WHERE permissao = 'decant.vender';
+DELETE FROM public.role_permissions WHERE permission = 'decant.vender';
 DELETE FROM public.permissoes_catalogo WHERE chave = 'decant.vender';
 COMMIT;
