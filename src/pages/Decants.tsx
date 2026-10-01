@@ -164,6 +164,7 @@ function AbaFrascos() {
 
       {dialogo === "destinar" && <DialogoDestinar onClose={() => setDialogo(null)} />}
       {dialogo === "abrir" && <DialogoAbrir onClose={() => setDialogo(null)} fechados={fechados} nomeProd={nomeProd} nomeUn={nomeUn} />}
+      {dialogo === "tester" && <DialogoTesterFrasco onClose={() => setDialogo(null)} />}
       {sel && <DialogoFrasco frasco={frascos.find((x) => x.id === sel.id) || sel} onClose={() => setSel(null)} />}
     </div>
   );
