@@ -13,6 +13,7 @@ export interface DecantConfig {
   margem_minima?: number;
   venda_sob_demanda?: boolean;
   transferir_frasco_aberto?: boolean;
+  perda_max_pct?: number;
 }
 
 export interface FrascoAberto {
