@@ -35,15 +35,20 @@ export async function emitirVenda(
   const { data: acesso } = await caller.rpc("usuario_tem_acesso_unidade", { _unidade_id: unidadeId });
   if (!acesso) throw new Error("Sem acesso a esta loja");
 
+  const { data: cfg } = await admin.from("configuracoes_fiscais").select("*").eq("unidade_id", unidadeId).maybeSingle();
+  if (!cfg) throw new Error("Loja sem configuração fiscal");
+  const emitente = { razao: cfg.razao_social, cnpj: cfg.cnpj, ie: cfg.inscricao_estadual, endereco: `${cfg.endereco}, ${cfg.numero} - ${cfg.bairro} - Manaus/AM` };
+
   // Idempotência: já autorizada → devolve a existente
   const { data: existentes } = await admin.from("nfce_emissoes").select("*").eq("venda_grupo_venda", grupo).order("created_at", { ascending: false });
   const autorizada = (existentes || []).find((e: any) => e.status === "emitida");
-  if (autorizada) return { ok: true, jaEmitida: true, emissao: autorizada };
+  if (autorizada) return { ok: true, jaEmitida: true, numero: autorizada.numero_nfce, serie: autorizada.serie, chave: autorizada.chave_acesso,
+    protocolo: autorizada.protocolo_autorizacao, qr: autorizada.danfe_url, dhEmi: autorizada.data_emissao, ambiente: cfg.ambiente, emitente, avisos: [] };
   const emAndamento = (existentes || []).find((e: any) => e.status === "processando" && Date.now() - new Date(e.updated_at).getTime() < 90_000);
   if (emAndamento) throw new Error("Esta NFC-e já está sendo enviada. Aguarde alguns segundos.");
+  // Nota recusada não fica registrada na SEFAZ: reaproveita o mesmo número
+  const reaproveitar = (existentes || []).find((e: any) => e.status === "rejeitada" && e.numero_nfce)?.numero_nfce ?? 0;
 
-  const { data: cfg } = await admin.from("configuracoes_fiscais").select("*").eq("unidade_id", unidadeId).maybeSingle();
-  if (!cfg) throw new Error("Loja sem configuração fiscal");
   if (!cfg.inscricao_estadual || !cfg.csc_token || !cfg.csc_id) throw new Error("Inscrição Estadual ou CSC não cadastrados para esta loja");
   const amb = (cfg.ambiente === "producao" ? "producao" : "homologacao") as keyof typeof AUT;
 
@@ -71,7 +76,7 @@ export async function emitirVenda(
   const pagamentos: Pag[] = (pgs || []).map((p: any) => ({ tPag: TPAG[p.tipo_pagamento] || "99", valor: Number(p.valor) }));
 
   // Reserva do número com trava otimista
-  let numero = 0;
+  let numero = reaproveitar;
   for (let i = 0; i < 5 && !numero; i++) {
     const { data: atual } = await admin.from("configuracoes_fiscais").select("proximo_numero_nfce").eq("id", cfg.id).single();
     const n = atual.proximo_numero_nfce || 1;
@@ -129,7 +134,7 @@ export async function emitirVenda(
     }, "autorizada", chave);
     return {
       ok: true, numero, serie: cfg.serie_nfce || 1, chave, protocolo: prot, qr, dhEmi, total, ambiente: amb, avisos,
-      emitente: { razao: cfg.razao_social, cnpj: cfg.cnpj, ie: cfg.inscricao_estadual, endereco: `${cfg.endereco}, ${cfg.numero} - ${cfg.bairro} - Manaus/AM` },
+      emitente,
     };
   } catch (e) {
     await marcar({ status: "rejeitada", motivo_rejeicao: e instanceof Error ? e.message : "Erro no envio" }, "rejeitada");
