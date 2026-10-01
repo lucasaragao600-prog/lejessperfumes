@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Camera, Loader2, Minus, Plus, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { useApp } from "@/context/AppContext";
 import { useUnidades } from "@/hooks/useUnidades";
 import { usePermissoes } from "@/hooks/usePermissoes";
@@ -34,6 +36,9 @@ export default function NovaTransferencia({ onCriada, implantacaoId = null }: Pr
   const [scanner, setScanner] = useState(false);
   const [linhas, setLinhas] = useState<NovoItemTransferencia[]>([]);
   const [salvando, setSalvando] = useState(false);
+  const [direto, setDireto] = useState(false);
+  const [chave, setChave] = useState(() => crypto.randomUUID());
+  const qc = useQueryClient();
 
   useEffect(() => {
     if (!origem && elegiveis.length) setOrigem(elegiveis[0].id);
@@ -96,6 +101,17 @@ export default function NovaTransferencia({ onCriada, implantacaoId = null }: Pr
     }
     setSalvando(true);
     try {
+      if (direto) {
+        const { error } = await supabase.rpc("fn_transferencia_manual" as never, {
+          p_origem: origem, p_destino: destino, p_observacao: observacao, p_idempotency_key: chave,
+          p_itens: linhas.map((l) => ({ produto_id: l.produto_id, quantidade: l.quantidade })),
+        } as never);
+        if (error) throw new Error(error.message);
+        ["estoque-unidades", "perfumes", "movimentacoes", "notas-transferencia", "estoque-lista"].forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+        toast.success("Envio direto registrado. O estoque já foi movido.");
+        setLinhas([]); setObservacao(""); setChave(crypto.randomUUID());
+        return;
+      }
       const id = await criar.mutateAsync({ origem, destino, itens: linhas, observacao, implantacaoId });
       toast.success("Transferência criada em rascunho.");
       setLinhas([]);
@@ -221,9 +237,16 @@ export default function NovaTransferencia({ onCriada, implantacaoId = null }: Pr
           className="w-full bg-surface-raised text-foreground border border-border rounded-lg px-3 py-2 text-sm"
         />
 
+        {isMaster && !implantacaoId && (
+          <label className="flex items-start gap-2 text-xs text-muted-foreground cursor-pointer">
+            <input type="checkbox" checked={direto} onChange={(e) => setDireto(e.target.checked)} className="mt-0.5" />
+            <span>Envio direto: move o estoque na hora, sem separação nem conferência (gera uma única Nota de Transferência).</span>
+          </label>
+        )}
+
         <button onClick={salvar} disabled={salvando} className="btn-primary w-full py-2.5 rounded-lg text-sm font-medium flex items-center justify-center gap-2">
           {salvando ? <Loader2 size={15} className="animate-spin" /> : null}
-          Criar transferência
+          {direto ? "Enviar agora" : "Criar transferência"}
         </button>
       </div>
 
