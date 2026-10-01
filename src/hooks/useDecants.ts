@@ -10,6 +10,7 @@ export interface DecantConfig {
   rendimento_padrao: number;
   dias_aberto_alerta: number;
   conferencia_obrigatoria: boolean;
+  margem_minima?: number;
 }
 
 export interface FrascoAberto {
@@ -172,3 +173,76 @@ export const useConferir = () => useOperacao((p: { frascoId: string; saldoFisico
 
 export const useDecidirConferencia = () => useOperacao((p: { id: string; aprovar: boolean; acao: string; obs: string }) =>
   rpc("fn_decant_decidir_conferencia", { p_conferencia_id: p.id, p_aprovar: p.aprovar, p_acao: p.acao, p_obs: p.obs }));
+
+/* ---------- Fase 2: produção ---------- */
+export interface FichaSku {
+  produto_id: string; produto_codigo: string; marca: string; nome: string; concentracao: string;
+  tamanho_id: string; tamanho_nome: string; volume_ml: number; sku_id: string | null; sku: string;
+  preco_venda: number; ativo: boolean; cadastrado: boolean; custo_ml: number | null;
+  custo_frasco: number | null; custo_atomizador: number | null; custo_etiqueta: number | null;
+  custo_embalagem: number | null; custo_mao_obra: number | null; custo_adicional: number | null;
+  ver_custos: boolean; ver_margem: boolean;
+}
+export interface FrascoDisponivel { id: string; codigo: string; aberto_em: string; custo_ml: number; saldo_ml: number; reservado_ml: number; disponivel_ml: number }
+export interface LoteDecant {
+  id: string; codigo: string; produto_id: string; unidade_id: string; status: string; volume_total_ml: number;
+  ml_consumido: number; perdas_ml: number; custo_liquido: number; custo_insumos: number; custo_total: number;
+  responsavel_producao: string; responsavel_conferencia: string; observacao: string; motivo_cancelamento: string;
+  fora_fifo: boolean; criado_por_nome: string; data_producao: string; created_at: string; conferido_em: string | null;
+  produto_codigo: string; marca: string; nome: string; concentracao: string; unidade_nome: string; ver_custos: boolean;
+  itens: { id: string; sku: string; volume_ml: number; qtd_planejada: number; qtd_fisica: number | null; diferenca: number | null; motivo: string; justificativa: string; custo_unitario: number }[];
+  frascos: { frasco_id: string; codigo: string; ml_reservado: number; ml_consumido: number | null; custo_ml: number }[];
+  eventos: { evento: string; dados: any; usuario: string; em: string }[];
+}
+
+export function useFichas() {
+  return useQuery({
+    queryKey: ["decant-fichas"],
+    queryFn: async (): Promise<FichaSku[]> => (await rpc("fn_decant_fichas_listar", { p_produto_id: null })) || [],
+  });
+}
+
+export function useFrascosDisponiveis(produtoId: string, unidadeId: string) {
+  return useQuery({
+    queryKey: ["decant-frascos-disp", produtoId, unidadeId],
+    enabled: !!produtoId && !!unidadeId,
+    queryFn: async (): Promise<FrascoDisponivel[]> =>
+      ((await rpc("fn_decant_frascos_disponiveis", { p_produto_id: produtoId, p_unidade_id: unidadeId })) || [])
+        .map((f: any) => ({ ...f, saldo_ml: Number(f.saldo_ml), reservado_ml: Number(f.reservado_ml), disponivel_ml: Number(f.disponivel_ml) })),
+  });
+}
+
+export function useLotes(unidadeId: string | null, status: string | null) {
+  return useQuery({
+    queryKey: ["decant-lotes", unidadeId, status],
+    queryFn: async (): Promise<LoteDecant[]> =>
+      (await rpc("fn_decant_lotes_listar", { p_unidade_id: unidadeId, p_status: status, p_limite: 30, p_offset: 0 })) || [],
+  });
+}
+
+function useOpLote<T>(fn: (p: T) => Promise<any>) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => ["decant-lotes", "decant-frascos", "decant-frascos-disp", "decant-historico", "decant-fichas"]
+      .forEach((k) => qc.invalidateQueries({ queryKey: [k] })),
+  });
+}
+
+export const useSalvarSku = () => useOpLote((p: { produtoId: string; tamanhoId: string; sku: string; preco: number | null; ativo: boolean }) =>
+  rpc("fn_decant_sku_salvar", { p_produto_id: p.produtoId, p_tamanho_id: p.tamanhoId, p_sku: p.sku, p_preco: p.preco, p_ativo: p.ativo }));
+
+export const useCriarLote = () => useOpLote((p: { produtoId: string; unidadeId: string; itens: { tamanho_id: string; quantidade: number }[];
+  frascos: { frasco_id: string; ml: number }[] | null; responsavel: string; observacao: string; chave: string }) =>
+  rpc("fn_decant_lote_criar", { p_produto_id: p.produtoId, p_unidade_id: p.unidadeId, p_itens: p.itens, p_frascos: p.frascos,
+    p_responsavel: p.responsavel, p_observacao: p.observacao, p_idempotency_key: p.chave }));
+
+export const useIniciarLote = () => useOpLote((id: string) => rpc("fn_decant_lote_iniciar", { p_lote_id: id }));
+export const useFinalizarLote = () => useOpLote((p: { id: string; consumo: { frasco_id: string; ml: number }[] | null }) =>
+  rpc("fn_decant_lote_finalizar", { p_lote_id: p.id, p_consumo: p.consumo }));
+export const useConferirLote = () => useOpLote((p: { id: string; itens: { item_id: string; qtd_fisica: number; motivo: string; justificativa: string }[]; responsavel: string }) =>
+  rpc("fn_decant_lote_conferir", { p_lote_id: p.id, p_itens: p.itens, p_responsavel: p.responsavel }));
+export const useCancelarLote = () => useOpLote((p: { id: string; motivo: string }) =>
+  rpc("fn_decant_lote_cancelar", { p_lote_id: p.id, p_motivo: p.motivo }));
+export const useEditarLote = () => useOpLote((p: { id: string; observacao: string; responsavel: string; motivo: string }) =>
+  rpc("fn_decant_lote_editar", { p_lote_id: p.id, p_observacao: p.observacao, p_responsavel_producao: p.responsavel, p_motivo: p.motivo }));
