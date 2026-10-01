@@ -162,7 +162,11 @@ export default function NfcePendentes() {
       const res = await emitirNfce(reg.grupoVenda);
       queryClient.invalidateQueries({ queryKey: ["nfce_emissoes"] });
       queryClient.invalidateQueries({ queryKey: ["vendas"] });
-      if (!res.ok) { toast.error(explicarRejeicao(res.cStat ? `${res.cStat} ${res.motivo}` : res.motivo)); return; }
+      if (!res.ok) {
+        toast.error(explicarRejeicao(res.cStat ? `${res.cStat} ${res.motivo}` : res.motivo), { duration: 10000 });
+        if (selected?.grupoVenda === reg.grupoVenda) setSelected({ ...reg, nfceStatus: "rejeitada" });
+        return;
+      }
       if (!soImprimir) toast.success(`NFC-e nº ${res.numero} autorizada`);
       if (selected?.grupoVenda === reg.grupoVenda) setSelected({ ...reg, nfceStatus: "autorizada", nfceChave: res.chave || "" });
       await imprimirDanfe(res,
@@ -238,7 +242,7 @@ ${nfceSection}
     pw.onload = () => pw.print();
   };
 
-  const canEmit = (s: NfceStatus) => s === "pendente" || s === "rejeitada";
+  const canEmit = (s: NfceStatus) => s === "pendente" || s === "rejeitada" || s === ("sem_certificado" as NfceStatus);
 
   // ─── Detail View ───
   if (selected) {
@@ -256,7 +260,7 @@ ${nfceSection}
               <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
             </div>
             <div className="flex gap-2 flex-wrap">
-              {canEmit(selected.nfceStatus) && temCertificado && (
+              {canEmit(selected.nfceStatus) && (
                 <button onClick={() => handleGerarNfce(selected)} disabled={gerandoId === selected.grupoVenda}
                   className="px-4 py-2 text-xs font-bold rounded-xl flex items-center gap-2 disabled:opacity-50"
                   style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}>
@@ -472,7 +476,7 @@ ${nfceSection}
                         <Printer size={16} />
                       </button>
                     )}
-                    {canEmit(reg.nfceStatus) && temCertificado && (
+                    {canEmit(reg.nfceStatus) && (
                       <button onClick={() => handleGerarNfce(reg)} disabled={gerandoId === reg.grupoVenda}
                         className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all disabled:opacity-50" title="Gerar NFC-e">
                         {gerandoId === reg.grupoVenda ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
