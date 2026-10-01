@@ -3,8 +3,10 @@ import { ArrowLeft, Printer, AlertTriangle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { useUnidades } from "@/hooks/useUnidades";
 import {
-  NT_ORIGEM_LABEL, NT_STATUS_META, useNotaDetalhe, useNotasLista, useReimprimirNota, type NtStatus,
+  NT_ORIGEM_LABEL, NT_STATUS_META, useNotaDetalhe, useNotasFiltradas, useReimprimirNota, useNtConfig, useNtAlertas,
+  filtrarNotas, type NtStatus, type NtFiltros,
 } from "@/hooks/useNotasTransferencia";
+import { Download } from "lucide-react";
 import { gerarPdfNota, imprimirTermicaNota } from "@/lib/pdf/notaTransferencia";
 import { VIA_LABEL, type NtVia } from "@/lib/notaTransferencia";
 
@@ -12,16 +14,17 @@ const dataHora = (s?: string | null) =>
   s ? new Date(s).toLocaleString("pt-BR", { timeZone: "America/Manaus" }) : "—";
 const campo = "bg-surface-raised text-foreground border border-border rounded-lg px-3 py-2 text-sm";
 
-function Badge({ status }: { status: NtStatus }) {
+export function BadgeNota({ status }: { status: NtStatus }) {
   const m = NT_STATUS_META[status];
   return <span className={`text-[11px] px-2 py-0.5 rounded-full border whitespace-nowrap ${m?.className}`}>{m?.label || status}</span>;
 }
 
-function Detalhe({ id, onVoltar }: { id: string; onVoltar: () => void }) {
+export function DetalheNota({ id, onVoltar }: { id: string; onVoltar?: () => void }) {
   const { data: nt, isLoading, error } = useNotaDetalhe(id);
   const reimprimir = useReimprimirNota();
   const [imprimindo, setImprimindo] = useState(false);
-  const [via, setVia] = useState<NtVia | "todas">("todas");
+  const { data: cfg } = useNtConfig();
+  const [via, setVia] = useState<NtVia | "todas">(cfg?.via_padrao || "todas");
 
   if (isLoading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
   if (error || !nt) return <p className="text-sm text-destructive">Não foi possível abrir a nota.</p>;
@@ -31,8 +34,9 @@ function Detalhe({ id, onVoltar }: { id: string; onVoltar: () => void }) {
     try {
       const vias: NtVia[] = via === "todas" ? ["origem", "destino", "transporte"] : [via];
       const contador = await reimprimir.mutateAsync({ id: nt.id, via: via, formato });
-      if (formato === "a4") await gerarPdfNota(nt, vias, contador);
-      else await imprimirTermicaNota(nt, vias[0], contador);
+      const doc = { ...nt, rodape: cfg?.rodape || "" };
+      if (formato === "a4") await gerarPdfNota(doc, vias, contador);
+      else await imprimirTermicaNota(doc, vias[0], contador);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Não foi possível imprimir.");
     } finally { setImprimindo(false); }
@@ -40,13 +44,13 @@ function Detalhe({ id, onVoltar }: { id: string; onVoltar: () => void }) {
 
   return (
     <div className="space-y-3">
-      <button onClick={onVoltar} className="flex items-center gap-1 text-xs text-muted-foreground"><ArrowLeft size={14} /> Voltar</button>
+      {onVoltar && <button onClick={onVoltar} className="flex items-center gap-1 text-xs text-muted-foreground"><ArrowLeft size={14} /> Voltar</button>}
       <div className="card p-4 space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
           <FileText size={16} className="text-gold" />
           <span className="font-medium text-foreground">{nt.numero}</span>
           {nt.revisao > 1 && <span className="text-[11px] text-muted-foreground">rev. {nt.revisao} ({nt.tipo_nota})</span>}
-          <span className="ml-auto"><Badge status={nt.status} /></span>
+          <span className="ml-auto"><BadgeNota status={nt.status} /></span>
         </div>
         <p className="text-xs text-muted-foreground">
           {nt.origem.nome_exibicao} → {nt.destino.nome_exibicao} · {NT_ORIGEM_LABEL[nt.tipo_origem]} {nt.origem_numero}
@@ -114,44 +118,101 @@ function Detalhe({ id, onVoltar }: { id: string; onVoltar: () => void }) {
   );
 }
 
+const vazio: NtFiltros = { origem: "", destino: "", de: "", ate: "", status: "", tipo_origem: "", busca: "" };
+const csvCel = (v: unknown) => { const t = v == null ? "" : String(v); return /[;"\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+
+export function AlertaNtSemRecebimento() {
+  const { data } = useNtAlertas();
+  const n = data?.itens.length ?? 0;
+  if (!n) return null;
+  return (
+    <div className="card p-3 border-amber-500/40 bg-amber-500/5 text-xs space-y-1">
+      <p className="flex items-center gap-1.5 text-amber-500 font-medium"><AlertTriangle size={14} /> {n} nota(s) sem recebimento há mais de {data!.dias} dia(s)</p>
+      {data!.itens.slice(0, 5).map((a) => (
+        <p key={a.id} className="text-muted-foreground">{a.numero} · {a.origem_nome} → {a.destino_nome} · {a.dias} dia(s)</p>
+      ))}
+    </div>
+  );
+}
+
 export default function NotasTransferencia() {
   const { todas } = useUnidades({ contexto: "historico" });
-  const [status, setStatus] = useState("");
-  const [unidade, setUnidade] = useState("");
-  const [busca, setBusca] = useState("");
+  const [f, setF] = useState<NtFiltros>(vazio);
   const [pagina, setPagina] = useState(0);
   const [aberta, setAberta] = useState<string | null>(null);
-  const { data, isLoading, error } = useNotasLista({ status, unidade, busca: busca.trim(), pagina });
+  const [exportando, setExportando] = useState(false);
+  const filtros = { ...f, busca: f.busca.trim() };
+  const { data, isLoading, error } = useNotasFiltradas(filtros, pagina);
+  const set = (k: keyof NtFiltros, v: string) => { setF({ ...f, [k]: v }); setPagina(0); };
 
-  if (aberta) return <Detalhe id={aberta} onVoltar={() => setAberta(null)} />;
+  const exportar = async () => {
+    setExportando(true);
+    try {
+      const r = await filtrarNotas(filtros, 2000, 0);
+      const comValor = r.itens.some((n) => n.valor_total != null);
+      const cab = ["Número", "Revisão", "Status", "Tipo de origem", "Documento de origem", "Origem", "Destino", "Emitida em", "Enviado por",
+        "Recebida em", "Recebido por", "Itens", "Unidades enviadas", "Unidades recebidas", ...(comValor ? ["Valor"] : [])];
+      const linhas = r.itens.map((n) => [n.numero, n.revisao, NT_STATUS_META[n.status]?.label || n.status, NT_ORIGEM_LABEL[n.tipo_origem] || n.tipo_origem,
+        n.origem_numero, n.origem_nome, n.destino_nome, dataHora(n.emitido_em), n.emitido_por_nome, n.recebido_em ? dataHora(n.recebido_em) : "",
+        n.recebido_por_nome || "", n.total_itens, n.qtd_enviada, n.qtd_recebida ?? "",
+        ...(comValor ? [n.valor_total != null ? Number(n.valor_total).toFixed(2).replace(".", ",") : ""] : [])]);
+      const csv = "\uFEFF" + [cab, ...linhas].map((l) => l.map(csvCel).join(";")).join("\n");
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+      a.download = `notas-transferencia-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click(); URL.revokeObjectURL(a.href);
+      if (r.total > 2000) toast.info("Exportadas as 2.000 notas mais recentes. Use os filtros para refinar.");
+    } catch { toast.error("Não foi possível exportar."); } finally { setExportando(false); }
+  };
+
+  if (aberta) return <DetalheNota id={aberta} onVoltar={() => setAberta(null)} />;
   const total = data?.total ?? 0;
 
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <input value={busca} onChange={(e) => { setBusca(e.target.value); setPagina(0); }} placeholder="Buscar NT ou número de origem" className={campo} />
-        <select value={status} onChange={(e) => { setStatus(e.target.value); setPagina(0); }} className={campo}>
+      <AlertaNtSemRecebimento />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+        <input value={f.busca} onChange={(e) => set("busca", e.target.value)} placeholder="Número da NT ou da origem" className={`${campo} col-span-2`} />
+        <select value={f.status} onChange={(e) => set("status", e.target.value)} className={campo}>
           <option value="">Todos os status</option>
           {Object.entries(NT_STATUS_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
-        <select value={unidade} onChange={(e) => { setUnidade(e.target.value); setPagina(0); }} className={campo}>
-          <option value="">Todas as unidades</option>
+        <select value={f.tipo_origem} onChange={(e) => set("tipo_origem", e.target.value)} className={campo}>
+          <option value="">Todos os tipos</option>
+          {Object.entries(NT_ORIGEM_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+        </select>
+        <select value={f.origem} onChange={(e) => set("origem", e.target.value)} className={campo}>
+          <option value="">Qualquer origem</option>
           {todas.map((u) => <option key={u.id} value={u.id}>{u.nomeExibicao}</option>)}
         </select>
+        <select value={f.destino} onChange={(e) => set("destino", e.target.value)} className={campo}>
+          <option value="">Qualquer destino</option>
+          {todas.map((u) => <option key={u.id} value={u.id}>{u.nomeExibicao}</option>)}
+        </select>
+        <input type="date" value={f.de} onChange={(e) => set("de", e.target.value)} className={campo} aria-label="De" />
+        <input type="date" value={f.ate} onChange={(e) => set("ate", e.target.value)} className={campo} aria-label="Até" />
+      </div>
+      <div className="flex items-center gap-2 text-xs">
+        <span className="text-muted-foreground">{total} nota(s)</span>
+        <button onClick={() => { setF(vazio); setPagina(0); }} className="text-muted-foreground underline">Limpar filtros</button>
+        <button onClick={exportar} disabled={exportando || total === 0}
+          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gold/40 text-gold bg-gold/5 disabled:opacity-50">
+          <Download size={14} /> {exportando ? "Exportando…" : "Exportar CSV"}
+        </button>
       </div>
       {isLoading && <p className="text-sm text-muted-foreground">Carregando…</p>}
       {error && <p className="text-sm text-destructive">Não foi possível carregar as notas.</p>}
-      {!isLoading && !error && total === 0 && <p className="text-sm text-muted-foreground">Nenhuma nota de transferência ainda.</p>}
+      {!isLoading && !error && total === 0 && <p className="text-sm text-muted-foreground">Nenhuma nota encontrada.</p>}
       <div className="space-y-2">
         {data?.itens.map((n) => (
           <button key={n.id} onClick={() => setAberta(n.id)} className="w-full card p-3.5 text-left hover:border-gold/30 transition-colors">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground">{n.numero}</span>
               {n.revisao > 1 && <span className="text-[11px] text-muted-foreground">rev. {n.revisao}</span>}
-              <span className="ml-auto"><Badge status={n.status} /></span>
+              <span className="ml-auto"><BadgeNota status={n.status} /></span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">{n.origem_nome} → {n.destino_nome} · {NT_ORIGEM_LABEL[n.tipo_origem]} {n.origem_numero}</p>
-            <p className="text-[11px] text-muted-foreground">{dataHora(n.emitido_em)} · {n.total_itens} item(ns)</p>
+            <p className="text-[11px] text-muted-foreground">{dataHora(n.emitido_em)} · {n.total_itens} item(ns) · {n.qtd_enviada} un{n.valor_total != null ? ` · R$ ${Number(n.valor_total).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : ""}</p>
           </button>
         ))}
       </div>
