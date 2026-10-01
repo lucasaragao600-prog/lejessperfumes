@@ -86,7 +86,6 @@ BEGIN
   ASSERT (r->>'custo_ml')::numeric = 6, '360: custo/ml';
 
   -- 4.6 Relatórios: todos executam
-  FOREACH v_dir IN ARRAY ARRAY[1] LOOP NULL; END LOOP;
   PERFORM public.fn_decant_relatorio(t, NULL, v_hoje - 30, v_hoje) FROM unnest(ARRAY['producao','vendas','estoque','estoque_filial','volume_disponivel',
     'perfumes_abertos_fechados','perdas','margem','custos','movimentacoes','divergencias','lotes','reposicao','mais_vendidos','sem_venda',
     'rent_perfume','rent_tamanho','desempenho_filial']) t;
