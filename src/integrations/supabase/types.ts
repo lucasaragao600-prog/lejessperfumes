@@ -799,6 +799,45 @@ export type Database = {
           },
         ]
       }
+      decant_etiqueta_modelos: {
+        Row: {
+          altura_mm: number
+          ativo: boolean
+          created_at: string
+          id: string
+          largura_mm: number
+          mostrar_barras: boolean
+          mostrar_qr: boolean
+          nome: string
+          padrao: boolean
+          updated_at: string
+        }
+        Insert: {
+          altura_mm?: number
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          largura_mm?: number
+          mostrar_barras?: boolean
+          mostrar_qr?: boolean
+          nome: string
+          padrao?: boolean
+          updated_at?: string
+        }
+        Update: {
+          altura_mm?: number
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          largura_mm?: number
+          mostrar_barras?: boolean
+          mostrar_qr?: boolean
+          nome?: string
+          padrao?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       decant_fechados_mov: {
         Row: {
           created_at: string
@@ -4824,6 +4863,10 @@ export type Database = {
         Args: { p_unidade_id: string }
         Returns: Json
       }
+      fn_decant_etiquetas_imprimir: {
+        Args: { p_itens: Json; p_lote_id: string; p_modelo_id: string }
+        Returns: Json
+      }
       fn_decant_fichas_listar: {
         Args: { p_produto_id?: string }
         Returns: Json
@@ -4962,6 +5005,8 @@ export type Database = {
         Args: { p_sku: string; p_unidade: string }
         Returns: number
       }
+      fn_decant_scan: { Args: { p_codigo: string }; Returns: Json }
+      fn_decant_scan_publico: { Args: { p_codigo: string }; Returns: Json }
       fn_decant_sku_codigo: {
         Args: { _codigo_perfume: string; _volume: number }
         Returns: string
