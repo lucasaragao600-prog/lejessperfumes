@@ -34,7 +34,7 @@ BEGIN
   -- Produção de 8×5 ml; antes da conferência não há estoque
   v_l := (public.fn_decant_lote_criar(v_p, v_u, jsonb_build_array(jsonb_build_object('tamanho_id',v_t5,'quantidade',8)), NULL, 'T', '', NULL)->>'lote_id')::uuid;
   SELECT id INTO v_sku FROM public.decant_skus WHERE produto_id = v_p AND tamanho_id = v_t5;
-  UPDATE public.decant_skus SET preco_venda = 50 WHERE id = v_sku;
+  PERFORM public.fn_decant_sku_salvar(v_p, v_t5, NULL, 50, true);
   PERFORM public.fn_decant_lote_iniciar(v_l);
   PERFORM public.fn_decant_lote_finalizar(v_l, NULL);
   ASSERT public.fn_decant_saldo_sku(v_sku, v_u) = 0, 'sem entrada antes da conferência';
