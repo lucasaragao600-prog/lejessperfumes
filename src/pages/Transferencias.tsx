@@ -13,13 +13,13 @@ export default function Transferencias() {
   const { transferencias, isLoading } = useTransferencias();
   const { todas } = useUnidades({ contexto: "historico" });
   const [tab, setTab] = useState<SubTab>("lista");
-  const { data: alertasNt } = useNtAlertas(!!ntAtiva);
-  const ntAlertas = alertasNt?.itens.length ?? 0;
   const [abertaId, setAbertaId] = useState<string | null>(null);
   const [filtroStatus, setFiltroStatus] = useState("");
   const [filtroUnidade, setFiltroUnidade] = useState("");
   const [busca, setBusca] = useState("");
   const { data: ntAtiva } = useNtAtiva();
+  const { data: alertasNt } = useNtAlertas(!!ntAtiva);
+  const ntAlertas = alertasNt?.itens.length ?? 0;
 
   const aberta = transferencias.find((t) => t.id === abertaId) || null;
   const nomeUnidade = (id: string) => todas.find((u) => u.id === id)?.nomeExibicao || "—";
