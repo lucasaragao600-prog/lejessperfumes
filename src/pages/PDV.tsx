@@ -384,7 +384,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
         await usarCredito(clienteId, valorCredito, null);
       }
 
-      await adicionarVendaMulti({ itens, pagamentosVenda });
+      await adicionarVendaMulti({ itens, pagamentosVenda, grupoVenda });
 
       for (const item of cart) {
         await baixarVenda(item.perfumeId, item.deposito, item.quantidade);
