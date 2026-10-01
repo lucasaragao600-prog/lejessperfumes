@@ -253,6 +253,13 @@
       "when": 1790887049832,
       "tag": "0035_nt_etapa5_retroativas",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1790896624762,
+      "tag": "0036_nt_cancelar_manual",
+      "breakpoints": true
     }
   ]
 }

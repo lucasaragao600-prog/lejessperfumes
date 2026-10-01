@@ -5398,6 +5398,10 @@ export type Database = {
         Returns: number
       }
       fn_nt_alertas: { Args: never; Returns: Json }
+      fn_nt_cancelar: {
+        Args: { p_id: string; p_motivo: string }
+        Returns: Json
+      }
       fn_nt_config_salvar: { Args: { p_cfg: Json }; Returns: Json }
       fn_nt_detalhe: { Args: { p_id: string }; Returns: Json }
       fn_nt_detalhe_por_codigo: { Args: { p_codigo: string }; Returns: Json }
