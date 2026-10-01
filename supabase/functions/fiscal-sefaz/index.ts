@@ -57,7 +57,8 @@ async function testeEmissao(admin: any, unidadeId: string, crtTeste?: string) {
   if (prot) await admin.from("configuracoes_fiscais").update({ proximo_numero_nfce: (cfg.proximo_numero_nfce || 1) + 1 }).eq("id", cfg.id);
   return { chave, total, produto: p.codigo, certificado_valido_ate: validade, lote: { cStat: cStats[0], xMotivo: motivos[0] },
     nota: { cStat: cStats[1] ?? null, xMotivo: motivos[1] ?? null, protocolo: prot }, http: out.status, erro: out.error ?? null,
-    corpo: cStats.length ? undefined : body.slice(0, 1500) };
+    corpo: cStats.length ? undefined : body.slice(0, 1500),
+    nfeProc: prot ? `<?xml version="1.0" encoding="UTF-8"?><nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">${nfe}${(body.match(/<protNFe[\s\S]*?<\/protNFe>/) || [""])[0]}</nfeProc>` : undefined };
 }
 
 const json = (obj: unknown, status = 200) =>
