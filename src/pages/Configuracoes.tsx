@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import NtRetroativas from "@/components/transferencias/NtRetroativas";
 import NtConfiguracao from "@/components/transferencias/NtConfiguracao";
 import { Settings, Plus, Trash2, RotateCcw, Loader2, Upload, X, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useApp } from "@/context/AppContext";
@@ -272,6 +273,7 @@ export default function Configuracoes() {
       <div className="px-4 space-y-5">
         {isMasterIA && <PerfilOlfativoLote />}
         {isMasterIA && <NtConfiguracao />}
+        {isMasterIA && <NtRetroativas />}
         {/* Dados da Empresa */}
         <section className="card-premium p-5 space-y-4">
           <div>

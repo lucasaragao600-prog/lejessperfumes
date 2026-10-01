@@ -55,6 +55,9 @@ export function DetalheNota({ id, onVoltar }: { id: string; onVoltar?: () => voi
         <p className="text-xs text-muted-foreground">
           {nt.origem.nome_exibicao} → {nt.destino.nome_exibicao} · {NT_ORIGEM_LABEL[nt.tipo_origem]} {nt.origem_numero}
         </p>
+        {nt.motivo_revisao?.startsWith("Emitida retroativamente") && (
+          <p className="text-[11px] text-gold">{nt.motivo_revisao}</p>
+        )}
         {nt.cnpjs_diferentes && (
           <p className="text-[11px] text-amber-500 flex items-center gap-1">
             <AlertTriangle size={12} /> CNPJs diferentes: verificar necessidade de NF-e de transferência com o contador.
