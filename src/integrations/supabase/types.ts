@@ -5394,8 +5394,14 @@ export type Database = {
         Args: { p_id: string }
         Returns: number
       }
+      fn_nt_alertas: { Args: never; Returns: Json }
+      fn_nt_config_salvar: { Args: { p_cfg: Json }; Returns: Json }
       fn_nt_detalhe: { Args: { p_id: string }; Returns: Json }
       fn_nt_detalhe_por_codigo: { Args: { p_codigo: string }; Returns: Json }
+      fn_nt_filtrar: {
+        Args: { p_filtros?: Json; p_limite?: number; p_offset?: number }
+        Returns: Json
+      }
       fn_nt_listar: {
         Args: {
           p_busca?: string
@@ -5404,6 +5410,10 @@ export type Database = {
           p_status?: string
           p_unidade?: string
         }
+        Returns: Json
+      }
+      fn_nt_por_origem: {
+        Args: { p_origem_id: string; p_tipo_origem: string }
         Returns: Json
       }
       fn_nt_registrar_impressao: {
