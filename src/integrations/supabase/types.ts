@@ -948,6 +948,265 @@ export type Database = {
           },
         ]
       }
+      decant_lote_eventos: {
+        Row: {
+          created_at: string
+          dados: Json
+          evento: string
+          id: string
+          lote_id: string
+          usuario_id: string | null
+          usuario_nome: string
+        }
+        Insert: {
+          created_at?: string
+          dados?: Json
+          evento: string
+          id?: string
+          lote_id: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Update: {
+          created_at?: string
+          dados?: Json
+          evento?: string
+          id?: string
+          lote_id?: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_lote_eventos_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "decant_lotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_lote_frascos: {
+        Row: {
+          custo_ml: number
+          frasco_id: string
+          id: string
+          lote_id: string
+          ml_consumido: number | null
+          ml_reservado: number
+          ordem_fifo: number
+        }
+        Insert: {
+          custo_ml?: number
+          frasco_id: string
+          id?: string
+          lote_id: string
+          ml_consumido?: number | null
+          ml_reservado: number
+          ordem_fifo?: number
+        }
+        Update: {
+          custo_ml?: number
+          frasco_id?: string
+          id?: string
+          lote_id?: string
+          ml_consumido?: number | null
+          ml_reservado?: number
+          ordem_fifo?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_lote_frascos_frasco_id_fkey"
+            columns: ["frasco_id"]
+            isOneToOne: false
+            referencedRelation: "decant_frascos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_lote_frascos_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "decant_lotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_lote_itens: {
+        Row: {
+          custo_insumo_unit: number
+          custo_unitario: number
+          diferenca: number | null
+          id: string
+          justificativa: string
+          lote_id: string
+          motivo: string
+          qtd_fisica: number | null
+          qtd_planejada: number
+          sku_id: string
+          tamanho_id: string
+          volume_ml: number
+        }
+        Insert: {
+          custo_insumo_unit?: number
+          custo_unitario?: number
+          diferenca?: number | null
+          id?: string
+          justificativa?: string
+          lote_id: string
+          motivo?: string
+          qtd_fisica?: number | null
+          qtd_planejada: number
+          sku_id: string
+          tamanho_id: string
+          volume_ml: number
+        }
+        Update: {
+          custo_insumo_unit?: number
+          custo_unitario?: number
+          diferenca?: number | null
+          id?: string
+          justificativa?: string
+          lote_id?: string
+          motivo?: string
+          qtd_fisica?: number | null
+          qtd_planejada?: number
+          sku_id?: string
+          tamanho_id?: string
+          volume_ml?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_lote_itens_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "decant_lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_lote_itens_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "decant_skus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_lote_itens_tamanho_id_fkey"
+            columns: ["tamanho_id"]
+            isOneToOne: false
+            referencedRelation: "decant_tamanhos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_lotes: {
+        Row: {
+          codigo: string
+          concluido_em: string | null
+          conferido_em: string | null
+          conferido_por: string | null
+          created_at: string
+          criado_por: string | null
+          criado_por_nome: string
+          custo_insumos: number
+          custo_liquido: number
+          custo_total: number
+          data_producao: string
+          entrada_estoque_pendente: boolean
+          fora_fifo: boolean
+          id: string
+          idempotency_key: string | null
+          ml_consumido: number
+          motivo_cancelamento: string
+          observacao: string
+          perdas_ml: number
+          produto_id: string
+          responsavel_conferencia: string
+          responsavel_producao: string
+          status: string
+          unidade_id: string
+          updated_at: string
+          volume_total_ml: number
+        }
+        Insert: {
+          codigo: string
+          concluido_em?: string | null
+          conferido_em?: string | null
+          conferido_por?: string | null
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string
+          custo_insumos?: number
+          custo_liquido?: number
+          custo_total?: number
+          data_producao?: string
+          entrada_estoque_pendente?: boolean
+          fora_fifo?: boolean
+          id?: string
+          idempotency_key?: string | null
+          ml_consumido?: number
+          motivo_cancelamento?: string
+          observacao?: string
+          perdas_ml?: number
+          produto_id: string
+          responsavel_conferencia?: string
+          responsavel_producao?: string
+          status?: string
+          unidade_id: string
+          updated_at?: string
+          volume_total_ml: number
+        }
+        Update: {
+          codigo?: string
+          concluido_em?: string | null
+          conferido_em?: string | null
+          conferido_por?: string | null
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string
+          custo_insumos?: number
+          custo_liquido?: number
+          custo_total?: number
+          data_producao?: string
+          entrada_estoque_pendente?: boolean
+          fora_fifo?: boolean
+          id?: string
+          idempotency_key?: string | null
+          ml_consumido?: number
+          motivo_cancelamento?: string
+          observacao?: string
+          perdas_ml?: number
+          produto_id?: string
+          responsavel_conferencia?: string
+          responsavel_producao?: string
+          status?: string
+          unidade_id?: string
+          updated_at?: string
+          volume_total_ml?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_lotes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_lotes_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "decant_lotes_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decant_ml_ledger: {
         Row: {
           created_at: string
@@ -1056,6 +1315,64 @@ export type Database = {
             isOneToOne: true
             referencedRelation: "perfumes_estoque_compat"
             referencedColumns: ["produto_id"]
+          },
+        ]
+      }
+      decant_skus: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          custo_medio: number
+          id: string
+          preco_venda: number
+          produto_id: string
+          sku: string
+          tamanho_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          custo_medio?: number
+          id?: string
+          preco_venda?: number
+          produto_id: string
+          sku: string
+          tamanho_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          custo_medio?: number
+          id?: string
+          preco_venda?: number
+          produto_id?: string
+          sku?: string
+          tamanho_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_skus_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_skus_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "decant_skus_tamanho_id_fkey"
+            columns: ["tamanho_id"]
+            isOneToOne: false
+            referencedRelation: "decant_tamanhos"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3533,6 +3850,10 @@ export type Database = {
         Args: { _perm: string; _unidade: string }
         Returns: undefined
       }
+      fn__decant_lote_evento: {
+        Args: { _dados: Json; _evento: string; _lote: string }
+        Returns: undefined
+      }
       fn__devolucao_core: {
         Args: {
           p_cliente: string
@@ -3562,6 +3883,7 @@ export type Database = {
           testers: Json
         }[]
       }
+      fn__fmt_ml: { Args: { _v: number }; Returns: string }
       fn__hoje_manaus: { Args: never; Returns: string }
       fn__nome_usuario: { Args: never; Returns: string }
       fn__pode: {
@@ -3721,8 +4043,63 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_decant_disponivel_frasco: {
+        Args: { p_frasco_id: string }
+        Returns: number
+      }
+      fn_decant_fichas_listar: {
+        Args: { p_produto_id?: string }
+        Returns: Json
+      }
+      fn_decant_frascos_disponiveis: {
+        Args: { p_produto_id: string; p_unidade_id: string }
+        Returns: Json
+      }
       fn_decant_frascos_listar: {
         Args: { p_unidade_id: string }
+        Returns: Json
+      }
+      fn_decant_lote_cancelar: {
+        Args: { p_lote_id: string; p_motivo: string }
+        Returns: Json
+      }
+      fn_decant_lote_conferir: {
+        Args: { p_itens: Json; p_lote_id: string; p_responsavel: string }
+        Returns: Json
+      }
+      fn_decant_lote_criar: {
+        Args: {
+          p_frascos: Json
+          p_idempotency_key: string
+          p_itens: Json
+          p_observacao: string
+          p_produto_id: string
+          p_responsavel: string
+          p_unidade_id: string
+        }
+        Returns: Json
+      }
+      fn_decant_lote_editar: {
+        Args: {
+          p_lote_id: string
+          p_motivo: string
+          p_observacao: string
+          p_responsavel_producao: string
+        }
+        Returns: Json
+      }
+      fn_decant_lote_finalizar: {
+        Args: { p_consumo: Json; p_lote_id: string }
+        Returns: Json
+      }
+      fn_decant_lote_iniciar: { Args: { p_lote_id: string }; Returns: Json }
+      fn_decant_lotes_listar: {
+        Args: {
+          p_limite?: number
+          p_offset?: number
+          p_status?: string
+          p_unidade_id: string
+        }
         Returns: Json
       }
       fn_decant_registrar_saida: {
@@ -3735,7 +4112,25 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_decant_reservado_frasco: {
+        Args: { p_excluir_lote?: string; p_frasco_id: string }
+        Returns: number
+      }
       fn_decant_saldo_frasco: { Args: { p_frasco_id: string }; Returns: number }
+      fn_decant_sku_codigo: {
+        Args: { _codigo_perfume: string; _volume: number }
+        Returns: string
+      }
+      fn_decant_sku_salvar: {
+        Args: {
+          p_ativo: boolean
+          p_preco: number
+          p_produto_id: string
+          p_sku: string
+          p_tamanho_id: string
+        }
+        Returns: Json
+      }
       fn_devolucao_registrar: {
         Args: {
           p_cliente_id?: string
