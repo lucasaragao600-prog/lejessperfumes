@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import CartaoNotaTransferencia from "@/components/transferencias/CartaoNotaTransferencia";
 import { X, Copy, FileDown, Truck, PackageCheck, CheckCircle2, XCircle, Loader2, Clock, FastForward } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/context/AppContext";
@@ -130,6 +131,7 @@ export default function ReposicaoDetalhe({ reposicao, onClose }: { reposicao: Re
         </div>
 
         <div className="p-4 space-y-4">
+          <CartaoNotaTransferencia tipo="reposicao" origemId={reposicao.id} />
           <div className="grid grid-cols-2 gap-3 text-[11px]">
             {[
               ["Criada em", formatarDataHora(rep.created_at)],
