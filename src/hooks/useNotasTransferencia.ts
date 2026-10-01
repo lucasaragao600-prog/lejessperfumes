@@ -39,7 +39,7 @@ export interface NtDetalhe {
   recebido_por_nome: string | null; recebido_em: string | null;
   cancelado_por_nome: string | null; cancelado_em: string | null; cancelado_motivo: string | null;
   transportador: string; observacao: string;
-  reimpressoes: number; mostrar_valores: boolean; conferencia_cega: boolean; itens: NtItem[];
+  reimpressoes: number; rodape?: string; mostrar_valores: boolean; conferencia_cega: boolean; itens: NtItem[];
 }
 
 export function useNtAtiva() {
