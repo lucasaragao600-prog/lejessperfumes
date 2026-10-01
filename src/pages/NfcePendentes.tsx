@@ -260,7 +260,7 @@ ${nfceSection}
               <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: badge.bg, color: badge.color }}>{badge.label}</span>
             </div>
             <div className="flex gap-2 flex-wrap">
-              {canEmit(selected.nfceStatus) && temCertificado && (
+              {canEmit(selected.nfceStatus) && (
                 <button onClick={() => handleGerarNfce(selected)} disabled={gerandoId === selected.grupoVenda}
                   className="px-4 py-2 text-xs font-bold rounded-xl flex items-center gap-2 disabled:opacity-50"
                   style={{ background: "var(--gradient-gold)", color: "hsl(var(--primary-foreground))" }}>
@@ -476,7 +476,7 @@ ${nfceSection}
                         <Printer size={16} />
                       </button>
                     )}
-                    {canEmit(reg.nfceStatus) && temCertificado && (
+                    {canEmit(reg.nfceStatus) && (
                       <button onClick={() => handleGerarNfce(reg)} disabled={gerandoId === reg.grupoVenda}
                         className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all disabled:opacity-50" title="Gerar NFC-e">
                         {gerandoId === reg.grupoVenda ? <Loader2 size={16} className="animate-spin" /> : <FileText size={16} />}
