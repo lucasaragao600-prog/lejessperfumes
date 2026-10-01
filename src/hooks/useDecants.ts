@@ -14,6 +14,7 @@ export interface DecantConfig {
   venda_sob_demanda?: boolean;
   transferir_frasco_aberto?: boolean;
   perda_max_pct?: number;
+  volume_critico_ml?: number;
 }
 
 export interface FrascoAberto {

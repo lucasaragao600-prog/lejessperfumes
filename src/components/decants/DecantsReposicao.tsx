@@ -54,7 +54,7 @@ export function AbaReposicaoDecant() {
                 {Number(l.deficit_ml) > 0 && (
                   <p className="text-xs text-destructive flex items-center gap-1"><AlertTriangle className="w-3 h-3" />Faltam {fmtMl(Number(l.deficit_ml))}</p>
                 )}
-                <button className="btn-gold w-full" onClick={() => setSel(l)}><Factory className="w-4 h-4 mr-1 inline" />Produzir</button>
+                <button className="btn-primary w-full" onClick={() => setSel(l)}><Factory className="w-4 h-4 mr-1 inline" />Produzir</button>
               </div>
             ))}
           </div>
@@ -105,8 +105,8 @@ function DialogProduzir({ l, onClose }: { l: ReposicaoLinha; onClose: () => void
           <p>Ordem a criar: <b>{qtd} un</b>{falta && qtd > 0 ? " (o máximo possível com o ml atual)" : ""}.</p>
         </div>
         <div className="flex justify-end gap-2 pt-2">
-          <button className="btn-outline-gold" onClick={onClose}>Fechar</button>
-          <button className="btn-gold" disabled={qtd <= 0 || criar.isPending} onClick={confirmar}>
+          <button className="btn-secondary" onClick={onClose}>Fechar</button>
+          <button className="btn-primary" disabled={qtd <= 0 || criar.isPending} onClick={confirmar}>
             {criar.isPending ? "Criando…" : "Criar ordem de produção"}
           </button>
         </div>
