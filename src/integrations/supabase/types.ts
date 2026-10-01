@@ -3073,6 +3073,16 @@ export type Database = {
         Args: { _produto: string; _qtd: number; _unidade: string }
         Returns: undefined
       }
+      fn__estoque_filtrado: {
+        Args: { p: Json }
+        Returns: {
+          estoques: Json
+          produto_id: string
+          qtd: number
+          tester_qtd: number
+          testers: Json
+        }[]
+      }
       fn__hoje_manaus: { Args: never; Returns: string }
       fn__nome_usuario: { Args: never; Returns: string }
       fn__pode: {
@@ -3158,6 +3168,11 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_estoque_listar: {
+        Args: { p_filtros?: Json; p_limite?: number; p_offset?: number }
+        Returns: Json
+      }
+      fn_estoque_resumo: { Args: { p_filtros?: Json }; Returns: Json }
       fn_implantacao_carga_manual_aprovar: {
         Args: { p_item_id: string }
         Returns: undefined

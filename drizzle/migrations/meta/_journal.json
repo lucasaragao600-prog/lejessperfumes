@@ -127,6 +127,13 @@
       "when": 1790777843914,
       "tag": "0017_fase1a_cancelamento_devolucao_troca_credito",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790860452762,
+      "tag": "0018_fase1c_estoque_servidor",
+      "breakpoints": true
     }
   ]
 }
