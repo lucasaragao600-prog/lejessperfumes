@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { Search, FileText, AlertTriangle, CheckCircle2, Loader2, Calendar, User, CreditCard, ShieldAlert, Eye, Printer, Download, Key, Filter, X, ChevronLeft } from "lucide-react";
 import { useVendas } from "@/hooks/useVendas";
 import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
-import { emitirNfce, imprimirDanfe } from "@/lib/nfceEmitir";
+import { emitirNfce, imprimirDanfe, cancelarNfce } from "@/lib/nfceEmitir";
 import { useQueryClient } from "@tanstack/react-query";
 import { useClientes } from "@/hooks/useClientes";
 import { useApp } from "@/context/AppContext";
@@ -29,6 +29,7 @@ const statusConfig: Record<string, { label: string; bg: string; color: string }>
   rejeitada: { label: "NFC-e rejeitada", bg: "hsl(var(--destructive) / 0.15)", color: "hsl(var(--destructive))" },
   processando: { label: "Em processamento", bg: "hsl(var(--warning) / 0.15)", color: "hsl(var(--warning))" },
   sem_certificado: { label: "Sem certificado", bg: "hsl(var(--muted) / 0.5)", color: "hsl(var(--muted-foreground))" },
+  cancelada: { label: "NFC-e cancelada", bg: "hsl(var(--muted) / 0.5)", color: "hsl(var(--muted-foreground))" },
   pendente: { label: "Pendente de emissão", bg: "hsl(var(--warning) / 0.15)", color: "hsl(var(--warning))" },
 };
 
@@ -40,6 +41,7 @@ const statusFilterOptions: { value: string; label: string }[] = [
   { value: "processando", label: "Processando" },
   { value: "autorizada", label: "Autorizada" },
   { value: "rejeitada", label: "Rejeitada" },
+  { value: "cancelada", label: "Cancelada" },
   { value: "sem_certificado", label: "Sem certificado" },
 ];
 
@@ -54,6 +56,23 @@ export default function NfcePendentes() {
   const [gerandoId, setGerandoId] = useState<string | null>(null);
   const [selected, setSelected] = useState<NfceRegistro | null>(null);
   const queryClient = useQueryClient();
+  const [cancelando, setCancelando] = useState(false);
+  const [justificativa, setJustificativa] = useState("");
+  const [enviandoCancel, setEnviandoCancel] = useState(false);
+
+  const handleCancelar = async (reg: NfceRegistro) => {
+    if (justificativa.trim().length < 15) { toast.error("Escreva o motivo com pelo menos 15 letras"); return; }
+    setEnviandoCancel(true);
+    try {
+      const res = await cancelarNfce(reg.grupoVenda, justificativa.trim());
+      if (!res.ok) { toast.error(`Cancelamento não aceito: ${res.motivo}`); return; }
+      toast.success("NFC-e cancelada na SEFAZ");
+      setSelected({ ...reg, nfceStatus: "cancelada" });
+      setCancelando(false); setJustificativa("");
+      queryClient.invalidateQueries({ queryKey: ["nfce_emissoes"] });
+      queryClient.invalidateQueries({ queryKey: ["vendas"] });
+    } finally { setEnviandoCancel(false); }
+  };
 
   const temCertificado = hasCertificadoConfigurado(configFiscal);
 
@@ -99,6 +118,7 @@ export default function NfcePendentes() {
       const emissao = emissoes.find(e => e.vendaGrupoVenda === gv);
       if (emissao) {
         if (emissao.chaveAcesso) p.nfceChave = emissao.chaveAcesso;
+        if (emissao.status === "cancelada") p.nfceStatus = "cancelada";
       }
     }
     return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
@@ -248,6 +268,12 @@ ${nfceSection}
                   <button onClick={() => handlePrintDanfe(selected)} className="btn-secondary px-4 py-2 text-xs flex items-center gap-2">
                     <Printer size={14} /> Imprimir DANFE
                   </button>
+                  {emissao?.dataEmissao && Date.now() - new Date(emissao.dataEmissao).getTime() < 30 * 60000 && (
+                    <button onClick={() => setCancelando(v => !v)} className="px-4 py-2 text-xs rounded-xl flex items-center gap-2"
+                      style={{ background: "hsl(var(--destructive) / 0.15)", color: "hsl(var(--destructive))" }}>
+                      <XCircle size={14} /> Cancelar NFC-e
+                    </button>
+                  )}
                   {emissao?.xmlUrl?.startsWith("http") && (
                     <a href={emissao.xmlUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary px-4 py-2 text-xs flex items-center gap-2">
                       <Download size={14} /> Baixar XML
@@ -271,6 +297,23 @@ ${nfceSection}
               <div key={f.l}><p className="text-[10px] text-muted-foreground">{f.l}</p><p className="text-sm font-medium text-foreground">{f.v}</p></div>
             ))}
           </div>
+
+          {cancelando && selected.nfceStatus === "autorizada" && (
+            <div className="rounded-xl p-3 space-y-2" style={{ background: "hsl(var(--destructive) / 0.08)", border: "1px solid hsl(var(--destructive) / 0.25)" }}>
+              <p className="text-xs font-medium text-foreground">Cancelar a nota na SEFAZ (prazo de 30 minutos após a emissão)</p>
+              <p className="text-[10px] text-muted-foreground">Isto cancela só a nota fiscal. Para devolver o produto ao estoque e o dinheiro ao caixa, cancele também a venda na tela de Vendas.</p>
+              <textarea value={justificativa} onChange={e => setJustificativa(e.target.value)} rows={2} maxLength={255}
+                placeholder="Motivo do cancelamento (mínimo 15 letras)" className="input-premium w-full px-2 py-2 text-xs" />
+              <div className="flex gap-2 justify-end">
+                <button onClick={() => { setCancelando(false); setJustificativa(""); }} className="btn-secondary px-3 py-1.5 text-xs">Voltar</button>
+                <button onClick={() => handleCancelar(selected)} disabled={enviandoCancel}
+                  className="px-3 py-1.5 text-xs rounded-xl font-bold flex items-center gap-2 disabled:opacity-50"
+                  style={{ background: "hsl(var(--destructive))", color: "hsl(var(--destructive-foreground))" }}>
+                  {enviandoCancel ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />} Confirmar cancelamento
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* NFC-e fiscal info */}
           {selected.nfceStatus === "autorizada" && selected.nfceChave && (
