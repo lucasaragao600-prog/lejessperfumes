@@ -162,7 +162,11 @@ export default function NfcePendentes() {
       const res = await emitirNfce(reg.grupoVenda);
       queryClient.invalidateQueries({ queryKey: ["nfce_emissoes"] });
       queryClient.invalidateQueries({ queryKey: ["vendas"] });
-      if (!res.ok) { toast.error(explicarRejeicao(res.cStat ? `${res.cStat} ${res.motivo}` : res.motivo)); return; }
+      if (!res.ok) {
+        toast.error(explicarRejeicao(res.cStat ? `${res.cStat} ${res.motivo}` : res.motivo), { duration: 10000 });
+        if (selected?.grupoVenda === reg.grupoVenda) setSelected({ ...reg, nfceStatus: "rejeitada" });
+        return;
+      }
       if (!soImprimir) toast.success(`NFC-e nº ${res.numero} autorizada`);
       if (selected?.grupoVenda === reg.grupoVenda) setSelected({ ...reg, nfceStatus: "autorizada", nfceChave: res.chave || "" });
       await imprimirDanfe(res,
@@ -238,7 +242,7 @@ ${nfceSection}
     pw.onload = () => pw.print();
   };
 
-  const canEmit = (s: NfceStatus) => s === "pendente" || s === "rejeitada";
+  const canEmit = (s: NfceStatus) => s === "pendente" || s === "rejeitada" || s === ("sem_certificado" as NfceStatus);
 
   // ─── Detail View ───
   if (selected) {

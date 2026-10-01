@@ -552,9 +552,23 @@ ${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-s
                       </button>
                     </>
                   ) : (
-                    <span className="px-4 py-2 rounded-xl inline-flex items-center gap-2 text-xs max-w-sm" style={{ background: "hsl(var(--destructive) / 0.15)", color: "hsl(var(--destructive))" }}>
-                      <AlertTriangle size={14} /> NFC-e não autorizada: {explicarRejeicao(nfceResultado.cStat ? `${nfceResultado.cStat} ${nfceResultado.motivo}` : nfceResultado.motivo)} A venda foi salva; reenvie pela tela NFC-e.
-                    </span>
+                    <div className="flex flex-col items-center gap-2">
+                      <span className="px-4 py-2 rounded-xl inline-flex items-center gap-2 text-xs max-w-sm" style={{ background: "hsl(var(--destructive) / 0.15)", color: "hsl(var(--destructive))" }}>
+                        <AlertTriangle size={14} /> NFC-e não autorizada: {explicarRejeicao(nfceResultado.cStat ? `${nfceResultado.cStat} ${nfceResultado.motivo}` : nfceResultado.motivo)} A venda foi salva.
+                      </span>
+                      <button className="btn-secondary px-4 py-2 text-xs inline-flex items-center gap-2"
+                        onClick={() => {
+                          if (!grupoVendaAtual) return;
+                          setNfceResultado(null);
+                          emitirNfce(grupoVendaAtual).then(res => {
+                            setNfceResultado(res);
+                            if (res.ok) { toast.success(`NFC-e nº ${res.numero} autorizada`); if (nfceDanfe) imprimirDanfe(res, nfceDanfe.itens, nfceDanfe.pags, nfceDanfe.troco); }
+                            else toast.error(`NFC-e recusada: ${res.motivo}`);
+                          });
+                        }}>
+                        Tentar enviar de novo
+                      </button>
+                    </div>
                   )}
                 </div>
               )}
