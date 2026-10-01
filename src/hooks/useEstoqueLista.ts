@@ -106,6 +106,7 @@ export function useEstoqueLista(filtros: FiltrosEstoque, chaves: string[]) {
     },
     placeholderData: keepPreviousData,
     staleTime: 30_000,
+    enabled: chaves.length > 0,
   });
 }
 

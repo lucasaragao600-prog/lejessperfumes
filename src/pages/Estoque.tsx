@@ -526,7 +526,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
 
       {/* List */}
       <div className={`px-4 space-y-3 ${lista.isPlaceholderData ? "opacity-60 transition-opacity" : ""}`}>
-        {lista.isLoading && Array.from({ length: 4 }).map((_, i) => (
+        {(lista.isLoading || lista.isPending) && Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="card-premium p-4 space-y-3">
             <div className="flex gap-3">
               <div className="w-14 h-14 rounded-xl bg-muted animate-pulse" />
@@ -586,7 +586,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
           </div>
         )}
 
-        {!lista.isLoading && !lista.isError && itens.length === 0 && (
+        {!lista.isPending && !lista.isError && itens.length === 0 && (
           <div className="text-center py-20">
             <Package size={40} className="text-muted-foreground mx-auto mb-4 opacity-40" />
             <p className="text-muted-foreground text-sm">
