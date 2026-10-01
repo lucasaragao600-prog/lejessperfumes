@@ -2,7 +2,8 @@ import { useState, useMemo } from "react";
 import { Search, Eye, Printer, ShoppingCart, Calendar, User, CreditCard, ChevronLeft, FileText, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import { useVendas } from "@/hooks/useVendas";
 import { useAuth } from "@/context/AuthContext";
-import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
+import { emitirNfce, imprimirDanfe, explicarRejeicao } from "@/lib/nfceEmitir";
+import { useQueryClient } from "@tanstack/react-query";
 import { useClientes } from "@/hooks/useClientes";
 import { formatCurrency } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
@@ -51,7 +52,7 @@ const fiscalBadge = (status: NfceStatus) => {
 export default function PedidosVenda() {
   const { vendas, pagamentos: vendaPagamentos, atualizarNfceStatus } = useVendas();
   useAuth();
-  const { configFiscal, criarEmissao, gerarXmlNfce } = useNfce();
+  const queryClient = useQueryClient();
   const { clientes } = useClientes();
   const { perfumes } = useApp();
   const [busca, setBusca] = useState("");
@@ -125,35 +126,21 @@ export default function PedidosVenda() {
   };
 
   const handleGerarNfce = async (pedido: PedidoResumo) => {
-    if (!hasCertificadoConfigurado(configFiscal)) {
-      toast.error("Certificado digital não configurado. Acesse Configurações para cadastrar.");
-      return;
-    }
     setGerandoId(pedido.grupoVenda);
     try {
-      await criarEmissao({ vendaGrupoVenda: pedido.grupoVenda });
-      if (configFiscal) {
-        gerarXmlNfce({
-          emitente: configFiscal,
-          itens: pedido.itens.map(item => ({
-            codigo: item.perfumeId.slice(0, 8),
-            descricao: `${getCasa(item.perfumeId)} - ${item.perfumeNome}`,
-            ncm: "33030010", cfop: "5102", cstCsosn: "102", unidade: "UN",
-            quantidade: item.quantidade, valor: item.precoUnitario,
-          })),
-          pagamentos: pedido.pagamentos.map(p => ({ forma: p.tipoPagamento, valor: p.valor })),
-          total: pedido.total,
-          numero: configFiscal.proximoNumeroNfce,
-          serie: configFiscal.serieNfce,
-        });
+      const res = await emitirNfce(pedido.grupoVenda);
+      queryClient.invalidateQueries({ queryKey: ["nfce_emissoes"] });
+      queryClient.invalidateQueries({ queryKey: ["vendas"] });
+      if (!res.ok) {
+        toast.error(explicarRejeicao(res.cStat ? `${res.cStat} ${res.motivo}` : res.motivo), { duration: 10000 });
+        if (selectedPedido?.grupoVenda === pedido.grupoVenda) setSelectedPedido({ ...pedido, nfceStatus: "rejeitada" });
+        return;
       }
-      // XML generated but NOT authorized - needs real SEFAZ integration
-      // Keep as pendente until real SEFAZ response
-      await atualizarNfceStatus({ grupoVenda: pedido.grupoVenda, nfceStatus: "pendente" });
-      toast.info("XML gerado. Aguardando integração com SEFAZ para autorização.");
-      if (selectedPedido?.grupoVenda === pedido.grupoVenda) {
-        setSelectedPedido({ ...pedido, nfceStatus: "pendente" });
-      }
+      toast.success(`NFC-e nº ${res.numero} autorizada${res.ambiente !== "producao" ? " (teste, sem valor fiscal)" : ""}`);
+      if (selectedPedido?.grupoVenda === pedido.grupoVenda) setSelectedPedido({ ...pedido, nfceStatus: "autorizada", nfceChave: res.chave || "" });
+      await imprimirDanfe(res,
+        pedido.itens.map(i => ({ nome: `${getCasa(i.perfumeId)} ${i.perfumeNome}`, quantidade: i.quantidade, precoUnitario: i.precoUnitario, total: i.total })),
+        pedido.pagamentos.map(p => ({ tipo: p.tipoPagamento, valor: p.valor })));
     } catch (err) {
       console.error("Erro ao gerar NFC-e:", err);
       toast.error("Erro ao gerar NFC-e");
@@ -243,7 +230,7 @@ ${pedido.nfceStatus === "autorizada" && pedido.nfceChave ? `<div style="font-siz
               </span>
             </div>
             <div className="flex gap-2">
-              {(selectedPedido.nfceStatus === "pendente" || selectedPedido.nfceStatus === "sem_certificado") && (
+              {(selectedPedido.nfceStatus === "pendente" || selectedPedido.nfceStatus === "sem_certificado" || selectedPedido.nfceStatus === "rejeitada" || selectedPedido.nfceStatus === "autorizada") && (
                 <button
                   onClick={() => handleGerarNfce(selectedPedido)}
                   disabled={gerandoId === selectedPedido.grupoVenda}
@@ -396,7 +383,7 @@ ${pedido.nfceStatus === "autorizada" && pedido.nfceChave ? `<div style="font-siz
                     <button onClick={() => handleReprint(pedido)} className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-surface-raised transition-all" title="Reimprimir">
                       <Printer size={16} />
                     </button>
-                    {(pedido.nfceStatus === "pendente" || pedido.nfceStatus === "sem_certificado") && (
+                    {(pedido.nfceStatus === "pendente" || pedido.nfceStatus === "sem_certificado" || pedido.nfceStatus === "rejeitada") && (
                       <button
                         onClick={() => handleGerarNfce(pedido)}
                         disabled={gerandoId === pedido.grupoVenda}
