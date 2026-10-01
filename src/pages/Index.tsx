@@ -32,6 +32,7 @@ import { useAlertas } from "@/hooks/useAlertas";
 import PrimeiroCadastro from "@/pages/PrimeiroCadastro";
 
 const Index = () => {
+  const { src: logoLeJess, personalizada: logoCustom } = useLogoEmpresa();
   const { user, role, loading, profile, signOut, hasMaster, refreshUserData } = useAuth();
   const [activeTab, setActiveTab] = useState("estoque");
 
