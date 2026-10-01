@@ -9,6 +9,7 @@ import { AppProvider } from "@/context/AppContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ScanDecant from "./pages/ScanDecant";
+import ScanNota from "./pages/ScanNota";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +25,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/d/:codigo" element={<ScanDecant />} />
+                <Route path="/nt/:codigo" element={<ScanNota />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

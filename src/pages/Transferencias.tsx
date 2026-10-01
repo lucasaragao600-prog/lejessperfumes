@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
-import { ArrowLeftRight, Plus, ListOrdered, AlertTriangle } from "lucide-react";
+import { ArrowLeftRight, Plus, ListOrdered, AlertTriangle, FileText } from "lucide-react";
+import { useNtAtiva } from "@/hooks/useNotasTransferencia";
+import NotasTransferencia from "@/components/transferencias/NotasTransferencia";
 import { useUnidades } from "@/hooks/useUnidades";
 import { TRF_STATUS_META, useTransferencias, type Transferencia } from "@/hooks/useTransferencias";
 import NovaTransferencia from "@/components/transferencias/NovaTransferencia";
 import TransferenciaDetalhe from "@/components/transferencias/TransferenciaDetalhe";
 
-type SubTab = "lista" | "nova" | "divergencias";
+type SubTab = "lista" | "nova" | "divergencias" | "notas";
 
 export default function Transferencias() {
   const { transferencias, isLoading } = useTransferencias();
@@ -15,6 +17,7 @@ export default function Transferencias() {
   const [filtroStatus, setFiltroStatus] = useState("");
   const [filtroUnidade, setFiltroUnidade] = useState("");
   const [busca, setBusca] = useState("");
+  const { data: ntAtiva } = useNtAtiva();
 
   const aberta = transferencias.find((t) => t.id === abertaId) || null;
   const nomeUnidade = (id: string) => todas.find((u) => u.id === id)?.nomeExibicao || "—";
@@ -51,6 +54,7 @@ export default function Transferencias() {
           { id: "lista", label: "Todas", icon: ListOrdered },
           { id: "nova", label: "Nova", icon: Plus },
           { id: "divergencias", label: `Divergências${divergentes.length ? ` (${divergentes.length})` : ""}`, icon: AlertTriangle },
+          ...(ntAtiva ? [{ id: "notas", label: "Notas", icon: FileText }] : []),
         ] as const).map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -64,7 +68,9 @@ export default function Transferencias() {
         ))}
       </div>
 
-      {tab === "nova" ? (
+      {tab === "notas" ? (
+        <NotasTransferencia />
+      ) : tab === "nova" ? (
         <NovaTransferencia onCriada={(id) => { setTab("lista"); setAbertaId(id); }} />
       ) : (
         <>

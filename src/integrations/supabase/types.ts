@@ -3200,6 +3200,215 @@ export type Database = {
           },
         ]
       }
+      notas_transferencia: {
+        Row: {
+          cancelado_em: string | null
+          cancelado_motivo: string | null
+          cancelado_por_nome: string | null
+          cnpjs_diferentes: boolean
+          codigo_publico: string
+          created_at: string
+          destino_snapshot: Json
+          destino_unidade_id: string
+          emitido_em: string
+          emitido_por: string | null
+          emitido_por_nome: string
+          id: string
+          motivo_revisao: string
+          nt_original_id: string | null
+          numero: string
+          origem_id: string
+          origem_numero: string
+          origem_snapshot: Json
+          origem_unidade_id: string
+          recebido_em: string | null
+          recebido_por: string | null
+          recebido_por_nome: string | null
+          reimpressoes: number
+          revisao: number
+          separado_por_nome: string
+          status: string
+          tipo_nota: string
+          tipo_origem: string
+          ultima_reimpressao_em: string | null
+          ultima_reimpressao_por: string | null
+        }
+        Insert: {
+          cancelado_em?: string | null
+          cancelado_motivo?: string | null
+          cancelado_por_nome?: string | null
+          cnpjs_diferentes?: boolean
+          codigo_publico?: string
+          created_at?: string
+          destino_snapshot: Json
+          destino_unidade_id: string
+          emitido_em?: string
+          emitido_por?: string | null
+          emitido_por_nome?: string
+          id?: string
+          motivo_revisao?: string
+          nt_original_id?: string | null
+          numero: string
+          origem_id: string
+          origem_numero?: string
+          origem_snapshot: Json
+          origem_unidade_id: string
+          recebido_em?: string | null
+          recebido_por?: string | null
+          recebido_por_nome?: string | null
+          reimpressoes?: number
+          revisao?: number
+          separado_por_nome?: string
+          status?: string
+          tipo_nota?: string
+          tipo_origem: string
+          ultima_reimpressao_em?: string | null
+          ultima_reimpressao_por?: string | null
+        }
+        Update: {
+          cancelado_em?: string | null
+          cancelado_motivo?: string | null
+          cancelado_por_nome?: string | null
+          cnpjs_diferentes?: boolean
+          codigo_publico?: string
+          created_at?: string
+          destino_snapshot?: Json
+          destino_unidade_id?: string
+          emitido_em?: string
+          emitido_por?: string | null
+          emitido_por_nome?: string
+          id?: string
+          motivo_revisao?: string
+          nt_original_id?: string | null
+          numero?: string
+          origem_id?: string
+          origem_numero?: string
+          origem_snapshot?: Json
+          origem_unidade_id?: string
+          recebido_em?: string | null
+          recebido_por?: string | null
+          recebido_por_nome?: string | null
+          reimpressoes?: number
+          revisao?: number
+          separado_por_nome?: string
+          status?: string
+          tipo_nota?: string
+          tipo_origem?: string
+          ultima_reimpressao_em?: string | null
+          ultima_reimpressao_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_transferencia_destino_unidade_id_fkey"
+            columns: ["destino_unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_transferencia_nt_original_id_fkey"
+            columns: ["nt_original_id"]
+            isOneToOne: false
+            referencedRelation: "notas_transferencia"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notas_transferencia_origem_unidade_id_fkey"
+            columns: ["origem_unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notas_transferencia_custos: {
+        Row: {
+          custo_unitario: number
+          item_id: string
+        }
+        Insert: {
+          custo_unitario?: number
+          item_id: string
+        }
+        Update: {
+          custo_unitario?: number
+          item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_transferencia_custos_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "notas_transferencia_itens"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notas_transferencia_itens: {
+        Row: {
+          codigo: string
+          created_at: string
+          descricao: string
+          id: string
+          nota_id: string
+          ordem: number
+          quantidade_enviada: number
+          quantidade_recebida: number | null
+          referencia_id: string | null
+          tipo_item: string
+          unidade_medida: string
+        }
+        Insert: {
+          codigo?: string
+          created_at?: string
+          descricao: string
+          id?: string
+          nota_id: string
+          ordem?: number
+          quantidade_enviada: number
+          quantidade_recebida?: number | null
+          referencia_id?: string | null
+          tipo_item?: string
+          unidade_medida?: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          descricao?: string
+          id?: string
+          nota_id?: string
+          ordem?: number
+          quantidade_enviada?: number
+          quantidade_recebida?: number | null
+          referencia_id?: string | null
+          tipo_item?: string
+          unidade_medida?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notas_transferencia_itens_nota_id_fkey"
+            columns: ["nota_id"]
+            isOneToOne: false
+            referencedRelation: "notas_transferencia"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nt_sequencias: {
+        Row: {
+          ano: number
+          ultimo: number
+        }
+        Insert: {
+          ano: number
+          ultimo?: number
+        }
+        Update: {
+          ano?: number
+          ultimo?: number
+        }
+        Relationships: []
+      }
       perfumes: {
         Row: {
           casa_sigla: string
@@ -4690,6 +4899,33 @@ export type Database = {
       fn__fmt_ml: { Args: { _v: number }; Returns: string }
       fn__hoje_manaus: { Args: never; Returns: string }
       fn__nome_usuario: { Args: never; Returns: string }
+      fn__nt_cancelar: {
+        Args: { p_motivo: string; p_origem_id: string; p_tipo_origem: string }
+        Returns: number
+      }
+      fn__nt_cfg: { Args: never; Returns: Json }
+      fn__nt_emitir: {
+        Args: {
+          p_destino_un: string
+          p_itens: Json
+          p_motivo?: string
+          p_origem_id: string
+          p_origem_numero: string
+          p_origem_un: string
+          p_original?: string
+          p_revisao?: number
+          p_separado_por_nome?: string
+          p_tipo_nota?: string
+          p_tipo_origem: string
+        }
+        Returns: string
+      }
+      fn__nt_proximo_numero: { Args: never; Returns: string }
+      fn__nt_receber: {
+        Args: { p_itens: Json; p_origem_id: string; p_tipo_origem: string }
+        Returns: string
+      }
+      fn__nt_snapshot: { Args: { p_un: string }; Returns: Json }
       fn__pode: {
         Args: { _perm: string; _unidade_id: string }
         Returns: boolean
@@ -5150,6 +5386,19 @@ export type Database = {
         Args: { p_id: string }
         Returns: number
       }
+      fn_nt_detalhe: { Args: { p_id: string }; Returns: Json }
+      fn_nt_listar: {
+        Args: {
+          p_busca?: string
+          p_limite?: number
+          p_offset?: number
+          p_status?: string
+          p_unidade?: string
+        }
+        Returns: Json
+      }
+      fn_nt_reimprimir: { Args: { p_id: string }; Returns: number }
+      fn_nt_scan_publico: { Args: { p_codigo: string }; Returns: Json }
       fn_proximo_numero_transferencia: { Args: never; Returns: string }
       fn_saida_tester: {
         Args: {
