@@ -1394,6 +1394,109 @@ export type Database = {
           },
         ]
       }
+      decant_perdas: {
+        Row: {
+          absorvida_custo: boolean
+          chave: string
+          created_at: string
+          custo_ml: number
+          frasco_id: string | null
+          id: string
+          justificativa: string
+          lote_id: string | null
+          ml: number
+          origem: string
+          produto_id: string
+          sku_id: string | null
+          tipo: string
+          unidade_id: string
+          usuario_id: string | null
+          usuario_nome: string
+          valor: number
+        }
+        Insert: {
+          absorvida_custo?: boolean
+          chave: string
+          created_at?: string
+          custo_ml?: number
+          frasco_id?: string | null
+          id?: string
+          justificativa?: string
+          lote_id?: string | null
+          ml: number
+          origem: string
+          produto_id: string
+          sku_id?: string | null
+          tipo: string
+          unidade_id: string
+          usuario_id?: string | null
+          usuario_nome?: string
+          valor?: number
+        }
+        Update: {
+          absorvida_custo?: boolean
+          chave?: string
+          created_at?: string
+          custo_ml?: number
+          frasco_id?: string | null
+          id?: string
+          justificativa?: string
+          lote_id?: string | null
+          ml?: number
+          origem?: string
+          produto_id?: string
+          sku_id?: string | null
+          tipo?: string
+          unidade_id?: string
+          usuario_id?: string | null
+          usuario_nome?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_perdas_frasco_id_fkey"
+            columns: ["frasco_id"]
+            isOneToOne: false
+            referencedRelation: "decant_frascos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_perdas_lote_id_fkey"
+            columns: ["lote_id"]
+            isOneToOne: false
+            referencedRelation: "decant_lotes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_perdas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_perdas_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "decant_perdas_sku_id_fkey"
+            columns: ["sku_id"]
+            isOneToOne: false
+            referencedRelation: "decant_skus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_perdas_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decant_perfume_config: {
         Row: {
           ativo: boolean
@@ -4452,14 +4555,22 @@ export type Database = {
         Returns: undefined
       }
       fn__decant_cfg: { Args: never; Returns: Json }
+      fn__decant_dia: { Args: { ts: string }; Returns: string }
       fn__decant_exigir: {
         Args: { _perm: string; _unidade: string }
         Returns: undefined
       }
+      fn__decant_exigir_leitura: { Args: { _perm: string }; Returns: undefined }
       fn__decant_lote_evento: {
         Args: { _dados: Json; _evento: string; _lote: string }
         Returns: undefined
       }
+      fn__decant_perda_lote: { Args: { _lote_id: string }; Returns: undefined }
+      fn__decant_perda_tipo_ml: {
+        Args: { _ref: string; _tipo: string }
+        Returns: string
+      }
+      fn__decant_rotulo: { Args: { p_produto: string }; Returns: string }
       fn__decant_un_mov: {
         Args: {
           _canal: string
@@ -4478,6 +4589,30 @@ export type Database = {
         }
         Returns: number
       }
+      fn__decant_vendas_liq: {
+        Args: { p_fim: string; p_ini: string; p_unidade: string }
+        Returns: {
+          canal: string
+          cmv: number
+          custo_unit: number
+          dia: string
+          preco_unit: number
+          produto_id: string
+          qtd: number
+          qtd_devolvida: number
+          quantidade: number
+          receita: number
+          sku_id: string
+          status: string
+          tamanho_id: string
+          unidade_id: string
+          venda_id: string
+          vendedora: string
+          volume_ml: number
+        }[]
+      }
+      fn__decant_ver_custos: { Args: never; Returns: boolean }
+      fn__decant_ver_margem: { Args: never; Returns: boolean }
       fn__devolucao_core: {
         Args: {
           p_cliente: string
@@ -4646,6 +4781,10 @@ export type Database = {
         Args: { _custo: number; _rendimento: number; _volume: number }
         Returns: number
       }
+      fn_decant_dashboard: {
+        Args: { p_fim: string; p_ini: string; p_unidade: string }
+        Returns: Json
+      }
       fn_decant_decidir_conferencia: {
         Args: {
           p_acao: string
@@ -4757,12 +4896,30 @@ export type Database = {
         Returns: Json
       }
       fn_decant_pdv_catalogo: { Args: { p_unidade_id: string }; Returns: Json }
+      fn_decant_perdas_painel: {
+        Args: { p_fim: string; p_ini: string; p_unidade: string }
+        Returns: Json
+      }
+      fn_decant_perfume_360: {
+        Args: { p_produto_id: string; p_unidade: string }
+        Returns: Json
+      }
       fn_decant_quarentena_decidir: {
         Args: {
           p_acao: string
           p_id: string
           p_lacrado: boolean
           p_obs: string
+        }
+        Returns: Json
+      }
+      fn_decant_registrar_perda: {
+        Args: {
+          p_frasco_id: string
+          p_idempotency_key: string
+          p_justificativa: string
+          p_ml: number
+          p_tipo: string
         }
         Returns: Json
       }
@@ -4773,6 +4930,24 @@ export type Database = {
           p_ml: number
           p_motivo: string
           p_tipo: string
+        }
+        Returns: Json
+      }
+      fn_decant_relatorio: {
+        Args: {
+          p_fim: string
+          p_ini: string
+          p_tipo: string
+          p_unidade: string
+        }
+        Returns: Json
+      }
+      fn_decant_rentabilidade: {
+        Args: {
+          p_agrupar: string
+          p_fim: string
+          p_ini: string
+          p_unidade: string
         }
         Returns: Json
       }

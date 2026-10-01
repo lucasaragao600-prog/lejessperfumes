@@ -15,16 +15,18 @@ import { custoPorMl, fmtBRL, fmtMl, ROTULO_MOV_ML, TIPOS_SAIDA_ML } from "@/lib/
 import { getHojeManaus as hojeManaus } from "@/lib/dateUtils";
 import { AbaProducao, AbaLotes } from "@/components/decants/DecantsProducao";
 import { AbaEstoqueDecants, AbaMovimentacoesDecant, AbaVendasDecant, AbaTransferenciasDecant } from "@/components/decants/DecantsOperacao";
+import { AbaDashboardDecants, AbaPerdasDecant, AbaRentabilidadeDecant, AbaRelatoriosDecant, Perfume360 } from "@/components/decants/DecantsAnalise";
 
 const ABAS = [
   { id: "dashboard", label: "Dashboard" }, { id: "perfumes", label: "Perfumes" },
   { id: "frascos", label: "Frascos Abertos" }, { id: "producao", label: "Produção" },
   { id: "lotes", label: "Lotes" }, { id: "estoque", label: "Estoque de Decants" },
   { id: "movimentacoes", label: "Movimentações" }, { id: "transferencias", label: "Transferências" }, { id: "perdas", label: "Perdas" },
-  { id: "reposicao", label: "Reposição" }, { id: "vendas", label: "Vendas" },
+  { id: "reposicao", label: "Reposição" }, { id: "vendas", label: "Vendas" }, { id: "rentabilidade", label: "Rentabilidade" },
   { id: "relatorios", label: "Relatórios" }, { id: "configuracoes", label: "Configurações" },
 ];
-const PRONTAS = new Set(["perfumes", "frascos", "producao", "lotes", "estoque", "movimentacoes", "vendas", "transferencias", "configuracoes"]);
+const PRONTAS = new Set(["perfumes", "frascos", "producao", "lotes", "estoque", "movimentacoes", "vendas", "transferencias", "configuracoes",
+  "dashboard", "perdas", "reposicao", "rentabilidade", "relatorios"]);
 
 const num = (v: string) => (v.trim() === "" ? NaN : Number(v.replace(",", ".")));
 const blurWheel = (e: React.WheelEvent<HTMLInputElement>) => e.currentTarget.blur();
@@ -33,7 +35,7 @@ const Campo = ({ label, children }: { label: string; children: React.ReactNode }
 );
 
 export default function Decants() {
-  const [aba, setAba] = useState("frascos");
+  const [aba, setAba] = useState("dashboard");
   const { data: cfg } = useDecantConfig();
   return (
     <div className="space-y-5">
@@ -63,6 +65,11 @@ export default function Decants() {
       {aba === "vendas" && <AbaVendasDecant />}
       {aba === "transferencias" && <AbaTransferenciasDecant />}
       {aba === "configuracoes" && <AbaConfiguracoes />}
+      {aba === "dashboard" && <AbaDashboardDecants />}
+      {aba === "perdas" && <AbaPerdasDecant />}
+      {aba === "rentabilidade" && <AbaRentabilidadeDecant />}
+      {aba === "relatorios" && <AbaRelatoriosDecant />}
+      {aba === "reposicao" && <AbaRelatoriosDecant fixo="reposicao" />}
       {!PRONTAS.has(aba) && (
         <div className="card-premium p-10 text-center text-muted-foreground">
           <p className="font-medium text-foreground">Em breve</p>
@@ -374,6 +381,7 @@ function AbaPerfumes() {
   const [soElegiveis, setSoElegiveis] = useState(true);
   const [novo, setNovo] = useState("");
   const mapa = useMemo(() => new Map(cfgs.map((c) => [c.produto_id, c])), [cfgs]);
+  const [ver360, setVer360] = useState<string | null>(null);
   const lista = useMemo(() => {
     const t = busca.toLowerCase().trim();
     return perfumes.filter((p) => (!soElegiveis || mapa.get(p.id)?.elegivel)
@@ -416,6 +424,7 @@ function AbaPerfumes() {
                   <div className="flex flex-col items-end gap-1 text-xs">
                     <label className="flex items-center gap-1">Elegível <Switch checked={!!c?.elegivel} onCheckedChange={(v) => atualizar(p.id, { elegivel: v })} /></label>
                     <label className="flex items-center gap-1">Ativo <Switch checked={c?.ativo ?? true} onCheckedChange={(v) => atualizar(p.id, { ativo: v })} /></label>
+                    <button className="text-gold hover:underline" onClick={() => setVer360(p.id)}>Visão 360°</button>
                   </div>
                 </div>
                 <div className="grid grid-cols-4 gap-2 text-sm">
@@ -431,6 +440,7 @@ function AbaPerfumes() {
           })}
         </div>
       )}
+      {ver360 && <Perfume360 produtoId={ver360} unidadeId={null} onClose={() => setVer360(null)} />}
     </div>
   );
 }
