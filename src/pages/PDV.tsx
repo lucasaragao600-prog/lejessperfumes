@@ -19,6 +19,7 @@ import { useClientes, type Cliente } from "@/hooks/useClientes";
 import { getHojeManaus } from "@/lib/dateUtils";
 import { ComprovantePreview, type ComprovanteData } from "@/components/ComprovantePrint";
 import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
+import { emitirNfce, imprimirDanfe, type ResultadoNfce } from "@/lib/nfceEmitir";
 import { useCaixa } from "@/hooks/useCaixa";
 import { useUnidades } from "@/hooks/useUnidades";
 
@@ -106,6 +107,8 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   const [showFinalizacao, setShowFinalizacao] = useState(false);
   const [showComprovante, setShowComprovante] = useState(false);
   const [comprovanteData, setComprovanteData] = useState<ComprovanteData | null>(null);
+  const [nfceResultado, setNfceResultado] = useState<ResultadoNfce | null>(null);
+  const [nfceDanfe, setNfceDanfe] = useState<{ itens: any[]; pags: any[]; troco: number } | null>(null);
   const [grupoVendaAtual, setGrupoVendaAtual] = useState("");
 
   const clienteSelecionado = clientes.find(c => c.id === clienteId) || null;
@@ -399,14 +402,19 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
           setTipoDocumento("comprovante");
           // Mark as sem_certificado (already set above)
         } else {
-          try {
-            await criarEmissao({ vendaGrupoVenda: grupoVenda });
-            // NFC-e stays pendente until real SEFAZ authorization
-            setTipoDocumento("nfce");
-          } catch (err) {
-            console.error("Erro ao criar emissão NFC-e:", err);
-            setTipoDocumento("comprovante");
-          }
+          setTipoDocumento("nfce");
+          setNfceResultado(null);
+          const danfe = {
+            itens: itens.map(i => ({ nome: i.perfumeNome, quantidade: i.quantidade, precoUnitario: i.precoUnitario, total: i.total })),
+            pags: pagamentos.map(p => ({ tipo: p.tipoPagamento, valor: p.valor })),
+            troco: trocoCalculado,
+          };
+          setNfceDanfe(danfe);
+          emitirNfce(grupoVenda).then(res => {
+            setNfceResultado(res);
+            if (res.ok) { toast.success(`NFC-e nº ${res.numero} autorizada`); imprimirDanfe(res, danfe.itens, danfe.pags, danfe.troco); }
+            else toast.error(`NFC-e recusada: ${res.motivo}`);
+          });
         }
       } else {
         setTipoDocumento("comprovante");
@@ -428,6 +436,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
     setVendaConcluida(false); setTroco(0); setClienteId(null);
     setTipoDocumento("comprovante"); setShowFinalizacao(false);
     setShowComprovante(false); setComprovanteData(null); setGrupoVendaAtual("");
+    setNfceResultado(null); setNfceDanfe(null);
     searchRef.current?.focus();
   };
 
@@ -527,11 +536,26 @@ ${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-s
               <h1 className="text-3xl font-bold text-foreground">Venda concluída!</h1>
               <p className="text-muted-foreground mt-2">Estoque atualizado automaticamente.</p>
               {tipoDocumento === "nfce" && (
-                <div className="mt-3 px-4 py-2 rounded-xl inline-flex items-center gap-2" style={{ background: "hsl(var(--warning) / 0.15)" }}>
-                  <AlertTriangle size={14} style={{ color: "hsl(var(--warning))" }} />
-                  <span className="text-xs" style={{ color: "hsl(var(--warning))" }}>
-                    NFC-e pendente — aguardando envio à SEFAZ
-                  </span>
+                <div className="mt-3 flex flex-col items-center gap-2">
+                  {!nfceResultado ? (
+                    <span className="px-4 py-2 rounded-xl inline-flex items-center gap-2 text-xs" style={{ background: "hsl(var(--warning) / 0.15)", color: "hsl(var(--warning))" }}>
+                      <Loader2 size={14} className="animate-spin" /> Enviando NFC-e à SEFAZ...
+                    </span>
+                  ) : nfceResultado.ok ? (
+                    <>
+                      <span className="px-4 py-2 rounded-xl inline-flex items-center gap-2 text-xs" style={{ background: "hsl(var(--success) / 0.15)", color: "hsl(var(--success))" }}>
+                        <CheckCircle2 size={14} /> NFC-e nº {nfceResultado.numero} autorizada{nfceResultado.ambiente !== "producao" ? " (teste, sem valor fiscal)" : ""}
+                      </span>
+                      <button className="btn-secondary px-3 py-1.5 text-xs inline-flex items-center gap-2"
+                        onClick={() => nfceDanfe && imprimirDanfe(nfceResultado, nfceDanfe.itens, nfceDanfe.pags, nfceDanfe.troco)}>
+                        <FileText size={14} /> Imprimir cupom fiscal
+                      </button>
+                    </>
+                  ) : (
+                    <span className="px-4 py-2 rounded-xl inline-flex items-center gap-2 text-xs max-w-sm" style={{ background: "hsl(var(--destructive) / 0.15)", color: "hsl(var(--destructive))" }}>
+                      <AlertTriangle size={14} /> NFC-e não autorizada: {nfceResultado.motivo}. A venda foi salva; reenvie pela tela NFC-e.
+                    </span>
+                  )}
                 </div>
               )}
               {!hasCertificadoConfigurado(configFiscal) && (

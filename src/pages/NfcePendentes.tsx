@@ -2,6 +2,8 @@ import { useState, useMemo } from "react";
 import { Search, FileText, AlertTriangle, CheckCircle2, Loader2, Calendar, User, CreditCard, ShieldAlert, Eye, Printer, Download, Key, Filter, X, ChevronLeft } from "lucide-react";
 import { useVendas } from "@/hooks/useVendas";
 import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
+import { emitirNfce, imprimirDanfe } from "@/lib/nfceEmitir";
+import { useQueryClient } from "@tanstack/react-query";
 import { useClientes } from "@/hooks/useClientes";
 import { useApp } from "@/context/AppContext";
 import { formatCurrency } from "@/data/mockData";
@@ -51,6 +53,7 @@ export default function NfcePendentes() {
   const [filtroStatus, setFiltroStatus] = useState("todos");
   const [gerandoId, setGerandoId] = useState<string | null>(null);
   const [selected, setSelected] = useState<NfceRegistro | null>(null);
+  const queryClient = useQueryClient();
 
   const temCertificado = hasCertificadoConfigurado(configFiscal);
 
@@ -133,35 +136,18 @@ export default function NfcePendentes() {
     return perf?.marca || "";
   };
 
-  const handleGerarNfce = async (reg: NfceRegistro) => {
-    if (!temCertificado) {
-      toast.error("Certificado digital não configurado. Acesse Configurações.");
-      return;
-    }
+  const handleGerarNfce = async (reg: NfceRegistro, soImprimir = false) => {
     setGerandoId(reg.grupoVenda);
     try {
-      await criarEmissao({ vendaGrupoVenda: reg.grupoVenda });
-      if (configFiscal) {
-        gerarXmlNfce({
-          emitente: configFiscal,
-          itens: reg.itens.map(item => ({
-            codigo: item.perfumeId.slice(0, 8),
-            descricao: `${getCasa(item.perfumeId)} - ${item.perfumeNome}`,
-            ncm: "33030010", cfop: "5102", cstCsosn: "102", unidade: "UN",
-            quantidade: item.quantidade, valor: item.precoUnitario,
-          })),
-          pagamentos: reg.pagamentos.map(p => ({ forma: p.tipoPagamento, valor: p.valor })),
-          total: reg.total,
-          numero: configFiscal.proximoNumeroNfce,
-          serie: configFiscal.serieNfce,
-        });
-      }
-      // XML generated but NOT authorized - needs real SEFAZ
-      await atualizarNfceStatus({ grupoVenda: reg.grupoVenda, nfceStatus: "pendente" });
-      toast.info("XML gerado. Aguardando integração com SEFAZ para autorização.");
-      if (selected?.grupoVenda === reg.grupoVenda) {
-        setSelected({ ...reg, nfceStatus: "pendente" });
-      }
+      const res = await emitirNfce(reg.grupoVenda);
+      queryClient.invalidateQueries({ queryKey: ["nfce_emissoes"] });
+      queryClient.invalidateQueries({ queryKey: ["vendas"] });
+      if (!res.ok) { toast.error(`NFC-e não autorizada: ${res.motivo}`); return; }
+      if (!soImprimir) toast.success(`NFC-e nº ${res.numero} autorizada`);
+      if (selected?.grupoVenda === reg.grupoVenda) setSelected({ ...reg, nfceStatus: "autorizada", nfceChave: res.chave || "" });
+      await imprimirDanfe(res,
+        reg.itens.map(i => ({ nome: `${getCasa(i.perfumeId)} ${i.perfumeNome}`, quantidade: i.quantidade, precoUnitario: i.precoUnitario, total: i.total })),
+        reg.pagamentos.map(p => ({ tipo: p.tipoPagamento, valor: p.valor })));
     } catch (err) {
       console.error("Erro ao gerar NFC-e:", err);
       toast.error("Erro ao gerar NFC-e");
@@ -172,7 +158,7 @@ export default function NfcePendentes() {
 
   const handlePrintDanfe = (reg: NfceRegistro) => {
     if (reg.nfceStatus !== "autorizada") return;
-    handlePrintReceipt(reg, true);
+    handleGerarNfce(reg, true);
   };
 
   const handlePrintReceipt = (reg: NfceRegistro, isDanfe = false) => {
@@ -262,7 +248,7 @@ ${nfceSection}
                   <button onClick={() => handlePrintDanfe(selected)} className="btn-secondary px-4 py-2 text-xs flex items-center gap-2">
                     <Printer size={14} /> Imprimir DANFE
                   </button>
-                  {emissao?.xmlUrl && (
+                  {emissao?.xmlUrl?.startsWith("http") && (
                     <a href={emissao.xmlUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary px-4 py-2 text-xs flex items-center gap-2">
                       <Download size={14} /> Baixar XML
                     </a>
