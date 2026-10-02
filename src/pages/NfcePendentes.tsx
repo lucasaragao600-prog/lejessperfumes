@@ -121,6 +121,15 @@ export default function NfcePendentes() {
         if (emissao.status === "cancelada") p.nfceStatus = "cancelada";
       }
     }
+    // Vendas já canceladas cuja NFC-e continua autorizada na SEFAZ: aparecem para poder cancelar a nota
+    for (const e of emissoes) {
+      if ((e.status as string) !== "PENDENTE_CANCELAMENTO" || map.has(e.vendaGrupoVenda)) continue;
+      map.set(e.vendaGrupoVenda, {
+        grupoVenda: e.vendaGrupoVenda, data: (e.dataEmissao || "").slice(0, 10), operador: "", vendedora: "",
+        clienteNome: "VENDA CANCELADA — NFC-e ainda autorizada", total: 0, tipoPagamento: "",
+        nfceStatus: "autorizada", nfceChave: e.chaveAcesso || "", itens: [], pagamentos: [],
+      });
+    }
     return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
   }, [vendas, vendaPagamentos, clientes, emissoes]);
 

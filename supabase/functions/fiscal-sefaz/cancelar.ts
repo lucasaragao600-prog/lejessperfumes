@@ -14,7 +14,7 @@ export async function cancelarNfce(
 ) {
   const just = esc(justificativa);
   if (just.length < 15 || just.length > 255) throw new Error("A justificativa precisa ter entre 15 e 255 caracteres");
-  const { data: em } = await admin.from("nfce_emissoes").select("*").eq("venda_grupo_venda", grupo).eq("status", "emitida").maybeSingle();
+  const { data: em } = await admin.from("nfce_emissoes").select("*").eq("venda_grupo_venda", grupo).in("status", ["emitida", "PENDENTE_CANCELAMENTO"]).order("data_emissao", { ascending: false }).limit(1).maybeSingle();
   if (!em) throw new Error("Não há NFC-e autorizada para esta venda");
   const { data: pode } = await caller.rpc("usuario_tem_permissao", { _unidade_id: em.unidade_id, _permissao: "fiscal.cancelar" });
   if (!pode) throw new Error("Você não tem permissão para cancelar notas nesta loja");
@@ -58,6 +58,6 @@ export async function cancelarNfce(
   await admin.from("nfce_emissoes").update({ status: "cancelada", data_cancelamento: new Date().toISOString(), motivo_cancelamento: just }).eq("id", em.id);
   await admin.from("vendas").update({ nfce_status: "cancelada" }).eq("grupo_venda", grupo);
   await admin.rpc("fn_audit", { p_acao: "nfce_cancelar", p_entidade: "nfce_emissoes", p_entidade_id: em.id, p_unidade_id: em.unidade_id,
-    p_dados_anteriores: { status: "emitida" }, p_dados_novos: { status: "cancelada", protocolo: prot, justificativa: just }, p_ip: "" }).then(() => {}, () => {});
+    p_dados_anteriores: { status: em.status }, p_dados_novos: { status: "cancelada", protocolo: prot, justificativa: just }, p_ip: "" }).then(() => {}, () => {});
   return { ok: true, protocolo: prot, motivo };
 }
