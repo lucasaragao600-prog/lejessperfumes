@@ -102,7 +102,7 @@ export async function emitirVenda(
   if (bloqueios.length) {
     await admin.from("nfce_tentativas").insert({ venda_grupo_venda: grupo, unidade_id: unidadeId, ambiente: amb, cstat: "VALIDACAO",
       motivo: "Bloqueada antes do envio: dados fiscais inválidos", erros_validacao: bloqueios });
-    return { ok: false, bloqueada: true, cStat: "VALIDACAO", motivo: "Corrija os dados fiscais dos produtos antes de emitir", erros: bloqueios, avisos };
+    return { ok: false, bloqueada: true, cStat: "VALIDACAO", motivo: bloqueios.map((b) => `${b.produto}: ${b.mensagem}`).join("; "), erros: bloqueios, avisos };
   }
   if (vendas.some((v: any) => v.tipo_ajuste === "acrescimo" && Number(v.total) > Number(v.preco_unitario) * Number(v.quantidade)))
     throw new Error("Vendas com acréscimo ainda não são suportadas na NFC-e");
