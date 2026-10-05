@@ -18,4 +18,5 @@
 - [x] Fiscal Etapa 1 — perfis tributários, produto_fiscal, histórico, tentativas (banco) — aguardando aprovação
 - [x] Fiscal Etapa 2 — telas (produtos, perfis, massa, histórico, CSV) — aguardando aprovação
 - [x] Fiscal Etapa 3 — validação antes de emitir + XML a partir do perfil — aguardando aprovação
-- [ ] Fiscal Etapa 4 — nota rejeitada (histórico de tentativas na tela, corrigir e reenviar)
+- [x] Fiscal Etapa 4 — tentativas na tela da NFC-e, corrigir e reenviar, sem mensagem duplicada — aguardando aprovação
+- [ ] Fiscal — conferência pelo XSD oficial antes do envio (não feita)

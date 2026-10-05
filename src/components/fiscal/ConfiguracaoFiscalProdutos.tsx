@@ -118,7 +118,7 @@ function AbaPerfis() {
 }
 
 /* ---------------- Produto individual ---------------- */
-function EditorProduto({ linha, onFechar }: { linha: ProdutoFiscalLinha; onFechar: () => void }) {
+export function EditorProduto({ linha, onFechar }: { linha: ProdutoFiscalLinha; onFechar: () => void }) {
   const { data: perfis = [] } = usePerfisTributarios();
   const { salvarProduto } = useFiscalMutations();
   const f = linha.fiscal;

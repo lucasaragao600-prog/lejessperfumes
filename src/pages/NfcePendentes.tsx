@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { Search, FileText, AlertTriangle, CheckCircle2, Loader2, Calendar, User, CreditCard, ShieldAlert, Eye, Printer, Download, Key, Filter, X, ChevronLeft, XCircle } from "lucide-react";
 import { useVendas } from "@/hooks/useVendas";
 import { useNfce, hasCertificadoConfigurado } from "@/hooks/useNfce";
+import TentativasNfce from "@/components/fiscal/TentativasNfce";
 import { emitirNfce, imprimirDanfe, cancelarNfce, explicarRejeicao } from "@/lib/nfceEmitir";
 import { useQueryClient } from "@tanstack/react-query";
 import { useClientes } from "@/hooks/useClientes";
@@ -171,8 +172,10 @@ export default function NfcePendentes() {
       const res = await emitirNfce(reg.grupoVenda);
       queryClient.invalidateQueries({ queryKey: ["nfce_emissoes"] });
       queryClient.invalidateQueries({ queryKey: ["vendas"] });
+      queryClient.invalidateQueries({ queryKey: ["nfce-tentativas", reg.grupoVenda] });
       if (!res.ok) {
-        toast.error(explicarRejeicao(res.cStat ? `${res.cStat} ${res.motivo}` : res.motivo), { duration: 10000 });
+        // Com o detalhe aberto, a explicação já aparece na tela: evita mensagem duplicada
+        if (selected?.grupoVenda !== reg.grupoVenda) toast.error(explicarRejeicao(res.cStat ? `${res.cStat} ${res.motivo}` : res.motivo), { duration: 10000 });
         if (selected?.grupoVenda === reg.grupoVenda) setSelected({ ...reg, nfceStatus: "rejeitada" });
         return;
       }
@@ -350,6 +353,8 @@ ${nfceSection}
               </>}
             </div>
           )}
+
+          <TentativasNfce grupo={selected.grupoVenda} />
 
           {/* Items */}
           <div style={{ borderTop: "1px solid hsl(var(--border))", paddingTop: "12px" }}>

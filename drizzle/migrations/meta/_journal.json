@@ -267,6 +267,27 @@
       "when": 1791224710580,
       "tag": "0037_fiscal_etapa1_base",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1791225354667,
+      "tag": "0038_fiscal_listar_rapido",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1791225405757,
+      "tag": "0039_fiscal_status_fix",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1791225453391,
+      "tag": "0040_fiscal_tentativas_ler",
+      "breakpoints": true
     }
   ]
 }

@@ -5741,6 +5741,7 @@ export type Database = {
         Args: { p_id: string }
         Returns: number
       }
+      fn_nfce_tentativas: { Args: { p_grupo: string }; Returns: Json }
       fn_nt_alertas: { Args: never; Returns: Json }
       fn_nt_cancelar: {
         Args: { p_id: string; p_motivo: string }
