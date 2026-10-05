@@ -15,3 +15,5 @@
 - [x] NT Etapa 3 — PDF A4 com 3 vias e assinaturas, térmica 72 mm, registro de impressão, QR com detalhes para logado — aguardando aprovação
 - [x] NT Etapa 4 — cartão da nota nos detalhes, aba Notas com filtros/CSV, configuração, alerta sem recebimento — aguardando aprovação
 - [x] NT Etapa 5 — notas retroativas (uma por vez, só Master, sem mexer no estoque) — aguardando aprovação
+- [x] Fiscal Etapa 1 — perfis tributários, produto_fiscal, histórico, tentativas (banco) — aguardando aprovação
+- [ ] Fiscal Etapas 2–4 — telas, validação/XML, nota rejeitada
