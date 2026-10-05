@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import NtRetroativas from "@/components/transferencias/NtRetroativas";
 import NtConfiguracao from "@/components/transferencias/NtConfiguracao";
+import ConfiguracaoFiscalProdutos from "@/components/fiscal/ConfiguracaoFiscalProdutos";
 import { Settings, Plus, Trash2, RotateCcw, Loader2, Upload, X, ShieldCheck, ShieldAlert } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import type { TipoPerfume, Concentracao } from "@/data/mockData";
@@ -271,6 +272,7 @@ export default function Configuracoes() {
       </div>
 
       <div className="px-4 space-y-5">
+        {isMasterIA && <ConfiguracaoFiscalProdutos />}
         {isMasterIA && <PerfilOlfativoLote />}
         {isMasterIA && <NtConfiguracao />}
         {isMasterIA && <NtRetroativas />}
