@@ -71,6 +71,14 @@ export interface Item { codigo: string; gtin: string; descricao: string; ncm: st
 export interface Pag { tPag: string; valor: number }
 export interface Destinatario { nome?: string; cpfCnpj: string }
 
+// Grupo de ICMS do Simples Nacional conforme o CSOSN (cada CSOSN exige sua própria tag no schema).
+function grupoIcmsSn(csosn: string) {
+  if (csosn === "500") return `<ICMSSN500><orig>0</orig><CSOSN>500</CSOSN></ICMSSN500>`;
+  if (csosn === "900") return `<ICMSSN900><orig>0</orig><CSOSN>900</CSOSN></ICMSSN900>`;
+  const c = ["102", "103", "300", "400"].includes(csosn) ? csosn : "102";
+  return `<ICMSSN102><orig>0</orig><CSOSN>${c}</CSOSN></ICMSSN102>`;
+}
+
 export function montarNfce(em: Emitente, itens: Item[], pagamentos: string | Pag[], key: any, certB64: string, destinatario?: Destinatario) {
   const dh = agoraManaus();
   const aamm = dh.slice(2, 4) + dh.slice(5, 7);
@@ -91,7 +99,7 @@ export function montarNfce(em: Emitente, itens: Item[], pagamentos: string | Pag
     const ibscbs = `<IBSCBS><CST>000</CST><cClassTrib>000001</cClassTrib><gIBSCBS><vBC>${n2(base)}</vBC><gIBSUF><pIBSUF>0.1000</pIBSUF><vIBSUF>${n2(vIbs)}</vIBSUF></gIBSUF><gIBSMun><pIBSMun>0.0000</pIBSMun><vIBSMun>0.00</vIBSMun></gIBSMun><vIBS>${n2(vIbs)}</vIBS><gCBS><pCBS>0.9000</pCBS><vCBS>${n2(vCbs)}</vCBS></gCBS></gIBSCBS></IBSCBS>`;
     const desc = homolog && i === 0 ? "NOTA FISCAL EMITIDA EM AMBIENTE DE HOMOLOGACAO - SEM VALOR FISCAL" : esc(it.descricao).slice(0, 120);
     const gtin = /^\d{8}$|^\d{12,14}$/.test(it.gtin) ? it.gtin : "SEM GTIN";
-    return `<det nItem="${i + 1}"><prod><cProd>${esc(it.codigo)}</cProd><cEAN>${gtin}</cEAN><xProd>${desc}</xProd><NCM>${dig(it.ncm)}</NCM><CFOP>${it.cfop}</CFOP><uCom>${esc(it.un)}</uCom><qCom>${it.qtd.toFixed(4)}</qCom><vUnCom>${it.valor.toFixed(10)}</vUnCom><vProd>${n2(vProd)}</vProd><cEANTrib>${gtin}</cEANTrib><uTrib>${esc(it.un)}</uTrib><qTrib>${it.qtd.toFixed(4)}</qTrib><vUnTrib>${it.valor.toFixed(10)}</vUnTrib>${vDescIt > 0 ? `<vDesc>${n2(vDescIt)}</vDesc>` : ""}<indTot>1</indTot></prod><imposto><ICMS><ICMSSN102><orig>0</orig><CSOSN>${it.csosn}</CSOSN></ICMSSN102></ICMS><PIS><PISOutr><CST>99</CST><vBC>0.00</vBC><pPIS>0.0000</pPIS><vPIS>0.00</vPIS></PISOutr></PIS><COFINS><COFINSOutr><CST>99</CST><vBC>0.00</vBC><pCOFINS>0.0000</pCOFINS><vCOFINS>0.00</vCOFINS></COFINSOutr></COFINS>${ibscbs}</imposto></det>`;
+    return `<det nItem="${i + 1}"><prod><cProd>${esc(it.codigo)}</cProd><cEAN>${gtin}</cEAN><xProd>${desc}</xProd><NCM>${dig(it.ncm)}</NCM><CFOP>${it.cfop}</CFOP><uCom>${esc(it.un)}</uCom><qCom>${it.qtd.toFixed(4)}</qCom><vUnCom>${it.valor.toFixed(10)}</vUnCom><vProd>${n2(vProd)}</vProd><cEANTrib>${gtin}</cEANTrib><uTrib>${esc(it.un)}</uTrib><qTrib>${it.qtd.toFixed(4)}</qTrib><vUnTrib>${it.valor.toFixed(10)}</vUnTrib>${vDescIt > 0 ? `<vDesc>${n2(vDescIt)}</vDesc>` : ""}<indTot>1</indTot></prod><imposto><ICMS>${grupoIcmsSn(it.csosn)}</ICMS><PIS><PISOutr><CST>99</CST><vBC>0.00</vBC><pPIS>0.0000</pPIS><vPIS>0.00</vPIS></PISOutr></PIS><COFINS><COFINSOutr><CST>99</CST><vBC>0.00</vBC><pCOFINS>0.0000</pCOFINS><vCOFINS>0.00</vCOFINS></COFINSOutr></COFINS>${ibscbs}</imposto></det>`;
   }).join("");
 
   const vNF = Math.round((total - tDesc) * 100) / 100;
