@@ -2499,6 +2499,42 @@ export type Database = {
           },
         ]
       }
+      historico_fiscal: {
+        Row: {
+          acao: string
+          antes: Json | null
+          created_at: string
+          depois: Json | null
+          entidade: string
+          entidade_id: string
+          id: string
+          usuario_id: string | null
+          usuario_nome: string | null
+        }
+        Insert: {
+          acao: string
+          antes?: Json | null
+          created_at?: string
+          depois?: Json | null
+          entidade: string
+          entidade_id: string
+          id?: string
+          usuario_id?: string | null
+          usuario_nome?: string | null
+        }
+        Update: {
+          acao?: string
+          antes?: Json | null
+          created_at?: string
+          depois?: Json | null
+          entidade?: string
+          entidade_id?: string
+          id?: string
+          usuario_id?: string | null
+          usuario_nome?: string | null
+        }
+        Relationships: []
+      }
       implantacao_checklist: {
         Row: {
           anexo_url: string
@@ -3068,6 +3104,68 @@ export type Database = {
           },
         ]
       }
+      nfce_tentativas: {
+        Row: {
+          ambiente: string | null
+          created_at: string
+          cstat: string | null
+          emissao_id: string | null
+          erros_validacao: Json | null
+          id: string
+          motivo: string | null
+          numero: number | null
+          protocolo: string | null
+          serie: number | null
+          unidade_id: string | null
+          usuario_id: string | null
+          venda_grupo_venda: string | null
+          xml_enviado: string | null
+          xml_retorno: string | null
+        }
+        Insert: {
+          ambiente?: string | null
+          created_at?: string
+          cstat?: string | null
+          emissao_id?: string | null
+          erros_validacao?: Json | null
+          id?: string
+          motivo?: string | null
+          numero?: number | null
+          protocolo?: string | null
+          serie?: number | null
+          unidade_id?: string | null
+          usuario_id?: string | null
+          venda_grupo_venda?: string | null
+          xml_enviado?: string | null
+          xml_retorno?: string | null
+        }
+        Update: {
+          ambiente?: string | null
+          created_at?: string
+          cstat?: string | null
+          emissao_id?: string | null
+          erros_validacao?: Json | null
+          id?: string
+          motivo?: string | null
+          numero?: number | null
+          protocolo?: string | null
+          serie?: number | null
+          unidade_id?: string | null
+          usuario_id?: string | null
+          venda_grupo_venda?: string | null
+          xml_enviado?: string | null
+          xml_retorno?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nfce_tentativas_emissao_id_fkey"
+            columns: ["emissao_id"]
+            isOneToOne: false
+            referencedRelation: "nfce_emissoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notas_fiscais: {
         Row: {
           cnpj: string
@@ -3412,6 +3510,120 @@ export type Database = {
         }
         Relationships: []
       }
+      perfil_tributario: {
+        Row: {
+          aliq_cbs: number | null
+          aliq_cofins: number | null
+          aliq_ibs_mun: number | null
+          aliq_ibs_uf: number | null
+          aliq_icms: number | null
+          aliq_icms_st: number | null
+          aliq_ipi: number | null
+          aliq_is: number | null
+          aliq_pis: number | null
+          arquivado: boolean
+          categoria_padrao: string | null
+          cbenef: string | null
+          cclass_trib: string | null
+          cest: string | null
+          cfop: string | null
+          created_at: string
+          criado_por: string | null
+          csosn: string | null
+          cst_cofins: string | null
+          cst_ibscbs: string | null
+          cst_icms: string | null
+          cst_ipi: string | null
+          cst_pis: string | null
+          descricao: string
+          enq_ipi: string | null
+          id: string
+          mod_bc_icms: string | null
+          mva_st: number | null
+          ncm: string | null
+          nome: string
+          origem: string | null
+          red_bc_icms: number | null
+          unidade_comercial: string | null
+          unidade_tributavel: string | null
+          updated_at: string
+        }
+        Insert: {
+          aliq_cbs?: number | null
+          aliq_cofins?: number | null
+          aliq_ibs_mun?: number | null
+          aliq_ibs_uf?: number | null
+          aliq_icms?: number | null
+          aliq_icms_st?: number | null
+          aliq_ipi?: number | null
+          aliq_is?: number | null
+          aliq_pis?: number | null
+          arquivado?: boolean
+          categoria_padrao?: string | null
+          cbenef?: string | null
+          cclass_trib?: string | null
+          cest?: string | null
+          cfop?: string | null
+          created_at?: string
+          criado_por?: string | null
+          csosn?: string | null
+          cst_cofins?: string | null
+          cst_ibscbs?: string | null
+          cst_icms?: string | null
+          cst_ipi?: string | null
+          cst_pis?: string | null
+          descricao?: string
+          enq_ipi?: string | null
+          id?: string
+          mod_bc_icms?: string | null
+          mva_st?: number | null
+          ncm?: string | null
+          nome: string
+          origem?: string | null
+          red_bc_icms?: number | null
+          unidade_comercial?: string | null
+          unidade_tributavel?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aliq_cbs?: number | null
+          aliq_cofins?: number | null
+          aliq_ibs_mun?: number | null
+          aliq_ibs_uf?: number | null
+          aliq_icms?: number | null
+          aliq_icms_st?: number | null
+          aliq_ipi?: number | null
+          aliq_is?: number | null
+          aliq_pis?: number | null
+          arquivado?: boolean
+          categoria_padrao?: string | null
+          cbenef?: string | null
+          cclass_trib?: string | null
+          cest?: string | null
+          cfop?: string | null
+          created_at?: string
+          criado_por?: string | null
+          csosn?: string | null
+          cst_cofins?: string | null
+          cst_ibscbs?: string | null
+          cst_icms?: string | null
+          cst_ipi?: string | null
+          cst_pis?: string | null
+          descricao?: string
+          enq_ipi?: string | null
+          id?: string
+          mod_bc_icms?: string | null
+          mva_st?: number | null
+          ncm?: string | null
+          nome?: string
+          origem?: string | null
+          red_bc_icms?: number | null
+          unidade_comercial?: string | null
+          unidade_tributavel?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       perfumes: {
         Row: {
           casa_sigla: string
@@ -3655,6 +3867,136 @@ export type Database = {
             foreignKeyName: "produto_custos_produto_id_fkey"
             columns: ["produto_id"]
             isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+        ]
+      }
+      produto_fiscal: {
+        Row: {
+          aliq_cbs: number | null
+          aliq_cofins: number | null
+          aliq_ibs_mun: number | null
+          aliq_ibs_uf: number | null
+          aliq_icms: number | null
+          aliq_icms_st: number | null
+          aliq_ipi: number | null
+          aliq_is: number | null
+          aliq_pis: number | null
+          cbenef: string | null
+          cclass_trib: string | null
+          cest: string | null
+          cfop: string | null
+          csosn: string | null
+          cst_cofins: string | null
+          cst_ibscbs: string | null
+          cst_icms: string | null
+          cst_ipi: string | null
+          cst_pis: string | null
+          emite_nota: boolean
+          enq_ipi: string | null
+          mod_bc_icms: string | null
+          mva_st: number | null
+          ncm: string | null
+          origem: string | null
+          perfil_id: string | null
+          perfume_id: string
+          red_bc_icms: number | null
+          unidade_comercial: string | null
+          unidade_tributavel: string | null
+          updated_at: string
+          updated_por: string | null
+          vinculo: string
+        }
+        Insert: {
+          aliq_cbs?: number | null
+          aliq_cofins?: number | null
+          aliq_ibs_mun?: number | null
+          aliq_ibs_uf?: number | null
+          aliq_icms?: number | null
+          aliq_icms_st?: number | null
+          aliq_ipi?: number | null
+          aliq_is?: number | null
+          aliq_pis?: number | null
+          cbenef?: string | null
+          cclass_trib?: string | null
+          cest?: string | null
+          cfop?: string | null
+          csosn?: string | null
+          cst_cofins?: string | null
+          cst_ibscbs?: string | null
+          cst_icms?: string | null
+          cst_ipi?: string | null
+          cst_pis?: string | null
+          emite_nota?: boolean
+          enq_ipi?: string | null
+          mod_bc_icms?: string | null
+          mva_st?: number | null
+          ncm?: string | null
+          origem?: string | null
+          perfil_id?: string | null
+          perfume_id: string
+          red_bc_icms?: number | null
+          unidade_comercial?: string | null
+          unidade_tributavel?: string | null
+          updated_at?: string
+          updated_por?: string | null
+          vinculo?: string
+        }
+        Update: {
+          aliq_cbs?: number | null
+          aliq_cofins?: number | null
+          aliq_ibs_mun?: number | null
+          aliq_ibs_uf?: number | null
+          aliq_icms?: number | null
+          aliq_icms_st?: number | null
+          aliq_ipi?: number | null
+          aliq_is?: number | null
+          aliq_pis?: number | null
+          cbenef?: string | null
+          cclass_trib?: string | null
+          cest?: string | null
+          cfop?: string | null
+          csosn?: string | null
+          cst_cofins?: string | null
+          cst_ibscbs?: string | null
+          cst_icms?: string | null
+          cst_ipi?: string | null
+          cst_pis?: string | null
+          emite_nota?: boolean
+          enq_ipi?: string | null
+          mod_bc_icms?: string | null
+          mva_st?: number | null
+          ncm?: string | null
+          origem?: string | null
+          perfil_id?: string | null
+          perfume_id?: string
+          red_bc_icms?: number | null
+          unidade_comercial?: string | null
+          unidade_tributavel?: string | null
+          updated_at?: string
+          updated_por?: string | null
+          vinculo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produto_fiscal_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfil_tributario"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produto_fiscal_perfume_id_fkey"
+            columns: ["perfume_id"]
+            isOneToOne: true
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produto_fiscal_perfume_id_fkey"
+            columns: ["perfume_id"]
+            isOneToOne: true
             referencedRelation: "perfumes_estoque_compat"
             referencedColumns: ["produto_id"]
           },
@@ -4899,6 +5241,7 @@ export type Database = {
           testers: Json
         }[]
       }
+      fn__fiscal_pode: { Args: never; Returns: boolean }
       fn__fmt_ml: { Args: { _v: number }; Returns: string }
       fn__hoje_manaus: { Args: never; Returns: string }
       fn__nome_usuario: { Args: never; Returns: string }
@@ -5356,6 +5699,7 @@ export type Database = {
         Returns: Json
       }
       fn_estoque_resumo: { Args: { p_filtros?: Json }; Returns: Json }
+      fn_fiscal_status: { Args: { r: Json }; Returns: Json }
       fn_implantacao_carga_manual_aprovar: {
         Args: { p_item_id: string }
         Returns: undefined
@@ -5437,6 +5781,39 @@ export type Database = {
         Returns: Json
       }
       fn_nt_scan_publico: { Args: { p_codigo: string }; Returns: Json }
+      fn_perfil_aplicar: {
+        Args: {
+          p_modo?: string
+          p_perfil: string
+          p_previa?: boolean
+          p_produtos: string[]
+          p_vinculo?: string
+        }
+        Returns: Json
+      }
+      fn_perfil_tributario_salvar: {
+        Args: { p_dados: Json; p_id: string }
+        Returns: string
+      }
+      fn_produto_fiscal_resolver: {
+        Args: { p_perfume_id: string }
+        Returns: Json
+      }
+      fn_produto_fiscal_salvar: {
+        Args: { p_dados: Json; p_perfume_id: string }
+        Returns: Json
+      }
+      fn_produtos_fiscal_listar: {
+        Args: {
+          p_busca?: string
+          p_limite?: number
+          p_offset?: number
+          p_perfil?: string
+          p_status?: string
+          p_tipo?: string
+        }
+        Returns: Json
+      }
       fn_proximo_numero_transferencia: { Args: never; Returns: string }
       fn_reposicao_cancelar: {
         Args: { p_id: string; p_motivo: string }
