@@ -139,7 +139,6 @@ export async function emitirVenda(
       crt: crtDe(cfg.regime_tributario), serie: cfg.serie_nfce || 1, numeroNota: numero,
       cscId: cfg.csc_id, csc: cfg.csc_token, tpAmb: AUT[amb].tpAmb,
     }, itens, pagamentos, key, certB64, destinatario);
-    void crt;
 
     const envelope = `<?xml version="1.0" encoding="utf-8"?><soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope"><soap12:Body><nfeDadosMsg xmlns="http://www.portalfiscal.inf.br/nfe/wsdl/NFeAutorizacao4"><enviNFe xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><idLote>${Date.now().toString().slice(-15)}</idLote><indSinc>1</indSinc>${nfe}</enviNFe></nfeDadosMsg></soap12:Body></soap12:Envelope>`;
     const r = await fetch(`${relayUrl}/soap`, {
