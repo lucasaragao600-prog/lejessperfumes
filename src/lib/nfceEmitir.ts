@@ -45,6 +45,8 @@ const EXPLICACOES: Record<string, string> = {
   "232": "A Inscrição Estadual da loja não está cadastrada na SEFAZ. Confira com o contador.",
   "301": "A SEFAZ apontou problema na situação cadastral da empresa (Inscrição Estadual irregular). Fale com o contador.",
   "778": "O código fiscal (NCM) de algum produto não existe ou está errado. Corrija o NCM no cadastro do produto.",
+  "215": "O arquivo da nota saiu fora do padrão da SEFAZ. Confira NCM, CFOP e CSOSN dos produtos em Configurações > Fiscal dos produtos.",
+  "386": "O CFOP não combina com o CSOSN do produto (ex.: 5405 exige CSOSN 500). Ajuste em Configurações > Fiscal dos produtos.",
   "225": "Algum dado da nota está fora do padrão exigido pela SEFAZ. Avise o suporte com a mensagem técnica.",
   "297": "A assinatura digital não foi aceita. O certificado pode estar vencido ou ser de outra empresa.",
   "280": "O certificado digital não foi aceito pela SEFAZ (vencido ou inválido). Providencie a renovação.",
@@ -58,6 +60,7 @@ const EXPLICACOES: Record<string, string> = {
 /** Explica a recusa da SEFAZ em linguagem simples. */
 export function explicarRejeicao(motivo?: string | null): string {
   const m = String(motivo || "");
+  if (/^\s*VALIDACAO/.test(m)) return `A nota não foi enviada: corrija os dados fiscais em Configurações > Fiscal dos produtos. ${m.replace(/^\s*VALIDACAO\s*/, "")}`;
   const cod = m.match(/^\s*(\d{3})/)?.[1];
   if (cod && EXPLICACOES[cod]) return EXPLICACOES[cod];
   if (/servidor fiscal|SEFAZ/i.test(m) && !cod) return "Não foi possível falar com a SEFAZ. Verifique a internet e tente reenviar.";

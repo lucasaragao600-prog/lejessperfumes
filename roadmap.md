@@ -17,4 +17,5 @@
 - [x] NT Etapa 5 — notas retroativas (uma por vez, só Master, sem mexer no estoque) — aguardando aprovação
 - [x] Fiscal Etapa 1 — perfis tributários, produto_fiscal, histórico, tentativas (banco) — aguardando aprovação
 - [x] Fiscal Etapa 2 — telas (produtos, perfis, massa, histórico, CSV) — aguardando aprovação
-- [ ] Fiscal Etapas 3–4 — validação/XML, nota rejeitada
+- [x] Fiscal Etapa 3 — validação antes de emitir + XML a partir do perfil — aguardando aprovação
+- [ ] Fiscal Etapa 4 — nota rejeitada (histórico de tentativas na tela, corrigir e reenviar)

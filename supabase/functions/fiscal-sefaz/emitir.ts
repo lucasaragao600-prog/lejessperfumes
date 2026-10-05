@@ -1,5 +1,6 @@
 // Emissão real de NFC-e a partir de uma venda (grupo_venda). Idempotente por grupo.
 import { carregarPfx, montarNfce, type Item, type Pag } from "./nfce.ts";
+import { validarItem } from "./validacao.ts";
 
 const AUT = {
   homologacao: { url: "https://homnfce.sefaz.am.gov.br/nfce-services/services/NfeAutorizacao4", tpAmb: 2 as const },
@@ -67,19 +68,42 @@ export async function emitirVenda(
   const { data: prods } = await admin.from("perfumes").select("id,codigo,nome,marca,concentracao,volume,ncm,cfop,cst_csosn,codigo_barras,unidade_fiscal").in("id", ids);
   const pm = new Map((prods || []).map((p: any) => [p.id, p]));
   const avisos: string[] = [];
+  // Dados fiscais efetivos (produto > perfil tributário > cadastro antigo)
+  const fiscal = new Map<string, any>();
+  for (const id of ids) {
+    const { data: r } = await admin.rpc("fn_produto_fiscal_resolver", { p_perfume_id: id });
+    fiscal.set(id as string, r || {});
+  }
+  const crt = crtDe(cfg.regime_tributario);
+  const bloqueios: Array<{ perfume_id: string; produto: string; campo: string; mensagem: string }> = [];
   const itens: Item[] = vendas.map((v: any) => {
     const p: any = pm.get(v.perfume_id) || {};
-    let ncm = String(p.ncm || "").replace(/\D/g, "");
-    if (ncm.length !== 8) { ncm = "33030010"; avisos.push(`${p.codigo || v.perfume_nome}: sem NCM, usado 3303.00.10`); }
+    const f: any = fiscal.get(v.perfume_id) || {};
+    const nomeProd = `${p.marca || ""} ${p.nome || v.perfume_nome || ""}`.trim();
+    for (const e of validarItem({ ...f, gtin: f.gtin ?? p.codigo_barras }, crt)) {
+      if (e.grave) bloqueios.push({ perfume_id: v.perfume_id, produto: nomeProd, campo: e.campo, mensagem: e.mensagem });
+      else avisos.push(`${nomeProd}: ${e.mensagem} (usado valor padrão)`);
+    }
+    let ncm = String(f.ncm || "").replace(/\D/g, "");
+    if (ncm.length !== 8) ncm = "33030010";
     const bruto = Number(v.preco_unitario) * Number(v.quantidade);
+    const num = (x: unknown) => (x == null || x === "" ? undefined : Number(x));
     return {
       codigo: p.codigo || String(v.perfume_id).slice(0, 8), gtin: String(p.codigo_barras || ""),
       descricao: `${p.marca || ""} - ${[p.nome, p.concentracao, p.volume ? `${p.volume}ML` : ""].filter(Boolean).join(" ")}`.replace(/\s+/g, " ").trim() || v.perfume_nome,
-      ncm, cfop: /^\d{4}$/.test(p.cfop || "") ? p.cfop : "5102", csosn: /^\d{3}$/.test(p.cst_csosn || "") ? p.cst_csosn : "102",
-      un: p.unidade_fiscal || "UN", qtd: Number(v.quantidade), valor: Number(v.preco_unitario),
+      ncm, cfop: /^\d{4}$/.test(f.cfop || "") ? f.cfop : "5102", csosn: /^\d{3}$/.test(f.csosn || "") ? f.csosn : "102",
+      un: f.unidade_comercial || p.unidade_fiscal || "UN", qtd: Number(v.quantidade), valor: Number(v.preco_unitario),
       desconto: Math.max(0, bruto - Number(v.total)),
+      origem: /^[0-8]$/.test(String(f.origem ?? "")) ? String(f.origem) : "0", cest: f.cest || undefined, cstIcms: f.cst_icms || undefined,
+      cstPis: f.cst_pis || undefined, cstCofins: f.cst_cofins || undefined, pIbsUf: num(f.aliq_ibs_uf), pCbs: num(f.aliq_cbs),
+      cstIbsCbs: f.cst_ibscbs || undefined, cClassTrib: f.cclass_trib || undefined,
     };
   });
+  if (bloqueios.length) {
+    await admin.from("nfce_tentativas").insert({ venda_grupo_venda: grupo, unidade_id: unidadeId, ambiente: amb, cstat: "VALIDACAO",
+      motivo: "Bloqueada antes do envio: dados fiscais inválidos", erros_validacao: bloqueios });
+    return { ok: false, bloqueada: true, cStat: "VALIDACAO", motivo: bloqueios.map((b) => `${b.produto}: ${b.mensagem}`).join("; "), erros: bloqueios, avisos };
+  }
   if (vendas.some((v: any) => v.tipo_ajuste === "acrescimo" && Number(v.total) > Number(v.preco_unitario) * Number(v.quantidade)))
     throw new Error("Vendas com acréscimo ainda não são suportadas na NFC-e");
 
@@ -131,6 +155,8 @@ export async function emitirVenda(
     const cStatNota = cStats[1] ?? cStats[0] ?? null;
     const motivo = motivos[1] ?? motivos[0] ?? out.error ?? "Sem resposta da SEFAZ";
 
+    await admin.from("nfce_tentativas").insert({ emissao_id: reg.id, venda_grupo_venda: grupo, unidade_id: unidadeId, numero, serie: cfg.serie_nfce || 1,
+      ambiente: amb, cstat: cStatNota, motivo, protocolo: prot, xml_enviado: nfe, xml_retorno: body.slice(0, 20000) }).then(() => {}, () => {});
     if (!prot || (cStatNota !== "100" && cStatNota !== "150")) {
       await marcar({ status: "rejeitada", motivo_rejeicao: `${cStatNota ?? "-"} - ${motivo}`, chave_acesso: chave }, "rejeitada");
       return { ok: false, numero, cStat: cStatNota, motivo, avisos };
