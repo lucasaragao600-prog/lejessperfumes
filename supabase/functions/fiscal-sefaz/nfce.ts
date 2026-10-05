@@ -71,6 +71,14 @@ export interface Item { codigo: string; gtin: string; descricao: string; ncm: st
 export interface Pag { tPag: string; valor: number }
 export interface Destinatario { nome?: string; cpfCnpj: string }
 
+// Grupo de ICMS do Simples Nacional conforme o CSOSN (cada CSOSN exige sua própria tag no schema).
+function grupoIcmsSn(csosn: string) {
+  if (csosn === "500") return `<ICMSSN500><orig>0</orig><CSOSN>500</CSOSN></ICMSSN500>`;
+  if (csosn === "900") return `<ICMSSN900><orig>0</orig><CSOSN>900</CSOSN></ICMSSN900>`;
+  const c = ["102", "103", "300", "400"].includes(csosn) ? csosn : "102";
+  return `<ICMSSN102><orig>0</orig><CSOSN>${c}</CSOSN></ICMSSN102>`;
+}
+
 export function montarNfce(em: Emitente, itens: Item[], pagamentos: string | Pag[], key: any, certB64: string, destinatario?: Destinatario) {
   const dh = agoraManaus();
   const aamm = dh.slice(2, 4) + dh.slice(5, 7);
