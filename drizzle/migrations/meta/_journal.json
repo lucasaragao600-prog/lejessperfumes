@@ -281,6 +281,13 @@
       "when": 1791225405757,
       "tag": "0039_fiscal_status_fix",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1791225453391,
+      "tag": "0040_fiscal_tentativas_ler",
+      "breakpoints": true
     }
   ]
 }
