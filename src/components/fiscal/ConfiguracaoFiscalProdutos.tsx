@@ -401,7 +401,7 @@ export default function ConfiguracaoFiscalProdutos() {
         <FileSpreadsheet size={16} className="text-gold" />
         <h2 className="text-sm font-semibold text-foreground">Fiscal dos produtos</h2>
       </div>
-      <p className="text-xs text-muted-foreground">Dados da empresa, certificado e numeração da NFC-e continuam na tela de Notas Fiscais, por loja.</p>
+      <p className="text-xs text-muted-foreground">Dados da empresa, certificado e numeração da NFC-e continuam na seção "Dados da Empresa" logo abaixo. Clique em um produto para ajustar só ele.</p>
       <div className="flex gap-1 border-b border-border">
         {(Object.keys(ABAS) as (keyof typeof ABAS)[]).map((k) => (
           <button key={k} onClick={() => setAba(k)} className={`px-3 py-2 text-xs border-b-2 -mb-px ${aba === k ? "border-gold text-gold" : "border-transparent text-muted-foreground"}`}>{ABAS[k]}</button>
