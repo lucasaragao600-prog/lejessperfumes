@@ -5244,7 +5244,9 @@ export type Database = {
       fn__fiscal_pode: { Args: never; Returns: boolean }
       fn__fmt_ml: { Args: { _v: number }; Returns: string }
       fn__hoje_manaus: { Args: never; Returns: string }
-      fn__nome_usuario: { Args: never; Returns: string }
+      fn__nome_usuario:
+        | { Args: never; Returns: string }
+        | { Args: { p_user: string }; Returns: string }
       fn__nt_cancelar: {
         Args: { p_motivo: string; p_origem_id: string; p_tipo_origem: string }
         Returns: number
