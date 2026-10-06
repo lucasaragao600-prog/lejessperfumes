@@ -288,6 +288,13 @@
       "when": 1791225453391,
       "tag": "0040_fiscal_tentativas_ler",
       "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1791290210055,
+      "tag": "0041_fiscal_nome_usuario_uuid",
+      "breakpoints": true
     }
   ]
 }
