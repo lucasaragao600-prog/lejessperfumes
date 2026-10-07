@@ -65,8 +65,12 @@ export default function GerenciarUsuarios() {
       body: { email: form.email, password: form.password, nome: form.nome, loja: form.loja, role: form.role },
     });
 
+    let msg: string | undefined = data?.error;
+    if (!msg && error && "context" in error) {
+      try { msg = (await (error as { context: Response }).context.json())?.error; } catch { /* ignora */ }
+    }
     if (error || data?.error) {
-      toast({ title: "Erro", description: data?.error || error?.message || "Erro ao criar usuário", variant: "destructive" });
+      toast({ title: "Erro ao criar usuário", description: msg || "Erro ao criar usuário", variant: "destructive" });
     } else {
       toast({ title: "Sucesso", description: `Usuário ${form.nome} criado com perfil ${form.role}` });
       setForm({ email: "", password: "", nome: "", loja: "", role: "vendedor" });

@@ -79,8 +79,11 @@ Deno.serve(async (req) => {
     if (createError) {
       console.error('[create-user] createUser error:', createError);
       let userMessage = "Erro ao criar usuário";
-      if (createError.message?.includes('already registered')) {
+      const code = (createError as { code?: string }).code;
+      if (createError.message?.includes('already registered') || code === "email_exists") {
         userMessage = "Este email já está cadastrado";
+      } else if (code === "weak_password") {
+        userMessage = "Senha muito fácil de adivinhar (já apareceu em vazamentos). Use uma senha mais forte, misturando letras, números e símbolos.";
       }
       return new Response(JSON.stringify({ error: userMessage }), {
         status: 400,
