@@ -21,6 +21,7 @@ import {
   FileText,
   Layers,
   PieChart as PieIcon,
+  ShoppingCart,
   TrendingDown,
   TrendingUp,
   Users,
@@ -233,8 +234,9 @@ export default function Relatorios() {
       </div>
 
       <Tabs defaultValue="fluxo" className="w-full">
-        <TabsList className="grid grid-cols-3 md:grid-cols-8 w-full bg-surface mb-4 h-auto">
+        <TabsList className="grid grid-cols-3 md:grid-cols-9 w-full bg-surface mb-4 h-auto">
           <TabsTrigger value="fluxo" className="text-xs py-2"><Wallet size={14} className="mr-1.5 hidden md:inline" />Fluxo de Caixa</TabsTrigger>
+          <TabsTrigger value="vendidos" className="text-xs py-2"><ShoppingCart size={14} className="mr-1.5 hidden md:inline" />Vendidos</TabsTrigger>
           <TabsTrigger value="vendedor" className="text-xs py-2"><Users size={14} className="mr-1.5 hidden md:inline" />Vendedor</TabsTrigger>
           <TabsTrigger value="giro" className="text-xs py-2"><Activity size={14} className="mr-1.5 hidden md:inline" />Giro</TabsTrigger>
           <TabsTrigger value="margem" className="text-xs py-2"><TrendingUp size={14} className="mr-1.5 hidden md:inline" />Margem</TabsTrigger>
@@ -245,6 +247,7 @@ export default function Relatorios() {
         </TabsList>
 
         <TabsContent value="fluxo"><FluxoCaixaTab concNome={concNome} /></TabsContent>
+        <TabsContent value="vendidos"><VendidosTab analise={analise} concNome={concNome} tipoNome={tipoNome} dInicio={dInicio} dFim={dFim} /></TabsContent>
         <TabsContent value="vendedor"><VendedorTab vendasFiltradas={vendasFiltradas} perfumes={perfumes} concNome={concNome} tipoNome={tipoNome} dInicio={dInicio} dFim={dFim} /></TabsContent>
         <TabsContent value="giro"><GiroTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
         <TabsContent value="margem"><MargemTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
@@ -284,6 +287,113 @@ function ClasseBadge({ classe }: { classe: string }) {
 }
 
 /* ============= GIRO ============= */
+function VendidosTab({ analise, concNome, tipoNome, dInicio, dFim }: { analise: any[]; concNome: (s: string) => string; tipoNome: (s: string) => string; dInicio: string; dFim: string }) {
+  const [ordem, setOrdem] = useState<"qtd" | "receita">("qtd");
+  const [busca, setBusca] = useState("");
+
+  const vendidos = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    return analise
+      .filter((x) => x.qtdVendida > 0)
+      .filter((x) => !q || x.perfume.nome.toLowerCase().includes(q) || x.perfume.marca.toLowerCase().includes(q) || String(x.perfume.codigo).toLowerCase().includes(q))
+      .sort((a, b) => (ordem === "qtd" ? b.qtdVendida - a.qtdVendida : b.receita - a.receita));
+  }, [analise, ordem, busca]);
+
+  const totalQtd = vendidos.reduce((s, x) => s + x.qtdVendida, 0);
+  const totalReceita = vendidos.reduce((s, x) => s + x.receita, 0);
+
+  const exportar = () => exportXlsx(
+    vendidos.map((x) => ({
+      Código: x.perfume.codigo,
+      Produto: x.perfume.nome,
+      Marca: x.perfume.marca,
+      Tipo: tipoNome(x.perfume.tipo),
+      Concentração: concNome(x.perfume.concentracao),
+      Volume: x.perfume.volume,
+      "Qtd vendida": x.qtdVendida,
+      "Receita (R$)": x.receita.toFixed(2),
+      "Ticket médio (R$)": x.qtdVendida > 0 ? (x.receita / x.qtdVendida).toFixed(2) : "0.00",
+      "Última venda": x.ultimaVenda || "",
+      "Estoque atual": x.estoqueAtual,
+    })),
+    `produtos_vendidos_${dInicio}_a_${dFim}`,
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-3">
+        <Card className="p-3 bg-card border-border">
+          <p className="text-[10px] text-muted-foreground">Produtos vendidos</p>
+          <p className="text-lg font-bold text-foreground">{vendidos.length}</p>
+        </Card>
+        <Card className="p-3 bg-card border-border">
+          <p className="text-[10px] text-muted-foreground">Itens vendidos</p>
+          <p className="text-lg font-bold text-foreground">{totalQtd}</p>
+        </Card>
+        <Card className="p-3 bg-card border-border">
+          <p className="text-[10px] text-muted-foreground">Receita no período</p>
+          <p className="text-lg font-bold text-gold">{fmtBRL(totalReceita)}</p>
+        </Card>
+      </div>
+
+      <div className="flex flex-wrap gap-2 items-center justify-between">
+        <Input
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Buscar por nome, marca ou código..."
+          className="max-w-xs h-9 text-xs"
+        />
+        <div className="flex gap-2 items-center">
+          <Select value={ordem} onValueChange={(v) => setOrdem(v as "qtd" | "receita")}>
+            <SelectTrigger className="w-44 h-9 text-xs"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="qtd">Mais vendidos (qtd)</SelectItem>
+              <SelectItem value="receita">Maior receita</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button size="sm" variant="outline" onClick={exportar} className="gap-2"><Download size={14} />Excel</Button>
+        </div>
+      </div>
+
+      <Card className="bg-card border-border overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-surface border-b border-border">
+              <tr>
+                <th className="text-left p-3 font-medium">#</th>
+                <th className="text-left p-3 font-medium">Produto</th>
+                <th className="text-right p-3 font-medium">Qtd</th>
+                <th className="text-right p-3 font-medium">Receita</th>
+                <th className="text-right p-3 font-medium">Ticket médio</th>
+                <th className="text-right p-3 font-medium">Última venda</th>
+                <th className="text-right p-3 font-medium">Estoque</th>
+              </tr>
+            </thead>
+            <tbody>
+              {vendidos.length === 0 ? (
+                <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Nenhum produto vendido no período</td></tr>
+              ) : vendidos.map((x, i) => (
+                <tr key={x.perfume.id} className="border-b border-border/50 hover:bg-surface/50">
+                  <td className="p-3 text-muted-foreground">{i + 1}</td>
+                  <td className="p-3">
+                    <p className="font-medium text-foreground">{x.perfume.nome}</p>
+                    <p className="text-[10px] text-muted-foreground">{x.perfume.marca} · {x.perfume.codigo} · {concNome(x.perfume.concentracao)} {x.perfume.volume}</p>
+                  </td>
+                  <td className="text-right p-3 font-bold text-foreground">{x.qtdVendida}</td>
+                  <td className="text-right p-3 font-medium text-gold">{fmtBRL(x.receita)}</td>
+                  <td className="text-right p-3">{x.qtdVendida > 0 ? fmtBRL(x.receita / x.qtdVendida) : "—"}</td>
+                  <td className="text-right p-3">{x.ultimaVenda ? x.ultimaVenda.split("-").reverse().join("/") : "—"}</td>
+                  <td className="text-right p-3">{x.estoqueAtual}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 function GiroTab({ analise, concNome, tipoNome }: { analise: any[]; concNome: (s: string) => string; tipoNome: (s: string) => string }) {
   const ordenado = [...analise].filter((x) => x.estoqueAtual > 0 || x.qtdVendida > 0).sort((a, b) => b.giro - a.giro);
   const top = ordenado.slice(0, 10);
