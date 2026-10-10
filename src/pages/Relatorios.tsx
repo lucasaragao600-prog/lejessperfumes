@@ -319,6 +319,35 @@ function VendidosTab({ analise, concNome, tipoNome, dInicio, dFim }: { analise: 
     `produtos_vendidos_${dInicio}_a_${dFim}`,
   );
 
+  const [gerandoPdf, setGerandoPdf] = useState(false);
+  const exportarPdf = async () => {
+    if (vendidos.length === 0) return;
+    setGerandoPdf(true);
+    try {
+      const { gerarVendidosPdf } = await import("@/lib/pdf/vendidos");
+      const doc = gerarVendidosPdf({
+        itens: vendidos.map((x) => ({
+          codigo: String(x.perfume.codigo),
+          nome: x.perfume.nome,
+          marca: x.perfume.marca,
+          tipo: tipoNome(x.perfume.tipo),
+          concentracao: concNome(x.perfume.concentracao),
+          volume: x.perfume.volume,
+          qtdVendida: x.qtdVendida,
+          receita: x.receita,
+          ultimaVenda: x.ultimaVenda || null,
+          estoqueAtual: x.estoqueAtual,
+        })),
+        dInicio,
+        dFim,
+        ordem,
+      });
+      doc.save(`produtos_vendidos_${dInicio}_a_${dFim}.pdf`);
+    } finally {
+      setGerandoPdf(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-3 gap-3">
@@ -351,6 +380,7 @@ function VendidosTab({ analise, concNome, tipoNome, dInicio, dFim }: { analise: 
               <SelectItem value="receita">Maior receita</SelectItem>
             </SelectContent>
           </Select>
+          <Button size="sm" variant="outline" onClick={exportarPdf} disabled={gerandoPdf || vendidos.length === 0} className="gap-2"><Download size={14} />{gerandoPdf ? "Gerando…" : "PDF"}</Button>
           <Button size="sm" variant="outline" onClick={exportar} className="gap-2"><Download size={14} />Excel</Button>
         </div>
       </div>
