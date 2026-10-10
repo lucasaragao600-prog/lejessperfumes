@@ -107,7 +107,7 @@ export async function gerarVendidosPdf(opts: VendidosPdfOptions): Promise<jsPDF>
     headStyles: { fillColor: DARK, textColor: GOLD, fontStyle: "bold", fontSize: 8 },
     footStyles: { fillColor: [240, 240, 240], textColor: DARK, fontStyle: "bold", fontSize: 8 },
     columnStyles: {
-      0: { cellWidth: FOTO_CX + 4, padding: 1.5 },
+      0: { cellWidth: FOTO_CX + 4, cellPadding: 1.5 },
       1: { cellWidth: 8, halign: "right", textColor: MUTED },
       3: { cellWidth: 13, halign: "center", fontStyle: "bold" },
       4: { cellWidth: 25, halign: "right" },
