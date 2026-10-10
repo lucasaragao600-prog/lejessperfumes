@@ -21,6 +21,7 @@ import {
   FileText,
   Layers,
   PieChart as PieIcon,
+  ShoppingCart,
   TrendingDown,
   TrendingUp,
   Users,
@@ -233,8 +234,9 @@ export default function Relatorios() {
       </div>
 
       <Tabs defaultValue="fluxo" className="w-full">
-        <TabsList className="grid grid-cols-3 md:grid-cols-8 w-full bg-surface mb-4 h-auto">
+        <TabsList className="grid grid-cols-3 md:grid-cols-9 w-full bg-surface mb-4 h-auto">
           <TabsTrigger value="fluxo" className="text-xs py-2"><Wallet size={14} className="mr-1.5 hidden md:inline" />Fluxo de Caixa</TabsTrigger>
+          <TabsTrigger value="vendidos" className="text-xs py-2"><ShoppingCart size={14} className="mr-1.5 hidden md:inline" />Vendidos</TabsTrigger>
           <TabsTrigger value="vendedor" className="text-xs py-2"><Users size={14} className="mr-1.5 hidden md:inline" />Vendedor</TabsTrigger>
           <TabsTrigger value="giro" className="text-xs py-2"><Activity size={14} className="mr-1.5 hidden md:inline" />Giro</TabsTrigger>
           <TabsTrigger value="margem" className="text-xs py-2"><TrendingUp size={14} className="mr-1.5 hidden md:inline" />Margem</TabsTrigger>
@@ -245,6 +247,7 @@ export default function Relatorios() {
         </TabsList>
 
         <TabsContent value="fluxo"><FluxoCaixaTab concNome={concNome} /></TabsContent>
+        <TabsContent value="vendidos"><VendidosTab analise={analise} concNome={concNome} tipoNome={tipoNome} dInicio={dInicio} dFim={dFim} /></TabsContent>
         <TabsContent value="vendedor"><VendedorTab vendasFiltradas={vendasFiltradas} perfumes={perfumes} concNome={concNome} tipoNome={tipoNome} dInicio={dInicio} dFim={dFim} /></TabsContent>
         <TabsContent value="giro"><GiroTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
         <TabsContent value="margem"><MargemTab analise={analise} concNome={concNome} tipoNome={tipoNome} /></TabsContent>
