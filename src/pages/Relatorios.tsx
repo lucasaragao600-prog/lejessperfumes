@@ -315,6 +315,7 @@ function VendidosTab({ analise, concNome, tipoNome, dInicio, dFim }: { analise: 
       "Ticket médio (R$)": x.qtdVendida > 0 ? (x.receita / x.qtdVendida).toFixed(2) : "0.00",
       "Última venda": x.ultimaVenda || "",
       "Estoque atual": x.estoqueAtual,
+      "Foto (link)": x.perfume.imageUrl || "",
     })),
     `produtos_vendidos_${dInicio}_a_${dFim}`,
   );
@@ -325,7 +326,7 @@ function VendidosTab({ analise, concNome, tipoNome, dInicio, dFim }: { analise: 
     setGerandoPdf(true);
     try {
       const { gerarVendidosPdf } = await import("@/lib/pdf/vendidos");
-      const doc = gerarVendidosPdf({
+      const doc = await gerarVendidosPdf({
         itens: vendidos.map((x) => ({
           codigo: String(x.perfume.codigo),
           nome: x.perfume.nome,
@@ -337,6 +338,7 @@ function VendidosTab({ analise, concNome, tipoNome, dInicio, dFim }: { analise: 
           receita: x.receita,
           ultimaVenda: x.ultimaVenda || null,
           estoqueAtual: x.estoqueAtual,
+          imageUrl: x.perfume.imageUrl,
         })),
         dInicio,
         dFim,
@@ -406,8 +408,22 @@ function VendidosTab({ analise, concNome, tipoNome, dInicio, dFim }: { analise: 
                 <tr key={x.perfume.id} className="border-b border-border/50 hover:bg-surface/50">
                   <td className="p-3 text-muted-foreground">{i + 1}</td>
                   <td className="p-3">
-                    <p className="font-medium text-foreground">{x.perfume.nome}</p>
-                    <p className="text-[10px] text-muted-foreground">{x.perfume.marca} · {x.perfume.codigo} · {concNome(x.perfume.concentracao)} {x.perfume.volume}</p>
+                    <div className="flex items-center gap-2">
+                      {x.perfume.imageUrl ? (
+                        <img
+                          src={x.perfume.imageUrl}
+                          alt={x.perfume.nome}
+                          loading="lazy"
+                          className="h-9 w-9 shrink-0 rounded-md border border-border object-cover bg-surface"
+                        />
+                      ) : (
+                        <span className="h-9 w-9 shrink-0 rounded-md border border-border bg-surface" aria-hidden="true" />
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-medium text-foreground truncate">{x.perfume.nome}</p>
+                        <p className="text-[10px] text-muted-foreground">{x.perfume.marca} · {x.perfume.codigo} · {concNome(x.perfume.concentracao)} {x.perfume.volume}</p>
+                      </div>
+                    </div>
                   </td>
                   <td className="text-right p-3 font-bold text-foreground">{x.qtdVendida}</td>
                   <td className="text-right p-3 font-medium text-gold">{fmtBRL(x.receita)}</td>

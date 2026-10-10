@@ -1,5 +1,6 @@
 import jsPDF from "jspdf";
 import type { Perfume } from "@/data/mockData";
+import { urlToDataUrl } from "./imagem";
 
 const GOLD: [number, number, number] = [201, 162, 74];
 const DARK: [number, number, number] = [25, 25, 28];
