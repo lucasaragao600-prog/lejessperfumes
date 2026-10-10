@@ -1,5 +1,6 @@
 // Carrega a foto de um produto como Data URL para uso dentro do PDF.
-// Usado pelos relatórios em PDF que exibem a imagem do produto.
+// As fotos são reduzidas antes de entrar no PDF: sem isso um relatório com
+// centenas de produtos geraria um arquivo de dezenas de megabytes.
 
 export interface ImagemPdf {
   data: string;
@@ -7,25 +8,42 @@ export interface ImagemPdf {
   h: number;
 }
 
-async function loadImageViaCanvas(url: string): Promise<ImagemPdf | null> {
+/** Lado máximo (px) de uma foto embutida no PDF. 240px basta para as caixas usadas. */
+export const LADO_MAX = 240;
+
+function reduzir(
+  fonte: CanvasImageSource,
+  larguraOriginal: number,
+  alturaOriginal: number,
+  maxLado: number,
+): ImagemPdf | null {
+  try {
+    const escala = Math.min(1, maxLado / Math.max(larguraOriginal, alturaOriginal || 1));
+    const w = Math.max(1, Math.round((larguraOriginal || 1) * escala));
+    const h = Math.max(1, Math.round((alturaOriginal || 1) * escala));
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    // fundo branco: fotos com transparência não viram mancha preta
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(fonte, 0, 0, w, h);
+    return { data: canvas.toDataURL("image/jpeg", 0.72), w, h };
+  } catch {
+    return null;
+  }
+}
+
+async function loadImageViaCanvas(url: string, maxLado: number): Promise<ImagemPdf | null> {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     const timer = setTimeout(() => resolve(null), 10000);
     img.onload = () => {
       clearTimeout(timer);
-      try {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth || 1;
-        canvas.height = img.naturalHeight || 1;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return resolve(null);
-        ctx.drawImage(img, 0, 0);
-        const data = canvas.toDataURL("image/jpeg", 0.85);
-        resolve({ data, w: canvas.width, h: canvas.height });
-      } catch {
-        resolve(null);
-      }
+      resolve(reduzir(img, img.naturalWidth || 1, img.naturalHeight || 1, maxLado));
     };
     img.onerror = () => {
       clearTimeout(timer);
@@ -35,7 +53,7 @@ async function loadImageViaCanvas(url: string): Promise<ImagemPdf | null> {
   });
 }
 
-export async function urlToDataUrl(url: string): Promise<ImagemPdf | null> {
+export async function urlToDataUrl(url: string, maxLado: number = LADO_MAX): Promise<ImagemPdf | null> {
   if (!url) return null;
   // 1) Try fetch
   try {
@@ -48,25 +66,28 @@ export async function urlToDataUrl(url: string): Promise<ImagemPdf | null> {
         r.onerror = reject;
         r.readAsDataURL(blob);
       });
-      const dim = await new Promise<{ w: number; h: number }>((resolve) => {
-        const img = new Image();
-        img.onload = () => resolve({ w: img.width, h: img.height });
-        img.onerror = () => resolve({ w: 1, h: 1 });
-        img.src = dataUrl;
+      const img = await new Promise<HTMLImageElement | null>((resolve) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => resolve(null);
+        i.src = dataUrl;
       });
-      return { data: dataUrl, w: dim.w, h: dim.h };
+      if (img) {
+        const reduzida = reduzir(img, img.naturalWidth || 1, img.naturalHeight || 1, maxLado);
+        if (reduzida) return reduzida;
+      }
     }
   } catch {
     /* fallthrough */
   }
   // 2) Canvas with crossOrigin
-  const viaCanvas = await loadImageViaCanvas(url);
+  const viaCanvas = await loadImageViaCanvas(url, maxLado);
   if (viaCanvas) return viaCanvas;
   // 3) Proxy via images.weserv.nl to bypass CORS
   try {
     const cleaned = url.replace(/^https?:\/\//, "");
     const proxied = `https://images.weserv.nl/?url=${encodeURIComponent(cleaned)}`;
-    const viaProxy = await loadImageViaCanvas(proxied);
+    const viaProxy = await loadImageViaCanvas(proxied, maxLado);
     if (viaProxy) return viaProxy;
   } catch {
     /* ignore */
@@ -76,8 +97,11 @@ export async function urlToDataUrl(url: string): Promise<ImagemPdf | null> {
 }
 
 /** Carrega em paralelo as fotos de uma lista de URLs (null vira null). */
-export function carregarImagens(urls: (string | undefined)[]): Promise<(ImagemPdf | null)[]> {
-  return Promise.all(urls.map((u) => (u ? urlToDataUrl(u) : Promise.resolve(null))));
+export function carregarImagens(
+  urls: (string | undefined)[],
+  maxLado: number = LADO_MAX,
+): Promise<(ImagemPdf | null)[]> {
+  return Promise.all(urls.map((u) => (u ? urlToDataUrl(u, maxLado) : Promise.resolve(null))));
 }
 
 /** Desenha a foto dentro de uma caixa, mantendo a proporção (conter). */
