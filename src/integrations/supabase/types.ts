@@ -666,6 +666,125 @@ export type Database = {
           },
         ]
       }
+      decant_apc: {
+        Row: {
+          condicao: string
+          created_at: string
+          criado_por: string | null
+          criado_por_nome: string
+          frasco_id: string
+          id: string
+          idempotency_key: string | null
+          ml_reservado: number
+          observacao: string
+          preco: number
+          produto_id: string
+          status: string
+          tem_caixa: boolean
+          tem_tampa: boolean
+          unidade_id: string
+          updated_at: string
+          venda_id: string | null
+        }
+        Insert: {
+          condicao?: string
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string
+          frasco_id: string
+          id?: string
+          idempotency_key?: string | null
+          ml_reservado: number
+          observacao?: string
+          preco: number
+          produto_id: string
+          status?: string
+          tem_caixa?: boolean
+          tem_tampa?: boolean
+          unidade_id: string
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Update: {
+          condicao?: string
+          created_at?: string
+          criado_por?: string | null
+          criado_por_nome?: string
+          frasco_id?: string
+          id?: string
+          idempotency_key?: string | null
+          ml_reservado?: number
+          observacao?: string
+          preco?: number
+          produto_id?: string
+          status?: string
+          tem_caixa?: boolean
+          tem_tampa?: boolean
+          unidade_id?: string
+          updated_at?: string
+          venda_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_apc_frasco_id_fkey"
+            columns: ["frasco_id"]
+            isOneToOne: true
+            referencedRelation: "decant_frascos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_apc_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      decant_apc_eventos: {
+        Row: {
+          antes: Json | null
+          apc_id: string
+          created_at: string
+          depois: Json | null
+          id: string
+          justificativa: string
+          tipo: string
+          usuario_id: string | null
+          usuario_nome: string
+        }
+        Insert: {
+          antes?: Json | null
+          apc_id: string
+          created_at?: string
+          depois?: Json | null
+          id?: string
+          justificativa?: string
+          tipo: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Update: {
+          antes?: Json | null
+          apc_id?: string
+          created_at?: string
+          depois?: Json | null
+          id?: string
+          justificativa?: string
+          tipo?: string
+          usuario_id?: string | null
+          usuario_nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_apc_eventos_apc_id_fkey"
+            columns: ["apc_id"]
+            isOneToOne: false
+            referencedRelation: "decant_apc"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decant_conferencias: {
         Row: {
           acao: string
@@ -963,9 +1082,11 @@ export type Database = {
           created_at: string
           custo: number
           custo_ml: number
+          dividido_em: string | null
           id: string
           idempotency_key: string | null
           lote_fabricante: string
+          ml_decants: number | null
           observacao: string
           origem: string
           produto_id: string
@@ -987,9 +1108,11 @@ export type Database = {
           created_at?: string
           custo: number
           custo_ml: number
+          dividido_em?: string | null
           id?: string
           idempotency_key?: string | null
           lote_fabricante?: string
+          ml_decants?: number | null
           observacao?: string
           origem?: string
           produto_id: string
@@ -1011,9 +1134,11 @@ export type Database = {
           created_at?: string
           custo?: number
           custo_ml?: number
+          dividido_em?: string | null
           id?: string
           idempotency_key?: string | null
           lote_fabricante?: string
+          ml_decants?: number | null
           observacao?: string
           origem?: string
           produto_id?: string
@@ -5406,6 +5531,11 @@ export type Database = {
         Returns: Json
       }
       fn_decant_alertas: { Args: { p_unidade?: string }; Returns: Json }
+      fn_decant_apc_listar: { Args: { p_unidade_id: string }; Returns: Json }
+      fn_decant_apc_status: {
+        Args: { p_apc_id: string; p_justificativa: string; p_status: string }
+        Returns: Json
+      }
       fn_decant_conferir: {
         Args: {
           p_acao: string
@@ -5456,6 +5586,23 @@ export type Database = {
       fn_decant_disponivel_frasco: {
         Args: { p_frasco_id: string }
         Returns: number
+      }
+      fn_decant_dividir_frasco: {
+        Args: {
+          p_caixa: boolean
+          p_condicao: string
+          p_frasco_id: string
+          p_idempotency_key: string
+          p_ml_apc: number
+          p_ml_decants: number
+          p_observacao: string
+          p_preco_10: number
+          p_preco_5: number
+          p_preco_8: number
+          p_preco_apc: number
+          p_tampa: boolean
+        }
+        Returns: Json
       }
       fn_decant_estoque_listar: {
         Args: { p_unidade_id: string }
