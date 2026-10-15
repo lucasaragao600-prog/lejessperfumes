@@ -1,5 +1,6 @@
 import { DialogoDividirFrasco, PainelApc } from "@/components/decants/DecantsApc";
 import { DialogoTesterFrasco } from "@/components/decants/DecantTesterFrasco";
+import { FichaFrasco } from "@/components/decants/FichaFrasco";
 import { ModelosEtiquetaConfig } from "@/components/decants/DecantsEtiquetas";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -295,6 +296,7 @@ function DialogoFrasco({ frasco, onClose }: { frasco: FrascoAberto; onClose: () 
       setModo("historico");
     } catch (e: any) { toast.error(e.message); }
   };
+  const [ficha, setFicha] = useState(false);
   const decidirConf = async (id: string, aprovar: boolean, acao: string) => {
     try { await decidir.mutateAsync({ id, aprovar, acao, obs: "" }); toast.success(aprovar ? "Aprovado." : "Rejeitado."); }
     catch (e: any) { toast.error(e.message); }
@@ -304,6 +306,8 @@ function DialogoFrasco({ frasco, onClose }: { frasco: FrascoAberto; onClose: () 
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader><DialogTitle><span className="font-mono text-gold">{frasco.codigo}</span> · {frasco.marca} - {frasco.nome}</DialogTitle></DialogHeader>
+        <button type="button" onClick={() => setFicha(true)} className="btn-secondary text-sm self-start">Ficha completa e rentabilidade</button>
+        {ficha && <FichaFrasco frascoId={frasco.id} onClose={() => setFicha(false)} />}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm">
           <div className="kpi-card p-3"><p className="text-xs text-muted-foreground">Saldo teórico</p><p className="font-semibold">{fmtMl(frasco.saldo_ml)}</p></div>
           <div className="kpi-card p-3"><p className="text-xs text-muted-foreground">Volume inicial</p><p>{fmtMl(frasco.volume_inicial_ml)}</p></div>
