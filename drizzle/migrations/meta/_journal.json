@@ -337,6 +337,13 @@
       "when": 1792099159776,
       "tag": "0047_pedidos_listar_servidor",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1792099477464,
+      "tag": "0048_movimentacoes_listar_servidor",
+      "breakpoints": true
     }
   ]
 }
