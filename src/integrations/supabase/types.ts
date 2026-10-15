@@ -6020,6 +6020,10 @@ export type Database = {
         Args: { p_id: string }
         Returns: number
       }
+      fn_movimentacoes_listar: {
+        Args: { p: Json; p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
       fn_nfce_tentativas: { Args: { p_grupo: string }; Returns: Json }
       fn_nt_alertas: { Args: never; Returns: Json }
       fn_nt_cancelar: {
