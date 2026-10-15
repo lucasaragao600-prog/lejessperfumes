@@ -90,3 +90,49 @@ export function useVendasResumo(filtros: FiltrosVendas) {
     staleTime: 30_000,
   });
 }
+
+export interface FiltrosPedidos { busca?: string; data_ini?: string; data_fim?: string }
+
+/** Pedidos (grupo_venda) paginados no servidor; itens e pagamentos só da página. */
+export function usePedidosLista(filtros: FiltrosPedidos) {
+  const f = limparFiltrosVendas(filtros);
+  return useInfiniteQuery({
+    queryKey: ["vendas_lista", "pedidos", f],
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const { data, error } = await supabase.rpc("fn_pedidos_listar" as any, {
+        p: f as any, p_limit: VENDAS_PAGINA, p_offset: pageParam as number,
+      });
+      if (error) throw error;
+      const d = (data || {}) as any;
+      const grupos = ((d.grupos as any[]) || []).map((g) => ({ grupo: String(g.grupo), clienteNome: (g.cliente_nome as string) || "" }));
+      const itens = ((d.itens as any[]) || []).map(rowToVenda);
+      const chaves = grupos.map((g) => g.grupo);
+      let pagamentos: VendaPagamento[] = [];
+      if (chaves.length) {
+        const { data: pg, error: e2 } = await supabase.from("venda_pagamentos").select("*").in("grupo_venda", chaves);
+        if (e2) throw e2;
+        pagamentos = (pg || []).map(rowToPagamento);
+      }
+      return { grupos, itens, pagamentos, offset: pageParam as number };
+    },
+    getNextPageParam: (last) => last.grupos.length < VENDAS_PAGINA ? undefined : last.offset + VENDAS_PAGINA,
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  });
+}
+
+export function usePedidosResumo(filtros: FiltrosPedidos) {
+  const f = limparFiltrosVendas(filtros);
+  return useQuery({
+    queryKey: ["vendas_resumo", "pedidos", f],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("fn_pedidos_resumo" as any, { p: f as any });
+      if (error) throw error;
+      const r = (data || {}) as any;
+      return { pedidos: Number(r.pedidos || 0), valor: Number(r.valor || 0), qtd: Number(r.qtd || 0) };
+    },
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  });
+}

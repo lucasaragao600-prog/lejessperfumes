@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
+import { usePedidosLista, usePedidosResumo } from "@/hooks/useVendasLista";
 import { Search, Eye, Printer, ShoppingCart, Calendar, User, CreditCard, ChevronLeft, FileText, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
-import { useVendas } from "@/hooks/useVendas";
 import { useAuth } from "@/context/AuthContext";
 import { useNfce } from "@/hooks/useNfce";
 import { emitirNfce, imprimirDanfe, explicarRejeicao } from "@/lib/nfceEmitir";
 import { useQueryClient } from "@tanstack/react-query";
-import { useClientes } from "@/hooks/useClientes";
 import { formatCurrency } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
 import { toast } from "sonner";
@@ -51,79 +51,71 @@ const fiscalBadge = (status: NfceStatus) => {
 };
 
 export default function PedidosVenda() {
-  const { vendas, pagamentos: vendaPagamentos, atualizarNfceStatus } = useVendas();
   useAuth();
   const queryClient = useQueryClient();
   const { configFiscal } = useNfce();
-  const { clientes } = useClientes();
   const { perfumes } = useApp();
-  const [busca, setBusca] = useState("");
+  const [params, setParams] = useSearchParams();
+  const [busca, setBusca] = useState(params.get("pq") || "");
+  const [buscaDeb, setBuscaDeb] = useState(busca);
+  const [de, setDe] = useState(params.get("pde") || "");
+  const [ate, setAte] = useState(params.get("pate") || "");
   const [selectedPedido, setSelectedPedido] = useState<PedidoResumo | null>(null);
   const [gerandoId, setGerandoId] = useState<string | null>(null);
 
-  // Group sales by grupo_venda
-  const pedidos = useMemo(() => {
-    const map = new Map<string, PedidoResumo>();
-    for (const v of vendas) {
-      const gv = v.grupoVenda || v.id;
-      if (!map.has(gv)) {
-        const cliente = v.clienteId ? clientes.find(c => c.id === v.clienteId) : null;
-        map.set(gv, {
-          grupoVenda: gv,
-          data: v.data,
-          operador: v.registradoPor || "",
-          vendedora: v.vendedora,
-          deposito: v.deposito,
-          clienteId: v.clienteId || null,
-          clienteNome: cliente?.nome || "",
-          total: 0,
-          tipoPagamento: v.tipoPagamento,
-          nfceStatus: v.nfceStatus || "pendente",
-          nfceChave: v.nfceChave || "",
-          itens: [],
-          pagamentos: [],
-        });
-      }
-      const p = map.get(gv)!;
-      p.total += v.total;
-      p.itens.push({
-        perfumeNome: v.perfumeNome,
-        perfumeId: v.perfumeId,
-        quantidade: v.quantidade,
-        precoUnitario: v.precoUnitario,
-        total: v.total,
-        deposito: v.deposito,
-      });
-    }
-    for (const [gv, p] of map) {
-      const pags = vendaPagamentos.filter(pg => pg.grupoVenda === gv);
-      if (pags.length > 0) {
-        p.pagamentos = pags.map(pg => ({
-          tipoPagamento: pg.tipoPagamento,
-          bandeira: pg.bandeira,
-          valor: pg.valor,
-          parcelas: (pg as any).parcelas || 1,
-        }));
-        p.tipoPagamento = pags.map(pg => pg.tipoPagamento).join(", ");
-      }
-    }
-    return Array.from(map.values()).sort((a, b) => b.data.localeCompare(a.data));
-  }, [vendas, vendaPagamentos, clientes]);
+  useEffect(() => { const t = setTimeout(() => setBuscaDeb(busca), 300); return () => clearTimeout(t); }, [busca]);
+  useEffect(() => {
+    const n = new URLSearchParams(params);
+    const set = (k: string, v: string) => (v ? n.set(k, v) : n.delete(k));
+    set("pq", buscaDeb.trim()); set("pde", de); set("pate", ate);
+    if (n.toString() !== params.toString()) setParams(n, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buscaDeb, de, ate]);
+
+  const filtros = { busca: buscaDeb, data_ini: de, data_fim: ate };
+  const lista = usePedidosLista(filtros);
+  const resumo = usePedidosResumo(filtros);
 
   const pedidosFiltrados = useMemo(() => {
-    if (!busca.trim()) return pedidos;
-    const q = busca.toLowerCase();
-    return pedidos.filter(p =>
-      p.grupoVenda.toLowerCase().includes(q) ||
-      p.clienteNome.toLowerCase().includes(q) ||
-      p.operador.toLowerCase().includes(q) ||
-      p.vendedora.toLowerCase().includes(q) ||
-      p.data.includes(q)
-    );
-  }, [pedidos, busca]);
+    const out: PedidoResumo[] = [];
+    for (const pg of lista.data?.pages || []) {
+      const pagsPorGrupo = new Map<string, typeof pg.pagamentos>();
+      for (const x of pg.pagamentos) { const a = pagsPorGrupo.get(x.grupoVenda) || []; a.push(x); pagsPorGrupo.set(x.grupoVenda, a); }
+      const itensPorGrupo = new Map<string, typeof pg.itens>();
+      for (const v of pg.itens) { const k = v.grupoVenda || v.id; const a = itensPorGrupo.get(k) || []; a.push(v); itensPorGrupo.set(k, a); }
+      for (const g of pg.grupos) {
+        const vs = itensPorGrupo.get(g.grupo) || [];
+        if (!vs.length) continue;
+        const v = vs[0];
+        const pags = pagsPorGrupo.get(g.grupo) || [];
+        out.push({
+          grupoVenda: g.grupo, data: v.data, operador: v.registradoPor || "", vendedora: v.vendedora,
+          deposito: v.deposito, clienteId: v.clienteId || null, clienteNome: g.clienteNome,
+          total: vs.reduce((s, i) => s + i.total, 0),
+          tipoPagamento: pags.length ? pags.map((p) => p.tipoPagamento).join(", ") : v.tipoPagamento,
+          nfceStatus: v.nfceStatus || "pendente", nfceChave: v.nfceChave || "",
+          itens: vs.map((i) => ({ perfumeNome: i.perfumeNome, perfumeId: i.perfumeId, quantidade: i.quantidade, precoUnitario: i.precoUnitario, total: i.total, deposito: i.deposito })),
+          pagamentos: pags.map((p) => ({ tipoPagamento: p.tipoPagamento, bandeira: p.bandeira, valor: p.valor, parcelas: (p as any).parcelas || 1 })),
+        });
+      }
+    }
+    return out;
+  }, [lista.data]);
 
+  const sentinela = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = sentinela.current;
+    if (!el) return;
+    const io = new IntersectionObserver((e) => {
+      if (e[0].isIntersecting && lista.hasNextPage && !lista.isFetchingNextPage) lista.fetchNextPage();
+    }, { rootMargin: "400px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [lista.hasNextPage, lista.isFetchingNextPage, lista.fetchNextPage, selectedPedido]);
+
+  const perfumesMap = useMemo(() => new Map(perfumes.map((p) => [p.id, p])), [perfumes]);
   const getCasa = (perfumeId: string) => {
-    const perf = perfumes.find(p => p.id === perfumeId);
+    const perf = perfumesMap.get(perfumeId);
     return perf?.marca || perf?.casaSigla || "";
   };
 
@@ -329,28 +321,42 @@ ${pedido.nfceStatus === "autorizada" && pedido.nfceChave ? `<div style="font-siz
           type="text"
           value={busca}
           onChange={e => setBusca(e.target.value)}
-          placeholder="Buscar por pedido, cliente, operador, data..."
+          placeholder="Buscar por pedido, cliente, operador, produto..."
           className="input-premium pl-10 pr-4 py-2.5 text-sm w-full"
         />
+      </div>
+      <div className="flex flex-wrap gap-2 items-center">
+        <input type="date" value={de} onChange={e => setDe(e.target.value)} className="input-premium text-xs" aria-label="De" />
+        <span className="text-xs text-muted-foreground">até</span>
+        <input type="date" value={ate} onChange={e => setAte(e.target.value)} className="input-premium text-xs" aria-label="Até" />
+        {(de || ate || busca) && <button onClick={() => { setDe(""); setAte(""); setBusca(""); }} className="btn-secondary px-3 py-1.5 text-xs">Limpar</button>}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div className="kpi-card">
           <p className="text-xs text-muted-foreground mb-1">Total de pedidos</p>
-          <p className="text-lg font-bold text-foreground">{pedidosFiltrados.length}</p>
+          <p className="text-lg font-bold text-foreground">{resumo.data?.pedidos ?? "—"}</p>
         </div>
         <div className="kpi-card">
           <p className="text-xs text-muted-foreground mb-1">Valor total</p>
-          <p className="text-lg font-bold text-gold">{formatCurrency(pedidosFiltrados.reduce((s, p) => s + p.total, 0))}</p>
+          <p className="text-lg font-bold text-gold">{resumo.data ? formatCurrency(resumo.data.valor) : "—"}</p>
         </div>
         <div className="kpi-card hidden md:block">
           <p className="text-xs text-muted-foreground mb-1">Itens vendidos</p>
-          <p className="text-lg font-bold text-foreground">{pedidosFiltrados.reduce((s, p) => s + p.itens.reduce((si, i) => si + i.quantidade, 0), 0)}</p>
+          <p className="text-lg font-bold text-foreground">{resumo.data?.qtd ?? "—"}</p>
         </div>
       </div>
 
       <div className="space-y-2">
-        {pedidosFiltrados.length === 0 ? (
+        {lista.isLoading ? (
+          Array.from({ length: 6 }).map((_, i) => <div key={i} className="card-premium h-[72px] animate-pulse" />)
+        ) : lista.isError ? (
+          <div className="card-premium p-8 text-center space-y-3">
+            <AlertTriangle size={28} className="mx-auto text-destructive" />
+            <p className="text-sm text-muted-foreground">Não foi possível carregar os pedidos.</p>
+            <button onClick={() => lista.refetch()} className="btn-secondary px-4 py-2 text-sm">Tentar novamente</button>
+          </div>
+        ) : pedidosFiltrados.length === 0 ? (
           <div className="text-center py-12">
             <ShoppingCart size={40} className="mx-auto text-muted-foreground opacity-30 mb-3" />
             <p className="text-sm text-muted-foreground">Nenhum pedido encontrado</p>
@@ -400,6 +406,12 @@ ${pedido.nfceStatus === "autorizada" && pedido.nfceChave ? `<div style="font-siz
               </div>
             );
           })
+        )}
+        <div ref={sentinela} />
+        {lista.hasNextPage && (
+          <button onClick={() => lista.fetchNextPage()} disabled={lista.isFetchingNextPage} className="btn-secondary w-full py-2.5 text-sm flex items-center justify-center gap-2">
+            {lista.isFetchingNextPage ? <><Loader2 size={14} className="animate-spin" /> Carregando...</> : "Carregar mais"}
+          </button>
         )}
       </div>
     </div>
