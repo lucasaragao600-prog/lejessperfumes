@@ -5494,6 +5494,17 @@ export type Database = {
         Returns: string
       }
       fn__nt_snapshot: { Args: { p_un: string }; Returns: Json }
+      fn__pedidos_grupos: {
+        Args: { p: Json }
+        Returns: {
+          cliente_nome: string
+          criado: string
+          data: string
+          grupo: string
+          qtd: number
+          valor: number
+        }[]
+      }
       fn__pode: {
         Args: { _perm: string; _unidade_id: string }
         Returns: boolean
@@ -6050,6 +6061,11 @@ export type Database = {
         Returns: Json
       }
       fn_nt_scan_publico: { Args: { p_codigo: string }; Returns: Json }
+      fn_pedidos_listar: {
+        Args: { p: Json; p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
+      fn_pedidos_resumo: { Args: { p: Json }; Returns: Json }
       fn_perfil_aplicar: {
         Args: {
           p_modo?: string
