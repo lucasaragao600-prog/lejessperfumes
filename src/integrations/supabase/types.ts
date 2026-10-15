@@ -785,6 +785,84 @@ export type Database = {
           },
         ]
       }
+      decant_apc_vendas: {
+        Row: {
+          apc_id: string
+          canal: string
+          cancelada_em: string | null
+          cliente_id: string | null
+          created_at: string
+          custo: number | null
+          grupo_venda: string
+          id: string
+          idempotency_key: string | null
+          ml: number
+          motivo_cancelamento: string | null
+          preco: number
+          sessao_caixa_id: string | null
+          status: string
+          unidade_id: string
+          usuario_id: string | null
+          usuario_nome: string
+          vendedora: string
+        }
+        Insert: {
+          apc_id: string
+          canal: string
+          cancelada_em?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          custo?: number | null
+          grupo_venda: string
+          id?: string
+          idempotency_key?: string | null
+          ml: number
+          motivo_cancelamento?: string | null
+          preco: number
+          sessao_caixa_id?: string | null
+          status?: string
+          unidade_id: string
+          usuario_id?: string | null
+          usuario_nome?: string
+          vendedora?: string
+        }
+        Update: {
+          apc_id?: string
+          canal?: string
+          cancelada_em?: string | null
+          cliente_id?: string | null
+          created_at?: string
+          custo?: number | null
+          grupo_venda?: string
+          id?: string
+          idempotency_key?: string | null
+          ml?: number
+          motivo_cancelamento?: string | null
+          preco?: number
+          sessao_caixa_id?: string | null
+          status?: string
+          unidade_id?: string
+          usuario_id?: string | null
+          usuario_nome?: string
+          vendedora?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decant_apc_vendas_apc_id_fkey"
+            columns: ["apc_id"]
+            isOneToOne: false
+            referencedRelation: "decant_apc"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decant_apc_vendas_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       decant_conferencias: {
         Row: {
           acao: string
@@ -2216,10 +2294,12 @@ export type Database = {
           cliente_id: string | null
           created_at: string
           custo_unit: number
+          frasco_id: string | null
           grupo_venda: string
           id: string
           idempotency_key: string | null
           lote_producao_id: string | null
+          ml_consumido: number | null
           motivo_cancelamento: string
           preco_unit: number
           qtd_devolvida: number
@@ -2239,10 +2319,12 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           custo_unit?: number
+          frasco_id?: string | null
           grupo_venda: string
           id?: string
           idempotency_key?: string | null
           lote_producao_id?: string | null
+          ml_consumido?: number | null
           motivo_cancelamento?: string
           preco_unit: number
           qtd_devolvida?: number
@@ -2262,10 +2344,12 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           custo_unit?: number
+          frasco_id?: string | null
           grupo_venda?: string
           id?: string
           idempotency_key?: string | null
           lote_producao_id?: string | null
+          ml_consumido?: number | null
           motivo_cancelamento?: string
           preco_unit?: number
           qtd_devolvida?: number
@@ -2280,6 +2364,13 @@ export type Database = {
           vendedora?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "decant_vendas_frasco_id_fkey"
+            columns: ["frasco_id"]
+            isOneToOne: false
+            referencedRelation: "decant_frascos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "decant_vendas_lote_producao_id_fkey"
             columns: ["lote_producao_id"]
@@ -5536,6 +5627,10 @@ export type Database = {
         Args: { p_apc_id: string; p_justificativa: string; p_status: string }
         Returns: Json
       }
+      fn_decant_apc_venda_cancelar: {
+        Args: { p_grupo: string; p_motivo: string }
+        Returns: Json
+      }
       fn_decant_conferir: {
         Args: {
           p_acao: string
@@ -5829,6 +5924,29 @@ export type Database = {
           p_itens: Json
           p_pagamentos: Json
           p_unidade_id: string
+          p_vendedora: string
+        }
+        Returns: Json
+      }
+      fn_decant_vender_apc: {
+        Args: {
+          p_apc_id: string
+          p_canal: string
+          p_cliente_id: string
+          p_idempotency_key: string
+          p_pagamentos: Json
+          p_vendedora: string
+        }
+        Returns: Json
+      }
+      fn_decant_vender_frasco: {
+        Args: {
+          p_canal: string
+          p_cliente_id: string
+          p_frasco_id: string
+          p_idempotency_key: string
+          p_itens: Json
+          p_pagamentos: Json
           p_vendedora: string
         }
         Returns: Json
