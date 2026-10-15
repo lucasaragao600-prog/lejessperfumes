@@ -28,3 +28,15 @@ describe("venda do frasco", () => {
     expect(tamanhosVendaveis(0)).toEqual([]);
   });
 });
+
+import { resumoFicha } from "./decantsApc";
+describe("resumoFicha", () => {
+  it("ordena tamanhos e calcula resultado com custo", () => {
+    const r = resumoFicha({ vendas_sob_demanda: { "10": { qtd: 1, receita: 50 }, "5": { qtd: 2, receita: 60 } }, receita_total: 410, custo_frasco: 300, custo_rateio_decants: 200, custo_rateio_apc: 100 });
+    expect(r.tamanhos.map((t) => t.ml)).toEqual([5, 10]);
+    expect(r.resultado).toBe(110);
+  });
+  it("sem permissão de custo não calcula resultado", () => {
+    expect(resumoFicha({ receita_total: 100 }).resultado).toBeNull();
+  });
+});

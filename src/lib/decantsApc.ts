@@ -12,3 +12,16 @@ export function validarDivisao(p: { disponivel: number; mlDecants: number; mlApc
 /** Tamanhos que ainda cabem no saldo a granel (nunca usa APC). */
 export const tamanhosVendaveis = (granelMl: number, tamanhos = [5, 8, 10]) =>
   tamanhos.filter((t) => Math.round(granelMl * 1000) >= Math.round(t * 1000));
+
+/** Resumo da ficha do frasco: tamanhos ordenados e resultado parcial (só com custo visível). */
+export function resumoFicha(f: {
+  vendas_sob_demanda?: Record<string, { qtd: number; receita: number }>;
+  receita_total?: number; custo_rateio_decants?: number | null; custo_rateio_apc?: number | null; custo_frasco?: number | null;
+}) {
+  const tamanhos = Object.entries(f.vendas_sob_demanda || {})
+    .map(([ml, v]) => ({ ml: Number(ml), qtd: Number(v.qtd), receita: Number(v.receita) }))
+    .sort((a, b) => a.ml - b.ml);
+  const temCusto = f.custo_frasco !== undefined && f.custo_frasco !== null;
+  const resultado = temCusto ? Math.round((Number(f.receita_total || 0) - Number(f.custo_rateio_decants || 0) - Number(f.custo_rateio_apc || 0)) * 100) / 100 : null;
+  return { tamanhos, temCusto, resultado };
+}
