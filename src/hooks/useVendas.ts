@@ -45,7 +45,7 @@ export function rowToPagamento(row: any): VendaPagamento {
   };
 }
 
-export function useVendas() {
+export function useVendas(carregarHistorico = true) {
   const queryClient = useQueryClient();
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["vendas"] });
@@ -54,6 +54,7 @@ export function useVendas() {
 
   const { data: vendas = [], isLoading } = useQuery({
     queryKey: ["vendas"],
+    enabled: carregarHistorico,
     queryFn: async () => {
       const PAGE = 1000;
       let all: any[] = [];
@@ -79,6 +80,7 @@ export function useVendas() {
 
   const { data: pagamentosTodos = [] } = useQuery({
     queryKey: ["venda_pagamentos"],
+    enabled: carregarHistorico,
     queryFn: async () => {
       const PAGE = 1000;
       let all: any[] = [];
