@@ -467,3 +467,43 @@ export function useTesterParaFrasco() {
       .forEach((k) => qc.invalidateQueries({ queryKey: [k] })),
   });
 }
+
+/* ---------- Dividir frasco: Decants + APC ---------- */
+export interface DecantApc {
+  id: string; frasco_id: string; frasco_codigo: string; unidade_id: string; unidade_nome: string; produto_id: string;
+  marca: string; nome: string; concentracao: string; ml_reservado: number; preco: number; condicao: string;
+  tem_tampa: boolean; tem_caixa: boolean; observacao: string; volume_nominal_ml: number; ml_decants: number | null;
+  status: "reservado" | "em_preparacao" | "disponivel" | "vendido" | "cancelado"; granel_ml: number; created_at: string;
+}
+export function useApcs(unidadeId: string | null) {
+  return useQuery({
+    queryKey: ["decant-apc", unidadeId],
+    queryFn: async (): Promise<DecantApc[]> => {
+      const { data, error } = await db.rpc("fn_decant_apc_listar", { p_unidade_id: unidadeId });
+      if (error) throw error;
+      return (data || []).map((a: any) => ({ ...a, ml_reservado: Number(a.ml_reservado), preco: Number(a.preco), granel_ml: Number(a.granel_ml) }));
+    },
+  });
+}
+const invalidarApc = (qc: ReturnType<typeof useQueryClient>) =>
+  ["decant-frascos", "decant-frascos-disp", "decant-apc", "decant-fichas", "decant-alertas", "decant-reposicao"]
+    .forEach((k) => qc.invalidateQueries({ queryKey: [k] }));
+export function useDividirFrasco() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { frascoId: string; mlDecants: number; mlApc: number; preco5: number | null; preco8: number | null;
+      preco10: number | null; precoApc: number | null; condicao: string; tampa: boolean; caixa: boolean; observacao: string; chave: string }) =>
+      rpc("fn_decant_dividir_frasco", { p_frasco_id: p.frascoId, p_ml_decants: p.mlDecants, p_ml_apc: p.mlApc,
+        p_preco_5: p.preco5, p_preco_8: p.preco8, p_preco_10: p.preco10, p_preco_apc: p.precoApc, p_condicao: p.condicao,
+        p_tampa: p.tampa, p_caixa: p.caixa, p_observacao: p.observacao, p_idempotency_key: p.chave }),
+    onSuccess: () => invalidarApc(qc),
+  });
+}
+export function useApcStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { id: string; status: string; justificativa: string }) =>
+      rpc("fn_decant_apc_status", { p_apc_id: p.id, p_status: p.status, p_justificativa: p.justificativa }),
+    onSuccess: () => invalidarApc(qc),
+  });
+}
