@@ -9,7 +9,7 @@ BEGIN
   IF NOT public.fn__pode(v_f.unidade_id,'decant.ver') THEN RAISE EXCEPTION 'Sem permissão'; END IF;
   SELECT * INTO v_p FROM public.perfumes WHERE id = v_f.produto_id;
   SELECT * INTO v_u FROM public.unidades WHERE id = v_f.unidade_id;
-  v_ver_custo := public.has_role(auth.uid(),'master') OR public.fn__pode(v_f.unidade_id,'decant.ver_custos');
+  v_ver_custo := public.fn__decant_ver_custos();
   v_granel := public.fn_decant_saldo_frasco(v_f.id);
   v_reserv := COALESCE(public.fn_decant_reservado_frasco(v_f.id, NULL),0);
   SELECT COALESCE(sum(-ml),0) INTO v_prod FROM public.decant_ml_ledger WHERE frasco_id = v_f.id AND tipo = 'producao';
