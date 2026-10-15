@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
-import { useApcs, useApcStatus, useDividirFrasco, type FrascoAberto, type DecantApc } from "@/hooks/useDecants";
+import { useVendasApc, useCancelarVendaApc, useApcs, useApcStatus, useDividirFrasco, type FrascoAberto, type DecantApc } from "@/hooks/useDecants";
 import { fmtBRL, fmtMl } from "@/lib/decants";
 import { validarDivisao } from "@/lib/decantsApc";
 
@@ -152,8 +152,17 @@ export function PainelApc({ unidadeId }: { unidadeId: string | null }) {
   const status = useApcStatus();
   const [cancelar, setCancelar] = useState<DecantApc | null>(null);
   const [motivo, setMotivo] = useState("");
-  const ativos = apcs.filter((a) => a.status !== "cancelado");
-  if (ativos.length === 0) return null;
+  const { data: vendas = [] } = useVendasApc(unidadeId);
+  const cancelarVenda = useCancelarVendaApc();
+  const ativos = apcs.filter((a) => a.status !== "cancelado" && a.status !== "vendido");
+  const vendidas = (vendas as any[]).filter((v) => v.status === "concluida");
+  if (ativos.length === 0 && vendidas.length === 0) return null;
+  const cancelarV = async (g: string) => {
+    const m = window.prompt("Motivo do cancelamento da venda do APC (mínimo 5 letras):");
+    if (!m) return;
+    try { await cancelarVenda.mutateAsync({ grupo: g, motivo: m }); toast.success("Venda cancelada. O APC voltou para Em preparação para conferência."); }
+    catch (e: any) { toast.error(e.message); }
+  };
   const mudar = async (a: DecantApc, s: string, j = "") => {
     try { await status.mutateAsync({ id: a.id, status: s, justificativa: j }); toast.success(`APC: ${STATUS[s]}`); setCancelar(null); setMotivo(""); }
     catch (e: any) { toast.error(e.message); }
@@ -177,6 +186,13 @@ export function PainelApc({ unidadeId }: { unidadeId: string | null }) {
             )}
             {a.status !== "vendido" && <button className="btn-secondary px-2 py-1 text-xs" onClick={() => setCancelar(a)}>Cancelar APC</button>}
           </div>
+        </div>
+      ))}
+      {vendidas.length > 0 && <p className="text-xs text-muted-foreground pt-2">APCs vendidos</p>}
+      {vendidas.map((v) => (
+        <div key={v.id} className="flex justify-between items-center gap-2 text-sm border-t border-border pt-2">
+          <span className="truncate">{v.decant_apc?.decant_frascos?.codigo} · {fmtMl(Number(v.ml))} · {fmtBRL(Number(v.preco))} · {new Date(v.created_at).toLocaleString("pt-BR", { timeZone: "America/Manaus" })}</span>
+          <button className="btn-secondary px-2 py-1 text-xs" onClick={() => cancelarV(v.grupo_venda)}>Cancelar venda</button>
         </div>
       ))}
       {cancelar && (
