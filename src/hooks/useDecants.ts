@@ -319,7 +319,7 @@ export function usePdvCatalogoDecants(unidadeId: string) {
   return useQuery({
     queryKey: ["decant-pdv", unidadeId],
     enabled: !!unidadeId,
-    queryFn: async (): Promise<{ sku_id: string; sku: string; preco_venda: number; marca: string; nome: string; concentracao: string; volume_ml: number; saldo: number }[]> =>
+    queryFn: async (): Promise<{ sku_id: string; sku: string; preco_venda: number; produto_id: string; marca: string; nome: string; concentracao: string; volume_ml: number; saldo: number }[]> =>
       (await rpc("fn_decant_pdv_catalogo", { p_unidade_id: unidadeId })) || [],
   });
 }
@@ -506,5 +506,40 @@ export function useApcStatus() {
     mutationFn: (p: { id: string; status: string; justificativa: string }) =>
       rpc("fn_decant_apc_status", { p_apc_id: p.id, p_status: p.status, p_justificativa: p.justificativa }),
     onSuccess: () => invalidarApc(qc),
+  });
+}
+export function useVenderFrasco() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { frascoId: string; itens: { sku_id: string; quantidade: number }[]; pagamentos: { forma: string; valor: number }[]; canal: string; vendedora: string; chave: string }) =>
+      rpc("fn_decant_vender_frasco", { p_frasco_id: p.frascoId, p_itens: p.itens, p_pagamentos: p.pagamentos, p_canal: p.canal,
+        p_cliente_id: null, p_vendedora: p.vendedora, p_idempotency_key: p.chave }),
+    onSuccess: () => { invalidarApc(qc); ["decant-pdv", "decant-vendas", "caixa"].forEach((k) => qc.invalidateQueries({ queryKey: [k] })); },
+  });
+}
+export function useVenderApc() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { apcId: string; pagamentos: { forma: string; valor: number }[]; canal: string; vendedora: string; chave: string }) =>
+      rpc("fn_decant_vender_apc", { p_apc_id: p.apcId, p_pagamentos: p.pagamentos, p_canal: p.canal, p_cliente_id: null,
+        p_vendedora: p.vendedora, p_idempotency_key: p.chave }),
+    onSuccess: () => { invalidarApc(qc); ["decant-vendas", "caixa", "decant-apc-vendas"].forEach((k) => qc.invalidateQueries({ queryKey: [k] })); },
+  });
+}
+export function useCancelarVendaApc() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { grupo: string; motivo: string }) => rpc("fn_decant_apc_venda_cancelar", { p_grupo: p.grupo, p_motivo: p.motivo }),
+    onSuccess: () => { invalidarApc(qc); ["caixa", "decant-apc-vendas"].forEach((k) => qc.invalidateQueries({ queryKey: [k] })); },
+  });
+}
+export function useVendasApc(unidadeId: string | null) {
+  return useQuery({
+    queryKey: ["decant-apc-vendas", unidadeId],
+    queryFn: async () => {
+      let q = db.from("decant_apc_vendas").select("*, decant_apc(frasco_id, ml_reservado, decant_frascos(codigo), produto_id)").order("created_at", { ascending: false }).limit(50);
+      if (unidadeId) q = q.eq("unidade_id", unidadeId);
+      const { data, error } = await q; if (error) throw error; return data || [];
+    },
   });
 }
