@@ -19,12 +19,13 @@ export function rowToMov(row: any): Movimentacao {
   };
 }
 
-export function useMovimentacoes() {
+export function useMovimentacoes(carregarHistorico = true) {
   const queryClient = useQueryClient();
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["movimentacoes"] });
 
   const { data: movimentacoes = [], isLoading } = useQuery({
     queryKey: ["movimentacoes"],
+    enabled: carregarHistorico,
     queryFn: async () => {
       const allRows: any[] = [];
       const PAGE_SIZE = 1000;

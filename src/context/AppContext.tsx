@@ -1,4 +1,4 @@
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import {
   type Perfume,
   type Venda,
@@ -81,8 +81,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   } = usePerfumes();
 
   const { casas, isLoading: casasLoading, adicionarCasa: adicionarCasaDB, removerCasa: removerCasaDB } = useCasas();
-  const { vendas, pagamentos, adicionarVenda, adicionarVendaMulti, excluirVenda } = useVendas();
-  const { movimentacoes, adicionarMovimentacao } = useMovimentacoes();
+  // Histórico completo só é baixado quando alguma tela realmente lê vendas/pagamentos/movimentações.
+  const [precisaVendas, setPrecisaVendas] = useState(false);
+  const [precisaMov, setPrecisaMov] = useState(false);
+  const pedirVendas = useCallback(() => setPrecisaVendas(true), []);
+  const pedirMov = useCallback(() => setPrecisaMov(true), []);
+  const { vendas, pagamentos, adicionarVenda, adicionarVendaMulti, excluirVenda } = useVendas(precisaVendas);
+  const { movimentacoes, adicionarMovimentacao } = useMovimentacoes(precisaMov);
   const { testers, adicionarTester: adicionarTesterDB, registrarSaidaTester, removerTester: removerTesterDB, ajustarTester: ajustarTesterDB } = useTesters();
   const { vendedoras, adicionarVendedora: adicionarVendedoraDB, removerVendedora: removerVendedoraDB } = useVendedoras();
   const { tiposPerfumeConfig, concentracoesConfig, volumesPadrao, setTiposPerfumeConfig, setConcentracoesConfig, setVolumesPadrao } = useConfiguracoes();
@@ -126,13 +131,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         perfumes,
         setPerfumes: noop,
         perfumesLoading,
-        vendas,
-        pagamentos,
+        get vendas() { if (!precisaVendas) queueMicrotask(pedirVendas); return vendas; },
+        get pagamentos() { if (!precisaVendas) queueMicrotask(pedirVendas); return pagamentos; },
         setVendas: noop,
         adicionarVenda,
         adicionarVendaMulti,
         excluirVenda,
-        movimentacoes,
+        get movimentacoes() { if (!precisaMov) queueMicrotask(pedirMov); return movimentacoes; },
         setMovimentacoes: noop,
         adicionarMovimentacao,
         testers,
