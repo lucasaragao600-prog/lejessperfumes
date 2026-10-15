@@ -5711,6 +5711,7 @@ export type Database = {
         Args: { p_produto_id?: string }
         Returns: Json
       }
+      fn_decant_frasco_ficha: { Args: { p_frasco_id: string }; Returns: Json }
       fn_decant_frascos_disponiveis: {
         Args: { p_produto_id: string; p_unidade_id: string }
         Returns: Json
