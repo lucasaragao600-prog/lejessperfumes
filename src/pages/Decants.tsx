@@ -1,3 +1,4 @@
+import { DialogoDividirFrasco, PainelApc } from "@/components/decants/DecantsApc";
 import { DialogoTesterFrasco } from "@/components/decants/DecantTesterFrasco";
 import { ModelosEtiquetaConfig } from "@/components/decants/DecantsEtiquetas";
 import { useMemo, useState } from "react";
@@ -95,7 +96,7 @@ function AbaFrascos() {
   const { data: frascos = [], isLoading, error } = useFrascosAbertos(unidade || null);
   const { data: fechados = [] } = useFechadosSaldo();
   const { perfumes } = useApp();
-  const [dialogo, setDialogo] = useState<null | "destinar" | "abrir" | "tester">(null);
+  const [dialogo, setDialogo] = useState<null | "destinar" | "abrir" | "tester" | "dividir">(null);
   const [sel, setSel] = useState<FrascoAberto | null>(null);
   const nomeProd = (id: string) => { const p = perfumes.find((x) => x.id === id); return p ? `${p.marca} - ${p.nome} ${p.volume}ml` : id; };
   const nomeUn = (id: string) => unidadesEstoque.find((u) => u.id === id)?.nomeExibicao || "";
@@ -113,9 +114,13 @@ function AbaFrascos() {
           <Plus className="w-4 h-4 inline mr-1" />Destinar para decants</button>
         <button className="btn-secondary px-4 py-2 text-sm" onClick={() => setDialogo("tester")}>
           <Droplets className="w-4 h-4 inline mr-1" />Usar tester</button>
+        <button className="btn-secondary px-4 py-2 text-sm" onClick={() => setDialogo("dividir")}>
+          <Droplets className="w-4 h-4 inline mr-1" />Dividir frasco — Decants + APC</button>
         <button className="btn-primary px-4 py-2 text-sm" onClick={() => setDialogo("abrir")}>
           <PackageOpen className="w-4 h-4 inline mr-1" />Abrir frasco</button>
       </div>
+
+      <PainelApc unidadeId={unidade || null} />
 
       {fechadosFiltro.length > 0 && (
         <div className="card-premium p-4">
@@ -155,6 +160,7 @@ function AbaFrascos() {
                     <span>{fmtMl(f.saldo_ml)} de {fmtMl(f.volume_inicial_ml)}</span>
                     <span className="text-muted-foreground">{fmtBRL(f.custo_ml)}/ml</span>
                   </div>
+                  {f.dividido_em && <p className="text-xs text-gold mt-1">Dividido: {fmtMl(Number(f.ml_decants ?? 0))} decants{f.apc ? ` · APC ${fmtMl(Number(f.apc.ml))} (${f.apc.status.replace("_", " ")})` : ""}</p>}
                   {f.pendencias > 0 && <p className="text-xs text-destructive mt-1">{f.pendencias} divergência(s) aguardando aprovação</p>}
                 </button>
               );
@@ -165,6 +171,7 @@ function AbaFrascos() {
       {dialogo === "destinar" && <DialogoDestinar onClose={() => setDialogo(null)} />}
       {dialogo === "abrir" && <DialogoAbrir onClose={() => setDialogo(null)} fechados={fechados} nomeProd={nomeProd} nomeUn={nomeUn} />}
       {dialogo === "tester" && <DialogoTesterFrasco onClose={() => setDialogo(null)} />}
+      {dialogo === "dividir" && <DialogoDividirFrasco frascos={frascos} onClose={() => setDialogo(null)} />}
       {sel && <DialogoFrasco frasco={frascos.find((x) => x.id === sel.id) || sel} onClose={() => setSel(null)} />}
     </div>
   );

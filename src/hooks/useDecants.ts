@@ -22,7 +22,8 @@ export interface FrascoAberto {
   concentracao: string; unidade_id: string; unidade_nome: string; lote_fabricante: string; validade: string | null;
   volume_nominal_ml: number; volume_inicial_ml: number; custo: number; custo_ml: number;
   status: "aberto" | "bloqueado"; aberto_em: string; aberto_por_nome: string; responsavel: string;
-  saldo_ml: number; pendencias: number;
+  saldo_ml: number; pendencias: number; reservado_ml?: number; ml_decants?: number | null; dividido_em?: string | null;
+  apc?: { id: string; ml: number; preco: number; status: string } | null;
 }
 
 export interface DecantTamanho {
