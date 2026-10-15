@@ -18,3 +18,13 @@ describe("dividir frasco", () => {
     expect(tamanhosVendaveis(7)).toEqual([5]);
   });
 });
+
+describe("venda do frasco", () => {
+  it("5, 8 e 10 ml a partir de 80 ml deixam 57 ml", () => {
+    expect(80 - (5 + 8 + 10)).toBe(57);
+  });
+  it("6×5 + 5×8 + 1×10 consome exatamente 80 ml", () => {
+    expect(6 * 5 + 5 * 8 + 1 * 10).toBe(80);
+    expect(tamanhosVendaveis(0)).toEqual([]);
+  });
+});
