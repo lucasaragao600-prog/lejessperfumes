@@ -91,7 +91,7 @@ export function DecantVendaPdv({ open, onClose, vendedoras }: { open: boolean; o
         <div className="grid gap-4 md:grid-cols-[1fr_300px]">
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
-              <select className="input-premium" value={unidade} onChange={(e) => { setUnidade(e.target.value); setCart({}); }}>
+              <select className="input-premium" value={unidade} onChange={(e) => { setUnidade(e.target.value); setCart({}); setCartF({}); setFrascoId(""); setApcId(""); }}>
                 <option value="">Filial</option>{unidadesVenda.map((u) => <option key={u.id} value={u.id}>{u.nomeExibicao}</option>)}
               </select>
               <input className="input-premium" placeholder="Buscar SKU, marca ou nome" value={busca} onChange={(e) => setBusca(e.target.value)} autoFocus />
