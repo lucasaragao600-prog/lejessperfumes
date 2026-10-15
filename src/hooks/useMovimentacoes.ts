@@ -1,8 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery, keepPreviousData } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Movimentacao, Deposito } from "@/data/mockData";
 
-function rowToMov(row: any): Movimentacao {
+export function rowToMov(row: any): Movimentacao {
   return {
     id: row.id,
     data: typeof row.data === "string" ? row.data.slice(0, 10) : row.data,
@@ -70,4 +70,33 @@ export function useMovimentacoes() {
     adicionarMovimentacao: adicionarMovimentacao.mutateAsync,
     setMovimentacoes: () => {},
   };
+}
+
+export const MOV_PAGINA = 30;
+export interface FiltrosMov { tipo?: string; busca?: string; ordem?: "recente" | "antiga" }
+
+/** Movimentações paginadas no servidor (RLS por unidade aplicada no banco). */
+export function useMovimentacoesLista(filtros: FiltrosMov) {
+  const f: Record<string, string> = {};
+  if (filtros.tipo && filtros.tipo !== "Todos") f.tipo = filtros.tipo;
+  if (filtros.busca?.trim()) f.busca = filtros.busca.trim();
+  if (filtros.ordem === "antiga") f.ordem = "antiga";
+  return useInfiniteQuery({
+    queryKey: ["movimentacoes", "lista", f],
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const { data, error } = await supabase.rpc("fn_movimentacoes_listar" as any, { p: f as any, p_limit: MOV_PAGINA, p_offset: pageParam as number });
+      if (error) throw error;
+      const d = (data || {}) as any;
+      const asc = f.ordem === "antiga";
+      const itens = ((d.itens as any[]) || []).map(rowToMov).sort((a, b) => {
+        const k = (a.data + (a.criadoEm || "")).localeCompare(b.data + (b.criadoEm || ""));
+        return asc ? k : -k;
+      });
+      return { total: Number(d.total || 0), itens, offset: pageParam as number };
+    },
+    getNextPageParam: (last) => last.offset + last.itens.length < last.total ? last.offset + MOV_PAGINA : undefined,
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+  });
 }

@@ -1,4 +1,6 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useMovimentacoesLista } from "@/hooks/useMovimentacoes";
+import { Loader2 } from "lucide-react";
 import { getHojeManaus } from "@/lib/dateUtils";
 
 function formatHoraManaus(iso?: string): string {
@@ -38,7 +40,7 @@ const tipoConfigDefault = { icon: RefreshCw, color: "text-muted-foreground", bg:
 
 export default function Movimentacoes() {
   const { nomes: depositos, todosNomes: depositosHistorico, rotulo: rotuloUnidade, isLoading: unidadesLoading } = useUnidades({ contexto: "operacional" });
-  const { movimentacoes, perfumes, adicionarEstoque, ajustarEstoque, transferirEstoque, registrarSaidaTester, adicionarMovimentacao, concentracoesConfig } = useApp();
+  const { perfumes, adicionarEstoque, ajustarEstoque, transferirEstoque, registrarSaidaTester, adicionarMovimentacao, concentracoesConfig } = useApp();
   const { profile, role } = useAuth();
   const isMaster = role === "master";
   const userLoja = (!isMaster && profile?.loja) ? profile.loja as Deposito : null;
@@ -81,17 +83,22 @@ export default function Movimentacoes() {
     }));
   }, [depositos, userLoja]);
 
-  const filtradas = useMemo(() => {
-    let result = movimentacoes.filter((m) => {
-      const matchTipo = filtroTipo === "Todos" || m.tipo === filtroTipo;
-      const matchBusca = busca.trim() === "" || m.perfumeNome.toLowerCase().includes(busca.toLowerCase());
-      return matchTipo && matchBusca;
-    });
-    result = [...result].sort((a, b) =>
-      ordenacao === "recente" ? b.data.localeCompare(a.data) : a.data.localeCompare(b.data)
-    );
-    return result;
-  }, [movimentacoes, filtroTipo, busca, ordenacao]);
+  const [buscaDeb, setBuscaDeb] = useState("");
+  useEffect(() => { const t = setTimeout(() => setBuscaDeb(busca), 300); return () => clearTimeout(t); }, [busca]);
+  const lista = useMovimentacoesLista({ tipo: filtroTipo, busca: buscaDeb, ordem: ordenacao });
+  const filtradas = useMemo(() => (lista.data?.pages || []).flatMap((p) => p.itens), [lista.data]);
+  const totalReg = lista.data?.pages[0]?.total ?? 0;
+  const perfumesMap = useMemo(() => new Map(perfumes.map((p) => [p.id, p])), [perfumes]);
+  const sentinela = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = sentinela.current;
+    if (!el) return;
+    const io = new IntersectionObserver((e) => {
+      if (e[0].isIntersecting && lista.hasNextPage && !lista.isFetchingNextPage) lista.fetchNextPage();
+    }, { rootMargin: "400px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [lista.hasNextPage, lista.isFetchingNextPage, lista.fetchNextPage]);
 
   const executarSalvar = async (motivoAjusteConfirmado?: string) => {
     const p = perfumes.find((x) => x.id === form.perfumeId);
@@ -241,7 +248,7 @@ export default function Movimentacoes() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h1 className="page-title">Movimentações</h1>
-            <p className="page-subtitle mt-1">{filtradas.length} registros</p>
+            <p className="page-subtitle mt-1">{lista.isLoading ? "Carregando..." : `${totalReg} registros`}</p>
           </div>
           <button onClick={() => setShowForm(!showForm)} className="btn-primary px-4 py-2">
             <Plus size={16} /> Nova
@@ -422,7 +429,7 @@ export default function Movimentacoes() {
         {filtradas.map((m) => {
           const cfg = tipoConfig[m.tipo] || tipoConfigDefault;
           const Icon = cfg.icon;
-          const pf = perfumes.find((p) => p.id === m.perfumeId);
+          const pf = perfumesMap.get(m.perfumeId);
           return (
             <div key={m.id} className="card-premium p-4 flex items-start gap-3">
               <div className={`w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 mt-0.5 ${cfg.bg}`}>
@@ -458,7 +465,21 @@ export default function Movimentacoes() {
             </div>
           );
         })}
-        {filtradas.length === 0 && (
+        {lista.isLoading && Array.from({ length: 6 }).map((_, i) => <div key={i} className="card-premium h-[88px] animate-pulse" />)}
+        {lista.isError && (
+          <div className="card-premium p-8 text-center space-y-3">
+            <AlertTriangle size={28} className="mx-auto text-destructive" />
+            <p className="text-sm text-muted-foreground">Não foi possível carregar as movimentações.</p>
+            <button onClick={() => lista.refetch()} className="btn-secondary px-4 py-2 text-sm">Tentar novamente</button>
+          </div>
+        )}
+        <div ref={sentinela} />
+        {lista.hasNextPage && (
+          <button onClick={() => lista.fetchNextPage()} disabled={lista.isFetchingNextPage} className="btn-secondary w-full py-2.5 text-sm flex items-center justify-center gap-2">
+            {lista.isFetchingNextPage ? <><Loader2 size={14} className="animate-spin" /> Carregando...</> : "Carregar mais"}
+          </button>
+        )}
+        {!lista.isLoading && !lista.isError && filtradas.length === 0 && (
           <div className="text-center py-20">
             <ArrowLeftRight size={40} className="text-muted-foreground mx-auto mb-4 opacity-40" />
             <p className="text-muted-foreground text-sm">Nenhuma movimentação encontrada</p>
