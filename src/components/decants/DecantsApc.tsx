@@ -131,7 +131,7 @@ export function DialogoDividirFrasco({ frascos, onClose }: { frascos: FrascoAber
               <span className="text-muted-foreground">Para decants</span><span className="text-right">{fmtMl(mlDec)}</span>
               <span className="text-muted-foreground">APC</span><span className="text-right">{mlApc > 0 ? `${fmtMl(mlApc)} · ${fmtBRL(num(f.papc))}` : "Sem APC"}</span>
               {[["5 ml", f.p5], ["8 ml", f.p8], ["10 ml", f.p10]].map(([t, v]) => (
-                <><span key={t + "l"} className="text-muted-foreground">Preço {t}</span><span key={t} className="text-right">{precoOuNull(v) ? fmtBRL(num(v)) : "sem preço (bloqueado)"}</span></>
+                <div key={t} className="contents"><span className="text-muted-foreground">Preço {t}</span><span className="text-right">{precoOuNull(v) ? fmtBRL(num(v)) : "sem preço (bloqueado)"}</span></div>
               ))}
             </div>
             {mlApc > 0 && mlDec > 0 && <p className="text-xs text-muted-foreground">O APC só poderá ser entregue depois que todo o líquido de decants for retirado deste frasco.</p>}
