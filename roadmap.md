@@ -1,5 +1,6 @@
 # Roadmap Le Jess
 
+- [ ] Varredura filtro Estoque — conferir todos os saldos positivos por unidade nas listas paginadas, totais e exportações.
 - [x] Correção filtro Estoque — saldo positivo incluído sem histórico anterior; Amazonica validada na UI, lista, resumo e exportação (5 unidades), testes do hook aprovados.
 - [x] Fase 1A — Cancelamento, devolução, troca, crédito
 - [ ] Fase 1B-DIRETA — NFC-e direto na SEFAZ-AM (serviço fiscal separado + edge functions). Etapas: 1 segredos/certificado, 2 XML/assinatura/XSD, 3 homologação, 4 eventos, 5 contingência, 6 DANFE/interface, 7 produção — aguardando: escolha do servidor, certificado A1, credenciamento e CSC
