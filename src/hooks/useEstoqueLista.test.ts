@@ -1,6 +1,16 @@
 import { describe, it, expect, vi } from "vitest";
 vi.mock("@/integrations/supabase/client", () => ({ supabase: {} }));
-import { limparFiltros, rowToItemEstoque } from "./useEstoqueLista";
+import { depositosDoFiltro, limparFiltros, rowToItemEstoque } from "./useEstoqueLista";
+
+describe("depositosDoFiltro", () => {
+  const depositos = ["Casa", "Sumaúma", "AMAZONAS SHOPPING"];
+  it("Todos mantém todos os depósitos", () => {
+    expect(depositosDoFiltro(depositos, "Todos")).toEqual(depositos);
+  });
+  it.each(depositos)("ao filtrar %s não apresenta saldos dos demais depósitos", (unidade) => {
+    expect(depositosDoFiltro(depositos, unidade)).toEqual([unidade]);
+  });
+});
 
 describe("limparFiltros", () => {
   it("remove vazios, 'Todos' e ordem padrão", () => {

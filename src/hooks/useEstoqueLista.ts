@@ -6,6 +6,11 @@ import { rowToPerfume } from "@/hooks/usePerfumes";
 
 export const ESTOQUE_PAGINA = 30;
 
+/** A apresentação dos saldos acompanha o depósito selecionado, sem alterar os dados. */
+export function depositosDoFiltro(depositos: string[], unidade: string): string[] {
+  return unidade === "Todos" ? depositos : depositos.filter((d) => d === unidade);
+}
+
 export interface FiltrosEstoque {
   busca?: string;
   unidade?: string;
