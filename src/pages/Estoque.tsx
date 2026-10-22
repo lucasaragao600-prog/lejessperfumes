@@ -21,7 +21,7 @@ import { buscarEstoque, depositosDoFiltro, useEstoqueLista, useEstoqueResumo, ty
 const LIMITE_TODOS = 2000;
 
 export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
-  const { todosNomes: depositos, rotulo: rotuloUnidade } = useUnidades({ contexto: "operacional" });
+  const { nomes: depositos, rotulo: rotuloUnidade } = useUnidades({ contexto: "operacional" });
   const { tiposPerfumeConfig, concentracoesConfig, excluirPerfume } = useApp();
   const { casas } = useCasas();
   const { profile } = useAuth();
