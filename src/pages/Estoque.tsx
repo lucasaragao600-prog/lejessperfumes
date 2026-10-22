@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { useUnidades } from "@/hooks/useUnidades";
 import { useQuery } from "@tanstack/react-query";
-import { buscarEstoque, useEstoqueLista, useEstoqueResumo, type FiltrosEstoque, type ItemEstoque } from "@/hooks/useEstoqueLista";
+import { buscarEstoque, depositosDoFiltro, useEstoqueLista, useEstoqueResumo, type FiltrosEstoque, type ItemEstoque } from "@/hooks/useEstoqueLista";
 
 const LIMITE_TODOS = 2000;
 
@@ -79,6 +79,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
 
   // Force deposit filter for vendedores
   const effectiveDeposito = userLoja || depositoFiltro;
+  const depositosVisiveis = depositosDoFiltro(depositos, effectiveDeposito);
 
   // Valores numéricos com espera de 300 ms para não consultar a cada tecla
   const numeros = useMemo(() => ({ custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax }), [custoMin, custoMax, vendaMin, vendaMax, estoqueMin, estoqueMax]);
@@ -492,12 +493,10 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
 
       {/* Quantity cards - hidden for vendedores */}
       {userLoja ? null : (
-        <div className="px-4 mb-3 grid grid-cols-4 gap-2">
+        <div className={`px-4 mb-3 grid gap-2 ${effectiveDeposito === "Todos" ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-1"}`}>
           {[
-            { label: "Total", value: resumo.unidades },
-            ...depositos
-              .filter((d) => !rotuloUnidade(d).includes("Unidade Inativa"))
-              .map((d) => ({ label: rotuloUnidade(d), value: resumo.por_unidade[d] || 0 })),
+            ...(effectiveDeposito === "Todos" ? [{ label: "Total", value: resumo.unidades }] : []),
+            ...depositosVisiveis.map((d) => ({ label: rotuloUnidade(d), value: effectiveDeposito === "Todos" ? resumo.por_unidade[d] || 0 : resumo.unidades })),
           ].map(({ label, value }) => (
             <div key={label} className="kpi-card p-3 text-center">
               <p className="text-[9px] text-muted-foreground mb-1">{label}</p>
@@ -557,7 +556,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
             isMaster={isMaster}
             userLoja={userLoja}
             todasLojas={effectiveDeposito === "Todos"}
-            depositos={depositos}
+            depositos={depositosVisiveis}
             concentracaoLabel={String(concentracoesConfig[p.concentracao] || p.concentracao)}
             selecaoAtiva={selecaoAtiva}
             marcado={selecionados.has(p.id)}

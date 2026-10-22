@@ -98,7 +98,7 @@ function ProdutoEstoqueCardBase({
         <span className="text-[11px] text-muted-foreground uppercase tracking-wider">unid.</span>
       </div>
 
-      {!userLoja && todasLojas && (
+      {!userLoja && (
         <div className="flex gap-2 mb-3">
           {depositos.map((d) => {
             const testerDeposito = p.testers[d] || 0;
