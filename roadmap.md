@@ -1,5 +1,7 @@
 # Roadmap Le Jess
 
+- [ ] Estoque — em Todos mostrar todos os depósitos; no filtro individual mostrar somente os saldos do depósito selecionado.
+
 - [x] Varredura filtro Estoque — 1.677 saldos por unidade conferidos com dados reais: páginas, resumo, exportação e ordenação; 91 associações produto/loja antes ocultas, todas contempladas pela correção global.
 - [x] Correção filtro Estoque — saldo positivo incluído sem histórico anterior; Amazonica validada na UI, lista, resumo e exportação (5 unidades), testes do hook aprovados.
 - [x] Fase 1A — Cancelamento, devolução, troca, crédito
