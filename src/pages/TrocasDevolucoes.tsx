@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeftRight, ChevronDown, Loader2, RotateCcw, Search, ShieldAlert, Undo2 } from "lucide-react";
-import { useDevolucaoItens, useDevolucoesLista, type DevolucaoListaItem } from "@/hooks/useDevolucoes";
+import { ArrowLeftRight, CheckCircle2, ChevronDown, Loader2, RotateCcw, Search, ShieldAlert, Undo2 } from "lucide-react";
+import { toast } from "sonner";
+import { useConfirmarReembolso, useDevolucaoItens, useDevolucoesLista, type DevolucaoListaItem } from "@/hooks/useDevolucoes";
 import { useUnidades } from "@/hooks/useUnidades";
 import { usePermissoesTrocas } from "@/hooks/usePermissoesTrocas";
 import { getHojeManaus } from "@/lib/dateUtils";
@@ -27,10 +28,22 @@ const DESTINO_LABEL: Record<string, string> = {
   tester: "Virou tester",
 };
 
-function CardDevolucao({ d, rotulo }: { d: DevolucaoListaItem; rotulo: (id: string) => string }) {
+function CardDevolucao({ d, rotulo, podeReembolso }: { d: DevolucaoListaItem; rotulo: (id: string) => string; podeReembolso: boolean }) {
   const [aberto, setAberto] = useState(false);
   const itens = useDevolucaoItens(aberto ? d.id : null);
+  const confirmar = useConfirmarReembolso();
   const isTroca = d.tipo === "troca";
+  const reembolsoPendente = !isTroca && d.reembolso_status === "pendente";
+
+  const confirmarReembolso = async () => {
+    if (!window.confirm(`Confirmar que o reembolso de ${fmtMoeda(d.valor_total)} (${d.forma_reembolso === "pix" ? "Pix" : "estorno no cartão"}) foi pago ao cliente?`)) return;
+    try {
+      await confirmar.mutateAsync({ devolucaoId: d.id });
+      toast.success(`Reembolso da ${d.numero} confirmado`);
+    } catch (e: any) {
+      toast.error(e?.message || "Não foi possível confirmar o reembolso");
+    }
+  };
 
   return (
     <div className="card p-4 space-y-2">
