@@ -33,7 +33,7 @@ BEGIN
     GET STACKED DIAGNOSTICS erro=MESSAGE_TEXT;
     IF erro NOT LIKE '%Situação fiscal inválida%' THEN RAISE; END IF;
   END;
-  SELECT regexp_replace(cnpj,'\D','','g') INTO cnpj FROM public.unidades WHERE id=vv.unidade_id;
+  SELECT regexp_replace(u.cnpj,'\D','','g') INTO cnpj FROM public.unidades u WHERE u.id=vv.unidade_id;
   IF length(cnpj)<>14 THEN RAISE EXCEPTION 'Teste exige CNPJ da unidade'; END IF;
   base:='132610'||cnpj||'55001000000123110000001';
   FOR i IN REVERSE 43..1 LOOP soma:=soma+substring(base,i,1)::int*peso; peso:=CASE WHEN peso=9 THEN 2 ELSE peso+1 END; END LOOP;
