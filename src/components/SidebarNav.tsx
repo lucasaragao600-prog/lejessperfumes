@@ -1,4 +1,4 @@
-import { Building2, Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon, Monitor, DollarSign, ClipboardList, LineChart, Sparkles, Truck, Droplets } from "lucide-react";
+import { Building2, Package, ShoppingCart, ArrowLeftRight, FlaskConical, BarChart3, Settings, Users, FileSpreadsheet, FileText, Sun, Moon, Monitor, DollarSign, ClipboardList, LineChart, Sparkles, Truck, Droplets, RotateCcw } from "lucide-react";
 import { useLogoEmpresa } from "@/hooks/useLogoEmpresa";
 import { useTheme } from "@/context/ThemeContext";
 
