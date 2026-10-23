@@ -2598,6 +2598,9 @@ export type Database = {
           id: string
           motivo: string
           numero: string
+          reembolso_confirmado_em: string | null
+          reembolso_confirmado_por: string | null
+          reembolso_status: string
           registrado_por: string | null
           registrado_por_nome: string
           sessao_caixa_id: string | null
@@ -2621,6 +2624,9 @@ export type Database = {
           id?: string
           motivo: string
           numero: string
+          reembolso_confirmado_em?: string | null
+          reembolso_confirmado_por?: string | null
+          reembolso_status?: string
           registrado_por?: string | null
           registrado_por_nome?: string
           sessao_caixa_id?: string | null
@@ -2644,6 +2650,9 @@ export type Database = {
           id?: string
           motivo?: string
           numero?: string
+          reembolso_confirmado_em?: string | null
+          reembolso_confirmado_por?: string | null
+          reembolso_status?: string
           registrado_por?: string | null
           registrado_por_nome?: string
           sessao_caixa_id?: string | null
@@ -6062,6 +6071,10 @@ export type Database = {
       }
       fn_devolucao_quarentena_listar: {
         Args: { p_status?: string; p_unidade_id?: string }
+        Returns: Json
+      }
+      fn_devolucao_reembolso_confirmar: {
+        Args: { p_devolucao_id: string; p_observacao?: string }
         Returns: Json
       }
       fn_devolucao_registrar: {

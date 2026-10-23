@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeftRight, ChevronDown, Loader2, RotateCcw, Search, ShieldAlert, Undo2 } from "lucide-react";
-import { useDevolucaoItens, useDevolucoesLista, type DevolucaoListaItem } from "@/hooks/useDevolucoes";
+import { ArrowLeftRight, CheckCircle2, ChevronDown, Loader2, RotateCcw, Search, ShieldAlert, Undo2 } from "lucide-react";
+import { toast } from "sonner";
+import { useConfirmarReembolso, useDevolucaoItens, useDevolucoesLista, type DevolucaoListaItem } from "@/hooks/useDevolucoes";
 import { useUnidades } from "@/hooks/useUnidades";
 import { usePermissoesTrocas } from "@/hooks/usePermissoesTrocas";
 import { getHojeManaus } from "@/lib/dateUtils";
@@ -27,10 +28,22 @@ const DESTINO_LABEL: Record<string, string> = {
   tester: "Virou tester",
 };
 
-function CardDevolucao({ d, rotulo }: { d: DevolucaoListaItem; rotulo: (id: string) => string }) {
+function CardDevolucao({ d, rotulo, podeReembolso }: { d: DevolucaoListaItem; rotulo: (id: string) => string; podeReembolso: boolean }) {
   const [aberto, setAberto] = useState(false);
   const itens = useDevolucaoItens(aberto ? d.id : null);
+  const confirmar = useConfirmarReembolso();
   const isTroca = d.tipo === "troca";
+  const reembolsoPendente = !isTroca && d.reembolso_status === "pendente";
+
+  const confirmarReembolso = async () => {
+    if (!window.confirm(`Confirmar que o reembolso de ${fmtMoeda(d.valor_total)} (${d.forma_reembolso === "pix" ? "Pix" : "estorno no cartão"}) foi pago ao cliente?`)) return;
+    try {
+      await confirmar.mutateAsync({ devolucaoId: d.id });
+      toast.success(`Reembolso da ${d.numero} confirmado`);
+    } catch (e: any) {
+      toast.error(e?.message || "Não foi possível confirmar o reembolso");
+    }
+  };
 
   return (
     <div className="card p-4 space-y-2">
@@ -48,6 +61,11 @@ function CardDevolucao({ d, rotulo }: { d: DevolucaoListaItem; rotulo: (id: stri
               {d.fora_do_prazo && (
                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-destructive/10 text-destructive border border-destructive/30">
                   Fora do prazo
+                </span>
+              )}
+              {reembolsoPendente && (
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-400 border border-amber-400/30">
+                  Reembolso pendente
                 </span>
               )}
             </div>
@@ -96,6 +114,28 @@ function CardDevolucao({ d, rotulo }: { d: DevolucaoListaItem; rotulo: (id: stri
           {d.registrado_por_nome && (
             <p className="text-[11px] text-muted-foreground">Registrado por {d.registrado_por_nome}</p>
           )}
+          {reembolsoPendente && (
+            <div className="pt-2">
+              {podeReembolso ? (
+                <button
+                  onClick={confirmarReembolso}
+                  disabled={confirmar.isPending}
+                  className="btn-primary px-3 py-1.5 text-xs flex items-center gap-1.5"
+                >
+                  {confirmar.isPending ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                  Confirmar reembolso pago
+                </button>
+              ) : (
+                <p className="text-[11px] text-amber-400">Aguardando confirmação de reembolso por quem tem permissão.</p>
+              )}
+            </div>
+          )}
+          {!reembolsoPendente && !isTroca && d.reembolso_confirmado_por && d.forma_reembolso && ["pix", "estorno_cartao"].includes(d.forma_reembolso) && (
+            <p className="text-[11px] text-success pt-1">
+              Reembolso confirmado por {d.reembolso_confirmado_por}
+              {d.reembolso_confirmado_em ? ` em ${fmtDataHora(d.reembolso_confirmado_em)}` : ""}
+            </p>
+          )}
         </div>
       )}
     </div>
@@ -104,7 +144,7 @@ function CardDevolucao({ d, rotulo }: { d: DevolucaoListaItem; rotulo: (id: stri
 
 export default function TrocasDevolucoes() {
   const { unidades, rotulo: rotuloChave } = useUnidades({ contexto: "historico" });
-  const { podeAlgumaAcao } = usePermissoesTrocas();
+  const { podeAlgumaAcao, podeReembolso } = usePermissoesTrocas();
   const hoje = getHojeManaus();
   const [desde, setDesde] = useState(hoje);
   const [ate, setAte] = useState(hoje);
@@ -192,7 +232,7 @@ export default function TrocasDevolucoes() {
         </div>
       ) : (
         <div className="space-y-2">
-          {itens.map((d) => <CardDevolucao key={d.id} d={d} rotulo={rotuloPorId} />)}
+          {itens.map((d) => <CardDevolucao key={d.id} d={d} rotulo={rotuloPorId} podeReembolso={podeReembolso} />)}
           <div ref={sentinela} />
           {lista.isFetchingNextPage && (
             <div className="flex items-center justify-center gap-2 py-4 text-muted-foreground text-xs">
