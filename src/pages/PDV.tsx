@@ -6,7 +6,7 @@ import {
   Package, CheckCircle2, ArrowLeft, Receipt, DollarSign,
   Percent, Store, User, Loader2, UserPlus, FileText,
   CreditCard, Banknote, QrCode, BookOpen, ChevronDown,
-  Printer, Eye, AlertTriangle, Lock
+  Printer, Eye, AlertTriangle, Lock, ArrowLeftRight
 } from "lucide-react";
 import { useApp } from "@/context/AppContext";
 import { useAuth } from "@/context/AuthContext";
