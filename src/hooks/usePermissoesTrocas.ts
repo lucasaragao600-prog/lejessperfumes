@@ -14,15 +14,23 @@ export function usePermissoesTrocas() {
   const perms = minhas.data || [];
 
   const podeTrocar = podeAcao(isMaster, perms, PERMISSOES_TROCAS.trocar);
+  const podeTrocarEntreUnidades = podeAcao(isMaster, perms, PERMISSOES_TROCAS.trocarEntreUnidades);
   const podeDevolver = podeAcao(isMaster, perms, PERMISSOES_TROCAS.devolver);
   const podeCancelar = podeAcao(isMaster, perms, PERMISSOES_TROCAS.cancelar);
   const podeQuarentena = podeAcao(isMaster, perms, PERMISSOES_TROCAS.quarentena);
   const podeReembolso = podeAcao(isMaster, perms, PERMISSOES_TROCAS.reembolso);
 
+  // Unidades onde o usuário tem a permissão de troca entre unidades (vazio para master: pode todas)
+  const unidadesTrocaEntreUnidades = isMaster
+    ? []
+    : [...new Set(perms.filter(p => p.permissao === PERMISSOES_TROCAS.trocarEntreUnidades).map(p => p.unidadeId))];
+
   return {
     isMaster,
     carregando: minhas.isLoading,
     podeTrocar,
+    podeTrocarEntreUnidades,
+    unidadesTrocaEntreUnidades,
     podeDevolver,
     podeCancelar,
     podeQuarentena,

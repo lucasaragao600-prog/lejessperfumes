@@ -6,6 +6,7 @@
 
 export const PERMISSOES_TROCAS = {
   trocar: "venda.trocar",
+  trocarEntreUnidades: "venda.trocar_entre_unidades",
   devolver: "venda.devolver",
   devolverForaPrazo: "venda.devolver_fora_prazo",
   cancelar: "venda.cancelar",
