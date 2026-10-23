@@ -495,6 +495,9 @@ export default function Movimentacoes() {
         )}
       </div>
 
+      {/* Troca de Produtos — mesmo fluxo central do PDV e do Histórico de Vendas */}
+      <BuscarVendaTroca aberto={showTroca} onClose={() => setShowTroca(false)} />
+
       {/* Modal de confirmação de Ajuste */}
       <Dialog open={!!ajusteModal} onOpenChange={(o) => { if (!o) { setAjusteModal(null); setMotivoAjuste(""); } }}>
         <DialogContent className="max-w-md">
