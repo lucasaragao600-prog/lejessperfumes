@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Printer, Trash2, Plus, AlertTriangle } from "lucide-react";
+import { Loader2, Printer, Trash2, Plus, AlertTriangle, ArrowLeftRight } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
 import { useApp } from "@/context/AppContext";
 import { formatCurrency } from "@/data/mockData";
 import { getHojeManaus } from "@/lib/dateUtils";
-import { useGrupoVenda, useAcoesVenda, usePrazoDevolucao } from "@/hooks/useDevolucoes";
+import { useGrupoVenda, useGrupoVendaTroca, useAcoesVenda, usePrazoDevolucao } from "@/hooks/useDevolucoes";
 import {
   CONDICOES_ITEM, DESTINOS_ITEM, FORMAS_REEMBOLSO, condicaoExigeQuarentena, diferencaTroca, foraDoPrazo,
   nomeCondicao, round2, saldoDevolvivel, valorUnitarioLiquido,

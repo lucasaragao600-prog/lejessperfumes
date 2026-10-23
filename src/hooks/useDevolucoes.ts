@@ -321,7 +321,25 @@ export function useAcoesVenda() {
     onSuccess,
   });
 
-  return { cancelar, devolver, trocar };
+  const trocarUnidade = useMutation({
+    mutationFn: async (p: {
+      grupoVenda: string; unidadeOperacaoId: string;
+      itensDevolvidos: { venda_id: string; quantidade: number; destino: string; condicao?: string }[];
+      itensNovos: { produto_id: string; quantidade: number; preco_unitario: number }[]; motivo: string;
+      pagamentos: { tipo_pagamento: string; bandeira: string; valor: number }[]; formaDiferenca: string | null; clienteId?: string | null;
+    }) => {
+      const { data, error } = await db.rpc("fn_troca_registrar_unidade", {
+        p_grupo_venda: p.grupoVenda, p_unidade_operacao: p.unidadeOperacaoId,
+        p_itens_devolvidos: p.itensDevolvidos, p_itens_novos: p.itensNovos, p_motivo: p.motivo,
+        p_pagamentos: p.pagamentos, p_forma_diferenca: p.formaDiferenca, p_cliente_id: p.clienteId ?? null, p_vendedora: "",
+      });
+      if (error) throw error;
+      return data as { id: string; numero: string; valor_devolvido: number; valor_novo: number; diferenca: number };
+    },
+    onSuccess,
+  });
+
+  return { cancelar, devolver, trocar, trocarUnidade };
 }
 
 export async function usarCredito(clienteId: string, valor: number, unidadeId?: string | null) {
