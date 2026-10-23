@@ -160,15 +160,15 @@ export default function TrocasDevolucoes() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-        <input type="date" value={desde} onChange={(e) => setDesde(e.target.value || hoje)} className="input text-xs" />
-        <input type="date" value={ate} onChange={(e) => setAte(e.target.value || hoje)} className="input text-xs" />
-        <select value={unidadeId} onChange={(e) => setUnidadeId(e.target.value)} className="input text-xs">
+        <input type="date" value={desde} onChange={(e) => setDesde(e.target.value || hoje)} className="input-premium text-xs" />
+        <input type="date" value={ate} onChange={(e) => setAte(e.target.value || hoje)} className="input-premium text-xs" />
+        <select value={unidadeId} onChange={(e) => setUnidadeId(e.target.value)} className="input-premium text-xs">
           <option value="">Todas as lojas</option>
           {unidades.map((u) => (
             <option key={u.id} value={u.id}>{rotuloChave(u.codigoLegado || u.codigo)}</option>
           ))}
         </select>
-        <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="input text-xs">
+        <select value={tipo} onChange={(e) => setTipo(e.target.value)} className="input-premium text-xs">
           <option value="">Trocas e devoluções</option>
           <option value="troca">Só trocas</option>
           <option value="devolucao">Só devoluções</option>
@@ -177,7 +177,7 @@ export default function TrocasDevolucoes() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             value={busca} onChange={(e) => setBusca(e.target.value)}
-            placeholder="Número ou produto…" className="input text-xs pl-8 w-full"
+            placeholder="Número ou produto…" className="input-premium text-xs pl-8 w-full"
           />
         </div>
       </div>
