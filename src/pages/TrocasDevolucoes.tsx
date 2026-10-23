@@ -144,7 +144,7 @@ function CardDevolucao({ d, rotulo, podeReembolso }: { d: DevolucaoListaItem; ro
 
 export default function TrocasDevolucoes() {
   const { unidades, rotulo: rotuloChave } = useUnidades({ contexto: "historico" });
-  const { podeAlgumaAcao } = usePermissoesTrocas();
+  const { podeAlgumaAcao, podeReembolso } = usePermissoesTrocas();
   const hoje = getHojeManaus();
   const [desde, setDesde] = useState(hoje);
   const [ate, setAte] = useState(hoje);
@@ -232,7 +232,7 @@ export default function TrocasDevolucoes() {
         </div>
       ) : (
         <div className="space-y-2">
-          {itens.map((d) => <CardDevolucao key={d.id} d={d} rotulo={rotuloPorId} />)}
+          {itens.map((d) => <CardDevolucao key={d.id} d={d} rotulo={rotuloPorId} podeReembolso={podeReembolso} />)}
           <div ref={sentinela} />
           {lista.isFetchingNextPage && (
             <div className="flex items-center justify-center gap-2 py-4 text-muted-foreground text-xs">
