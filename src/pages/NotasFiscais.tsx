@@ -158,6 +158,10 @@ export default function NotasFiscais() {
 
   const handleConciliar = async () => {
     if (!notaSelecionada || conciliando) return;
+    if (!depositoDestino) {
+      toast.error("Selecione o depósito de destino antes de dar entrada.");
+      return;
+    }
     setConciliando(true);
     try {
     const itensCorrespondidos = notaSelecionada.itens.filter((i) => i.perfumeId);
@@ -197,6 +201,8 @@ export default function NotasFiscais() {
     await conciliarNota({ notaId: notaSelecionada.id, conciliadaPor: profile?.nome || "Sistema" });
     setNotaSelecionada(null);
     setEditableQtds({});
+    } catch (err) {
+      toast.error("Erro ao dar entrada: " + (err instanceof Error ? err.message : "tente novamente."));
     } finally {
       setConciliando(false);
     }
