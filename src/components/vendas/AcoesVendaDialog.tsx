@@ -97,7 +97,7 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose }: Props) {
       }
       if (!itens.length) { toast.error("Selecione ao menos um item"); return; }
       const nomeDest = (d: string) => DESTINOS_ITEM.find(x => x.value === d)?.label || d;
-      const itensPrint = itensSel.map(i => ({ nome: i.perfumeNome, qtd: i.qtd, valor: i.unit * i.qtd, destino: nomeDest(i.destino) }));
+      const itensPrint = itensSel.map(i => ({ nome: i.perfumeNome, qtd: i.qtd, valor: i.unit * i.qtd, destino: `${nomeDest(i.destino)} · ${nomeCondicao(i.condicao)}` }));
       if (modo === "devolver") {
         if (precisaCliente) { toast.error("Esta venda não tem cliente: escolha outra forma de reembolso"); return; }
         const r = await devolver.mutateAsync({ grupoVenda: grupo.grupoVenda, itens, motivo: motivo.trim(), forma });
@@ -192,10 +192,20 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose }: Props) {
                           onChange={e => setQtds(q => ({ ...q, [i.id]: Math.min(max, Math.max(0, Math.floor(Number(e.target.value) || 0))) }))}
                           className={`${input} w-16 text-right`} />
                         <span className="text-[11px] text-muted-foreground">de {max}{i.jaDevolvido ? ` (já devolvido ${i.jaDevolvido})` : ""}</span>
-                        <select value={destinos[i.id] || "estoque"} onChange={e => setDestinos(d => ({ ...d, [i.id]: e.target.value as DestinoItem }))}
-                          className={`${input} ml-auto`}>
-                          {DESTINOS_ITEM.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <select value={condicoes[i.id] || "novo_lacrado"} onChange={e => setCondicoes(c => ({ ...c, [i.id]: e.target.value as CondicaoItem }))}
+                          className={`${input} flex-1`} aria-label="Condição do produto">
+                          {CONDICOES_ITEM.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                         </select>
+                        {condicaoExigeQuarentena(condicoes[i.id] || "novo_lacrado") ? (
+                          <span className="text-[11px] px-2.5 py-1.5 rounded-full border border-gold-muted text-gold whitespace-nowrap">Quarentena</span>
+                        ) : (
+                          <select value={destinos[i.id] || "estoque"} onChange={e => setDestinos(d => ({ ...d, [i.id]: e.target.value as DestinoItem }))}
+                            className={`${input} ml-auto`} aria-label="Destino do produto">
+                            {DESTINOS_ITEM.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                          </select>
+                        )}
                       </div>
                     </div>
                   );
