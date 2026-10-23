@@ -2591,6 +2591,11 @@ export type Database = {
           cliente_id: string | null
           created_at: string
           diferenca: number
+          fiscal_atualizado_em: string | null
+          fiscal_atualizado_por: string | null
+          fiscal_chave_entrada: string | null
+          fiscal_observacao: string | null
+          fiscal_status: string
           fora_do_prazo: boolean
           forma_reembolso: string | null
           grupo_venda_origem: string
@@ -2619,6 +2624,11 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           diferenca?: number
+          fiscal_atualizado_em?: string | null
+          fiscal_atualizado_por?: string | null
+          fiscal_chave_entrada?: string | null
+          fiscal_observacao?: string | null
+          fiscal_status?: string
           fora_do_prazo?: boolean
           forma_reembolso?: string | null
           grupo_venda_origem: string
@@ -2647,6 +2657,11 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           diferenca?: number
+          fiscal_atualizado_em?: string | null
+          fiscal_atualizado_por?: string | null
+          fiscal_chave_entrada?: string | null
+          fiscal_observacao?: string | null
+          fiscal_status?: string
           fora_do_prazo?: boolean
           forma_reembolso?: string | null
           grupo_venda_origem?: string
@@ -6075,6 +6090,19 @@ export type Database = {
           p_itens: Json
           p_pagamentos: Json
           p_vendedora: string
+        }
+        Returns: Json
+      }
+      fn_devolucao_fiscal_detalhe: {
+        Args: { p_devolucao_id: string }
+        Returns: Json
+      }
+      fn_devolucao_fiscal_tratar: {
+        Args: {
+          p_chave_entrada?: string
+          p_devolucao_id: string
+          p_observacao: string
+          p_status: string
         }
         Returns: Json
       }

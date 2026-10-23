@@ -25,5 +25,6 @@
 - [x] Fiscal Etapa 4 — tentativas na tela da NFC-e, corrigir e reenviar, sem mensagem duplicada — aguardando aprovação
 - [ ] Fiscal — conferência pelo XSD oficial antes do envio (não feita)
 - [x] Trocas/Devoluções Fases 1–5 — entrada central, quarentena, permissões, Central, reembolso confirmado
-- [x] Trocas/Devoluções Fase 6 — troca entre unidades (0052/0053, teste SQL transacional) — aguardando aprovação
-- [ ] Trocas/Devoluções Fase 7 — integração fiscal (aguardando aprovação da Fase 6)
+- [x] Trocas/Devoluções Fase 6 — troca entre unidades (0052/0053, teste SQL transacional) — aprovada
+- [x] Trocas/Devoluções Fase 7A — acompanhamento fiscal, vínculos, análise/rejeição e preservação da NFC-e original (0054; 74 testes; SQL rollback). Relatório: docs/trocas-fase7-validacao.md. Aguardar aprovação; formulário com devolução real não verificado porque não há registros.
+- [ ] Trocas/Devoluções Fase 7B — emissão e acompanhamento automático de NF-e de entrada modelo 55 — bloqueada pela integração específica e validação contábil (CFOP/CST/CSOSN/tributos/natureza); CNPJ real da unidade recebedora necessário.
