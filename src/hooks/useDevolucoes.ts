@@ -208,6 +208,24 @@ export function useDevolucaoItens(devolucaoId: string | null) {
   });
 }
 
+/** Confirma que o reembolso (pix/estorno) foi pago ao cliente. */
+export function useConfirmarReembolso() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (p: { devolucaoId: string; observacao?: string }) => {
+      const { data, error } = await db.rpc("fn_devolucao_reembolso_confirmar", {
+        p_devolucao_id: p.devolucaoId, p_observacao: p.observacao ?? null,
+      });
+      if (error) throw error;
+      return data as { id: string; numero: string; valor: number };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["devolucoes_lista"] });
+      qc.invalidateQueries({ queryKey: ["devolucoes_resumo"] });
+    },
+  });
+}
+
 export function useAcoesVenda() {
   const qc = useQueryClient();
   const onSuccess = () => invalidarVendasRelacionadas(qc);
