@@ -1,19 +1,11 @@
 import { useState } from "react";
 import { Ban, RotateCcw, Repeat } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
-import { useMinhasPermissoes } from "@/hooks/useAcessosUnidade";
-import { PERMISSOES_TROCAS, podeAcao } from "@/lib/permissoesVenda";
+import { usePermissoesTrocas } from "@/hooks/usePermissoesTrocas";
 import AcoesVendaDialog, { type ModoAcaoVenda } from "./AcoesVendaDialog";
 
 export default function AcoesVendaBotoes({ grupoVenda, compacto = false, onClose }: { grupoVenda: string; compacto?: boolean; onClose?: () => void }) {
   const [modo, setModo] = useState<ModoAcaoVenda | null>(null);
-  const { role } = useAuth();
-  const minhas = useMinhasPermissoes();
-  const isMaster = role === "master";
-  const perms = minhas.data || [];
-  const podeDevolver = podeAcao(isMaster, perms, PERMISSOES_TROCAS.devolver);
-  const podeTrocar = podeAcao(isMaster, perms, PERMISSOES_TROCAS.trocar);
-  const podeCancelar = podeAcao(isMaster, perms, PERMISSOES_TROCAS.cancelar);
+  const { podeDevolver, podeTrocar, podeCancelar } = usePermissoesTrocas();
   const cls = compacto
     ? "text-[10px] px-2 py-1 rounded-full border border-border text-muted-foreground hover:text-foreground flex items-center gap-1"
     : "btn-secondary px-3 py-2 text-xs flex items-center gap-1.5";

@@ -2,9 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Search, ArrowLeftRight, RotateCcw, Receipt } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { usePedidosLista } from "@/hooks/useVendasLista";
-import { useMinhasPermissoes } from "@/hooks/useAcessosUnidade";
-import { useAuth } from "@/context/AuthContext";
-import { PERMISSOES_TROCAS, podeAcao } from "@/lib/permissoesVenda";
+import { usePermissoesTrocas } from "@/hooks/usePermissoesTrocas";
 import { formatCurrency } from "@/data/mockData";
 import AcoesVendaDialog, { type ModoAcaoVenda } from "./AcoesVendaDialog";
 
@@ -17,11 +15,7 @@ export default function BuscarVendaTroca({ aberto, onClose }: { aberto: boolean;
   const [busca, setBusca] = useState("");
   const [buscaDeb, setBuscaDeb] = useState("");
   const [selecionado, setSelecionado] = useState<{ grupoVenda: string; modo: ModoAcaoVenda } | null>(null);
-  const { role } = useAuth();
-  const minhas = useMinhasPermissoes();
-  const isMaster = role === "master";
-  const podeTrocar = podeAcao(isMaster, minhas.data || [], PERMISSOES_TROCAS.trocar);
-  const podeDevolver = podeAcao(isMaster, minhas.data || [], PERMISSOES_TROCAS.devolver);
+  const { podeTrocar, podeDevolver } = usePermissoesTrocas();
 
   useEffect(() => {
     const t = setTimeout(() => setBuscaDeb(busca.trim()), 300);

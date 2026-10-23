@@ -4,9 +4,7 @@ import { Loader2, PackageCheck, ShieldAlert, FlaskConical, Trash2 } from "lucide
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthContext";
-import { useMinhasPermissoes } from "@/hooks/useAcessosUnidade";
-import { PERMISSOES_TROCAS, podeAcao } from "@/lib/permissoesVenda";
+import { usePermissoesTrocas } from "@/hooks/usePermissoesTrocas";
 import { nomeCondicao } from "@/lib/devolucao";
 import { invalidarVendasRelacionadas } from "@/hooks/useDevolucoes";
 
@@ -32,9 +30,7 @@ const DECISOES = [
 export default function QuarentenaDevolucao({ aberto, onClose }: { aberto: boolean; onClose: () => void }) {
   const qc = useQueryClient();
   const [obs, setObs] = useState<Record<string, string>>({});
-  const { role } = useAuth();
-  const minhas = useMinhasPermissoes();
-  const podeDecidir = podeAcao(role === "master", minhas.data || [], PERMISSOES_TROCAS.quarentena);
+  const { podeQuarentena: podeDecidir } = usePermissoesTrocas();
 
   const lista = useQuery({
     queryKey: ["devolucao_quarentena"],
