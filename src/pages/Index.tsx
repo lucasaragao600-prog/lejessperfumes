@@ -6,6 +6,7 @@ import SidebarNav from "@/components/SidebarNav";
 import Estoque from "@/pages/Estoque";
 import Vendas from "@/pages/Vendas";
 import Movimentacoes from "@/pages/Movimentacoes";
+import TrocasDevolucoes from "@/pages/TrocasDevolucoes";
 import Testers from "@/pages/Testers";
 import Dashboards from "@/pages/Dashboards";
 import Configuracoes from "@/pages/Configuracoes";
@@ -114,6 +115,8 @@ function IndexContent({
       case "estoque": return <Estoque isMaster={isMaster} />;
       case "vendas": return <Vendas />;
       case "movimentacoes": return <Movimentacoes />;
+      case "trocas": return <TrocasDevolucoes />;
+
       
       case "testers": return <Testers isMaster={isMaster} />;
       case "notas": return isMaster ? <NotasFiscais /> : <Estoque isMaster={false} />;

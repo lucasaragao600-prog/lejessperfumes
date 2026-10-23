@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const db = supabase as any;
@@ -103,6 +103,104 @@ export function useDevolucoesResumo(params: { desde: string; ate: string }) {
       if (error) throw error;
       return (data || []).map((d: any) => ({ ...d, valor_total: Number(d.valor_total) })) as
         { id: string; numero: string; tipo: string; valor_total: number; unidade_id: string; sessao_caixa_id: string | null; created_at: string }[];
+    },
+  });
+}
+
+export interface DevolucaoListaItem {
+  id: string;
+  numero: string;
+  tipo: string;
+  status: string;
+  valor_total: number;
+  valor_troca: number;
+  diferenca: number;
+  forma_reembolso: string | null;
+  fora_do_prazo: boolean;
+  motivo: string | null;
+  unidade_id: string;
+  cliente_id: string | null;
+  cliente_nome: string | null;
+  registrado_por_nome: string | null;
+  created_at: string;
+}
+
+export interface FiltroDevolucoes {
+  desde: string;
+  ate: string;
+  unidadeId: string | null;
+  tipo: string | null; // 'devolucao' | 'troca' | null
+  busca: string;
+}
+
+const PAGINA_DEV = 30;
+
+/** Central de Trocas e Devoluções: lista paginada (30/página), filtrada por período, loja, tipo e busca. RLS filtra por unidade. */
+export function useDevolucoesLista(f: FiltroDevolucoes) {
+  return useInfiniteQuery({
+    queryKey: ["devolucoes_lista", f.desde, f.ate, f.unidadeId, f.tipo, f.busca],
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const ini = `${f.desde}T04:00:00Z`;
+      const fimD = new Date(`${f.ate}T04:00:00Z`);
+      fimD.setUTCDate(fimD.getUTCDate() + 1);
+      let q = db.from("devolucoes")
+        .select("id, numero, tipo, status, valor_total, valor_troca, diferenca, forma_reembolso, fora_do_prazo, motivo, unidade_id, cliente_id, registrado_por_nome, created_at", { count: "exact" })
+        .gte("created_at", ini).lt("created_at", fimD.toISOString())
+        .order("created_at", { ascending: false });
+      if (f.unidadeId) q = q.eq("unidade_id", f.unidadeId);
+      if (f.tipo) q = q.eq("tipo", f.tipo);
+      const busca = f.busca.trim();
+      if (busca) {
+        const { data: itensMatch } = await db.from("devolucao_itens").select("devolucao_id").ilike("produto_nome", `%${busca}%`).limit(200);
+        const ids = [...new Set((itensMatch || []).map((i: any) => i.devolucao_id))];
+        q = ids.length ? q.or(`numero.ilike.%${busca}%,id.in.(${ids.join(",")})`) : q.ilike("numero", `%${busca}%`);
+      }
+      const from = pageParam * PAGINA_DEV;
+      const { data, error, count } = await q.range(from, from + PAGINA_DEV - 1);
+      if (error) throw error;
+      const rows = (data || []) as any[];
+      const clienteIds = [...new Set(rows.map((r) => r.cliente_id).filter(Boolean))];
+      let nomes = new Map<string, string>();
+      if (clienteIds.length) {
+        const { data: cls } = await db.from("clientes").select("id, nome").in("id", clienteIds);
+        nomes = new Map((cls || []).map((c: any) => [c.id, c.nome]));
+      }
+      const itens: DevolucaoListaItem[] = rows.map((r) => ({
+        ...r,
+        valor_total: Number(r.valor_total), valor_troca: Number(r.valor_troca ?? 0), diferenca: Number(r.diferenca ?? 0),
+        cliente_nome: r.cliente_id ? (nomes.get(r.cliente_id) ?? null) : null,
+      }));
+      return { itens, total: count ?? 0 };
+    },
+    getNextPageParam: (last, pages) => {
+      const carregados = pages.reduce((s, p) => s + p.itens.length, 0);
+      return carregados < last.total ? pages.length : undefined;
+    },
+  });
+}
+
+export interface DevolucaoItemDetalhe {
+  id: string;
+  produto_nome: string;
+  quantidade: number;
+  valor_unitario: number;
+  destino: string;
+  condicao: string;
+  volta_ao_estoque: boolean;
+}
+
+/** Itens de uma devolução/troca (carregado ao expandir o card). */
+export function useDevolucaoItens(devolucaoId: string | null) {
+  return useQuery({
+    queryKey: ["devolucao_itens", devolucaoId],
+    enabled: !!devolucaoId,
+    queryFn: async () => {
+      const { data, error } = await db.from("devolucao_itens")
+        .select("id, produto_nome, quantidade, valor_unitario, destino, condicao, volta_ao_estoque")
+        .eq("devolucao_id", devolucaoId).order("created_at");
+      if (error) throw error;
+      return (data || []).map((d: any) => ({ ...d, valor_unitario: Number(d.valor_unitario) })) as DevolucaoItemDetalhe[];
     },
   });
 }
