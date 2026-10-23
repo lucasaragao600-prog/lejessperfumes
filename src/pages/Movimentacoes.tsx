@@ -27,6 +27,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useUnidades } from "@/hooks/useUnidades";
 import BuscarVendaTroca from "@/components/vendas/BuscarVendaTroca";
 import QuarentenaDevolucao from "@/components/vendas/QuarentenaDevolucao";
+import { usePermissoesTrocas } from "@/hooks/usePermissoesTrocas";
 
 const tipos = ["Entrada", "Ajuste", "Transferência", "Saída Tester"] as const;
 
@@ -52,6 +53,7 @@ export default function Movimentacoes() {
   const [ordenacao, setOrdenacao] = useState<"recente" | "antiga">("recente");
   const [showForm, setShowForm] = useState(false);
   const [showTroca, setShowTroca] = useState(false);
+  const { podeAlgumaAcao: podeTrocaDevolucao } = usePermissoesTrocas();
   const [showQuarentena, setShowQuarentena] = useState(false);
   const [form, setForm] = useState({
     tipo: "Entrada" as typeof tipos[number],
@@ -259,10 +261,12 @@ export default function Movimentacoes() {
               title="Itens devolvidos com avaria aguardando decisão">
               <ShieldAlert size={16} /> Quarentena
             </button>
-            <button onClick={() => setShowTroca(true)} className="btn-secondary px-4 py-2 flex items-center gap-1.5"
-              title="Trocar produtos de vendas realizadas">
-              <ArrowLeftRight size={16} /> Troca
-            </button>
+            {podeTrocaDevolucao && (
+              <button onClick={() => setShowTroca(true)} className="btn-secondary px-4 py-2 flex items-center gap-1.5"
+                title="Trocar produtos de vendas realizadas">
+                <ArrowLeftRight size={16} /> Troca
+              </button>
+            )}
             <button onClick={() => setShowForm(!showForm)} className="btn-primary px-4 py-2">
               <Plus size={16} /> Nova
             </button>
