@@ -48,7 +48,7 @@ BEGIN
   r := public.fn_troca_registrar_unidade(vv.grupo_venda, u_op.id,
     jsonb_build_array(jsonb_build_object('venda_id', vv.id, 'quantidade', 1, 'destino', 'estoque', 'condicao', 'novo_lacrado')),
     jsonb_build_array(jsonb_build_object('produto_id', prod_novo.produto_id, 'quantidade', 1)),
-    'teste troca entre unidades');
+    'teste troca entre unidades', '[]'::jsonb, 'pix');
 
   SELECT * INTO dev FROM public.devolucoes WHERE id = (r->>'id')::uuid;
   IF NOT dev.troca_entre_unidades OR dev.unidade_id <> u_op.id OR dev.unidade_origem_id <> vv.unidade_id THEN

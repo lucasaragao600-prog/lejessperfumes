@@ -24,3 +24,6 @@
 - [x] Fiscal Etapa 3 — validação antes de emitir + XML a partir do perfil — aguardando aprovação
 - [x] Fiscal Etapa 4 — tentativas na tela da NFC-e, corrigir e reenviar, sem mensagem duplicada — aguardando aprovação
 - [ ] Fiscal — conferência pelo XSD oficial antes do envio (não feita)
+- [x] Trocas/Devoluções Fases 1–5 — entrada central, quarentena, permissões, Central, reembolso confirmado
+- [x] Trocas/Devoluções Fase 6 — troca entre unidades (0052/0053, teste SQL transacional) — aguardando aprovação
+- [ ] Trocas/Devoluções Fase 7 — integração fiscal (aguardando aprovação da Fase 6)
