@@ -226,6 +226,61 @@ export function useConfirmarReembolso() {
   });
 }
 
+export interface VendaBuscaTroca {
+  grupo_venda: string;
+  data: string;
+  deposito: string;
+  unidade_id: string | null;
+  unidade_nome: string | null;
+  cliente_nome: string | null;
+  total: number;
+  cancelada: boolean;
+}
+
+/** Busca vendas em TODAS as unidades para troca entre lojas (exige venda.trocar_entre_unidades no banco). */
+export function useBuscarVendaTrocaTodas(unidadeOperacaoId: string | null, busca: string) {
+  return useQuery({
+    queryKey: ["venda_buscar_troca", unidadeOperacaoId, busca],
+    enabled: !!unidadeOperacaoId,
+    queryFn: async () => {
+      const { data, error } = await db.rpc("fn_venda_buscar_troca", {
+        p_unidade_operacao: unidadeOperacaoId, p_busca: busca, p_limite: 30,
+      });
+      if (error) throw error;
+      return (data || []).map((r: any) => ({ ...r, total: Number(r.total) })) as VendaBuscaTroca[];
+    },
+  });
+}
+
+/** Detalhe da venda de outra unidade para o fluxo de troca (exige venda.trocar_entre_unidades no banco). */
+export function useGrupoVendaTroca(grupoVenda: string | null, unidadeOperacaoId: string | null) {
+  return useQuery({
+    queryKey: ["grupo_venda_troca", grupoVenda, unidadeOperacaoId],
+    enabled: !!grupoVenda && !!unidadeOperacaoId,
+    queryFn: async (): Promise<GrupoVendaDetalhe> => {
+      const { data, error } = await db.rpc("fn_grupo_venda_troca", {
+        p_grupo_venda: grupoVenda, p_unidade_operacao: unidadeOperacaoId,
+      });
+      if (error) throw error;
+      const r = data as any;
+      return {
+        grupoVenda: r.grupo_venda,
+        data: String(r.data).slice(0, 10),
+        deposito: r.deposito,
+        unidadeId: r.unidade_id,
+        clienteId: r.cliente_id,
+        vendedora: r.vendedora || "",
+        cancelada: !!r.cancelada,
+        itens: (r.itens || []).map((i: any) => ({
+          id: i.id, perfumeId: i.perfume_id, perfumeNome: i.perfume_nome,
+          quantidade: i.quantidade, total: Number(i.total), jaDevolvido: Number(i.ja_devolvido || 0),
+        })),
+        devolucoes: (r.devolucoes || []).map((d: any) => ({ ...d, valor_total: Number(d.valor_total) })),
+      };
+    },
+  });
+}
+
 export function useAcoesVenda() {
   const qc = useQueryClient();
   const onSuccess = () => invalidarVendasRelacionadas(qc);
