@@ -65,11 +65,15 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose }: Props) {
   const [pagDif, setPagDif] = useState("Pix");
   const [resultado, setResultado] = useState<null | (() => void)>(null);
 
-  useEffect(() => { setMotivo(""); setQtds({}); setDestinos({}); setNovos([]); setResultado(null); }, [grupoVenda, modo]);
+  useEffect(() => { setMotivo(""); setQtds({}); setDestinos({}); setCondicoes({}); setNovos([]); setResultado(null); }, [grupoVenda, modo]);
 
   const itensSel = useMemo(() => (grupo?.itens || [])
     .filter(i => (qtds[i.id] || 0) > 0)
-    .map(i => ({ ...i, qtd: qtds[i.id], unit: valorUnitarioLiquido(i.total, i.quantidade), destino: destinos[i.id] || "estoque" })), [grupo, qtds, destinos]);
+    .map(i => {
+      const condicao = condicoes[i.id] || "novo_lacrado";
+      const destino = condicaoExigeQuarentena(condicao) ? "avaria" : (destinos[i.id] || "estoque");
+      return { ...i, qtd: qtds[i.id], unit: valorUnitarioLiquido(i.total, i.quantidade), destino, condicao };
+    }), [grupo, qtds, destinos, condicoes]);
   const totalDevolvido = round2(itensSel.reduce((s, i) => s + i.unit * i.qtd, 0));
   const totalNovo = round2(novos.reduce((s, n) => s + n.preco * n.quantidade, 0));
   const dif = diferencaTroca(totalDevolvido, totalNovo);
@@ -83,7 +87,7 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose }: Props) {
   const confirmar = async () => {
     if (!grupo) return;
     if (!motivo.trim()) { toast.error("Informe o motivo"); return; }
-    const itens = itensSel.map(i => ({ venda_id: i.id, quantidade: i.qtd, destino: i.destino }));
+    const itens = itensSel.map(i => ({ venda_id: i.id, quantidade: i.qtd, destino: i.destino, condicao: i.condicao }));
     try {
       if (modo === "cancelar") {
         const r = await cancelar.mutateAsync({ grupoVenda: grupo.grupoVenda, motivo: motivo.trim() });
