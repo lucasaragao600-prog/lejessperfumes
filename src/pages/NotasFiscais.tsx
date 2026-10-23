@@ -9,6 +9,7 @@ import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalC
 import { formatCurrency, formatDate, type Deposito } from "@/data/mockData";
 import { processarXmlNFe } from "@/lib/nfeXmlParser";
 import { useUnidades } from "@/hooks/useUnidades";
+import { toast } from "sonner";
 
 type SubTab = "pendentes" | "conciliadas" | "canceladas";
 
@@ -158,6 +159,10 @@ export default function NotasFiscais() {
 
   const handleConciliar = async () => {
     if (!notaSelecionada || conciliando) return;
+    if (!depositoDestino) {
+      toast.error("Selecione o depósito de destino antes de dar entrada.");
+      return;
+    }
     setConciliando(true);
     try {
     const itensCorrespondidos = notaSelecionada.itens.filter((i) => i.perfumeId);
@@ -197,6 +202,8 @@ export default function NotasFiscais() {
     await conciliarNota({ notaId: notaSelecionada.id, conciliadaPor: profile?.nome || "Sistema" });
     setNotaSelecionada(null);
     setEditableQtds({});
+    } catch (err) {
+      toast.error("Erro ao dar entrada: " + (err instanceof Error ? err.message : "tente novamente."));
     } finally {
       setConciliando(false);
     }
@@ -206,6 +213,10 @@ export default function NotasFiscais() {
     if (!manualForm.fornecedor) return;
     const itensValidos = manualItens.filter((it) => it.perfumeId && it.quantidade > 0);
     if (itensValidos.length === 0) return;
+    if (!manualForm.deposito) {
+      toast.error("Selecione o depósito de destino antes de dar entrada.");
+      return;
+    }
     if (salvandoManual) return;
     setSalvandoManual(true);
     try {
@@ -275,6 +286,9 @@ export default function NotasFiscais() {
       setManualItens([novoItem()]);
       setManualFiscal(null);
       setShowManual(false);
+      toast.success("Entrada registrada com sucesso.");
+    } catch (err) {
+      toast.error("Erro ao dar entrada: " + (err instanceof Error ? err.message : "tente novamente."));
     } finally {
       setSalvandoManual(false);
     }
@@ -624,7 +638,10 @@ export default function NotasFiscais() {
       <div className="px-4 pt-3 space-y-2.5">
         {filtradas.map((nota) => (
           <div key={nota.id} className="card-premium p-4 cursor-pointer hover:border-gold-muted transition-colors"
-            onClick={() => setNotaSelecionada(nota)}>
+            onClick={() => {
+              setNotaSelecionada(nota);
+              setDepositoDestino(nota.depositoDestino || unidadesEstoqueNomes[0] || "");
+            }}>
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
