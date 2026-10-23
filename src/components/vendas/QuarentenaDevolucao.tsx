@@ -4,6 +4,9 @@ import { Loader2, PackageCheck, ShieldAlert, FlaskConical, Trash2 } from "lucide
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import { useMinhasPermissoes } from "@/hooks/useAcessosUnidade";
+import { PERMISSOES_TROCAS, podeAcao } from "@/lib/permissoesVenda";
 import { nomeCondicao } from "@/lib/devolucao";
 import { invalidarVendasRelacionadas } from "@/hooks/useDevolucoes";
 
