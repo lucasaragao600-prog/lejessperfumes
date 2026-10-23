@@ -87,7 +87,7 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose, unidadeOpe
   const dif = diferencaTroca(totalDevolvido, totalNovo);
   const fora = grupo ? foraDoPrazo(grupo.data, getHojeManaus(), prazo) : false;
   const totalVenda = round2((grupo?.itens || []).reduce((s, i) => s + i.total, 0));
-  const pending = cancelar.isPending || devolver.isPending || trocar.isPending;
+  const pending = cancelar.isPending || devolver.isPending || trocar.isPending || trocarUnidade.isPending;
   const precisaCliente = (forma === "credito_loja" || forma === "vale_troca") && !grupo?.clienteId;
 
   const titulo = modo === "cancelar" ? "Cancelar venda" : modo === "devolver" ? "Devolver itens" : "Trocar itens";
@@ -116,12 +116,15 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose, unidadeOpe
       } else {
         if (!novos.length) { toast.error("Adicione os novos produtos"); return; }
         if (dif.aReceber > 0 && precisaCliente) { toast.error("Esta venda não tem cliente: escolha outra forma para a diferença"); return; }
-        const r = await trocar.mutateAsync({
+        const payload = {
           grupoVenda: grupo.grupoVenda, itensDevolvidos: itens, motivo: motivo.trim(),
           itensNovos: novos.map(n => ({ produto_id: n.produtoId, quantidade: n.quantidade, preco_unitario: n.preco })),
           pagamentos: dif.aPagar > 0 ? [{ tipo_pagamento: pagDif, bandeira: ["Débito", "Crédito"].includes(pagDif) ? "Visa" : "N/A", valor: dif.aPagar }] : [],
           formaDiferenca: dif.aReceber > 0 ? forma : null,
-        });
+        };
+        const r = entreUnidades
+          ? await trocarUnidade.mutateAsync({ ...payload, unidadeOperacaoId: unidadeOperacaoId! })
+          : await trocar.mutateAsync(payload);
         toast.success(`Troca ${r.numero} registrada`);
         const nome = (id: string) => perfumes.find(p => p.id === id)?.nome || "";
         setResultado(() => () => imprimirComprovante({ titulo: "COMPROVANTE DE TROCA", numero: r.numero, loja: grupo.deposito, motivo: motivo.trim(),
