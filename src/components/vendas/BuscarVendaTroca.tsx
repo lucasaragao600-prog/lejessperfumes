@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Search, ArrowLeftRight, RotateCcw, Receipt } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { usePedidosLista } from "@/hooks/useVendasLista";
+import { useMinhasPermissoes } from "@/hooks/useAcessosUnidade";
+import { useAuth } from "@/context/AuthContext";
+import { PERMISSOES_TROCAS, podeAcao } from "@/lib/permissoesVenda";
 import { formatCurrency } from "@/data/mockData";
 import AcoesVendaDialog, { type ModoAcaoVenda } from "./AcoesVendaDialog";
 
@@ -14,6 +17,11 @@ export default function BuscarVendaTroca({ aberto, onClose }: { aberto: boolean;
   const [busca, setBusca] = useState("");
   const [buscaDeb, setBuscaDeb] = useState("");
   const [selecionado, setSelecionado] = useState<{ grupoVenda: string; modo: ModoAcaoVenda } | null>(null);
+  const { role } = useAuth();
+  const minhas = useMinhasPermissoes();
+  const isMaster = role === "master";
+  const podeTrocar = podeAcao(isMaster, minhas.data || [], PERMISSOES_TROCAS.trocar);
+  const podeDevolver = podeAcao(isMaster, minhas.data || [], PERMISSOES_TROCAS.devolver);
 
   useEffect(() => {
     const t = setTimeout(() => setBuscaDeb(busca.trim()), 300);
@@ -88,16 +96,23 @@ export default function BuscarVendaTroca({ aberto, onClose }: { aberto: boolean;
                   </p>
                 </div>
                 <div className="flex gap-1.5 flex-shrink-0">
-                    <button
-                      onClick={() => setSelecionado({ grupoVenda: g.grupo, modo: "trocar" })}
-                      className="text-[10px] px-2.5 py-1.5 rounded-full border border-gold-muted text-gold flex items-center gap-1">
-                      <ArrowLeftRight size={11} /> Trocar
-                    </button>
-                    <button
-                      onClick={() => setSelecionado({ grupoVenda: g.grupo, modo: "devolver" })}
-                      className="text-[10px] px-2.5 py-1.5 rounded-full border border-border text-muted-foreground hover:text-foreground flex items-center gap-1">
-                      <RotateCcw size={11} /> Devolver
-                    </button>
+                    {podeTrocar && (
+                      <button
+                        onClick={() => setSelecionado({ grupoVenda: g.grupo, modo: "trocar" })}
+                        className="text-[10px] px-2.5 py-1.5 rounded-full border border-gold-muted text-gold flex items-center gap-1">
+                        <ArrowLeftRight size={11} /> Trocar
+                      </button>
+                    )}
+                    {podeDevolver && (
+                      <button
+                        onClick={() => setSelecionado({ grupoVenda: g.grupo, modo: "devolver" })}
+                        className="text-[10px] px-2.5 py-1.5 rounded-full border border-border text-muted-foreground hover:text-foreground flex items-center gap-1">
+                        <RotateCcw size={11} /> Devolver
+                      </button>
+                    )}
+                    {!podeTrocar && !podeDevolver && (
+                      <span className="text-[10px] text-muted-foreground">Sem permissão</span>
+                    )}
                 </div>
               </div>
             ))}
