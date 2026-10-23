@@ -22,6 +22,9 @@ interface Props {
   grupoVenda: string | null;
   modo: ModoAcaoVenda;
   onClose: () => void;
+  /** Troca entre unidades: loja onde a troca está acontecendo (venda veio de outra loja). */
+  unidadeOperacaoId?: string | null;
+  unidadeOperacaoNome?: string | null;
 }
 
 function imprimirComprovante(p: {
@@ -49,10 +52,15 @@ function imprimirComprovante(p: {
   w.document.close();
 }
 
-export default function AcoesVendaDialog({ grupoVenda, modo, onClose }: Props) {
-  const { data: grupo, isLoading, error } = useGrupoVenda(grupoVenda);
+export default function AcoesVendaDialog({ grupoVenda, modo, onClose, unidadeOperacaoId, unidadeOperacaoNome }: Props) {
+  const entreUnidades = modo === "trocar" && !!unidadeOperacaoId;
+  const local = useGrupoVenda(entreUnidades ? null : grupoVenda);
+  const externo = useGrupoVendaTroca(entreUnidades ? grupoVenda : null, entreUnidades ? unidadeOperacaoId! : null);
+  const grupo = entreUnidades ? externo.data : local.data;
+  const isLoading = entreUnidades ? externo.isLoading : local.isLoading;
+  const error = entreUnidades ? externo.error : local.error;
   const { data: prazo = 30 } = usePrazoDevolucao();
-  const { cancelar, devolver, trocar } = useAcoesVenda();
+  const { cancelar, devolver, trocar, trocarUnidade } = useAcoesVenda();
   const { perfumes, concentracoesConfig } = useApp();
 
   const [motivo, setMotivo] = useState("");
