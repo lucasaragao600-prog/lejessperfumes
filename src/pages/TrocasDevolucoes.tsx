@@ -202,8 +202,8 @@ export default function TrocasDevolucoes() {
         </div>
       )}
 
-      {showTroca && <BuscarVendaTroca open={showTroca} onClose={() => setShowTroca(false)} />}
-      {showQuarentena && <QuarentenaDevolucao open={showQuarentena} onClose={() => setShowQuarentena(false)} />}
+      {showTroca && <BuscarVendaTroca aberto={showTroca} onClose={() => setShowTroca(false)} />}
+      {showQuarentena && <QuarentenaDevolucao aberto={showQuarentena} onClose={() => setShowQuarentena(false)} />}
     </div>
   );
 }

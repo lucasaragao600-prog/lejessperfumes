@@ -114,6 +114,8 @@ function IndexContent({
       case "estoque": return <Estoque isMaster={isMaster} />;
       case "vendas": return <Vendas />;
       case "movimentacoes": return <Movimentacoes />;
+      case "trocas": return <TrocasDevolucoes />;
+
       
       case "testers": return <Testers isMaster={isMaster} />;
       case "notas": return isMaster ? <NotasFiscais /> : <Estoque isMaster={false} />;
