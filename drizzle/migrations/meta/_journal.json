@@ -365,6 +365,13 @@
       "when": 1792791677512,
       "tag": "0051_devolucao_reembolso_confirmacao",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1792791963216,
+      "tag": "0052_troca_entre_unidades",
+      "breakpoints": true
     }
   ]
 }
