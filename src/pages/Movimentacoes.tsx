@@ -16,7 +16,7 @@ function formatHoraManaus(iso?: string): string {
     return "";
   }
 }
-import { ArrowLeftRight, ArrowDown, RefreshCw, FlaskConical, Plus, Search, ArrowUpDown, AlertTriangle } from "lucide-react";
+import { ArrowLeftRight, ArrowDown, RefreshCw, FlaskConical, Plus, Search, ArrowUpDown, AlertTriangle, ShieldAlert } from "lucide-react";
 import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
 import { formatDate, type Deposito, type Movimentacao } from "@/data/mockData";
 import { useApp } from "@/context/AppContext";
@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useUnidades } from "@/hooks/useUnidades";
 import BuscarVendaTroca from "@/components/vendas/BuscarVendaTroca";
+import QuarentenaDevolucao from "@/components/vendas/QuarentenaDevolucao";
 
 const tipos = ["Entrada", "Ajuste", "Transferência", "Saída Tester"] as const;
 
@@ -51,6 +52,7 @@ export default function Movimentacoes() {
   const [ordenacao, setOrdenacao] = useState<"recente" | "antiga">("recente");
   const [showForm, setShowForm] = useState(false);
   const [showTroca, setShowTroca] = useState(false);
+  const [showQuarentena, setShowQuarentena] = useState(false);
   const [form, setForm] = useState({
     tipo: "Entrada" as typeof tipos[number],
     perfumeId: "",
@@ -253,6 +255,10 @@ export default function Movimentacoes() {
             <p className="page-subtitle mt-1">{lista.isLoading ? "Carregando..." : `${totalReg} registros`}</p>
           </div>
           <div className="flex gap-2">
+            <button onClick={() => setShowQuarentena(true)} className="btn-secondary px-4 py-2 flex items-center gap-1.5"
+              title="Itens devolvidos com avaria aguardando decisão">
+              <ShieldAlert size={16} /> Quarentena
+            </button>
             <button onClick={() => setShowTroca(true)} className="btn-secondary px-4 py-2 flex items-center gap-1.5"
               title="Trocar produtos de vendas realizadas">
               <ArrowLeftRight size={16} /> Troca
@@ -497,6 +503,7 @@ export default function Movimentacoes() {
 
       {/* Troca de Produtos — mesmo fluxo central do PDV e do Histórico de Vendas */}
       <BuscarVendaTroca aberto={showTroca} onClose={() => setShowTroca(false)} />
+      <QuarentenaDevolucao aberto={showQuarentena} onClose={() => setShowQuarentena(false)} />
 
       {/* Modal de confirmação de Ajuste */}
       <Dialog open={!!ajusteModal} onOpenChange={(o) => { if (!o) { setAjusteModal(null); setMotivoAjuste(""); } }}>

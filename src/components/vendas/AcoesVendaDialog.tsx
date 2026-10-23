@@ -8,8 +8,9 @@ import { formatCurrency } from "@/data/mockData";
 import { getHojeManaus } from "@/lib/dateUtils";
 import { useGrupoVenda, useAcoesVenda, usePrazoDevolucao } from "@/hooks/useDevolucoes";
 import {
-  DESTINOS_ITEM, FORMAS_REEMBOLSO, diferencaTroca, foraDoPrazo, round2, saldoDevolvivel, valorUnitarioLiquido,
-  type DestinoItem, type FormaReembolso,
+  CONDICOES_ITEM, DESTINOS_ITEM, FORMAS_REEMBOLSO, condicaoExigeQuarentena, diferencaTroca, foraDoPrazo,
+  nomeCondicao, round2, saldoDevolvivel, valorUnitarioLiquido,
+  type CondicaoItem, type DestinoItem, type FormaReembolso,
 } from "@/lib/devolucao";
 
 export type ModoAcaoVenda = "cancelar" | "devolver" | "trocar";
@@ -57,17 +58,22 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose }: Props) {
   const [motivo, setMotivo] = useState("");
   const [qtds, setQtds] = useState<Record<string, number>>({});
   const [destinos, setDestinos] = useState<Record<string, DestinoItem>>({});
+  const [condicoes, setCondicoes] = useState<Record<string, CondicaoItem>>({});
   const [forma, setForma] = useState<FormaReembolso>("dinheiro");
   const [novos, setNovos] = useState<{ produtoId: string; quantidade: number; preco: number }[]>([]);
   const [novoSel, setNovoSel] = useState("");
   const [pagDif, setPagDif] = useState("Pix");
   const [resultado, setResultado] = useState<null | (() => void)>(null);
 
-  useEffect(() => { setMotivo(""); setQtds({}); setDestinos({}); setNovos([]); setResultado(null); }, [grupoVenda, modo]);
+  useEffect(() => { setMotivo(""); setQtds({}); setDestinos({}); setCondicoes({}); setNovos([]); setResultado(null); }, [grupoVenda, modo]);
 
   const itensSel = useMemo(() => (grupo?.itens || [])
     .filter(i => (qtds[i.id] || 0) > 0)
-    .map(i => ({ ...i, qtd: qtds[i.id], unit: valorUnitarioLiquido(i.total, i.quantidade), destino: destinos[i.id] || "estoque" })), [grupo, qtds, destinos]);
+    .map(i => {
+      const condicao = condicoes[i.id] || "novo_lacrado";
+      const destino = condicaoExigeQuarentena(condicao) ? "avaria" : (destinos[i.id] || "estoque");
+      return { ...i, qtd: qtds[i.id], unit: valorUnitarioLiquido(i.total, i.quantidade), destino, condicao };
+    }), [grupo, qtds, destinos, condicoes]);
   const totalDevolvido = round2(itensSel.reduce((s, i) => s + i.unit * i.qtd, 0));
   const totalNovo = round2(novos.reduce((s, n) => s + n.preco * n.quantidade, 0));
   const dif = diferencaTroca(totalDevolvido, totalNovo);
@@ -81,7 +87,7 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose }: Props) {
   const confirmar = async () => {
     if (!grupo) return;
     if (!motivo.trim()) { toast.error("Informe o motivo"); return; }
-    const itens = itensSel.map(i => ({ venda_id: i.id, quantidade: i.qtd, destino: i.destino }));
+    const itens = itensSel.map(i => ({ venda_id: i.id, quantidade: i.qtd, destino: i.destino, condicao: i.condicao }));
     try {
       if (modo === "cancelar") {
         const r = await cancelar.mutateAsync({ grupoVenda: grupo.grupoVenda, motivo: motivo.trim() });
@@ -91,7 +97,7 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose }: Props) {
       }
       if (!itens.length) { toast.error("Selecione ao menos um item"); return; }
       const nomeDest = (d: string) => DESTINOS_ITEM.find(x => x.value === d)?.label || d;
-      const itensPrint = itensSel.map(i => ({ nome: i.perfumeNome, qtd: i.qtd, valor: i.unit * i.qtd, destino: nomeDest(i.destino) }));
+      const itensPrint = itensSel.map(i => ({ nome: i.perfumeNome, qtd: i.qtd, valor: i.unit * i.qtd, destino: `${nomeDest(i.destino)} · ${nomeCondicao(i.condicao)}` }));
       if (modo === "devolver") {
         if (precisaCliente) { toast.error("Esta venda não tem cliente: escolha outra forma de reembolso"); return; }
         const r = await devolver.mutateAsync({ grupoVenda: grupo.grupoVenda, itens, motivo: motivo.trim(), forma });
@@ -186,10 +192,20 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose }: Props) {
                           onChange={e => setQtds(q => ({ ...q, [i.id]: Math.min(max, Math.max(0, Math.floor(Number(e.target.value) || 0))) }))}
                           className={`${input} w-16 text-right`} />
                         <span className="text-[11px] text-muted-foreground">de {max}{i.jaDevolvido ? ` (já devolvido ${i.jaDevolvido})` : ""}</span>
-                        <select value={destinos[i.id] || "estoque"} onChange={e => setDestinos(d => ({ ...d, [i.id]: e.target.value as DestinoItem }))}
-                          className={`${input} ml-auto`}>
-                          {DESTINOS_ITEM.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                      </div>
+                      <div className="flex gap-2 items-center">
+                        <select value={condicoes[i.id] || "novo_lacrado"} onChange={e => setCondicoes(c => ({ ...c, [i.id]: e.target.value as CondicaoItem }))}
+                          className={`${input} flex-1`} aria-label="Condição do produto">
+                          {CONDICOES_ITEM.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                         </select>
+                        {condicaoExigeQuarentena(condicoes[i.id] || "novo_lacrado") ? (
+                          <span className="text-[11px] px-2.5 py-1.5 rounded-full border border-gold-muted text-gold whitespace-nowrap">Quarentena</span>
+                        ) : (
+                          <select value={destinos[i.id] || "estoque"} onChange={e => setDestinos(d => ({ ...d, [i.id]: e.target.value as DestinoItem }))}
+                            className={`${input} ml-auto`} aria-label="Destino do produto">
+                            {DESTINOS_ITEM.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                          </select>
+                        )}
                       </div>
                     </div>
                   );

@@ -50,5 +50,24 @@ export const DESTINOS_ITEM = [
   { value: "tester", label: "Vira tester" },
 ] as const;
 
+export const CONDICOES_ITEM = [
+  { value: "novo_lacrado", label: "Novo lacrado" },
+  { value: "novo_aberto", label: "Novo aberto" },
+  { value: "usado_parcial", label: "Usado parcial" },
+  { value: "avariado", label: "Avariado" },
+  { value: "vencido", label: "Vencido" },
+  { value: "incompleto", label: "Incompleto (faltando partes)" },
+] as const;
+
 export type FormaReembolso = (typeof FORMAS_REEMBOLSO)[number]["value"];
 export type DestinoItem = (typeof DESTINOS_ITEM)[number]["value"];
+export type CondicaoItem = (typeof CONDICOES_ITEM)[number]["value"];
+
+/** Condições que não podem voltar direto ao estoque: vão para a quarentena. */
+export function condicaoExigeQuarentena(condicao: string): boolean {
+  return condicao === "avariado" || condicao === "vencido" || condicao === "incompleto";
+}
+
+export function nomeCondicao(condicao: string): string {
+  return CONDICOES_ITEM.find(c => c.value === condicao)?.label || condicao;
+}

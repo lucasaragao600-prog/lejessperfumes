@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { valorUnitarioLiquido, saldoDevolvivel, validarQuantidadeDevolucao, foraDoPrazo, diasEntre, diferencaTroca, vendasLiquidas } from "./devolucao";
+import { valorUnitarioLiquido, saldoDevolvivel, validarQuantidadeDevolucao, foraDoPrazo, diasEntre, diferencaTroca, vendasLiquidas, CONDICOES_ITEM, condicaoExigeQuarentena, nomeCondicao } from "./devolucao";
 
 describe("devolução", () => {
   it("valor unitário líquido considera desconto", () => {
@@ -29,5 +29,28 @@ describe("devolução", () => {
   });
   it("vendas líquidas", () => {
     expect(vendasLiquidas(1000, 250.25)).toBe(749.75);
+  });
+});
+
+describe("condição física e quarentena", () => {
+  it("seis condições disponíveis", () => {
+    expect(CONDICOES_ITEM.map(c => c.value)).toEqual([
+      "novo_lacrado", "novo_aberto", "usado_parcial", "avariado", "vencido", "incompleto",
+    ]);
+  });
+  it("avariado, vencido e incompleto exigem quarentena", () => {
+    expect(condicaoExigeQuarentena("avariado")).toBe(true);
+    expect(condicaoExigeQuarentena("vencido")).toBe(true);
+    expect(condicaoExigeQuarentena("incompleto")).toBe(true);
+  });
+  it("novo e usado parcial não exigem quarentena", () => {
+    expect(condicaoExigeQuarentena("novo_lacrado")).toBe(false);
+    expect(condicaoExigeQuarentena("novo_aberto")).toBe(false);
+    expect(condicaoExigeQuarentena("usado_parcial")).toBe(false);
+  });
+  it("nome amigável da condição", () => {
+    expect(nomeCondicao("novo_lacrado")).toBe("Novo lacrado");
+    expect(nomeCondicao("incompleto")).toBe("Incompleto (faltando partes)");
+    expect(nomeCondicao("desconhecida")).toBe("desconhecida");
   });
 });

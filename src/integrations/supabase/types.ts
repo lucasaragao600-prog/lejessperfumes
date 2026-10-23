@@ -2396,6 +2396,7 @@ export type Database = {
       }
       devolucao_itens: {
         Row: {
+          condicao: string
           created_at: string
           destino: string
           devolucao_id: string
@@ -2409,6 +2410,7 @@ export type Database = {
           volta_ao_estoque: boolean
         }
         Insert: {
+          condicao?: string
           created_at?: string
           destino?: string
           devolucao_id: string
@@ -2422,6 +2424,7 @@ export type Database = {
           volta_ao_estoque?: boolean
         }
         Update: {
+          condicao?: string
           created_at?: string
           destino?: string
           devolucao_id?: string
@@ -2461,6 +2464,96 @@ export type Database = {
             columns: ["venda_id"]
             isOneToOne: false
             referencedRelation: "vendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devolucao_quarentena: {
+        Row: {
+          condicao: string
+          created_at: string
+          decidido_em: string | null
+          decidido_por: string | null
+          decidido_por_nome: string
+          devolucao_id: string
+          devolucao_item_id: string
+          id: string
+          motivo: string
+          observacao_decisao: string
+          produto_id: string
+          produto_nome: string
+          quantidade: number
+          status: string
+          unidade_id: string
+        }
+        Insert: {
+          condicao: string
+          created_at?: string
+          decidido_em?: string | null
+          decidido_por?: string | null
+          decidido_por_nome?: string
+          devolucao_id: string
+          devolucao_item_id: string
+          id?: string
+          motivo?: string
+          observacao_decisao?: string
+          produto_id: string
+          produto_nome?: string
+          quantidade: number
+          status?: string
+          unidade_id: string
+        }
+        Update: {
+          condicao?: string
+          created_at?: string
+          decidido_em?: string | null
+          decidido_por?: string | null
+          decidido_por_nome?: string
+          devolucao_id?: string
+          devolucao_item_id?: string
+          id?: string
+          motivo?: string
+          observacao_decisao?: string
+          produto_id?: string
+          produto_nome?: string
+          quantidade?: number
+          status?: string
+          unidade_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devolucao_quarentena_devolucao_id_fkey"
+            columns: ["devolucao_id"]
+            isOneToOne: false
+            referencedRelation: "devolucoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucao_quarentena_devolucao_item_id_fkey"
+            columns: ["devolucao_item_id"]
+            isOneToOne: false
+            referencedRelation: "devolucao_itens"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucao_quarentena_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucao_quarentena_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "perfumes_estoque_compat"
+            referencedColumns: ["produto_id"]
+          },
+          {
+            foreignKeyName: "devolucao_quarentena_unidade_id_fkey"
+            columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
             referencedColumns: ["id"]
           },
         ]
@@ -5961,6 +6054,14 @@ export type Database = {
           p_pagamentos: Json
           p_vendedora: string
         }
+        Returns: Json
+      }
+      fn_devolucao_quarentena_decidir: {
+        Args: { p_decisao: string; p_id: string; p_observacao?: string }
+        Returns: Json
+      }
+      fn_devolucao_quarentena_listar: {
+        Args: { p_status?: string; p_unidade_id?: string }
         Returns: Json
       }
       fn_devolucao_registrar: {

@@ -351,6 +351,13 @@
       "when": 1792274400051,
       "tag": "0049_estoque_filtro_incluir_saldo_unidade",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1792790912937,
+      "tag": "0050_devolucao_condicao_quarentena",
+      "breakpoints": true
     }
   ]
 }
