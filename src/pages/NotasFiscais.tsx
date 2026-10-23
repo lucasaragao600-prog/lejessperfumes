@@ -9,6 +9,7 @@ import FiscalCostCalculator, { type FiscalBreakdown } from "@/components/FiscalC
 import { formatCurrency, formatDate, type Deposito } from "@/data/mockData";
 import { processarXmlNFe } from "@/lib/nfeXmlParser";
 import { useUnidades } from "@/hooks/useUnidades";
+import { toast } from "sonner";
 
 type SubTab = "pendentes" | "conciliadas" | "canceladas";
 
@@ -630,7 +631,10 @@ export default function NotasFiscais() {
       <div className="px-4 pt-3 space-y-2.5">
         {filtradas.map((nota) => (
           <div key={nota.id} className="card-premium p-4 cursor-pointer hover:border-gold-muted transition-colors"
-            onClick={() => setNotaSelecionada(nota)}>
+            onClick={() => {
+              setNotaSelecionada(nota);
+              setDepositoDestino(nota.depositoDestino || unidadesEstoqueNomes[0] || "");
+            }}>
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
