@@ -379,6 +379,13 @@
       "when": 1792792091580,
       "tag": "0053_troca_entre_unidades_fix_busca",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1792793056866,
+      "tag": "0054_devolucao_acompanhamento_fiscal",
+      "breakpoints": true
     }
   ]
 }
