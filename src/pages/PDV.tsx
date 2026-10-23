@@ -24,6 +24,7 @@ import { useCaixa } from "@/hooks/useCaixa";
 import { useUnidades } from "@/hooks/useUnidades";
 import { DecantVendaPdv } from "@/components/decants/DecantVendaPdv";
 import { useDecantConfig } from "@/hooks/useDecants";
+import BuscarVendaTroca from "@/components/vendas/BuscarVendaTroca";
 import { z } from "zod";
 
 const tiposPagamento: TipoPagamento[] = ["Dinheiro", "Pix", "Débito", "Crédito", "Conta Assinada", "Crédito Loja"];
@@ -107,6 +108,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   const { sessaoAberta } = useCaixa();
   const { data: decantCfg } = useDecantConfig();
   const [vendaDecant, setVendaDecant] = useState(false);
+  const [showTroca, setShowTroca] = useState(false);
   const mostrarDecants = isMaster || !!decantCfg?.ativo;
 
   // Search
@@ -943,12 +945,19 @@ ${comprovanteData.observacao ? `<div class="sep">${dash}</div><div style="font-s
               </div>
             </div>
           )}
+          <button onClick={() => setShowTroca(true)}
+            className="btn-secondary px-3 py-1.5 text-xs flex items-center gap-1.5"
+            title="Troca ou devolução de venda realizada">
+            <ArrowLeftRight size={13} /> Troca / Devolução
+          </button>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <User size={14} />
             <span>{profile?.nome || "Operador"}</span>
           </div>
         </div>
       </header>
+
+      <BuscarVendaTroca aberto={showTroca} onClose={() => setShowTroca(false)} />
 
       {/* ─── MAIN CONTENT ─── */}
       <div className="flex flex-1 overflow-hidden">
