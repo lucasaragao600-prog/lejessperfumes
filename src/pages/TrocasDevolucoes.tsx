@@ -63,6 +63,11 @@ function CardDevolucao({ d, rotulo, podeReembolso }: { d: DevolucaoListaItem; ro
                   Fora do prazo
                 </span>
               )}
+              {reembolsoPendente && (
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-amber-400/10 text-amber-400 border border-amber-400/30">
+                  Reembolso pendente
+                </span>
+              )}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {fmtDataHora(d.created_at)} · {rotulo(d.unidade_id)}
@@ -108,6 +113,28 @@ function CardDevolucao({ d, rotulo, podeReembolso }: { d: DevolucaoListaItem; ro
           {d.motivo && <p className="text-[11px] text-muted-foreground pt-1">Motivo: {d.motivo}</p>}
           {d.registrado_por_nome && (
             <p className="text-[11px] text-muted-foreground">Registrado por {d.registrado_por_nome}</p>
+          )}
+          {reembolsoPendente && (
+            <div className="pt-2">
+              {podeReembolso ? (
+                <button
+                  onClick={confirmarReembolso}
+                  disabled={confirmar.isPending}
+                  className="btn-primary px-3 py-1.5 text-xs flex items-center gap-1.5"
+                >
+                  {confirmar.isPending ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                  Confirmar reembolso pago
+                </button>
+              ) : (
+                <p className="text-[11px] text-amber-400">Aguardando confirmação de reembolso por quem tem permissão.</p>
+              )}
+            </div>
+          )}
+          {!reembolsoPendente && !isTroca && d.reembolso_confirmado_por && d.forma_reembolso && ["pix", "estorno_cartao"].includes(d.forma_reembolso) && (
+            <p className="text-[11px] text-success pt-1">
+              Reembolso confirmado por {d.reembolso_confirmado_por}
+              {d.reembolso_confirmado_em ? ` em ${fmtDataHora(d.reembolso_confirmado_em)}` : ""}
+            </p>
           )}
         </div>
       )}
