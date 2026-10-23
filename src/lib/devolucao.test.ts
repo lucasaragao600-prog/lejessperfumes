@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { valorUnitarioLiquido, saldoDevolvivel, validarQuantidadeDevolucao, foraDoPrazo, diasEntre, diferencaTroca, vendasLiquidas } from "./devolucao";
+import { valorUnitarioLiquido, saldoDevolvivel, validarQuantidadeDevolucao, foraDoPrazo, diasEntre, diferencaTroca, vendasLiquidas, CONDICOES_ITEM, condicaoExigeQuarentena, nomeCondicao } from "./devolucao";
 
 describe("devolução", () => {
   it("valor unitário líquido considera desconto", () => {
