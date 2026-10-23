@@ -15,6 +15,7 @@ const allTabs = [
   { id: "pedidos", label: "Pedidos", icon: ClipboardList, masterOnly: false },
   { id: "nfce-pendentes", label: "NFC-e", icon: FileText, masterOnly: false },
   { id: "movimentacoes", label: "Movimentações", icon: ArrowLeftRight, masterOnly: false },
+  { id: "trocas", label: "Trocas", icon: RotateCcw, masterOnly: false },
   { id: "reposicao", label: "Reposição", icon: Truck, masterOnly: false },
   { id: "transferencias", label: "Transferências", icon: ArrowLeftRight, masterOnly: false },
   
