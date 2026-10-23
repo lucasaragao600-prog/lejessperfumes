@@ -87,8 +87,7 @@ export default function BuscarVendaTroca({ aberto, onClose }: { aberto: boolean;
                     {g.data ? g.data.split("-").reverse().join("/") : ""} · {g.deposito} · {formatCurrency(g.total)}
                   </p>
                 </div>
-                {
-                  <div className="flex gap-1.5 flex-shrink-0">
+                <div className="flex gap-1.5 flex-shrink-0">
                     <button
                       onClick={() => setSelecionado({ grupoVenda: g.grupo, modo: "trocar" })}
                       className="text-[10px] px-2.5 py-1.5 rounded-full border border-gold-muted text-gold flex items-center gap-1">
