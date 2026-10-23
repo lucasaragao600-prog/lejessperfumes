@@ -26,4 +26,4 @@
 - [ ] Fiscal — conferência pelo XSD oficial antes do envio (não feita)
 - [x] Trocas/Devoluções Fases 1–5 — entrada central, quarentena, permissões, Central, reembolso confirmado
 - [x] Trocas/Devoluções Fase 6 — troca entre unidades (0052/0053, teste SQL transacional) — aguardando aprovação
-- [ ] Trocas/Devoluções Fase 7 — integração fiscal (aguardando aprovação da Fase 6)
+- [ ] Trocas/Devoluções Fase 7 — vínculos fiscais, pendências e rejeições; preservar NFC-e original e separar saída dos novos produtos. Em andamento, Fase 6 aprovada.
