@@ -8,8 +8,9 @@ import { formatCurrency } from "@/data/mockData";
 import { getHojeManaus } from "@/lib/dateUtils";
 import { useGrupoVenda, useAcoesVenda, usePrazoDevolucao } from "@/hooks/useDevolucoes";
 import {
-  DESTINOS_ITEM, FORMAS_REEMBOLSO, diferencaTroca, foraDoPrazo, round2, saldoDevolvivel, valorUnitarioLiquido,
-  type DestinoItem, type FormaReembolso,
+  CONDICOES_ITEM, DESTINOS_ITEM, FORMAS_REEMBOLSO, condicaoExigeQuarentena, diferencaTroca, foraDoPrazo,
+  nomeCondicao, round2, saldoDevolvivel, valorUnitarioLiquido,
+  type CondicaoItem, type DestinoItem, type FormaReembolso,
 } from "@/lib/devolucao";
 
 export type ModoAcaoVenda = "cancelar" | "devolver" | "trocar";
@@ -57,6 +58,7 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose }: Props) {
   const [motivo, setMotivo] = useState("");
   const [qtds, setQtds] = useState<Record<string, number>>({});
   const [destinos, setDestinos] = useState<Record<string, DestinoItem>>({});
+  const [condicoes, setCondicoes] = useState<Record<string, CondicaoItem>>({});
   const [forma, setForma] = useState<FormaReembolso>("dinheiro");
   const [novos, setNovos] = useState<{ produtoId: string; quantidade: number; preco: number }[]>([]);
   const [novoSel, setNovoSel] = useState("");
