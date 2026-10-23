@@ -8,6 +8,8 @@ import { getHojeManaus } from "@/lib/dateUtils";
 import { nomeCondicao } from "@/lib/devolucao";
 import BuscarVendaTroca from "@/components/vendas/BuscarVendaTroca";
 import QuarentenaDevolucao from "@/components/vendas/QuarentenaDevolucao";
+import FiscalDevolucao from "@/components/fiscal/FiscalDevolucao";
+import { STATUS_DEVOLUCAO_FISCAL } from "@/lib/devolucaoFiscal";
 
 const fmtMoeda = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -58,6 +60,7 @@ function CardDevolucao({ d, rotulo, podeReembolso }: { d: DevolucaoListaItem; ro
                 {isTroca ? "Troca" : "Devolução"}
               </span>
               <span className="text-sm font-semibold text-foreground">{d.numero}</span>
+              <span className="text-[10px] text-muted-foreground">{STATUS_DEVOLUCAO_FISCAL[d.fiscal_status as keyof typeof STATUS_DEVOLUCAO_FISCAL] || "Fiscal pendente"}</span>
               {d.fora_do_prazo && (
                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-destructive/10 text-destructive border border-destructive/30">
                   Fora do prazo
@@ -111,6 +114,7 @@ function CardDevolucao({ d, rotulo, podeReembolso }: { d: DevolucaoListaItem; ro
             </div>
           ))}
           {d.motivo && <p className="text-[11px] text-muted-foreground pt-1">Motivo: {d.motivo}</p>}
+          <FiscalDevolucao id={d.id} />
           {d.registrado_por_nome && (
             <p className="text-[11px] text-muted-foreground">Registrado por {d.registrado_por_nome}</p>
           )}
