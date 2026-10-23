@@ -16,6 +16,9 @@ const MODULOS: Record<string, string> = {
   caixa: "Caixa",
   fiscal: "Fiscal",
   relatorio: "Relatórios",
+  devolucao: "Trocas e Devoluções",
+  decant: "Decants",
+  nt: "Notas de Transferência",
 };
 
 export default function AcessosUnidade({ unidadeId, unidadeNome, onClose }: Props) {

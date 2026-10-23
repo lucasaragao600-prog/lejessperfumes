@@ -32,6 +32,9 @@ const DECISOES = [
 export default function QuarentenaDevolucao({ aberto, onClose }: { aberto: boolean; onClose: () => void }) {
   const qc = useQueryClient();
   const [obs, setObs] = useState<Record<string, string>>({});
+  const { role } = useAuth();
+  const minhas = useMinhasPermissoes();
+  const podeDecidir = podeAcao(role === "master", minhas.data || [], PERMISSOES_TROCAS.quarentena);
 
   const lista = useQuery({
     queryKey: ["devolucao_quarentena"],
@@ -84,23 +87,29 @@ export default function QuarentenaDevolucao({ aberto, onClose }: { aberto: boole
                   {q.devolucao_numero} · {q.unidade_nome} · {nomeCondicao(q.condicao)}
                 </p>
                 {q.motivo && <p className="text-[11px] text-muted-foreground italic">"{q.motivo}"</p>}
-                <input
-                  value={obs[q.id] || ""}
-                  onChange={e => setObs(o => ({ ...o, [q.id]: e.target.value }))}
-                  placeholder="Observação da decisão (opcional)"
-                  className="input w-full text-xs"
-                />
-                <div className="flex gap-1.5 flex-wrap">
-                  {DECISOES.map(d => (
-                    <button
-                      key={d.value}
-                      disabled={decidir.isPending}
-                      onClick={() => decidir.mutate({ id: q.id, decisao: d.value, observacao: (obs[q.id] || "").trim() })}
-                      className="text-[10px] px-2.5 py-1.5 rounded-full border border-gold-muted text-gold flex items-center gap-1 disabled:opacity-50">
-                      <d.icon size={11} /> {d.label}
-                    </button>
-                  ))}
-                </div>
+                {podeDecidir ? (
+                  <>
+                    <input
+                      value={obs[q.id] || ""}
+                      onChange={e => setObs(o => ({ ...o, [q.id]: e.target.value }))}
+                      placeholder="Observação da decisão (opcional)"
+                      className="input w-full text-xs"
+                    />
+                    <div className="flex gap-1.5 flex-wrap">
+                      {DECISOES.map(d => (
+                        <button
+                          key={d.value}
+                          disabled={decidir.isPending}
+                          onClick={() => decidir.mutate({ id: q.id, decisao: d.value, observacao: (obs[q.id] || "").trim() })}
+                          className="text-[10px] px-2.5 py-1.5 rounded-full border border-gold-muted text-gold flex items-center gap-1 disabled:opacity-50">
+                          <d.icon size={11} /> {d.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground">Aguardando decisão de quem tem permissão de quarentena.</p>
+                )}
               </div>
             ))}
           </div>
