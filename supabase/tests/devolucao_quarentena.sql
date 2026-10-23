@@ -5,7 +5,7 @@ BEGIN;
 DO $$
 DECLARE
   master_id uuid;
-  v record;
+  vv record;
   saldo_antes int;
   saldo_depois int;
   r jsonb;
@@ -17,26 +17,26 @@ BEGIN
   PERFORM set_config('request.jwt.claims', jsonb_build_object('sub', master_id, 'role', 'authenticated')::text, true);
 
   -- Venda real recente com quantidade disponível para devolver
-  SELECT v.id, v.grupo_venda, v.perfume_id, v.unidade_id, v.quantidade
-  INTO v
-  FROM public.vendas v
-  WHERE v.cancelada = false AND v.unidade_id IS NOT NULL AND v.quantidade >= 1
-    AND NOT v.is_teste
-    AND NOT EXISTS (SELECT 1 FROM public.devolucao_itens di WHERE di.venda_id = v.id)
-  ORDER BY v.created_at DESC LIMIT 1;
-  IF v.id IS NULL THEN RAISE EXCEPTION 'Nenhuma venda elegível para o teste'; END IF;
+  SELECT s.id, s.grupo_venda, s.perfume_id, s.unidade_id, s.quantidade
+  INTO vv
+  FROM public.vendas s
+  WHERE s.cancelada = false AND s.unidade_id IS NOT NULL AND s.quantidade >= 1
+    AND NOT s.is_teste
+    AND NOT EXISTS (SELECT 1 FROM public.devolucao_itens di WHERE di.venda_id = s.id)
+  ORDER BY s.created_at DESC LIMIT 1;
+  IF vv.id IS NULL THEN RAISE EXCEPTION 'Nenhuma venda elegível para o teste'; END IF;
 
   SELECT quantidade INTO saldo_antes FROM public.estoque_unidades
-  WHERE produto_id = v.perfume_id AND unidade_id = v.unidade_id;
+  WHERE produto_id = vv.perfume_id AND unidade_id = vv.unidade_id;
   saldo_antes := COALESCE(saldo_antes, 0);
 
   -- 1) Devolução com condição avariado: não volta ao estoque, entra na quarentena
-  r := public.fn_devolucao_registrar(v.grupo_venda,
-    jsonb_build_array(jsonb_build_object('venda_id', v.id, 'quantidade', 1, 'destino', 'estoque', 'condicao', 'avariado')),
+  r := public.fn_devolucao_registrar(vv.grupo_venda,
+    jsonb_build_array(jsonb_build_object('venda_id', vv.id, 'quantidade', 1, 'destino', 'estoque', 'condicao', 'avariado')),
     'teste quarentena', 'pix');
 
   SELECT quantidade INTO saldo_depois FROM public.estoque_unidades
-  WHERE produto_id = v.perfume_id AND unidade_id = v.unidade_id;
+  WHERE produto_id = vv.perfume_id AND unidade_id = vv.unidade_id;
   IF COALESCE(saldo_depois, 0) <> saldo_antes THEN
     RAISE EXCEPTION 'Avaria não deveria voltar ao estoque (antes %, depois %)', saldo_antes, saldo_depois;
   END IF;
@@ -51,7 +51,7 @@ BEGIN
   -- 2) Decisão "reintegrar" devolve ao estoque
   PERFORM public.fn_devolucao_quarentena_decidir(q.id, 'reintegrar', 'teste');
   SELECT quantidade INTO saldo_depois FROM public.estoque_unidades
-  WHERE produto_id = v.perfume_id AND unidade_id = v.unidade_id;
+  WHERE produto_id = vv.perfume_id AND unidade_id = vv.unidade_id;
   IF COALESCE(saldo_depois, 0) <> saldo_antes + 1 THEN
     RAISE EXCEPTION 'Reintegração não devolveu ao estoque (esperado %, obtido %)', saldo_antes + 1, saldo_depois;
   END IF;
@@ -68,8 +68,8 @@ BEGIN
 
   -- 4) Condição inválida é rejeitada
   BEGIN
-    PERFORM public.fn_devolucao_registrar(v.grupo_venda,
-      jsonb_build_array(jsonb_build_object('venda_id', v.id, 'quantidade', 1, 'destino', 'estoque', 'condicao', 'molhado')),
+    PERFORM public.fn_devolucao_registrar(vv.grupo_venda,
+      jsonb_build_array(jsonb_build_object('venda_id', vv.id, 'quantidade', 1, 'destino', 'estoque', 'condicao', 'molhado')),
       'teste condicao invalida', 'pix');
     RAISE EXCEPTION 'Condição inválida foi aceita';
   EXCEPTION WHEN raise_exception THEN
