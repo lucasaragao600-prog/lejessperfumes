@@ -122,6 +122,9 @@ export interface DevolucaoListaItem {
   cliente_id: string | null;
   cliente_nome: string | null;
   registrado_por_nome: string | null;
+  reembolso_status: string;
+  reembolso_confirmado_por: string | null;
+  reembolso_confirmado_em: string | null;
   created_at: string;
 }
 
@@ -145,7 +148,7 @@ export function useDevolucoesLista(f: FiltroDevolucoes) {
       const fimD = new Date(`${f.ate}T04:00:00Z`);
       fimD.setUTCDate(fimD.getUTCDate() + 1);
       let q = db.from("devolucoes")
-        .select("id, numero, tipo, status, valor_total, valor_troca, diferenca, forma_reembolso, fora_do_prazo, motivo, unidade_id, cliente_id, registrado_por_nome, created_at", { count: "exact" })
+        .select("id, numero, tipo, status, valor_total, valor_troca, diferenca, forma_reembolso, fora_do_prazo, motivo, unidade_id, cliente_id, registrado_por_nome, reembolso_status, reembolso_confirmado_por, reembolso_confirmado_em, created_at", { count: "exact" })
         .gte("created_at", ini).lt("created_at", fimD.toISOString())
         .order("created_at", { ascending: false });
       if (f.unidadeId) q = q.eq("unidade_id", f.unidadeId);
