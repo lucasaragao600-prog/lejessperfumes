@@ -213,6 +213,10 @@ export default function NotasFiscais() {
     if (!manualForm.fornecedor) return;
     const itensValidos = manualItens.filter((it) => it.perfumeId && it.quantidade > 0);
     if (itensValidos.length === 0) return;
+    if (!manualForm.deposito) {
+      toast.error("Selecione o depósito de destino antes de dar entrada.");
+      return;
+    }
     if (salvandoManual) return;
     setSalvandoManual(true);
     try {
