@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Printer, Trash2, Plus, AlertTriangle } from "lucide-react";
+import { Loader2, Printer, Trash2, Plus, AlertTriangle, ArrowLeftRight } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import PerfumeSearchSelect from "@/components/PerfumeSearchSelect";
 import { useApp } from "@/context/AppContext";
 import { formatCurrency } from "@/data/mockData";
 import { getHojeManaus } from "@/lib/dateUtils";
-import { useGrupoVenda, useAcoesVenda, usePrazoDevolucao } from "@/hooks/useDevolucoes";
+import { useGrupoVenda, useGrupoVendaTroca, useAcoesVenda, usePrazoDevolucao } from "@/hooks/useDevolucoes";
 import {
   CONDICOES_ITEM, DESTINOS_ITEM, FORMAS_REEMBOLSO, condicaoExigeQuarentena, diferencaTroca, foraDoPrazo,
   nomeCondicao, round2, saldoDevolvivel, valorUnitarioLiquido,
@@ -22,6 +22,9 @@ interface Props {
   grupoVenda: string | null;
   modo: ModoAcaoVenda;
   onClose: () => void;
+  /** Troca entre unidades: loja onde a troca está acontecendo (venda veio de outra loja). */
+  unidadeOperacaoId?: string | null;
+  unidadeOperacaoNome?: string | null;
 }
 
 function imprimirComprovante(p: {
@@ -49,10 +52,15 @@ function imprimirComprovante(p: {
   w.document.close();
 }
 
-export default function AcoesVendaDialog({ grupoVenda, modo, onClose }: Props) {
-  const { data: grupo, isLoading, error } = useGrupoVenda(grupoVenda);
+export default function AcoesVendaDialog({ grupoVenda, modo, onClose, unidadeOperacaoId, unidadeOperacaoNome }: Props) {
+  const entreUnidades = modo === "trocar" && !!unidadeOperacaoId;
+  const local = useGrupoVenda(entreUnidades ? null : grupoVenda);
+  const externo = useGrupoVendaTroca(entreUnidades ? grupoVenda : null, entreUnidades ? unidadeOperacaoId! : null);
+  const grupo = entreUnidades ? externo.data : local.data;
+  const isLoading = entreUnidades ? externo.isLoading : local.isLoading;
+  const error = entreUnidades ? externo.error : local.error;
   const { data: prazo = 30 } = usePrazoDevolucao();
-  const { cancelar, devolver, trocar } = useAcoesVenda();
+  const { cancelar, devolver, trocar, trocarUnidade } = useAcoesVenda();
   const { perfumes, concentracoesConfig } = useApp();
 
   const [motivo, setMotivo] = useState("");
@@ -79,7 +87,7 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose }: Props) {
   const dif = diferencaTroca(totalDevolvido, totalNovo);
   const fora = grupo ? foraDoPrazo(grupo.data, getHojeManaus(), prazo) : false;
   const totalVenda = round2((grupo?.itens || []).reduce((s, i) => s + i.total, 0));
-  const pending = cancelar.isPending || devolver.isPending || trocar.isPending;
+  const pending = cancelar.isPending || devolver.isPending || trocar.isPending || trocarUnidade.isPending;
   const precisaCliente = (forma === "credito_loja" || forma === "vale_troca") && !grupo?.clienteId;
 
   const titulo = modo === "cancelar" ? "Cancelar venda" : modo === "devolver" ? "Devolver itens" : "Trocar itens";
@@ -108,12 +116,15 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose }: Props) {
       } else {
         if (!novos.length) { toast.error("Adicione os novos produtos"); return; }
         if (dif.aReceber > 0 && precisaCliente) { toast.error("Esta venda não tem cliente: escolha outra forma para a diferença"); return; }
-        const r = await trocar.mutateAsync({
+        const payload = {
           grupoVenda: grupo.grupoVenda, itensDevolvidos: itens, motivo: motivo.trim(),
           itensNovos: novos.map(n => ({ produto_id: n.produtoId, quantidade: n.quantidade, preco_unitario: n.preco })),
           pagamentos: dif.aPagar > 0 ? [{ tipo_pagamento: pagDif, bandeira: ["Débito", "Crédito"].includes(pagDif) ? "Visa" : "N/A", valor: dif.aPagar }] : [],
           formaDiferenca: dif.aReceber > 0 ? forma : null,
-        });
+        };
+        const r = entreUnidades
+          ? await trocarUnidade.mutateAsync({ ...payload, unidadeOperacaoId: unidadeOperacaoId! })
+          : await trocar.mutateAsync(payload);
         toast.success(`Troca ${r.numero} registrada`);
         const nome = (id: string) => perfumes.find(p => p.id === id)?.nome || "";
         setResultado(() => () => imprimirComprovante({ titulo: "COMPROVANTE DE TROCA", numero: r.numero, loja: grupo.deposito, motivo: motivo.trim(),
@@ -161,6 +172,11 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose }: Props) {
         {grupo && !resultado && (
           <div className="space-y-4">
             {grupo.cancelada && <p className="text-sm text-destructive">Esta venda já está cancelada.</p>}
+            {entreUnidades && (
+              <p className="text-xs flex items-center gap-1.5 text-gold">
+                <ArrowLeftRight size={14} /> Troca entre lojas: venda feita em {grupo.deposito}. Os itens devolvidos entram no estoque de {unidadeOperacaoNome || "esta loja"} e os novos saem daqui.
+              </p>
+            )}
             {fora && modo !== "cancelar" && (
               <p className="text-xs flex items-center gap-1.5 text-warning"><AlertTriangle size={14} /> Venda com mais de {prazo} dias: exige aprovação de gerente.</p>
             )}

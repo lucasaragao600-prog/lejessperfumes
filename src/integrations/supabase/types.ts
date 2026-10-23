@@ -2606,7 +2606,9 @@ export type Database = {
           sessao_caixa_id: string | null
           status: string
           tipo: string
+          troca_entre_unidades: boolean
           unidade_id: string
+          unidade_origem_id: string | null
           updated_at: string
           valor_total: number
           valor_troca: number
@@ -2632,7 +2634,9 @@ export type Database = {
           sessao_caixa_id?: string | null
           status?: string
           tipo: string
+          troca_entre_unidades?: boolean
           unidade_id: string
+          unidade_origem_id?: string | null
           updated_at?: string
           valor_total?: number
           valor_troca?: number
@@ -2658,7 +2662,9 @@ export type Database = {
           sessao_caixa_id?: string | null
           status?: string
           tipo?: string
+          troca_entre_unidades?: boolean
           unidade_id?: string
+          unidade_origem_id?: string | null
           updated_at?: string
           valor_total?: number
           valor_troca?: number
@@ -2681,6 +2687,13 @@ export type Database = {
           {
             foreignKeyName: "devolucoes_unidade_id_fkey"
             columns: ["unidade_id"]
+            isOneToOne: false
+            referencedRelation: "unidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devolucoes_unidade_origem_id_fkey"
+            columns: ["unidade_origem_id"]
             isOneToOne: false
             referencedRelation: "unidades"
             referencedColumns: ["id"]
@@ -6093,6 +6106,10 @@ export type Database = {
       }
       fn_estoque_resumo: { Args: { p_filtros?: Json }; Returns: Json }
       fn_fiscal_status: { Args: { r: Json }; Returns: Json }
+      fn_grupo_venda_troca: {
+        Args: { p_grupo_venda: string; p_unidade_operacao: string }
+        Returns: Json
+      }
       fn_implantacao_carga_manual_aprovar: {
         Args: { p_item_id: string }
         Returns: undefined
@@ -6334,6 +6351,20 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_troca_registrar_unidade: {
+        Args: {
+          p_cliente_id?: string
+          p_forma_diferenca?: string
+          p_grupo_venda: string
+          p_itens_devolvidos: Json
+          p_itens_novos: Json
+          p_motivo: string
+          p_pagamentos?: Json
+          p_unidade_operacao: string
+          p_vendedora?: string
+        }
+        Returns: Json
+      }
       fn_unidade_por_texto: {
         Args: { _txt: string }
         Returns: {
@@ -6377,6 +6408,23 @@ export type Database = {
       fn_validar_operacao_unidade: {
         Args: { _operacao: string; _unidade_id: string }
         Returns: undefined
+      }
+      fn_venda_buscar_troca: {
+        Args: {
+          p_busca?: string
+          p_limite?: number
+          p_unidade_operacao: string
+        }
+        Returns: {
+          cancelada: boolean
+          cliente_nome: string
+          data: string
+          deposito: string
+          grupo_venda: string
+          total: number
+          unidade_id: string
+          unidade_nome: string
+        }[]
       }
       fn_venda_cancelar: {
         Args: { p_grupo_venda: string; p_motivo: string }
