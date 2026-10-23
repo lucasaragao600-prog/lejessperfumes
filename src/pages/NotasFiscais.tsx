@@ -282,6 +282,9 @@ export default function NotasFiscais() {
       setManualItens([novoItem()]);
       setManualFiscal(null);
       setShowManual(false);
+      toast.success("Entrada registrada com sucesso.");
+    } catch (err) {
+      toast.error("Erro ao dar entrada: " + (err instanceof Error ? err.message : "tente novamente."));
     } finally {
       setSalvandoManual(false);
     }
