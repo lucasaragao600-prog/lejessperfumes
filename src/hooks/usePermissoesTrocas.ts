@@ -17,6 +17,7 @@ export function usePermissoesTrocas() {
   const podeDevolver = podeAcao(isMaster, perms, PERMISSOES_TROCAS.devolver);
   const podeCancelar = podeAcao(isMaster, perms, PERMISSOES_TROCAS.cancelar);
   const podeQuarentena = podeAcao(isMaster, perms, PERMISSOES_TROCAS.quarentena);
+  const podeReembolso = podeAcao(isMaster, perms, PERMISSOES_TROCAS.reembolso);
 
   return {
     isMaster,
@@ -25,6 +26,7 @@ export function usePermissoesTrocas() {
     podeDevolver,
     podeCancelar,
     podeQuarentena,
+    podeReembolso,
     podeAlgumaAcao: podeTrocar || podeDevolver,
   };
 }

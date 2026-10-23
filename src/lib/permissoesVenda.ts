@@ -10,6 +10,7 @@ export const PERMISSOES_TROCAS = {
   devolverForaPrazo: "venda.devolver_fora_prazo",
   cancelar: "venda.cancelar",
   quarentena: "devolucao.quarentena",
+  reembolso: "devolucao.reembolso",
 } as const;
 
 export type PermissaoTrocaKey = keyof typeof PERMISSOES_TROCAS;
