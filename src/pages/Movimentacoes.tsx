@@ -25,6 +25,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { useUnidades } from "@/hooks/useUnidades";
+import BuscarVendaTroca from "@/components/vendas/BuscarVendaTroca";
 
 const tipos = ["Entrada", "Ajuste", "Transferência", "Saída Tester"] as const;
 
@@ -49,6 +50,7 @@ export default function Movimentacoes() {
   const [busca, setBusca] = useState("");
   const [ordenacao, setOrdenacao] = useState<"recente" | "antiga">("recente");
   const [showForm, setShowForm] = useState(false);
+  const [showTroca, setShowTroca] = useState(false);
   const [form, setForm] = useState({
     tipo: "Entrada" as typeof tipos[number],
     perfumeId: "",
@@ -250,9 +252,15 @@ export default function Movimentacoes() {
             <h1 className="page-title">Movimentações</h1>
             <p className="page-subtitle mt-1">{lista.isLoading ? "Carregando..." : `${totalReg} registros`}</p>
           </div>
-          <button onClick={() => setShowForm(!showForm)} className="btn-primary px-4 py-2">
-            <Plus size={16} /> Nova
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowTroca(true)} className="btn-secondary px-4 py-2 flex items-center gap-1.5"
+              title="Trocar produtos de vendas realizadas">
+              <ArrowLeftRight size={16} /> Troca
+            </button>
+            <button onClick={() => setShowForm(!showForm)} className="btn-primary px-4 py-2">
+              <Plus size={16} /> Nova
+            </button>
+          </div>
         </div>
 
         <div className="relative mb-3">
@@ -486,6 +494,9 @@ export default function Movimentacoes() {
           </div>
         )}
       </div>
+
+      {/* Troca de Produtos — mesmo fluxo central do PDV e do Histórico de Vendas */}
+      <BuscarVendaTroca aberto={showTroca} onClose={() => setShowTroca(false)} />
 
       {/* Modal de confirmação de Ajuste */}
       <Dialog open={!!ajusteModal} onOpenChange={(o) => { if (!o) { setAjusteModal(null); setMotivoAjuste(""); } }}>
