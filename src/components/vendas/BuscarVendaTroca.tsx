@@ -98,8 +98,7 @@ export default function BuscarVendaTroca({ aberto, onClose }: { aberto: boolean;
                       className="text-[10px] px-2.5 py-1.5 rounded-full border border-border text-muted-foreground hover:text-foreground flex items-center gap-1">
                       <RotateCcw size={11} /> Devolver
                     </button>
-                  </div>
-                )}
+                </div>
               </div>
             ))}
             {lista.hasNextPage && (
