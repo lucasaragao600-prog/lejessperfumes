@@ -34,8 +34,7 @@ export default function BuscarVendaTroca({ aberto, onClose }: { aberto: boolean;
       const total = doGrupo.reduce((s, i) => s + (i.total || 0), 0);
       const data = doGrupo[0]?.data || "";
       const deposito = doGrupo[0]?.deposito || "";
-      const cancelada = doGrupo.some((i) => i.cancelada);
-      return { ...g, total, data, deposito, cancelada };
+      return { ...g, total, data, deposito };
     });
   }, [lista.data]);
 
@@ -86,10 +85,9 @@ export default function BuscarVendaTroca({ aberto, onClose }: { aberto: boolean;
                   </p>
                   <p className="text-[11px] text-muted-foreground">
                     {g.data ? g.data.split("-").reverse().join("/") : ""} · {g.deposito} · {formatCurrency(g.total)}
-                    {g.cancelada && <span className="text-destructive"> · cancelada</span>}
                   </p>
                 </div>
-                {!g.cancelada && (
+                {
                   <div className="flex gap-1.5 flex-shrink-0">
                     <button
                       onClick={() => setSelecionado({ grupoVenda: g.grupo, modo: "trocar" })}
