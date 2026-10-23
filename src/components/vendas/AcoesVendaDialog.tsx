@@ -172,6 +172,11 @@ export default function AcoesVendaDialog({ grupoVenda, modo, onClose, unidadeOpe
         {grupo && !resultado && (
           <div className="space-y-4">
             {grupo.cancelada && <p className="text-sm text-destructive">Esta venda já está cancelada.</p>}
+            {entreUnidades && (
+              <p className="text-xs flex items-center gap-1.5 text-gold">
+                <ArrowLeftRight size={14} /> Troca entre lojas: venda feita em {grupo.deposito}. Os itens devolvidos entram no estoque de {unidadeOperacaoNome || "esta loja"} e os novos saem daqui.
+              </p>
+            )}
             {fora && modo !== "cancelar" && (
               <p className="text-xs flex items-center gap-1.5 text-warning"><AlertTriangle size={14} /> Venda com mais de {prazo} dias: exige aprovação de gerente.</p>
             )}
