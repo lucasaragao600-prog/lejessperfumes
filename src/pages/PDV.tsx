@@ -177,7 +177,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
         const estoque = p.estoques[deposito] || 0;
         // Search by name, code, brand, concentration, volume, and barcode
         const text = `${p.nome} ${p.codigo} ${p.marca} ${concentracoesConfig[p.concentracao] || p.concentracao} ${p.volume}ml ${p.codigoBarras || ""}`.toLowerCase();
-        return text.includes(q) && estoque > 0;
+        return p.ativo !== false && text.includes(q) && estoque > 0;
       })
       .slice(0, 10);
   }, [busca, perfumes, deposito, concentracoesConfig]);

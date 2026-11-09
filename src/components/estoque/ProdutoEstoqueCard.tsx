@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { AlertTriangle, Check, FlaskConical, History, Image, Pencil, Percent, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, FlaskConical, History, Image, Pencil, Percent, Trash2, Archive, ArchiveRestore } from "lucide-react";
 import QuickActionMenu from "@/components/QuickActionMenu";
 import { formatCurrency } from "@/data/mockData";
 import type { ItemEstoque } from "@/hooks/useEstoqueLista";
@@ -19,11 +19,13 @@ interface Props {
   onHistorico: (p: ItemEstoque) => void;
   onEditar: (p: ItemEstoque) => void;
   onExcluir: (p: ItemEstoque) => void;
+  inativo?: boolean;
+  onAlternarAtivo?: (p: ItemEstoque) => void;
 }
 
 function ProdutoEstoqueCardBase({
   p, isMaster, userLoja, todasLojas, depositos, concentracaoLabel, selecaoAtiva, marcado,
-  onToggle, onImagem, onParcelamento, onHistorico, onEditar, onExcluir,
+  onToggle, onImagem, onParcelamento, onHistorico, onEditar, onExcluir, inativo = false, onAlternarAtivo,
 }: Props) {
   const qtd = p.qtd;
   const baixo = qtd <= p.estoqueMinimo;
@@ -167,6 +169,11 @@ function ProdutoEstoqueCardBase({
               <button onClick={() => onEditar(p)} className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-gold transition-colors duration-150">
                 <Pencil size={11} /> Editar
               </button>
+              {onAlternarAtivo && (
+                <button onClick={() => onAlternarAtivo(p)} className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-gold transition-colors duration-150">
+                  {inativo ? <><ArchiveRestore size={11} /> Reativar</> : <><Archive size={11} /> Inativar</>}
+                </button>
+              )}
               <button onClick={() => onExcluir(p)} className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors duration-150">
                 <Trash2 size={11} /> Excluir
               </button>

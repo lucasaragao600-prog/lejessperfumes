@@ -386,6 +386,20 @@
       "when": 1792793056866,
       "tag": "0054_devolucao_acompanhamento_fiscal",
       "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "7",
+      "when": 1794228149373,
+      "tag": "0055_produto_inativar_reativar",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "7",
+      "when": 1794228171914,
+      "tag": "0056_produto_inativar_audit_fix",
+      "breakpoints": true
     }
   ]
 }

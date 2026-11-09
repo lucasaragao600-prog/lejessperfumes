@@ -7,6 +7,7 @@ import type { Perfume, Deposito } from "@/data/mockData";
 export function rowToPerfume(row: any): Perfume {
   return {
     id: row.id,
+    ativo: row.ativo !== false,
     codigo: row.codigo,
     codigoBarras: row.codigo_barras || "",
     nome: row.nome,

@@ -25,6 +25,7 @@ export interface FiltrosEstoque {
   alertas?: boolean;
   ordem?: "none" | "asc" | "desc";
   especial?: "sem_barcode" | "sem_tester";
+  situacao?: "inativos";
 }
 
 export interface ItemEstoque extends Perfume {

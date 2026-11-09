@@ -3972,6 +3972,7 @@ export type Database = {
       }
       perfumes: {
         Row: {
+          ativo: boolean
           casa_sigla: string
           cfop: string
           classificacao: string
@@ -3988,6 +3989,9 @@ export type Database = {
           estoque_sumauma: number
           id: string
           image_url: string | null
+          inativado_em: string | null
+          inativado_motivo: string | null
+          inativado_por: string | null
           marca: string
           ncm: string
           nome: string
@@ -4004,6 +4008,7 @@ export type Database = {
           volume: number
         }
         Insert: {
+          ativo?: boolean
           casa_sigla: string
           cfop?: string
           classificacao?: string
@@ -4020,6 +4025,9 @@ export type Database = {
           estoque_sumauma?: number
           id?: string
           image_url?: string | null
+          inativado_em?: string | null
+          inativado_motivo?: string | null
+          inativado_por?: string | null
           marca: string
           ncm?: string
           nome: string
@@ -4036,6 +4044,7 @@ export type Database = {
           volume: number
         }
         Update: {
+          ativo?: boolean
           casa_sigla?: string
           cfop?: string
           classificacao?: string
@@ -4052,6 +4061,9 @@ export type Database = {
           estoque_sumauma?: number
           id?: string
           image_url?: string | null
+          inativado_em?: string | null
+          inativado_motivo?: string | null
+          inativado_por?: string | null
           marca?: string
           ncm?: string
           nome?: string
@@ -6242,6 +6254,10 @@ export type Database = {
       fn_perfil_tributario_salvar: {
         Args: { p_dados: Json; p_id: string }
         Returns: string
+      }
+      fn_produto_definir_ativo: {
+        Args: { p_ativo: boolean; p_motivo?: string; p_produto_id: string }
+        Returns: undefined
       }
       fn_produto_fiscal_resolver: {
         Args: { p_perfume_id: string }

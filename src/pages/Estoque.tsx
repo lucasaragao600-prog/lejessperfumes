@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Package, Search, AlertTriangle, Plus, Pencil, X, Download, ChevronUp, ChevronDown, Barcode, Beaker, ListChecks, FileDown, Loader2, RefreshCw } from "lucide-react";
+import { Package, Search, AlertTriangle, Plus, Pencil, X, Download, ChevronUp, ChevronDown, Barcode, Beaker, ListChecks, FileDown, Loader2, RefreshCw, Archive } from "lucide-react";
 import { gerarListaProdutosPdf } from "@/lib/pdf/listaProdutos";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatCurrency, CLASSIFICACOES_PERFUME, type Deposito, type Perfume, type TipoPerfume, type ClassificacaoPerfume } from "@/data/mockData";
@@ -15,7 +15,8 @@ import { useCasas } from "@/hooks/useCasas";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import { useUnidades } from "@/hooks/useUnidades";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { buscarEstoque, depositosDoFiltro, useEstoqueLista, useEstoqueResumo, type FiltrosEstoque, type ItemEstoque } from "@/hooks/useEstoqueLista";
 
 const LIMITE_TODOS = 2000;
@@ -25,6 +26,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const { tiposPerfumeConfig, concentracoesConfig, excluirPerfume } = useApp();
   const { casas } = useCasas();
   const { profile } = useAuth();
+  const queryClient = useQueryClient();
   const userLoja = (!isMaster && profile?.loja) ? profile.loja as Deposito : null;
 
   const tipos = useMemo(() =>
@@ -69,6 +71,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
   const [filtrosColapsados, setFiltrosColapsados] = useState(false);
   const [showSemBarcode, setShowSemBarcode] = useState(false);
   const [showSemTester, setShowSemTester] = useState(false);
+  const [verInativos, setVerInativos] = useState(false);
   const [parcelamentoPerfume, setParcelamentoPerfume] = useState<Perfume | null>(null);
   const [historicoPerfume, setHistoricoPerfume] = useState<Perfume | null>(null);
   const [selecaoAtiva, setSelecaoAtiva] = useState(false);
@@ -96,7 +99,8 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     estoque_max: numerosDeb.estoqueMax,
     alertas: showAlertas,
     ordem: ordenacaoEstoque,
-  }), [busca, effectiveDeposito, tipoFiltro, classificacaoFiltro, isMaster, numerosDeb, showAlertas, ordenacaoEstoque]);
+    ...(isMaster && verInativos ? { situacao: "inativos" as const } : {}),
+  }), [verInativos, busca, effectiveDeposito, tipoFiltro, classificacaoFiltro, isMaster, numerosDeb, showAlertas, ordenacaoEstoque]);
 
   const lista = useEstoqueLista(filtros, depositos);
   const resumoQ = useEstoqueResumo(filtros);
@@ -216,6 +220,21 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
     }
   }, []);
 
+  const onAlternarAtivo = useCallback(async (p: ItemEstoque) => {
+    const inativar = !verInativos;
+    let motivo: string | null = null;
+    if (inativar) {
+      motivo = window.prompt(`Inativar "${p.nome}"?\n\nEle sai do Estoque e das vendas, mas o histórico é mantido e você pode reativar depois em "Inativos".\n\nMotivo (opcional):`, "");
+      if (motivo === null) return;
+    } else if (!window.confirm(`Reativar "${p.nome}"? Ele volta para o Estoque e para as vendas.`)) return;
+    const { error } = await supabase.rpc("fn_produto_definir_ativo", { p_produto_id: p.id, p_ativo: !inativar, p_motivo: motivo || undefined });
+    if (error) { toast.error(error.message.includes("master") ? "Apenas master pode fazer isso." : "Não foi possível alterar o produto."); return; }
+    toast.success(inativar ? "Produto inativado. Veja em \"Inativos\"." : "Produto reativado.");
+    queryClient.invalidateQueries({ queryKey: ["estoque_lista"] });
+    queryClient.invalidateQueries({ queryKey: ["estoque_resumo"] });
+    queryClient.invalidateQueries({ queryKey: ["perfumes"] });
+  }, [verInativos, queryClient]);
+
   const exportarExcel = useCallback(async () => {
     let todos: ItemEstoque[];
     try {
@@ -303,7 +322,7 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
           <div>
             <h1 className="page-title">Estoque</h1>
             <p className="page-subtitle mt-1">
-              {total} produtos{userLoja ? ` · ${userLoja}` : ""}
+              {total} produtos{verInativos ? " inativos" : ""}{userLoja ? ` · ${userLoja}` : ""}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -346,6 +365,15 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
               >
                 <Beaker size={13} className={resumo.sem_tester > 0 ? "animate-pulse" : ""} />
                 {resumo.sem_tester}
+              </button>
+            )}
+            {isMaster && (
+              <button
+                onClick={() => setVerInativos((v) => !v)}
+                title={verInativos ? "Voltar aos produtos ativos" : "Ver produtos inativos"}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150 ${verInativos ? "bg-gold/15 border border-gold/40 text-gold" : "btn-secondary"}`}
+              >
+                <Archive size={13} /> {verInativos ? "Ver ativos" : "Inativos"}
               </button>
             )}
             {isMaster && (
@@ -566,6 +594,8 @@ export default function Estoque({ isMaster = true }: { isMaster?: boolean }) {
             onHistorico={onHistorico}
             onEditar={onEditar}
             onExcluir={onExcluir}
+            inativo={verInativos}
+            onAlternarAtivo={onAlternarAtivo}
           />
         ))}
 
