@@ -28,3 +28,11 @@
 - [x] Trocas/Devoluções Fase 6 — troca entre unidades (0052/0053, teste SQL transacional) — aprovada
 - [x] Trocas/Devoluções Fase 7A — acompanhamento fiscal, vínculos, análise/rejeição e preservação da NFC-e original (0054; 74 testes; SQL rollback). Relatório: docs/trocas-fase7-validacao.md. Aguardar aprovação; formulário com devolução real não verificado porque não há registros.
 - [ ] Trocas/Devoluções Fase 7B — emissão e acompanhamento automático de NF-e de entrada modelo 55 — bloqueada pela integração específica e validação contábil (CFOP/CST/CSOSN/tributos/natureza); CNPJ real da unidade recebedora necessário.
+
+## Perfis, ajustes e PIN (pedido 17/11)
+- [x] Fase A: ajuste de estoque só Master, motivo obrigatório (categoria + texto), registro único no banco
+- [ ] Fase B: perfil Vendedor Líder + permissões por módulo + custo escondido no servidor para não-master
+- [ ] Fase C: vendedor travado na própria unidade (leitura e movimento) + testes pela API
+- [ ] Fase D: tela Usuários (editar, inativar, permissões) + 3 usuários de teste + checklist
+- [ ] Fase E: login por PIN em terminal da loja; nenhuma senha/PIN/token em logs
+- [ ] Depois: relatório de ajustes, aprovação, alertas, contagem cega, foto, estorno

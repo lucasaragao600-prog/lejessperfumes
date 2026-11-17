@@ -21,6 +21,8 @@ export type Database = {
           diferenca: number
           id: string
           motivo: string
+          motivo_categoria: string | null
+          origem: string | null
           produto_id: string
           produto_nome: string
           quantidade_anterior: number
@@ -35,6 +37,8 @@ export type Database = {
           diferenca: number
           id?: string
           motivo: string
+          motivo_categoria?: string | null
+          origem?: string | null
           produto_id: string
           produto_nome: string
           quantidade_anterior: number
@@ -49,6 +53,8 @@ export type Database = {
           diferenca?: number
           id?: string
           motivo?: string
+          motivo_categoria?: string | null
+          origem?: string | null
           produto_id?: string
           produto_nome?: string
           quantidade_anterior?: number
@@ -3285,6 +3291,7 @@ export type Database = {
       }
       movimentacoes: {
         Row: {
+          ajuste_id: string | null
           created_at: string
           data: string
           deposito: string | null
@@ -3304,6 +3311,7 @@ export type Database = {
           unidade_origem_id: string | null
         }
         Insert: {
+          ajuste_id?: string | null
           created_at?: string
           data?: string
           deposito?: string | null
@@ -3323,6 +3331,7 @@ export type Database = {
           unidade_origem_id?: string | null
         }
         Update: {
+          ajuste_id?: string | null
           created_at?: string
           data?: string
           deposito?: string | null
@@ -5700,6 +5709,17 @@ export type Database = {
           p_unidade: string
         }
         Returns: number
+      }
+      fn_ajuste_estoque: {
+        Args: {
+          p_motivo: string
+          p_motivo_categoria: string
+          p_origem?: string
+          p_produto_id: string
+          p_quantidade_nova: number
+          p_unidade: string
+        }
+        Returns: Json
       }
       fn_audit: {
         Args: {

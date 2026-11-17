@@ -1,3 +1,4 @@
+import { CATEGORIAS_AJUSTE, erroMotivoAjuste, registrarAjusteEstoque } from "@/lib/ajusteEstoque";
 import { useState, useRef, useEffect } from "react";
 import { Plus, ArrowDown, ArrowUpDown, RefreshCw, FlaskConical, ArrowLeftRight, X } from "lucide-react";
 import { useApp } from "@/context/AppContext";
@@ -38,6 +39,7 @@ export default function QuickActionMenu({ perfume }: Props) {
   const [destino, setDestino] = useState<Deposito>("");
   const [quantidade, setQuantidade] = useState<string>("");
   const [obs, setObs] = useState("");
+  const [categoriaAjuste, setCategoriaAjuste] = useState("");
   const [saving, setSaving] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -73,6 +75,7 @@ export default function QuickActionMenu({ perfume }: Props) {
     setAcao(null);
     setQuantidade("");
     setObs("");
+    setCategoriaAjuste("");
     setDeposito(userLoja || depositos[0] || "");
     setOrigem(userLoja || depositos[0] || "");
     setDestino(depositos.find((d) => d !== (userLoja || depositos[0])) || "");
@@ -92,7 +95,7 @@ export default function QuickActionMenu({ perfume }: Props) {
     { key: "Transferência Tester", label: "Transf. Tester", icon: FlaskConical, color: "text-purple-400" },
   ];
 
-  const acoesDisponiveis = isMaster ? acoes : acoes.filter(a => a.key !== "Transferência" && a.key !== "Transferência Tester");
+  const acoesDisponiveis = isMaster ? acoes : acoes.filter(a => a.key !== "Transferência" && a.key !== "Transferência Tester" && a.key !== "Ajuste");
 
   const handleSalvar = async () => {
     if (!acao) return;
@@ -145,17 +148,13 @@ export default function QuickActionMenu({ perfume }: Props) {
         } as any);
         toast.success(`-${qtdNum} un. em ${deposito}`);
       } else if (acao === "Ajuste") {
-        const estAtual = perfume.estoques[deposito];
-        const dif = qtdNum - estAtual;
-        await ajustarEstoque(perfume.id, deposito, qtdNum);
-        await adicionarMovimentacao({
-          id: `m${Date.now()}`, data: hoje, tipo: "Ajuste",
-          perfumeId: perfume.id, perfumeNome: perfume.nome,
-          quantidade: dif, deposito,
-          observacao: `Ajuste: ${estAtual} → ${qtdNum}${obs ? ` | ${obs}` : ""}`,
-          registradoPor,
-        } as Movimentacao);
-        toast.success(`Estoque ajustado: ${estAtual} → ${qtdNum}`);
+        const erro = erroMotivoAjuste(categoriaAjuste, obs);
+        if (erro) { toast.error(erro); setSaving(false); return; }
+        const r = await registrarAjusteEstoque({
+          produtoId: perfume.id, unidade: deposito, quantidadeNova: qtdNum,
+          categoria: categoriaAjuste, motivo: obs, origem: "acoes_rapidas",
+        });
+        toast.success(`Estoque ajustado: ${r.anterior} → ${r.nova}`);
       } else if (acao === "Transferência") {
         const est = perfume.estoques[origem];
         if (est < qtdNum) {
@@ -351,13 +350,22 @@ export default function QuickActionMenu({ perfume }: Props) {
                 />
               </div>
 
+              {acao === "Ajuste" && (
+                <div>
+                  <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 block">Motivo do ajuste *</label>
+                  <select value={categoriaAjuste} onChange={(e) => setCategoriaAjuste(e.target.value)} className="input-premium px-3 py-2 text-xs w-full">
+                    <option value="">Escolha a categoria *</option>
+                    {CATEGORIAS_AJUSTE.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              )}
               <div>
-                <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 block">Observação</label>
+                <label className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1.5 block">{acao === "Ajuste" ? "Descreva o que aconteceu *" : "Observação"}</label>
                 <input
                   type="text"
                   value={obs}
                   onChange={(e) => setObs(e.target.value)}
-                  placeholder="Opcional"
+                  placeholder={acao === "Ajuste" ? "Mínimo 10 caracteres. Fica salvo na auditoria" : "Opcional"}
                   className="input-premium px-3 py-2 text-xs w-full"
                 />
               </div>
@@ -365,7 +373,7 @@ export default function QuickActionMenu({ perfume }: Props) {
 
             <div className="flex gap-2 mt-5">
               <button onClick={closeAll} className="btn-secondary flex-1 py-2 text-xs">Cancelar</button>
-              <button onClick={handleSalvar} disabled={saving || unidadesLoading || depositos.length === 0} className="btn-primary flex-1 py-2 text-xs disabled:opacity-60">
+              <button onClick={handleSalvar} disabled={saving || unidadesLoading || depositos.length === 0 || (acao === "Ajuste" && !!erroMotivoAjuste(categoriaAjuste, obs))} className="btn-primary flex-1 py-2 text-xs disabled:opacity-60">
                 {unidadesLoading ? "Carregando unidades..." : saving ? "Salvando..." : "Confirmar"}
               </button>
             </div>

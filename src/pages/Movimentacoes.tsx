@@ -1,3 +1,4 @@
+import { CATEGORIAS_AJUSTE, erroMotivoAjuste, registrarAjusteEstoque } from "@/lib/ajusteEstoque";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useMovimentacoesLista } from "@/hooks/useMovimentacoes";
 import { Loader2 } from "lucide-react";
@@ -72,6 +73,7 @@ export default function Movimentacoes() {
     diferenca: number;
   } | null>(null);
   const [motivoAjuste, setMotivoAjuste] = useState("");
+  const [categoriaAjuste, setCategoriaAjuste] = useState("");
   const [salvandoAjuste, setSalvandoAjuste] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
@@ -145,23 +147,14 @@ export default function Movimentacoes() {
     } else if (form.tipo === "Entrada") {
       await adicionarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
     } else if (form.tipo === "Ajuste") {
-      await ajustarEstoque(form.perfumeId, form.deposito as Deposito, form.quantidade);
-      // Registra auditoria
-      const { data: userData } = await supabase.auth.getUser();
-      await supabase.from("ajuste_auditoria").insert({
-        produto_id: form.perfumeId,
-        produto_nome: p.nome,
-        deposito: form.deposito,
-        quantidade_anterior: estoqueAtual,
-        quantidade_nova: form.quantidade,
-        diferenca: diferencaAjuste,
-        motivo: motivoAjusteConfirmado || "",
-        registrado_por: profile?.nome || "Desconhecido",
-        user_id: userData.user?.id ?? null,
+      // Saldo, auditoria e movimentação gravados juntos no banco (só Master)
+      await registrarAjusteEstoque({
+        produtoId: form.perfumeId, unidade: form.deposito, quantidadeNova: form.quantidade,
+        categoria: categoriaAjuste, motivo: motivoAjusteConfirmado || "", origem: "movimentacoes",
       });
     }
 
-    if (form.tipo !== "Saída Tester") await adicionarMovimentacao(nova);
+    if (form.tipo !== "Saída Tester" && form.tipo !== "Ajuste") await adicionarMovimentacao(nova);
     setForm({ tipo: "Entrada", perfumeId: "", deposito: userLoja || "", depositoOrigem: userLoja || "", depositoDestino: "", quantidade: 1, observacao: "" });
     setShowForm(false);
   };
@@ -205,6 +198,7 @@ export default function Movimentacoes() {
         return;
       }
       setMotivoAjuste("");
+      setCategoriaAjuste("");
       setAjusteModal({
         perfumeNome: p.nome,
         deposito: form.deposito as Deposito,
@@ -228,10 +222,8 @@ export default function Movimentacoes() {
 
   const confirmarAjuste = async () => {
     const motivo = motivoAjuste.trim();
-    if (motivo.length < 5) {
-      toast.error("Informe um motivo com pelo menos 5 caracteres.");
-      return;
-    }
+    const erro = erroMotivoAjuste(categoriaAjuste, motivo);
+    if (erro) { toast.error(erro); return; }
     setSalvandoAjuste(true);
     try {
       await executarSalvar(motivo);
@@ -305,7 +297,7 @@ export default function Movimentacoes() {
             <div>
               <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">Tipo</label>
               <div className="grid grid-cols-2 gap-2">
-                {tipos.map((t) => (
+                {tipos.filter((t) => isMaster || t !== "Ajuste").map((t) => (
                   <button key={t}
                     onClick={() => setForm({ ...form, tipo: t, depositoOrigem: userLoja || "", depositoDestino: "", deposito: userLoja || "" })}
                     className={`py-2.5 rounded-xl text-xs font-medium border transition-all duration-150 ${
@@ -543,15 +535,20 @@ export default function Movimentacoes() {
                 <label className="text-[11px] text-muted-foreground mb-2 block uppercase tracking-wider font-medium">
                   Motivo do ajuste <span className="text-destructive">*</span>
                 </label>
+                <select value={categoriaAjuste} onChange={(e) => setCategoriaAjuste(e.target.value)}
+                  className="input-premium px-3 py-2.5 text-sm w-full mb-2">
+                  <option value="">Escolha a categoria *</option>
+                  {CATEGORIAS_AJUSTE.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
                 <textarea
                   value={motivoAjuste}
                   onChange={(e) => setMotivoAjuste(e.target.value)}
-                  placeholder="Ex: contagem física, produto avariado, perda, correção de erro..."
+                  placeholder="Descreva o que aconteceu. Ex.: Contagem física de 17/11: havia 2 un. na vitrine e 1 no estoque"
                   rows={3}
                   className="input-premium px-3 py-2.5 text-sm w-full resize-none"
                   autoFocus
                 />
-                <p className="text-[10px] text-muted-foreground mt-1">Mínimo 5 caracteres. Este registro fica salvo na auditoria.</p>
+                <p className="text-[10px] text-muted-foreground mt-1">{motivoAjuste.replace(/\s/g, "").length}/10 caracteres mínimos. Este registro fica salvo na auditoria e não pode ser apagado.</p>
               </div>
             </div>
           )}
@@ -559,7 +556,7 @@ export default function Movimentacoes() {
             <button onClick={() => { setAjusteModal(null); setMotivoAjuste(""); }} className="btn-secondary px-4 py-2" disabled={salvandoAjuste}>
               Cancelar
             </button>
-            <button onClick={confirmarAjuste} disabled={salvandoAjuste || motivoAjuste.trim().length < 5} className="btn-primary px-4 py-2">
+            <button onClick={confirmarAjuste} disabled={salvandoAjuste || !!erroMotivoAjuste(categoriaAjuste, motivoAjuste)} className="btn-primary px-4 py-2">
               {salvandoAjuste ? "Salvando..." : "Confirmar ajuste"}
             </button>
           </DialogFooter>
