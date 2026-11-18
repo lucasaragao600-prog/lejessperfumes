@@ -5509,6 +5509,10 @@ export type Database = {
     Functions: {
       check_master_exists: { Args: never; Returns: boolean }
       claim_first_master: { Args: { p_user_id: string }; Returns: boolean }
+      fn__acesso_unidade_estrito: {
+        Args: { _unidade_id: string }
+        Returns: boolean
+      }
       fn__caixa_aberto: { Args: { _unidade: string }; Returns: string }
       fn__credito_entrada: {
         Args: {
@@ -5607,6 +5611,10 @@ export type Database = {
           tester_qtd: number
           testers: Json
         }[]
+      }
+      fn__exigir_acesso_unidade: {
+        Args: { _unidade_id: string }
+        Returns: undefined
       }
       fn__fiscal_pode: { Args: never; Returns: boolean }
       fn__fmt_ml: { Args: { _v: number }; Returns: string }

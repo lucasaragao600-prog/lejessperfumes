@@ -435,6 +435,20 @@
       "when": 1795039305018,
       "tag": "0061_vendedor_lider_custo_servidor",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1795039794784,
+      "tag": "0062_vendedor_travado_unidade",
+      "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1795039873486,
+      "tag": "0063_acesso_unidade_estrito_origem_destino",
+      "breakpoints": true
     }
   ]
 }
