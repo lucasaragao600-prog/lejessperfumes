@@ -50,7 +50,7 @@ export default function Vendas() {
     concentracoesConfig
   } = useApp();
   const { role, profile } = useAuth();
-  const isVendedor = role === "vendedor";
+  const isVendedor = role === "vendedor" || role === "vendedor_lider";
   const isMaster = role === "master";
   const userLoja = (isVendedor && profile?.loja) ? profile.loja as Deposito : null;
   const vendedoras = [...vendedorasCtx, ...vendedorasFixas];

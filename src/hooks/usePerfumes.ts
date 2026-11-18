@@ -3,6 +3,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Perfume, Deposito } from "@/data/mockData";
 
+// Colunas públicas (custo vem só por fn_produtos_custos)
+export const COLUNAS_PERFUME =
+  "id,codigo,nome,marca,casa_sigla,tipo,concentracao,tamanho,volume,preco_venda,estoque_casa,estoque_sumauma,estoque_amazonas,estoque_minimo,created_at,updated_at,image_url,ncm,cfop,cst_csosn,unidade_fiscal,codigo_barras,classificacao,perfil_olfativo,notas_saida,notas_coracao,notas_fundo,ativo,inativado_em,inativado_por,inativado_motivo";
+
 // Map DB row to app Perfume type
 export function rowToPerfume(row: any): Perfume {
   return {
@@ -17,7 +21,7 @@ export function rowToPerfume(row: any): Perfume {
     concentracao: row.concentracao,
     tamanho: row.tamanho,
     volume: row.volume,
-    custo: Number(row.custo),
+    custo: Number(row.custo) || 0,
     precoVenda: Number(row.preco_venda),
     estoques: {
       Casa: row.estoque_casa,
@@ -78,7 +82,7 @@ export function usePerfumes() {
       while (true) {
         const { data, error } = await supabase
           .from("perfumes")
-          .select("*")
+          .select(COLUNAS_PERFUME)
           .order("nome")
           .range(from, from + PAGE_SIZE - 1);
         if (error) throw error;
@@ -87,7 +91,10 @@ export function usePerfumes() {
         if (data.length < PAGE_SIZE) break;
         from += PAGE_SIZE;
       }
-      return all.map(rowToPerfume);
+      // Custos só chegam para quem pode ver (servidor devolve vazio para os demais)
+      const { data: custos } = await supabase.rpc("fn_produtos_custos" as any);
+      const mapa = new Map<string, any>(((custos as any[]) || []).map((c) => [c.id, c]));
+      return all.map((r) => rowToPerfume({ ...r, ...(mapa.get(r.id) || {}) }));
     },
   });
 

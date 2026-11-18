@@ -10,7 +10,7 @@ function rowToTester(row: any): Tester {
     marca: row.marca,
     deposito: row.deposito as Deposito,
     quantidade: row.quantidade,
-    custo: Number(row.custo),
+    custo: Number(row.custo) || 0,
     registradoPor: row.registrado_por || "",
   };
 }
@@ -24,10 +24,13 @@ export function useTesters() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("testers")
-        .select("*")
+        .select("id,perfume_id,perfume_nome,marca,deposito,quantidade,created_at,registrado_por,unidade_id")
         .order("perfume_nome");
       if (error) throw error;
-      return (data || []).map(rowToTester);
+      // Custo só para quem pode ver (servidor devolve vazio para os demais)
+      const { data: custos } = await supabase.rpc("fn_testers_custos" as any);
+      const mapa = new Map<string, any>(((custos as any[]) || []).map((c) => [c.id, c.custo]));
+      return (data || []).map((r: any) => rowToTester({ ...r, custo: mapa.get(r.id) ?? 0 }));
     },
   });
 

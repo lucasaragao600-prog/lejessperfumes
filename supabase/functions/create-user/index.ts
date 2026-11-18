@@ -11,7 +11,7 @@ const CreateUserSchema = z.object({
   password: z.string().min(6).max(128),
   nome: z.string().min(1).max(100).trim(),
   loja: z.string().max(100).trim().optional().default(""),
-  role: z.enum(["master", "vendedor"]),
+  role: z.enum(["master", "vendedor_lider", "vendedor"]),
 });
 
 Deno.serve(async (req) => {

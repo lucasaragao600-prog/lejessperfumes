@@ -55,7 +55,7 @@ export default function GerenciarUsuarios() {
       toast({ title: "Senha muito curta", description: "A senha deve ter no mínimo 6 caracteres.", variant: "destructive" });
       return;
     }
-    if (form.role === "vendedor" && !form.loja) {
+    if (form.role !== "master" && !form.loja) {
       toast({ title: "Erro", description: "Vendedoras devem ter uma loja atribuída.", variant: "destructive" });
       return;
     }
@@ -148,7 +148,7 @@ export default function GerenciarUsuarios() {
               />
               
               <div className="flex gap-2">
-                {(["master", "vendedor"] as const).map((r) => (
+                {(["master", "vendedor_lider", "vendedor"] as const).map((r) => (
                   <button
                     key={r}
                     onClick={() => setForm({ ...form, role: r, loja: r === "master" ? "" : form.loja })}
@@ -158,13 +158,13 @@ export default function GerenciarUsuarios() {
                         : "bg-surface-overlay border-border text-muted-foreground"
                     }`}
                   >
-                    {r === "master" ? "🔑 Master" : "🛒 Vendedor"}
+                    {r === "master" ? "🔑 Master" : r === "vendedor_lider" ? "⭐ Vendedor Líder" : "🛒 Vendedor"}
                   </button>
                 ))}
               </div>
 
               {/* Loja selection - only for vendedor */}
-              {form.role === "vendedor" && (
+              {form.role !== "master" && (
                 <div>
                   <label className="text-[10px] text-muted-foreground mb-1.5 block uppercase tracking-wider font-medium flex items-center gap-1">
                     <Store size={10} /> Loja (obrigatório)
@@ -190,7 +190,7 @@ export default function GerenciarUsuarios() {
 
             <button
               onClick={handleCreate}
-              disabled={creating || !form.email || !form.password || !form.nome || (form.role === "vendedor" && !form.loja)}
+              disabled={creating || !form.email || !form.password || !form.nome || (form.role !== "master" && !form.loja)}
               className="w-full py-2.5 rounded-xl text-xs font-semibold text-primary-foreground disabled:opacity-40 transition-opacity"
               style={{ background: "var(--gradient-gold)" }}
             >
@@ -212,11 +212,11 @@ export default function GerenciarUsuarios() {
                     <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                       u.role === "master"
                         ? "bg-gold/20 text-gold border border-gold-muted"
-                        : u.role === "vendedor"
+                        : u.role === "vendedor" || u.role === "vendedor_lider"
                         ? "bg-surface-overlay text-muted-foreground border border-border"
                         : "bg-destructive/10 text-destructive border border-destructive/30"
                     }`}>
-                      {u.role || "Sem papel"}
+                      {u.role === "vendedor_lider" ? "Vendedor Líder" : u.role || "Sem papel"}
                     </span>
                   </div>
                   {u.loja && (

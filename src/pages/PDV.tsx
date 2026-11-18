@@ -101,7 +101,7 @@ export default function PDV({ onBack }: { onBack?: () => void }) {
   } = useApp();
   const { role, profile, user } = useAuth();
   const isMaster = role === "master";
-  const isVendedor = role === "vendedor";
+  const isVendedor = role === "vendedor" || role === "vendedor_lider";
   const userLoja = (isVendedor && profile?.loja) ? profile.loja as Deposito : null;
   const vendedoras = [...vendedorasCtx, "Outra"];
   const { clientes, adicionarCliente } = useClientes();

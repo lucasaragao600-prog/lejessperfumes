@@ -19,7 +19,7 @@ export default function FechamentoCaixa() {
   const { nomes: depositos } = useUnidades({ contexto: "operacional" });
   const { profile, user, role } = useAuth();
   const isMaster = role === "master";
-  const userLoja = (role === "vendedor" && profile?.loja) ? profile.loja : null;
+  const userLoja = ((role === "vendedor" || role === "vendedor_lider") && profile?.loja) ? profile.loja : null;
   const { sessoes, movimentacoes, sessaoAberta, abrirCaixa, fecharCaixa, registrarMovimentacao } = useCaixa();
   const { vendas, pagamentos: vendaPagamentos } = useVendas();
   const { configFiscal } = useNfce();

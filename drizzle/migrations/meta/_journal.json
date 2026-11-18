@@ -421,6 +421,20 @@
       "when": 1795036270995,
       "tag": "0059_faturamento_diario_fix_ambiguidade",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1795039254828,
+      "tag": "0060_perfil_vendedor_lider_enum",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1795039305018,
+      "tag": "0061_vendedor_lider_custo_servidor",
+      "breakpoints": true
     }
   ]
 }

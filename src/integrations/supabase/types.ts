@@ -5701,6 +5701,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      fn__ver_custos: { Args: never; Returns: boolean }
       fn_ajustar_saldo: {
         Args: {
           p_modo?: string
@@ -6299,6 +6300,15 @@ export type Database = {
         Args: { p_dados: Json; p_perfume_id: string }
         Returns: Json
       }
+      fn_produtos_custos: {
+        Args: never
+        Returns: {
+          custo: number
+          custo_medio: number
+          id: string
+          ultimo_custo_em: string
+        }[]
+      }
       fn_produtos_fiscal_listar: {
         Args: {
           p_busca?: string
@@ -6334,6 +6344,13 @@ export type Database = {
       fn_sync_estoque_legado: {
         Args: { _produto_id: string; _unidade_id: string }
         Returns: undefined
+      }
+      fn_testers_custos: {
+        Args: never
+        Returns: {
+          custo: number
+          id: string
+        }[]
       }
       fn_transf_concluir_interna: {
         Args: { p_id: string; p_modo: string }
@@ -6577,7 +6594,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "master" | "vendedor"
+      app_role: "master" | "vendedor" | "vendedor_lider"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6705,7 +6722,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["master", "vendedor"],
+      app_role: ["master", "vendedor", "vendedor_lider"],
     },
   },
 } as const

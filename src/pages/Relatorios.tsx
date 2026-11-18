@@ -1583,7 +1583,7 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
 
   const { nomes: lojasDisponiveis, rotulo: rotuloLoja } = useUnidades({ contexto: "operacional" });
   const lojaInicial: Deposito =
-    role === "vendedor" && profile?.loja && lojasDisponiveis.includes(profile.loja)
+    (role === "vendedor" || role === "vendedor_lider") && profile?.loja && lojasDisponiveis.includes(profile.loja)
       ? (profile.loja as Deposito)
       : lojasDisponiveis[0] || "";
 
@@ -1600,7 +1600,7 @@ function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
   const [dataPersonalizadoFim, setDataPersonalizadoFim] = useState(hoje);
   const [gerando, setGerando] = useState(false);
 
-  const podeMudarLoja = role !== "vendedor";
+  const podeMudarLoja = role === "master";
 
   const intervaloPeriodo = (): { inicio: string; fim: string; label: string } => {
     const [y, m] = mes.split("-").map(Number);
