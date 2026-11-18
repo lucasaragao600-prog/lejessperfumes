@@ -1,3 +1,4 @@
+import type React from "react";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
@@ -16,7 +17,9 @@ interface AuthContextType {
   refreshUserData: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+// Mantém o mesmo contexto entre recargas automáticas (evita tela em branco)
+const g = globalThis as any;
+const AuthContext: React.Context<AuthContextType | null> = g.__lejessAuthCtx ?? (g.__lejessAuthCtx = createContext<AuthContextType | null>(null));
 
 const AUTH_BOOT_TIMEOUT_MS = 8000;
 
