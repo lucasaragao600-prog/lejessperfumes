@@ -407,6 +407,20 @@
       "when": 1794951921626,
       "tag": "0057_ajuste_estoque_master_motivo",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "7",
+      "when": 1795036099133,
+      "tag": "0058_faturamento_diario",
+      "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1795036270995,
+      "tag": "0059_faturamento_diario_fix_ambiguidade",
+      "breakpoints": true
     }
   ]
 }

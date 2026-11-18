@@ -36,3 +36,4 @@
 - [ ] Fase D: tela Usuários (editar, inativar, permissões) + 3 usuários de teste + checklist
 - [ ] Fase E: login por PIN em terminal da loja; nenhuma senha/PIN/token em logs
 - [ ] Depois: relatório de ajustes, aprovação, alertas, contagem cega, foto, estorno
+- [x] Relatório Faturamento por dia — aba "Por dia" em Relatórios com período + loja, totais, gráfico diário, tabela e Excel (0058/0059; validado na tela com dados reais, filtro por loja conferido)

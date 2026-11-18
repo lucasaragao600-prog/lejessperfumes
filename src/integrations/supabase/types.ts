@@ -6165,6 +6165,18 @@ export type Database = {
         Returns: Json
       }
       fn_estoque_resumo: { Args: { p_filtros?: Json }; Returns: Json }
+      fn_faturamento_diario: {
+        Args: { p: Json }
+        Returns: {
+          bruto: number
+          devolvido: number
+          dia: string
+          itens: number
+          liquido: number
+          pedidos: number
+          qtd: number
+        }[]
+      }
       fn_fiscal_status: { Args: { r: Json }; Returns: Json }
       fn_grupo_venda_troca: {
         Args: { p_grupo_venda: string; p_unidade_operacao: string }

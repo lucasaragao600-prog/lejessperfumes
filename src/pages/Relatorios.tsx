@@ -1,5 +1,6 @@
 import { formatCurrency } from "@/data/mockData";
 import { useDevolucoesResumo } from "@/hooks/useDevolucoes";
+import { useFaturamentoDiario } from "@/hooks/useFaturamentoDiario";
 import { vendasLiquidas } from "@/lib/devolucao";
 import { useMemo, useState, useEffect } from "react";
 import { useApp } from "@/context/AppContext";
@@ -17,6 +18,7 @@ import {
   AlertTriangle,
   ArrowDownRight,
   ArrowUpRight,
+  CalendarDays,
   Download,
   FileText,
   Layers,
@@ -234,7 +236,8 @@ export default function Relatorios() {
       </div>
 
       <Tabs defaultValue="fluxo" className="w-full">
-        <TabsList className="grid grid-cols-3 md:grid-cols-9 w-full bg-surface mb-4 h-auto">
+        <TabsList className="grid grid-cols-3 md:grid-cols-10 w-full bg-surface mb-4 h-auto">
+          <TabsTrigger value="pordia" className="text-xs py-2"><CalendarDays size={14} className="mr-1.5 hidden md:inline" />Por dia</TabsTrigger>
           <TabsTrigger value="fluxo" className="text-xs py-2"><Wallet size={14} className="mr-1.5 hidden md:inline" />Fluxo de Caixa</TabsTrigger>
           <TabsTrigger value="vendidos" className="text-xs py-2"><ShoppingCart size={14} className="mr-1.5 hidden md:inline" />Vendidos</TabsTrigger>
           <TabsTrigger value="vendedor" className="text-xs py-2"><Users size={14} className="mr-1.5 hidden md:inline" />Vendedor</TabsTrigger>
@@ -246,6 +249,7 @@ export default function Relatorios() {
           <TabsTrigger value="classificacao" className="text-xs py-2"><PieIcon size={14} className="mr-1.5 hidden md:inline" />Classificação</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="pordia"><FaturamentoDiarioTab dInicio={dInicio} dFim={dFim} deposito={deposito} rotuloUnidade={rotuloUnidade} /></TabsContent>
         <TabsContent value="fluxo"><FluxoCaixaTab concNome={concNome} /></TabsContent>
         <TabsContent value="vendidos"><VendidosTab analise={analise} concNome={concNome} tipoNome={tipoNome} dInicio={dInicio} dFim={dFim} /></TabsContent>
         <TabsContent value="vendedor"><VendedorTab vendasFiltradas={vendasFiltradas} perfumes={perfumes} concNome={concNome} tipoNome={tipoNome} dInicio={dInicio} dFim={dFim} /></TabsContent>
@@ -1441,6 +1445,135 @@ function isDateValid(s: string) {
 function fmtDataBr(iso: string) {
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
+}
+
+/* ============= FATURAMENTO POR DIA ============= */
+function FaturamentoDiarioTab({ dInicio, dFim, deposito, rotuloUnidade }: { dInicio: string; dFim: string; deposito: string; rotuloUnidade: (d: string) => string }) {
+  const { data: dias = [], isLoading } = useFaturamentoDiario({ data_ini: dInicio, data_fim: dFim, deposito });
+
+  const totais = useMemo(() => dias.reduce((acc, d) => ({
+    bruto: acc.bruto + d.bruto,
+    devolvido: acc.devolvido + d.devolvido,
+    liquido: acc.liquido + d.liquido,
+    itens: acc.itens + d.itens,
+    qtd: acc.qtd + d.qtd,
+    pedidos: acc.pedidos + d.pedidos,
+  }), { bruto: 0, devolvido: 0, liquido: 0, itens: 0, qtd: 0, pedidos: 0 }), [dias]);
+
+  const grafico = useMemo(() => [...dias].reverse().map((d) => ({
+    dia: d.dia.split("-").reverse().slice(0, 2).join("/"),
+    Bruto: Number(d.bruto.toFixed(2)),
+    Líquido: Number(d.liquido.toFixed(2)),
+  })), [dias]);
+
+  const exportar = () => exportXlsx(
+    [...dias].reverse().map((d) => ({
+      Data: d.dia.split("-").reverse().join("/"),
+      "Pedidos": d.pedidos,
+      "Itens vendidos": d.qtd,
+      "Bruto (R$)": d.bruto.toFixed(2),
+      "Devoluções/trocas (R$)": d.devolvido.toFixed(2),
+      "Líquido (R$)": d.liquido.toFixed(2),
+      "Ticket médio (R$)": d.pedidos > 0 ? (d.bruto / d.pedidos).toFixed(2) : "0.00",
+    })),
+    `faturamento_por_dia_${deposito === "todos" ? "todas" : deposito}_${dInicio}_a_${dFim}`,
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card className="p-3 bg-card border-border">
+          <p className="text-[10px] text-muted-foreground">Faturamento bruto</p>
+          <p className="text-lg font-bold text-foreground">{fmtBRL(totais.bruto)}</p>
+        </Card>
+        <Card className="p-3 bg-card border-border">
+          <p className="text-[10px] text-muted-foreground">Devoluções/trocas</p>
+          <p className="text-lg font-bold text-destructive">-{fmtBRL(totais.devolvido)}</p>
+        </Card>
+        <Card className="p-3 bg-card border-border">
+          <p className="text-[10px] text-muted-foreground">Faturamento líquido</p>
+          <p className="text-lg font-bold text-gold">{fmtBRL(totais.liquido)}</p>
+        </Card>
+        <Card className="p-3 bg-card border-border">
+          <p className="text-[10px] text-muted-foreground">Pedidos no período</p>
+          <p className="text-lg font-bold text-foreground">{totais.pedidos}</p>
+        </Card>
+      </div>
+
+      <div className="flex justify-between items-center">
+        <p className="text-xs text-muted-foreground">
+          {dias.length} dia(s) com movimento · {deposito === "todos" ? "Todas as lojas" : rotuloUnidade(deposito)} · {dInicio.split("-").reverse().join("/")} a {dFim.split("-").reverse().join("/")}
+        </p>
+        <Button size="sm" variant="outline" onClick={exportar} disabled={dias.length === 0} className="gap-2"><Download size={14} />Excel</Button>
+      </div>
+
+      {grafico.length > 0 && (
+        <Card className="p-4 bg-card border-border">
+          <h3 className="text-sm font-semibold mb-3">Evolução diária</h3>
+          <div className="h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={grafico}>
+                <XAxis dataKey="dia" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `R$${v >= 1000 ? `${(v / 1000).toFixed(1)}k` : v}`} />
+                <Tooltip formatter={(v: any) => fmtBRL(Number(v))} />
+                <Legend />
+                <Bar dataKey="Bruto" fill="#C9A24A" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="Líquido" fill="#3d9970" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+      )}
+
+      <Card className="bg-card border-border overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="bg-surface border-b border-border">
+              <tr>
+                <th className="text-left p-3 font-medium">Data</th>
+                <th className="text-right p-3 font-medium">Pedidos</th>
+                <th className="text-right p-3 font-medium">Itens</th>
+                <th className="text-right p-3 font-medium">Bruto</th>
+                <th className="text-right p-3 font-medium">Devoluções</th>
+                <th className="text-right p-3 font-medium">Líquido</th>
+                <th className="text-right p-3 font-medium">Ticket médio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? (
+                <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Carregando…</td></tr>
+              ) : dias.length === 0 ? (
+                <tr><td colSpan={7} className="p-6 text-center text-muted-foreground">Nenhuma venda no período selecionado</td></tr>
+              ) : dias.map((d) => (
+                <tr key={d.dia} className="border-b border-border/50 hover:bg-surface/50">
+                  <td className="p-3 font-medium text-foreground">{d.dia.split("-").reverse().join("/")}</td>
+                  <td className="text-right p-3">{d.pedidos}</td>
+                  <td className="text-right p-3">{d.qtd}</td>
+                  <td className="text-right p-3 font-medium text-foreground">{fmtBRL(d.bruto)}</td>
+                  <td className="text-right p-3 text-destructive">{d.devolvido > 0 ? `-${fmtBRL(d.devolvido)}` : "—"}</td>
+                  <td className="text-right p-3 font-bold text-gold">{fmtBRL(d.liquido)}</td>
+                  <td className="text-right p-3">{d.pedidos > 0 ? fmtBRL(d.bruto / d.pedidos) : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+            {dias.length > 0 && (
+              <tfoot className="bg-surface border-t border-border">
+                <tr>
+                  <td className="p-3 font-bold text-foreground">Total</td>
+                  <td className="text-right p-3 font-bold">{totais.pedidos}</td>
+                  <td className="text-right p-3 font-bold">{totais.qtd}</td>
+                  <td className="text-right p-3 font-bold">{fmtBRL(totais.bruto)}</td>
+                  <td className="text-right p-3 font-bold text-destructive">{totais.devolvido > 0 ? `-${fmtBRL(totais.devolvido)}` : "—"}</td>
+                  <td className="text-right p-3 font-bold text-gold">{fmtBRL(totais.liquido)}</td>
+                  <td className="text-right p-3 font-bold">{totais.pedidos > 0 ? fmtBRL(totais.bruto / totais.pedidos) : "—"}</td>
+                </tr>
+              </tfoot>
+            )}
+          </table>
+        </div>
+      </Card>
+    </div>
+  );
 }
 
 function FluxoCaixaTab({ concNome }: { concNome: (s: string) => string }) {
