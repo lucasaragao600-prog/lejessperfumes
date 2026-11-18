@@ -92,8 +92,13 @@ export function usePerfumes() {
         from += PAGE_SIZE;
       }
       // Custos só chegam para quem pode ver (servidor devolve vazio para os demais)
-      const { data: custos } = await supabase.rpc("fn_produtos_custos" as any);
-      const mapa = new Map<string, any>(((custos as any[]) || []).map((c) => [c.id, c]));
+      const mapa = new Map<string, any>();
+      for (let de = 0; ; de += PAGE_SIZE) {
+        const { data: custos } = await (supabase.rpc("fn_produtos_custos" as any) as any).range(de, de + PAGE_SIZE - 1);
+        const lote = (custos as any[]) || [];
+        lote.forEach((c) => mapa.set(c.id, c));
+        if (lote.length < PAGE_SIZE) break;
+      }
       return all.map((r) => rowToPerfume({ ...r, ...(mapa.get(r.id) || {}) }));
     },
   });

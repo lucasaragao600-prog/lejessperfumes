@@ -4398,8 +4398,12 @@ export type Database = {
       }
       profiles: {
         Row: {
+          ativo: boolean
           created_at: string
           id: string
+          inativado_em: string | null
+          inativado_motivo: string | null
+          inativado_por: string | null
           loja: string
           nome: string
           unidade_id: string | null
@@ -4407,8 +4411,12 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          ativo?: boolean
           created_at?: string
           id?: string
+          inativado_em?: string | null
+          inativado_motivo?: string | null
+          inativado_por?: string | null
           loja?: string
           nome?: string
           unidade_id?: string | null
@@ -4416,8 +4424,12 @@ export type Database = {
           user_id: string
         }
         Update: {
+          ativo?: boolean
           created_at?: string
           id?: string
+          inativado_em?: string | null
+          inativado_motivo?: string | null
+          inativado_por?: string | null
           loja?: string
           nome?: string
           unidade_id?: string | null
@@ -5619,6 +5631,7 @@ export type Database = {
       fn__fiscal_pode: { Args: never; Returns: boolean }
       fn__fmt_ml: { Args: { _v: number }; Returns: string }
       fn__hoje_manaus: { Args: never; Returns: string }
+      fn__masters_ativos: { Args: never; Returns: number }
       fn__nome_usuario:
         | { Args: never; Returns: string }
         | { Args: { p_user: string }; Returns: string }
@@ -6505,6 +6518,32 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      fn_usuario_definir_ativo: {
+        Args: { p_ativo: boolean; p_motivo?: string; p_user_id: string }
+        Returns: Json
+      }
+      fn_usuario_salvar: {
+        Args: {
+          p_nome: string
+          p_role: Database["public"]["Enums"]["app_role"]
+          p_unidade_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
+      fn_usuarios_listar: {
+        Args: never
+        Returns: {
+          ativo: boolean
+          inativado_em: string
+          inativado_motivo: string
+          loja: string
+          nome: string
+          role: string
+          unidade_id: string
+          user_id: string
+        }[]
       }
       fn_validar_operacao_unidade: {
         Args: { _operacao: string; _unidade_id: string }

@@ -49,8 +49,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUserData = async (userId: string) => {
     const [{ data: roleData }, { data: profileData }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", userId).maybeSingle(),
-      supabase.from("profiles").select("nome, loja").eq("user_id", userId).maybeSingle(),
+      supabase.from("profiles").select("nome, loja, ativo").eq("user_id", userId).maybeSingle(),
     ]);
+    // Usuário inativado pelo Master: encerra a sessão
+    if ((profileData as any)?.ativo === false) {
+      await supabase.auth.signOut();
+      setRole(null);
+      setProfile(null);
+      return;
+    }
     setRole((roleData?.role as AppRole) ?? null);
     setProfile(profileData ? { nome: profileData.nome, loja: profileData.loja } : null);
   };

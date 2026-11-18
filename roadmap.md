@@ -33,7 +33,7 @@
 - [x] Fase A: ajuste de estoque só Master, motivo obrigatório (categoria + texto), registro único no banco
 - [x] Fase B: Vendedor Líder (perfil + padrão de permissões, sem custo) + custo escondido no servidor (0060/0061; teste pela API como vendedor) — aguardando aprovação
 - [x] Fase C: vendedor/líder presos à própria loja (leitura + movimento) — 0062/0063; teste pela API como vendedor da Sumaúma — aguardando aprovação
-- [ ] Fase D: tela Usuários (editar, inativar, permissões) + 3 usuários de teste + checklist
+- [x] Fase D: tela Usuários (editar perfil/loja, inativar com motivo + bloqueio de login, reativar, permissões por perfil) + 3 usuários de teste + checklist (0064) — aguardando aprovação
 - [ ] Fase E: login por PIN em terminal da loja; nenhuma senha/PIN/token em logs
 - [ ] Depois: relatório de ajustes, aprovação, alertas, contagem cega, foto, estorno
 - [x] Relatório Faturamento por dia — aba "Por dia" em Relatórios com período + loja, totais, gráfico diário, tabela e Excel (0058/0059; validado na tela com dados reais, filtro por loja conferido)

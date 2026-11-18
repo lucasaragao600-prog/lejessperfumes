@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Users, Plus, Shield, Trash2, Store } from "lucide-react";
+import { Users, Plus, Shield, Store, Pencil, UserX, UserCheck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -8,14 +8,26 @@ import { useUnidades } from "@/hooks/useUnidades";
 
 interface UserItem {
   id: string;
-  email: string;
   nome: string;
   loja: string;
+  unidadeId: string | null;
   role: string | null;
+  ativo: boolean;
+  inativadoMotivo: string | null;
+}
+
+const PERFIL_LABEL: Record<string, string> = { master: "Master", vendedor_lider: "Vendedor Líder", vendedor: "Vendedor" };
+
+async function mensagemErro(data: any, error: any): Promise<string | undefined> {
+  let msg: string | undefined = data?.error;
+  if (!msg && error && "context" in error) {
+    try { msg = (await (error as { context: Response }).context.json())?.error; } catch { /* ignora */ }
+  }
+  return msg || error?.message;
 }
 
 export default function GerenciarUsuarios() {
-  const { nomes: LOJAS } = useUnidades({ contexto: "operacional" });
+  const { nomes: LOJAS, unidades } = useUnidades({ contexto: "operacional" });
   const auth = useAuth();
   const { toast } = useToast();
   const [users, setUsers] = useState<UserItem[]>([]);
@@ -23,27 +35,19 @@ export default function GerenciarUsuarios() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ email: "", password: "", nome: "", loja: "", role: "vendedor" as string });
   const [creating, setCreating] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [verInativos, setVerInativos] = useState(false);
+  const [editando, setEditando] = useState<{ id: string; nome: string; role: string; unidadeId: string } | null>(null);
+  const [inativando, setInativando] = useState<{ id: string; motivo: string } | null>(null);
+  const [salvandoId, setSalvandoId] = useState<string | null>(null);
 
   const fetchUsers = async () => {
     setLoading(true);
-    const { data: profiles } = await supabase.from("profiles").select("user_id, nome, loja");
-    const { data: roles } = await supabase.from("user_roles").select("user_id, role");
-    
-    if (profiles) {
-      const userList: UserItem[] = profiles.map((p) => {
-        const r = roles?.find((r) => r.user_id === p.user_id);
-        return {
-          id: p.user_id,
-          email: "",
-          nome: p.nome,
-          loja: p.loja,
-          role: r?.role ?? null,
-        };
-      });
-      setUsers(userList);
-    }
+    const { data, error } = await supabase.rpc("fn_usuarios_listar" as any);
+    if (error) toast({ title: "Erro", description: "Não foi possível carregar os usuários.", variant: "destructive" });
+    setUsers(((data as any[]) || []).map((u) => ({
+      id: u.user_id, nome: u.nome, loja: u.loja, unidadeId: u.unidade_id, role: u.role,
+      ativo: u.ativo !== false, inativadoMotivo: u.inativado_motivo,
+    })));
     setLoading(false);
   };
 
@@ -72,7 +76,7 @@ export default function GerenciarUsuarios() {
     if (error || data?.error) {
       toast({ title: "Erro ao criar usuário", description: msg || "Erro ao criar usuário", variant: "destructive" });
     } else {
-      toast({ title: "Sucesso", description: `Usuário ${form.nome} criado com perfil ${form.role}` });
+      toast({ title: "Sucesso", description: `Usuário ${form.nome} criado com perfil ${PERFIL_LABEL[form.role] || form.role}` });
       setForm({ email: "", password: "", nome: "", loja: "", role: "vendedor" });
       setShowForm(false);
       fetchUsers();
@@ -80,21 +84,36 @@ export default function GerenciarUsuarios() {
     setCreating(false);
   };
 
-  const handleDelete = async (userId: string) => {
-    setDeletingId(userId);
-    const { data, error } = await supabase.functions.invoke("delete-user", {
-      body: { userId },
+  const salvarEdicao = async () => {
+    if (!editando) return;
+    setSalvandoId(editando.id);
+    const { error } = await supabase.rpc("fn_usuario_salvar" as any, {
+      p_user_id: editando.id, p_nome: editando.nome, p_role: editando.role,
+      p_unidade_id: editando.role === "master" ? null : editando.unidadeId || null,
     });
-
-    if (error || data?.error) {
-      toast({ title: "Erro", description: data?.error || error?.message || "Erro ao excluir usuário", variant: "destructive" });
-    } else {
-      toast({ title: "Sucesso", description: "Usuário excluído com sucesso" });
-      fetchUsers();
-    }
-    setDeletingId(null);
-    setConfirmDeleteId(null);
+    setSalvandoId(null);
+    if (error) { toast({ title: "Não foi possível salvar", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Usuário atualizado" });
+    setEditando(null);
+    fetchUsers();
   };
+
+  const alterarSituacao = async (userId: string, ativo: boolean, motivo?: string) => {
+    setSalvandoId(userId);
+    const { data, error } = await supabase.functions.invoke("user-status", { body: { userId, ativo, motivo } });
+    setSalvandoId(null);
+    if (error || data?.error) {
+      toast({ title: "Não foi possível alterar", description: (await mensagemErro(data, error)) || "Tente novamente.", variant: "destructive" });
+      return;
+    }
+    toast({ title: ativo ? "Usuário reativado" : "Usuário inativado", description: ativo ? "O login foi liberado." : "O login foi bloqueado e o histórico foi mantido." });
+    setInativando(null);
+    fetchUsers();
+  };
+
+  const lista = users.filter((u) => u.ativo !== verInativos);
+  const qtdInativos = users.filter((u) => !u.ativo).length;
+  const campo = "w-full bg-surface-overlay border border-border rounded-lg px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-gold-muted";
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -200,66 +219,100 @@ export default function GerenciarUsuarios() {
         )}
 
         {/* Lista de usuários */}
+        <div className="flex gap-2">
+          <button onClick={() => setVerInativos(false)}
+            className={`px-3 py-1.5 rounded-full text-xs border ${!verInativos ? "bg-gold/20 text-gold border-gold-muted" : "bg-surface-overlay border-border text-muted-foreground"}`}>
+            Ativos
+          </button>
+          <button onClick={() => setVerInativos(true)}
+            className={`px-3 py-1.5 rounded-full text-xs border ${verInativos ? "bg-gold/20 text-gold border-gold-muted" : "bg-surface-overlay border-border text-muted-foreground"}`}>
+            Inativos ({qtdInativos})
+          </button>
+        </div>
         {loading ? (
           <p className="text-center text-muted-foreground text-sm py-8">Carregando...</p>
         ) : (
           <div className="space-y-3">
-            {users.map((u) => (
-              <div key={u.id} className="bg-surface border border-border rounded-xl p-4 flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-foreground truncate">{u.nome || "Sem nome"}</p>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                      u.role === "master"
-                        ? "bg-gold/20 text-gold border border-gold-muted"
-                        : u.role === "vendedor" || u.role === "vendedor_lider"
-                        ? "bg-surface-overlay text-muted-foreground border border-border"
-                        : "bg-destructive/10 text-destructive border border-destructive/30"
-                    }`}>
-                      {u.role === "vendedor_lider" ? "Vendedor Líder" : u.role || "Sem papel"}
-                    </span>
+            {lista.map((u) => (
+              <div key={u.id} className={`bg-surface border border-border rounded-xl p-4 space-y-3 ${!u.ativo ? "opacity-80" : ""}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-sm font-medium text-foreground truncate">{u.nome || "Sem nome"}</p>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium border ${
+                        u.role === "master" ? "bg-gold/20 text-gold border-gold-muted"
+                        : u.role ? "bg-surface-overlay text-muted-foreground border-border"
+                        : "bg-destructive/10 text-destructive border-destructive/30"}`}>
+                        {u.role ? PERFIL_LABEL[u.role] || u.role : "Sem perfil"}
+                      </span>
+                      {!u.ativo && <span className="text-[10px] px-2 py-0.5 rounded-full font-medium border bg-destructive/10 text-destructive border-destructive/30">Inativo</span>}
+                    </div>
+                    {u.loja && <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1"><Store size={9} /> {u.loja}</p>}
+                    {!u.ativo && u.inativadoMotivo && <p className="text-[10px] text-muted-foreground mt-0.5">Motivo: {u.inativadoMotivo}</p>}
                   </div>
-                  {u.loja && (
-                    <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
-                      <Store size={9} /> {u.loja}
-                    </p>
-                  )}
+                  <div className="flex items-center gap-1">
+                    {u.ativo && (
+                      <button aria-label="Editar usuário" onClick={() => setEditando({ id: u.id, nome: u.nome, role: u.role || "vendedor", unidadeId: u.unidadeId || "" })}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-gold hover:bg-gold/10"><Pencil size={14} /></button>
+                    )}
+                    {u.id !== auth.user?.id && (u.ativo ? (
+                      <button aria-label="Inativar usuário" onClick={() => setInativando({ id: u.id, motivo: "" })}
+                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10"><UserX size={14} /></button>
+                    ) : (
+                      <button onClick={() => alterarSituacao(u.id, true)} disabled={salvandoId === u.id}
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold border border-gold-muted text-gold bg-gold/10 disabled:opacity-50">
+                        <UserCheck size={12} /> {salvandoId === u.id ? "..." : "Reativar"}
+                      </button>
+                    ))}
+                    <Shield size={14} className={u.role === "master" ? "text-gold" : "text-muted-foreground"} />
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  {u.id !== auth.user?.id && (
-                    confirmDeleteId === u.id ? (
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => handleDelete(u.id)}
-                          disabled={deletingId === u.id}
-                          className="px-2 py-1 rounded-lg text-[10px] font-semibold bg-destructive text-destructive-foreground disabled:opacity-50"
-                        >
-                          {deletingId === u.id ? "..." : "Confirmar"}
+                {editando?.id === u.id && (
+                  <div className="space-y-2 border-t border-border pt-3">
+                    <input className={campo} value={editando.nome} placeholder="Nome" onChange={(e) => setEditando({ ...editando, nome: e.target.value })} />
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(["master", "vendedor_lider", "vendedor"] as const).map((r) => (
+                        <button key={r} onClick={() => setEditando({ ...editando, role: r })}
+                          className={`py-2 rounded-lg text-[11px] font-medium border ${editando.role === r ? "bg-gold/20 text-gold border-gold-muted" : "bg-surface-overlay border-border text-muted-foreground"}`}>
+                          {PERFIL_LABEL[r]}
                         </button>
-                        <button
-                          onClick={() => setConfirmDeleteId(null)}
-                          className="px-2 py-1 rounded-lg text-[10px] font-medium bg-surface-overlay border border-border text-muted-foreground"
-                        >
-                          Não
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setConfirmDeleteId(u.id)}
-                        className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                      >
-                        <Trash2 size={14} />
+                      ))}
+                    </div>
+                    {editando.role !== "master" && (
+                      <select className={campo} value={editando.unidadeId} onChange={(e) => setEditando({ ...editando, unidadeId: e.target.value })} aria-label="Loja">
+                        <option value="">Escolha a loja</option>
+                        {unidades.map((un) => <option key={un.id} value={un.id}>{un.nomeExibicao}</option>)}
+                      </select>
+                    )}
+                    <div className="flex gap-2">
+                      <button onClick={salvarEdicao} disabled={salvandoId === u.id || !editando.nome.trim() || (editando.role !== "master" && !editando.unidadeId)}
+                        className="flex-1 py-2 rounded-lg text-xs font-semibold text-primary-foreground disabled:opacity-40" style={{ background: "var(--gradient-gold)" }}>
+                        {salvandoId === u.id ? "Salvando..." : "Salvar"}
                       </button>
-                    )
-                  )}
-                  <Shield size={14} className={u.role === "master" ? "text-gold" : "text-muted-foreground"} />
-                </div>
+                      <button onClick={() => setEditando(null)} className="px-3 py-2 rounded-lg text-xs border border-border text-muted-foreground">Cancelar</button>
+                    </div>
+                  </div>
+                )}
+
+                {inativando?.id === u.id && (
+                  <div className="space-y-2 border-t border-border pt-3">
+                    <p className="text-[11px] text-muted-foreground">O login será bloqueado e todo o histórico continua guardado. Dá para reativar depois.</p>
+                    <input className={campo} value={inativando.motivo} placeholder="Motivo da inativação (obrigatório)" onChange={(e) => setInativando({ ...inativando, motivo: e.target.value })} />
+                    <div className="flex gap-2">
+                      <button onClick={() => alterarSituacao(u.id, false, inativando.motivo.trim())} disabled={salvandoId === u.id || inativando.motivo.trim().length < 5}
+                        className="flex-1 py-2 rounded-lg text-xs font-semibold bg-destructive text-destructive-foreground disabled:opacity-40">
+                        {salvandoId === u.id ? "Inativando..." : "Inativar usuário"}
+                      </button>
+                      <button onClick={() => setInativando(null)} className="px-3 py-2 rounded-lg text-xs border border-border text-muted-foreground">Cancelar</button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
 
-            {users.length === 0 && (
-              <p className="text-center text-muted-foreground text-sm py-8">Nenhum usuário cadastrado</p>
+            {lista.length === 0 && (
+              <p className="text-center text-muted-foreground text-sm py-8">{verInativos ? "Nenhum usuário inativo" : "Nenhum usuário ativo"}</p>
             )}
           </div>
         )}

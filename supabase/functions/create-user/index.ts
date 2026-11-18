@@ -94,6 +94,18 @@ Deno.serve(async (req) => {
     await adminClient.from("profiles").update({ loja }).eq("user_id", newUser.user.id);
     await adminClient.from("user_roles").insert({ user_id: newUser.user.id, role });
 
+    // Vincula à loja (perfil, unidade e acesso) pela regra única do banco, como o Master logado
+    if (role !== "master" && loja) {
+      const { data: un } = await adminClient.from("unidades").select("id")
+        .or(`codigo_legado.eq."${loja}",nome_exibicao.eq."${loja}",codigo.eq."${loja}"`).limit(1).maybeSingle();
+      if (un?.id) {
+        const { error: vErr } = await callerClient.rpc("fn_usuario_salvar", {
+          p_user_id: newUser.user.id, p_nome: nome, p_role: role, p_unidade_id: un.id,
+        });
+        if (vErr) console.error("[create-user] vínculo de loja falhou:", vErr.message);
+      }
+    }
+
     return new Response(
       JSON.stringify({ success: true, userId: newUser.user.id }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

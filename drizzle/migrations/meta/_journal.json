@@ -449,6 +449,13 @@
       "when": 1795039873486,
       "tag": "0063_acesso_unidade_estrito_origem_destino",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1795042952404,
+      "tag": "0064_usuarios_gestao_inativar",
+      "breakpoints": true
     }
   ]
 }
