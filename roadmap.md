@@ -31,7 +31,7 @@
 
 ## Perfis, ajustes e PIN (pedido 17/11)
 - [x] Fase A: ajuste de estoque só Master, motivo obrigatório (categoria + texto), registro único no banco
-- [ ] Fase B: perfil Vendedor Líder + permissões por módulo + custo escondido no servidor para não-master
+- [x] Fase B: Vendedor Líder (perfil + padrão de permissões, sem custo) + custo escondido no servidor (0060/0061; teste pela API como vendedor) — aguardando aprovação
 - [ ] Fase C: vendedor travado na própria unidade (leitura e movimento) + testes pela API
 - [ ] Fase D: tela Usuários (editar, inativar, permissões) + 3 usuários de teste + checklist
 - [ ] Fase E: login por PIN em terminal da loja; nenhuma senha/PIN/token em logs
