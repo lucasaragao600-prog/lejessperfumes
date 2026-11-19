@@ -211,7 +211,7 @@ Deno.serve(async (req) => {
     }
     return json(await status(admin));
   } catch (e) {
-    console.error("fiscal-sefaz", e);
+    console.error("fiscal-sefaz: erro", e instanceof Error ? e.name : "desconhecido");
     return json({ error: e instanceof Error ? e.message : "Erro interno" }, 500);
   }
 });

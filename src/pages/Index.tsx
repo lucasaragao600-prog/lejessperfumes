@@ -11,6 +11,8 @@ import Testers from "@/pages/Testers";
 import Dashboards from "@/pages/Dashboards";
 import Configuracoes from "@/pages/Configuracoes";
 import Login from "@/pages/Login";
+import MeuPin from "@/components/MeuPin";
+import BloqueioPin from "@/components/BloqueioPin";
 import GerenciarUsuarios from "@/pages/GerenciarUsuarios";
 import Unidades from "@/pages/Unidades";
 import Implantacoes from "@/pages/Implantacoes";
@@ -141,6 +143,7 @@ function IndexContent({
 
   return (
     <div className="min-h-screen bg-background relative">
+      <BloqueioPin signOut={signOut} />
       {showAlertas && <Alertas onClose={() => setShowAlertas(false)} />}
       <SidebarNav activeTab={activeTab} onTabChange={setActiveTab} isMaster={isMaster} />
 
@@ -168,6 +171,7 @@ function IndexContent({
               </span>
             )}
           </button>
+          <MeuPin />
           <button onClick={signOut} className="text-[11px] text-muted-foreground hover:text-destructive transition-colors duration-150 px-2 py-1">
             Sair
           </button>
@@ -198,6 +202,7 @@ function IndexContent({
               </span>
             )}
           </button>
+          <MeuPin />
           <button onClick={signOut} className="btn-secondary px-4 py-2 text-xs">
             Sair
           </button>

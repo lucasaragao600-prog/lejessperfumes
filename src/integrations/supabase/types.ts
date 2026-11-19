@@ -5193,6 +5193,30 @@ export type Database = {
         }
         Relationships: []
       }
+      usuario_pins: {
+        Row: {
+          atualizado_em: string
+          bloqueado_ate: string | null
+          pin_hash: string
+          tentativas: number
+          user_id: string
+        }
+        Insert: {
+          atualizado_em?: string
+          bloqueado_ate?: string | null
+          pin_hash: string
+          tentativas?: number
+          user_id: string
+        }
+        Update: {
+          atualizado_em?: string
+          bloqueado_ate?: string | null
+          pin_hash?: string
+          tentativas?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       usuario_unidade_permissoes: {
         Row: {
           concedido_por: string | null
@@ -5685,6 +5709,7 @@ export type Database = {
         Args: { r: Database["public"]["Tables"]["reposicoes"]["Row"] }
         Returns: Record<string, unknown>
       }
+      fn__sanitizar_segredos: { Args: { j: Json }; Returns: Json }
       fn__vendas_filtradas: {
         Args: { p: Json }
         Returns: {
@@ -6307,6 +6332,14 @@ export type Database = {
       }
       fn_perfil_tributario_salvar: {
         Args: { p_dados: Json; p_id: string }
+        Returns: string
+      }
+      fn_pin_conferir: { Args: { p_pin: string }; Returns: string }
+      fn_pin_definir: { Args: { p_pin: string }; Returns: undefined }
+      fn_pin_remover: { Args: { p_user_id: string }; Returns: undefined }
+      fn_pin_status: { Args: never; Returns: boolean }
+      fn_pin_verificar: {
+        Args: { p_email: string; p_pin: string }
         Returns: string
       }
       fn_produto_definir_ativo: {

@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     });
 
     if (createError) {
-      console.error('[create-user] createUser error:', createError);
+      console.error("[create-user] createUser error:", (createError as { code?: string }).code ?? "desconhecido");
       let userMessage = "Erro ao criar usuário";
       const code = (createError as { code?: string }).code;
       if (createError.message?.includes('already registered') || code === "email_exists") {

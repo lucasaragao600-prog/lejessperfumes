@@ -456,6 +456,20 @@
       "when": 1795042952404,
       "tag": "0064_usuarios_gestao_inativar",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1795090810322,
+      "tag": "0065_login_pin_e_auditoria_sem_segredos",
+      "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1795090879995,
+      "tag": "0066_pin_desbloqueio_sessao",
+      "breakpoints": true
     }
   ]
 }
